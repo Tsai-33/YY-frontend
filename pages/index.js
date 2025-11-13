@@ -49,11 +49,18 @@ export default function Home() {
   const handleSend = () => {};
 
   return (
-    <div className="w-full bg-red-500 text-white p-4">
-      Hello Tailwind
-      <Mask showModal={true} title={"測試標題"} onClose={() => setc(false)} onConfirm={handleSend}>
-        <>測試</>
-      </Mask>
-    </div>
+    <div
+      className="relative w-full h-screen bg-center bg-cover cursor-pointer bg-black"
+      // style={{ backgroundImage: `url(${ASSETS.BACKGROUND})` }}
+      // onClick={navigateToWorkspace}
+      role="button"
+      tabIndex={0}
+      // onKeyDown={(e) => {
+      //   if (e.key === "Enter" || e.key === " ") {
+      //     e.preventDefault();
+      //     navigateToWorkspace();
+      //   }
+      // }}
+      aria-label="點擊進入工作站"></div>
   );
 }
