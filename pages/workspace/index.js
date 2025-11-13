@@ -7,13 +7,25 @@ export default function WorkspaceIndex() {
     <>
       <div className="flex-1 flex justify-center items-center gap-50">
         <Link href="/inventory/fullCheck">
-          <CategoryBtn icon="icon-FullAreaInventoryCheck" text="全區盤點" variant="purple" />
+          <CategoryBtn
+            icon="icon-storageAdjust"
+            text="全區盤點"
+            variant="darkGreen"
+          />
         </Link>
         <Link href="/inventory/cycleCheck">
-          <CategoryBtn icon="icon-FluctuationInventoryCheck" text="波動盤點" variant="purple" />
+          <CategoryBtn
+            icon="icon-storageAdjust"
+            text="波動盤點"
+            variant="darkGreen"
+          />
         </Link>
         <Link href="/inventory/abnormalCheck">
-          <CategoryBtn icon="icon-InventoryDiscrepancyList" text="盤點異常清單" variant="purple" />
+          <CategoryBtn
+            icon="icon-storageAdjust"
+            text="盤點異常清單"
+            variant="darkGreen"
+          />
         </Link>
       </div>
     </>

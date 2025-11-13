@@ -34,7 +34,6 @@ const PAGE_TITLES = {
 };
 
 // 常數定義
-const COMPANY_NAME = "優好生活，呵護健康  Live better,stay healthy";
 const LOGO_PATH = "/common/YY-Logo.svg";
 
 export default function Layout({ children }) {
@@ -43,24 +42,24 @@ export default function Layout({ children }) {
 
   const path = router.pathname;
 
+  const mainClass =
+    path === "/" ? "flex-1" : "flex-1 flex flex-col gap-2 my-5 mx-4 relative";
+
   return (
     <div className="flex flex-col h-screen">
       {/* 頂部導航欄 */}
-      <header className="shrink-0 w-full h-30 max-w-full px-12 flex items-center justify-between nav">
+      <header className="shrink-0 h-19 w-full max-w-full px-4 bg-white flex items-center justify-between">
         {/* Logo */}
         <Link href="/">
           <img
             src={LOGO_PATH}
             alt="YOHO Logo"
-            className="h-16 w-auto object-contain"
+            className="h-12 w-auto object-contain"
           />
         </Link>
       </header>
       {/* 主內容區域 */}
-      <main
-        className={`flex-1 flex flex-col gap-2 mt-4 md:mt-6 xl:mt-8 mx-5 xl:mx-12 relative`}>
-        {children}
-      </main>
+      <main className={mainClass}>{children}</main>
     </div>
   );
 }

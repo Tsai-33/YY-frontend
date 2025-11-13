@@ -3,6 +3,7 @@ import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { store, persistor } from "../redux/store";
 import "@/styles/globals.css";
+import "@/public/icomoon/style.css";
 import { Roboto_Mono } from "next/font/google";
 import Head from "next/head";
 import SocketManager from "@/components/socketManager";
