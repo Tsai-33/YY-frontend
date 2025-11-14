@@ -8,10 +8,6 @@ export default function Home() {
   const navigateToWorkspace = () => {
     router.push("/workspace");
   };
-
-  const [c, setc] = useState(false);
-  const handleSend = () => {};
-
   return (
     <div
       className="relative w-full h-full bg-[url(/common/background-home.svg)] bg-center bg-cover bg-no-repeat cursor-pointer"

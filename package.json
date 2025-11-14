@@ -11,9 +11,11 @@
   "dependencies": {
     "@redux-devtools/extension": "^3.3.0",
     "@reduxjs/toolkit": "^2.9.0",
+    "@tailwindcss/postcss": "^4.1.17",
     "atob": "^2.1.2",
     "axios": "^1.11.0",
     "clsx": "^2.1.1",
+    "lucide-react": "^0.553.0",
     "next": "15.3.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

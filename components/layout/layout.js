@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
-import { resetUser } from "@/redux/reducer/reducerUser";
 import Link from "next/link";
 import ActionBtn from "../common/btns/actionBtn";
 
