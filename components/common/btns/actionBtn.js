@@ -22,7 +22,7 @@ export default function ActionBtn({
       bg-[var(--blue-dark)] 
       border border-[var(--blue)] 
       text-white 
-      hover:bg-[var(--blue-light)] 
+      hover:bg-[var(--blue-muted)] 
       hover:border-white 
       hover:text-black 
       focus:bg-[var(--gray)] 
@@ -30,107 +30,112 @@ export default function ActionBtn({
       focus:text-white 
       focus:hover:bg-[var(--gray)] 
       focus:hover:border-white 
-      focus:hover:text-white
-    disabled:opacity-50 
-    disabled:cursor-not-allowed 
-    disabled:pointer-events-none 
-    disabled:border-white 
-    disabled:text-black
+      focus:hover:text-white 
+      disabled:opacity-80 
+      disabled:cursor-not-allowed 
+      disabled:pointer-events-none 
+      disabled:border-white 
+      disabled:bg-[#4A9BC833]
+      disabled:text-[#7B7B7B]
       `,
-    skyBlue: `
-      bg-[var(--blue-sky)] 
-      border border-[var(--blue-bright)] 
+    yellow: `
+      bg-[var(--yellow-primary)] 
+      border border-[var(--white)] 
       text-white 
-      hover:bg-[var(--blue-sky-light)] 
+      hover:bg-[var(--yellow-accent)] 
       hover:border-white 
-      hover:text-black 
-      focus:bg-[var(--gray)] 
+      hover:text-white 
+      focus:bg-[var(--yellow-soft)] 
       focus:border-white 
-      focus:text-white 
-      focus:hover:bg-[var(--gray)] 
+      focus:text-[#B9B6AC] 
+      focus:hover:bg-[var(--yellow-soft)] 
       focus:hover:border-white 
-      focus:hover:text-white
-    disabled:opacity-50 
-    disabled:cursor-not-allowed 
-    disabled:pointer-events-none 
-    disabled:border-white 
-    disabled:text-black
+      focus:hover:text-[#B9B6AC]
+      disabled:bg-[var(--yellow-pale)]
+      disabled:cursor-not-allowed 
+      disabled:pointer-events-none 
+      disabled:border-white 
+      disabled:text-[#73737380]
       `,
     green: `
-      bg-[var(--aqua)] 
-      border border-[var(--aqua-light)] 
+      bg-[var(--primary-color)] 
+      border border-[var(--white)] 
       text-white 
-      hover:bg-[var(--aqua-light)] 
+      hover:bg-[var(--green-vivid)] 
       hover:border-white 
-      hover:text-black 
-      focus:bg-[var(--gray)] 
+      hover:text-[var(--white)]
+      focus:bg-[var(--green-pale)] 
       focus:border-white 
-      focus:text-white 
-      focus:hover:bg-[var(--gray)] 
+      focus:text-[var(--primary-color)] 
+      focus:hover:bg-[var(--green-pale)] 
       focus:hover:border-white 
-      focus:hover:text-white
-    disabled:opacity-50 
-    disabled:cursor-not-allowed 
-    disabled:pointer-events-none 
-    disabled:border-white 
-    disabled:text-black
+      focus:hover:text-[var(--primary-color)] 
+      disabled:opacity-80 
+      disabled:bg-[#008B4833] 
+      disabled:cursor-not-allowed 
+      disabled:pointer-events-none 
+      disabled:border-white 
+      disabled:text-[#83A79B]
       `,
     orange: `
-      bg-[var(--orange-soft)] 
-      border border-[var(--orange)] 
+      bg-[var(--orange-main)] 
+      border border-[var(--orange-vivid)] 
       text-white 
       hover:bg-[var(--orange-light)] 
-      hover:border-white 
-      hover:text-black 
-      focus:bg-[var(--gray)] 
-      focus:border-white 
-      focus:text-white 
-      focus:hover:bg-[var(--gray)] 
-      focus:hover:border-white 
-      focus:hover:text-white
-    disabled:opacity-50 
-    disabled:cursor-not-allowed 
-    disabled:pointer-events-none 
-    disabled:border-white 
-    disabled:text-black
+      hover:border-[var(--white)]
+      hover:text-[var(--white)]
+      focus:bg-[var(--orange-pale)] 
+      focus:border-[var(--white)] 
+      focus:text-[var(--orange-main)] 
+      focus:hover:bg-[var(--orange-pale)] 
+      focus:hover:border-[var(--white)] 
+      focus:hover:text-[var(--orange-main)]
+      disabled:opacity-80 
+      disabled:bg-[var(--orange-ivory)] 
+      disabled:cursor-not-allowed 
+      disabled:pointer-events-none 
+      disabled:border-white 
+      disabled:text-[var(--orange-muted)]
       `,
-    red: `
-      bg-[var(--red-80)] 
-      border border-[var(--red)] 
+    rose: `
+      bg-[var(--rose-primary)] 
+      border border-[var(--white)] 
       text-white 
-      hover:bg-[var(--red-transparent)] 
+      hover:bg-[var(--rose-accent)] 
       hover:border-white 
-      hover:text-black 
-      focus:bg-[var(--gray)] 
+      hover:text-white 
+      focus:bg-[var(--rose-soft)] 
       focus:border-white 
-      focus:text-white 
-      focus:hover:bg-[var(--gray)] 
+      focus:text-[var(--rose-primary)] 
+      focus:hover:bg-[var(--rose-soft)] 
       focus:hover:border-white 
-      focus:hover:text-white
-    disabled:opacity-50 
-    disabled:cursor-not-allowed 
-    disabled:pointer-events-none 
-    disabled:border-white 
-    disabled:text-black
+      focus:hover:text-[var(--rose-primary)]
+      disabled:opacity-80 
+      disabled:cursor-not-allowed 
+      disabled:pointer-events-none 
+      disabled:border-white 
+      disabled:text-[var(--rose-tint)]
+      disabled:bg-[var(--rose-muted)]
       `,
-    purple: `
-      bg-[var(--purple)] 
-      border border-[var(--purple-dark)] 
+    violet: `
+      bg-[var(--violet-primary)] 
+      border border-[var(--white)] 
       text-white 
-      hover:bg-[var(--purple-light)] 
+      hover:bg-[var(--violet-accent)] 
       hover:border-white 
-      hover:text-black 
-      focus:bg-[var(--gray)] 
+      hover:text-white 
+      focus:bg-[var(--violet-soft)] 
       focus:border-white 
-      focus:text-white 
-      focus:hover:bg-[var(--gray)] 
+      focus:text-[var(--violet-accent)]
+      focus:hover:bg-[var(--violet-soft)] 
       focus:hover:border-white 
-      focus:hover:text-white
-    disabled:opacity-50 
-    disabled:cursor-not-allowed 
-    disabled:pointer-events-none 
-    disabled:border-white 
-    disabled:text-black
+      focus:hover:text-[var(--violet-accent)]
+      disabled:opacity-80 
+      disabled:cursor-not-allowed 
+      disabled:pointer-events-none 
+      disabled:border-white 
+      disabled:text-white
+      disabled:bg-[var(--violet-light)] 
       `,
 
     white: `
@@ -147,7 +152,7 @@ export default function ActionBtn({
     disabled:cursor-not-allowed 
     disabled:pointer-events-none 
     disabled:border-white 
-    disabled:text-black
+    disabled:text-[#73737380]
       `,
   };
   return (
@@ -157,7 +162,7 @@ export default function ActionBtn({
         onClick={onClick}
         disabled={disabled}>
         {icon && <span className={`${icon} text-[60px]`}></span>}
-        <div className="md:text-[length:var(--middle-fontSize)] lg:text-[length:var(--large-fontSize)]">
+        <div className="md:text-[length:var(--middle-fontSize)] lg:text-[length:var(--font-size-4xl)]">
           {text}
         </div>
       </button>

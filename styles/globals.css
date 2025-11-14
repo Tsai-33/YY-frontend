@@ -24,13 +24,38 @@
   --green-teal: #288c71;
   /* 藍綠色 */
 
+  --blue: #4A9BC8;
   --blue-dark: #2d5780;
+  --blue-muted: #9FB6CF;
   --blue-vivid: #007bff;
   --blue-fresh: #459fff;
   --blue-pale: #68a6ea;
 
+  --yellow-primary: #FFCD42;
+  --yellow-accent: #FFDF86;
+  --yellow-soft: #FFF0C5;
+  --yellow-pale: #FFF8E5;
+
+  --orange-main: #FA8350;
+  --orange-vivid: #FF9800;
+  --orange-light: #FFA67F;
+  --orange-pale: #FFE2D5;
+  --orange-ivory: #FAEBE5;
+  --orange-muted: #BF9E90;
+
   --red: #b32627;
   --red-vivid: #e15360;
+  --rose-primary: #E86B7D;
+  --rose-accent: #FF7C90;
+  --rose-soft: #FFF1FA;
+  --rose-light: #FFE8EB;
+  --rose-muted: #FAEFF0;
+  --rose-tint: #FAB9C3;
+
+  --violet-primary: #7E7ACE;
+  --violet-accent: #7771DB;
+  --violet-soft: #E9E8FC;
+  --violet-light: #E1DFF4;
 
   /* 字重 */
   --fontWeight-regular: 400;
