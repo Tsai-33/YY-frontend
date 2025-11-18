@@ -24,7 +24,7 @@ export default function WorkspaceIndex() {
             <Link href="/outbound">
               <CategoryBtn icon="icon-" text="出庫" variant="darkGreen" />
             </Link>
-            <Link href="/">
+            <Link href="/shelfTransfer">
               <CategoryBtn icon="icon-" text="理貨" variant="darkGreen" />
             </Link>
           </>
