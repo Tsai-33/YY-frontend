@@ -1,5 +1,5 @@
-import Mask from "@/components/modal/modal";
-import InputFrame from "../common/input/inputFrame";
+import Mask from "@/components/common/modal/modal";
+import InputFrame from "../input/inputFrame";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
