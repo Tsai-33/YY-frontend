@@ -12,15 +12,28 @@ import {
 } from "redux-persist";
 
 import pageReducer from "./reducer/reducerPage";
+import userReducer from "./reducer/reducerUser";
+import workStationsReducer from "@/redux/reducer/reducerWorkStations";
 
 const pagePersistConfig = {
   key: "page",
   storage,
 };
 
+const userPersistConfig = {
+  key: "user",
+  storage,
+};
+
+const workStationsPersistConfig = {
+  key: "workstation",
+  storage,
+};
 
 const rootReducer = combineReducers({
-  page: persistReducer(pagePersistConfig, pageReducer)
+  page: persistReducer(pagePersistConfig, pageReducer),
+  user: persistReducer(userPersistConfig, userReducer),
+  workstation: persistReducer(workStationsPersistConfig, workStationsReducer),
 });
 
 export const store = configureStore({
