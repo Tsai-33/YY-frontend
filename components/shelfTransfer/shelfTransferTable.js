@@ -2,8 +2,9 @@ import Table from "@/components/common/table/table";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import InputFrame from "@/components/common/input/inputFrame";
 import PageTitle from "@/components/common/pageTitle";
-import { testTable } from "./testData";
+import { testTable, testShelve } from "./testData";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function ShelfTransferTable() {
 
@@ -12,6 +13,15 @@ export default function ShelfTransferTable() {
         { label: "配置貨架數量", key: "deploy", width: "40%" },
         { label: "箱數", key: "box", width: "10%" },
     ];
+
+    // =====過濾Table選中的資料=====
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const selectedShelveData = selectedOrder
+        ? testShelve.filter(item => item.orderNumber === selectedOrder.orderNumber)
+        : [];
+    const handleRowClick = (row) => {
+        setSelectedOrder(row);
+    }
     
     return (
         <>
@@ -37,43 +47,73 @@ export default function ShelfTransferTable() {
                             needInput={true}
                             idKey="orderNumber"
                             height="70vh"
+                            checked={selectedOrder}
+                            onChange={handleRowClick}
                         />
                     </div>
                     {/* 右邊畫面 */}
                     <div className="w-1/2 flex flex-col h-[70vh]">
-                        {/* <div className="flex flex-row justify-between">
-                            <div className="mb-6">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <label className="text-lg font-medium whitespace-nowrap">
-                                        訂單單號：
-                                    </label>
-                                    <InputFrame 
-                                        type="text"
-                                        name="orderNo"
-                                        className="w-[400px]"
-                                    />
+                        <div className="bg-gray-50 rounded-lg p-6 flex flex-col h-full">
+                            {selectedOrder && selectedShelveData.length > 0 ? (
+                                <>
+                                    <div className="flex-1 overflow-auto space-y-4 mb-6">
+                                        {selectedShelveData.map((shelve, index) => (
+                                            <div key={index} className="bg-[#DCB692] rounded-lg p-6 shadow-md">
+                                                {/* 貨架、庫別 */}
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <div className="text-2xl font-bold">
+                                                        貨架編號：{shelve.shelve_Id}
+                                                    </div>
+                                                    <div className="text-2xl font-bold">
+                                                        入庫庫別：{shelve.stock}
+                                                    </div>
+                                                </div>
+                                                {/* 產品品號、棧板規格 */}
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <div className="text-2xl font-bold">
+                                                        產品品號：{shelve.material}
+                                                    </div>
+                                                    <div className="text-2xl font-bold">
+                                                        棧板規格：{shelve.stock_class}
+                                                    </div>
+                                                </div>
+                                                {/* 品名、配置貨架數 */}
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <div className="text-2xl font-bold">
+                                                        品名：{shelve.materialSpec}
+                                                    </div>
+                                                    {/* <div className="text-lg font-bold text-red-600">
+                                                        配置貨架數：{1}
+                                                    </div> */}
+                                                </div>
+                                                {/* 箱數、包數、進度 */}
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <div className="flex justify-between items-center mb-4">
+                                                        <div className="text-2xl font-bold mr-12">
+                                                            箱數：{shelve.box}
+                                                        </div>
+                                                        <div className="text-2xl font-bold">
+                                                            包數：{shelve.bag}包
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-2xl font-bold">
+                                                        {index + 1}/{selectedShelveData.length}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex-1 flex items-center justify-center text-gray-400 text-2xl">
+                                    請選擇左側訂單查看詳細資訊
                                 </div>
-                            </div>
-                            <div className="mb-6">
-                                <div className="flex items-center gap-3">
-                                    <label className="text-lg font-medium whitespace-nowrap">
-                                        外箱條碼：
-                                    </label>
-                                    <InputFrame 
-                                        type="text"
-                                        name="boxNo"
-                                        className="w-[400px]"
-                                    />
-                                </div>
-                            </div>
-                        </div> */}
-                        <div className=" bg-gray-200 rounded p-6 flex flex-col h-[70vh]">
+                            )}
                             {/* 確定按鈕 */}
                             <div className="mt-auto flex items-center justify-center">
                                 <ActionBtn icon="icon-check" text="確定" variant="orange" disabled="true"/>
                             </div>
                         </div>
-                        
                     </div>
                 </div>
                 {/* 站點 */}
