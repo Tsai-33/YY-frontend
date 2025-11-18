@@ -4,8 +4,16 @@ import React from "react";
 export default function Test() {
   return (
     <>
-      <div>
-        <ActionBtn variant="violet" text="測試" disabled={false} />
+      {/* 站點切換按鈕 */}
+      <div className="w-full flex justify-between">
+        {stations.map((station) => (
+          <ActionBtn
+            text={station}
+            variant="green"
+            disabled={currentStation === station ? true : false}
+            onClick={() => handleSwitchStation(station)}
+          />
+        ))}
       </div>
     </>
   );
