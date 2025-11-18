@@ -6,7 +6,7 @@ export default function Modal({ showModal, title, onClose, children, onConfirm, 
   const containerWidth = width || "32vw";
 
   return (
-    <div className={`fixed inset-0 z-20 flex items-center justify-center transition-opacity duration-500 ${showModal ? "opacity-100 visible" : "opacity-0 invisible"} bg-[#C3DDD680]`}>
+    <div className={`fixed inset-0 z-25 flex items-center justify-center transition-opacity duration-500 ${showModal ? "opacity-100 visible" : "opacity-0 invisible"} bg-[#C3DDD680]`}>
       <div className={`rounded-[50px] bg-white border border-5 border-[var(--green-vivid)] overflow-hidden`} style={{ width: containerWidth, height: containerHeight }}>
         <div className="w-full h-full p-6 shadow-md flex flex-col justify-between items-center gap-8">
           {/* topzone */}

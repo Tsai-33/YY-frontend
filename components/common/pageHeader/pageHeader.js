@@ -12,7 +12,7 @@ export default function PageHeader({ title, backTo = "/" }) {
     <div className="relative w-full flex items-center justify-between ps-4">
       {/* 左邊 */}
       <div className="text-[length:var(--font-size-6xl)] font-bold text-[var(--green-deep)]">
-        {`${currentJob}${currentStation}`}
+        {`${currentJob}${currentStation || ""}`}
       </div>
 
       {/* 中間 */}
