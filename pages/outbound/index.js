@@ -10,7 +10,7 @@ export default function Outbound() {
   return (
     <>
       <div className="flex justify-between">
-        <h1 className="sm:text-[length:var(--font-size-6xl)] px-12">入庫</h1>
+        <h1 className="sm:text-[length:var(--font-size-6xl)] px-12">出庫</h1>
         {currentStep === 1 && <PageTitle title={`請點擊清單內工單單號或訂單單號、掃描工單或訂單條碼、外箱條碼`} />}
         {currentStep === 2 && <PageTitle title={`檢視完入庫資訊確認沒問題，請點擊確定按鈕`} />}
         {currentStep === 3 && <PageTitle title={`貨架到站點，請掃外箱條碼或點擊介面清單方框確定已將產品放上貨架`} />}
