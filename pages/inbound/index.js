@@ -1,13 +1,21 @@
 import React, { useState } from "react";
-
-import PageTitle from "@/components/common/pageHeader/pageTitle";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
 import ActionBtn from "@/components/common/btns/actionBtn";
-import Table from "@/components/common/table/table";
+import PageHeader from "@/components/common/pageHeader/pageHeader";
 import NoCheckBoxTable from "@/components/common/table/noCheckBoxTable";
+import Table from "@/components/common/table/table";
+import InputFrame from "@/components/common/input/inputFrame";
 
 export default function Inbound() {
+  const dispatch = useDispatch();
+  const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStep = useSelector((state) => state.page.currentStep);
+
+  const handleSwitchStation = (station) => {
+    dispatch(setCurrentStation(station));
+  };
+
   const [tableData, setTableData] = useState([]);
   // ===== radio table =====
   const tableHeader = [
@@ -44,51 +52,68 @@ export default function Inbound() {
 
   // ===== 假資料 =====
   const data = [
-    { checkbox: false, orderId: "M510-1351050505", inDate: "20251017", boxCount: "5" },
-    { checkbox: false, orderId: "M510-1351050501", inDate: "20251017", boxCount: "5" },
-    { checkbox: false, orderId: "M510-1351050503", inDate: "20251017", boxCount: "5" },
-    { checkbox: false, orderId: "M510-1351050506", inDate: "20251017", boxCount: "5" },
-    { checkbox: false, orderId: "M510-1351050508", inDate: "20251017", boxCount: "5" },
-    { checkbox: false, orderId: "M510-1351050510", inDate: "20251017", boxCount: "5" },
-    { checkbox: false, orderId: "M510-1351050510", inDate: "20251017", boxCount: "5" },
-    { checkbox: false, orderId: "M510-1351050510", inDate: "20251017", boxCount: "5" },
-    { checkbox: false, orderId: "M510-1351050510", inDate: "20251017", boxCount: "5" },
-    { checkbox: false, orderId: "M510-1351050510", inDate: "20251017", boxCount: "5" },
-    { checkbox: false, orderId: "M510-1351050510", inDate: "20251017", boxCount: "5" },
-    { checkbox: false, orderId: "M510-1351050510", inDate: "20251017", boxCount: "5" },
-    { checkbox: false, orderId: "M510-1351050510", inDate: "20251017", boxCount: "5" },
+    { checkbox: false, orderId: "M510-1351050505", inDate: "20251017", boxCount: "5", shelf: "R0001", product: "Y01TSK025100YB", productName: "黑色束帶100條/包,250包", area: "D01", count: 5, box: 9, rule: "美規1/1" },
+    { checkbox: false, orderId: "M510-1351050501", inDate: "20251017", boxCount: "5", shelf: "R0001", product: "Y01TSK025100YB", productName: "黑色束帶100條/包,250包", area: "D01", count: 5, box: 9, rule: "美規1/1" },
+    { checkbox: false, orderId: "M510-1351050503", inDate: "20251017", boxCount: "5", shelf: "R0001", product: "Y01TSK025100YB", productName: "黑色束帶100條/包,250包", area: "D01", count: 5, box: 9, rule: "美規1/1" },
+    { checkbox: false, orderId: "M510-1351050506", inDate: "20251017", boxCount: "5", shelf: "R0001", product: "Y01TSK025100YB", productName: "黑色束帶100條/包,250包", area: "D01", count: 5, box: 9, rule: "美規1/1" },
+    { checkbox: false, orderId: "M510-1351050508", inDate: "20251017", boxCount: "5", shelf: "R0001", product: "Y01TSK025100YB", productName: "黑色束帶100條/包,250包", area: "D01", count: 5, box: 9, rule: "美規1/1" },
+    { checkbox: false, orderId: "M510-1351050510", inDate: "20251017", boxCount: "5", shelf: "R0001", product: "Y01TSK025100YB", productName: "黑色束帶100條/包,250包", area: "D01", count: 5, box: 9, rule: "美規1/1" },
+    { checkbox: false, orderId: "M510-1351050511", inDate: "20251017", boxCount: "5", shelf: "R0001", product: "Y01TSK025100YB", productName: "黑色束帶100條/包,250包", area: "D01", count: 5, box: 9, rule: "美規1/1" },
+    { checkbox: false, orderId: "M510-1351050512", inDate: "20251017", boxCount: "5", shelf: "R0001", product: "Y01TSK025100YB", productName: "黑色束帶100條/包,250包", area: "D01", count: 5, box: 9, rule: "美規1/1" },
+    { checkbox: false, orderId: "M510-1351050513", inDate: "20251017", boxCount: "5", shelf: "R0001", product: "Y01TSK025100YB", productName: "黑色束帶100條/包,250包", area: "D01", count: 5, box: 9, rule: "美規1/1" },
+    { checkbox: false, orderId: "M510-1351050514", inDate: "20251017", boxCount: "5", shelf: "R0001", product: "Y01TSK025100YB", productName: "黑色束帶100條/包,250包", area: "D01", count: 5, box: 9, rule: "美規1/1" },
+    { checkbox: false, orderId: "M510-1351050515", inDate: "20251017", boxCount: "5", shelf: "R0001", product: "Y01TSK025100YB", productName: "黑色束帶100條/包,250包", area: "D01", count: 5, box: 9, rule: "美規1/1" },
+    { checkbox: false, orderId: "M510-1351050516", inDate: "20251017", boxCount: "5", shelf: "R0001", product: "Y01TSK025100YB", productName: "黑色束帶100條/包,250包", area: "D01", count: 5, box: 9, rule: "美規1/1" },
+    { checkbox: false, orderId: "M510-1351050517", inDate: "20251017", boxCount: "5", shelf: "R0001", product: "Y01TSK025100YB", productName: "黑色束帶100條/包,250包", area: "D01", count: 5, box: 9, rule: "美規1/1" },
   ];
+  // ===== 行為 =====
+  const handleOrderConfrim = ()=>{
+    console.log(selected,'選擇的訂單')
+  }
   return (
     <>
-      <div className="absolute w-full flex justify-between">
-        <h1 className="sm:text-[length:var(--font-size-6xl)] px-12">入庫 {"A01"}</h1>
-        <ActionBtn text="返回" icon="icon-goback" variant="darkBlue" />
-      </div>
-      {currentStep === 1 && <PageTitle title={`請點擊清單內工單單號或訂單單號、掃描工單或訂單條碼、外箱條碼`} />}
-      {currentStep === 2 && <PageTitle title={`檢視完入庫資訊確認沒問題，請點擊確定按鈕`} />}
-      {currentStep === 3 && <PageTitle title={`貨架到站點，請掃外箱條碼或點擊介面清單方框確定已將產品放上貨架`} />}
-      {currentStep === 4 && <PageTitle title={`上架完請點擊退回貨架按鈕`} />}
-      {currentStep === 5 && <PageTitle title={`等待無人車將貨架搬回庫區`} />}
-      <div className="flex flex-1 gap-12">
+      {/* 頂部區域 */}
+      {currentStep === 1 && <PageHeader title={`請點擊清單內工單單號或訂單單號、掃描工單或訂單條碼、外箱條碼`} backTo="/workspace" />}
+      {currentStep === 2 && <PageHeader title={`檢視完入庫資訊確認沒問題，請點擊確定按鈕`} />}
+      {currentStep === 3 && <PageHeader title={`貨架到站點，請掃外箱條碼或點擊介面清單方框確定已將產品放上貨架`} />}
+      {currentStep === 4 && <PageHeader title={`上架完請點擊退回貨架按鈕`} />}
+      {currentStep === 5 && <PageHeader title={`等待無人車將貨架搬回庫區`} />}
+      {/* 主要內容區域 */}
+      <div className="flex flex-1 gap-4 px-2 py-8 items-stretch">
+        {/* 左側 */}
         <div className="w-3/7">
           <NoCheckBoxTable headers={tableHeader} data={data} type="radio" name="inbound" variants="green" idKey="orderId" checked={selected} onChange={handleSelectedOption} />
+          {/* <Table headers={tableHeader2} data={data} type="checkbox" name="inbound2" variants="green" idKey="orderId" checked={selectedArray} onChange={handleSelectedOption} /> */}
         </div>
-
-        <div className="w-4/7">
-          <Table headers={tableHeader2} data={data} type="checkbox" name="inbound2" variants="green" idKey="orderId" checked={selectedArray} onChange={handleSelectedOption} />
+        {/* 右側 */}
+        <div className="w-4/7 font-bold text-black p-4 flex flex-col">
+          {/* 條碼 */}
+          <div className="flex space-x-4 pb-4">
+            <div className="flex flex-1 items-center">
+              <label htmlFor="order" className="font-bold text-black">
+                訂單/工單條碼:
+              </label>
+              <InputFrame type="text" name="orderCode" id="order" value="" onChange="" />
+            </div>
+            <div className="flex flex-1 items-center">
+              <label htmlFor="box">外箱條碼:</label>
+              <InputFrame type="text" name="boxCode" id="box" value="" onChange="" />
+            </div>
+          </div>
+          {/* 資料 */}
+          <div className="flex flex-col flex-1 bg-white p-8 pb-4">
+            <div></div>
+            <div className="flex flex-1 flex-col justify-end items-center">
+              <ActionBtn text="確定" variant="orange" onClick={handleOrderConfrim} />
+            </div>
+          </div>
         </div>
       </div>
-      <div className="flex justify-between gap-2">
-        <ActionBtn text="站點1" variant="green" onClick={() => onClick(station)} />
-        <ActionBtn text="站點2" variant="green" onClick={() => onClick(station)} />
-        <ActionBtn text="站點3" variant="green" onClick={() => onClick(station)} />
-        <ActionBtn text="站點4" variant="green" onClick={() => onClick(station)} />
-        <ActionBtn text="站點5" variant="green" onClick={() => onClick(station)} />
-        <ActionBtn text="站點6" variant="green" onClick={() => onClick(station)} />
-        <ActionBtn text="站點7" variant="green" onClick={() => onClick(station)} />
-        <ActionBtn text="站點8" variant="green" onClick={() => onClick(station)} />
-        <ActionBtn text="站點9" variant="green" onClick={() => onClick(station)} />
-        <ActionBtn text="站點10" variant="green" onClick={() => onClick(station)} />
+      {/* 底部按鈕區域 */}
+      <div className="w-full flex justify-between">
+        {stations.map((station) => (
+          <ActionBtn text={station} variant="green" disabled={currentStation === station ? true : false} onClick={() => handleSwitchStation(station)} />
+        ))}
       </div>
     </>
   );

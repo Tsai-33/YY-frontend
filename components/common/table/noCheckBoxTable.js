@@ -1,8 +1,8 @@
 import React from "react";
 
 export default function NoCheckBoxTable({ headers = [], data = [], type, name, onChange, checked, idKey, height }) {
-  const containerHeight = height || "50vh";
-  const innerHeight = height ? `calc(${height} - 1vh)` : "49vh"; // 沒傳就用原本的
+  const containerHeight = height || "65vh";
+  const innerHeight = height ? `calc(${height} - 1vh)` : "65vh"; // 沒傳就用原本的
 
   return (
     <div className="w-full bg-[var(--white)] border border-white rounded-md text-center overflow-x-auto" style={{ height: containerHeight }}>
@@ -45,7 +45,7 @@ export default function NoCheckBoxTable({ headers = [], data = [], type, name, o
                   <input type="radio" checked={checked === row[idKey]} readOnly className="absolute hidden opacity-0 w-0 h-0 pointer-events-none" />
                   {headers.map((header, i) => (
                     <td key={i} style={{ width: header.width }} className="border-[var(--green-vivid)] px-4 py-2 text-center border-b truncate">
-                      {header.render ? header.render(row) : row[header.key]}123
+                      {header.render ? header.render(row) : row[header.key]}
                     </td>
                   ))}
                 </tr>

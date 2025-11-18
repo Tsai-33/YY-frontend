@@ -5,12 +5,9 @@ export default function InputFrame({ type, name, id, value, onChange, onBlur, on
   return (
     <input
       className={`
-      flex-1 w-full pl-6 pr-2 py-0.75 bg-white 
-      border-[3px] rounded-md outline-none 
+      flex-1 w-full pl-3 pr-2 py-0.75 bg-[var(--gray-deep)]
       focus:bg-[#d9d9d9] ${value !== "" ? "bg-[#d9d9d9]" : ""} 
-      text-[length:var(--middle-fontSize)] font-normal leading-[var(--xlarge-lineHeight)] ${
-        className || ""
-      }`}
+      text-[length:var(--middle-fontSize)] font-normal  ${className || ""}`}
       type={type}
       name={name}
       id={id}
