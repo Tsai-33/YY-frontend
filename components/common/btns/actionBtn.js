@@ -58,18 +58,18 @@ export default function ActionBtn({
       disabled:text-[#73737380]
       `,
     green: `
-      bg-[var(--primary-color)] 
+      bg-[var(--green-vivid)] 
       border border-[var(--white)] 
       text-white 
-      hover:bg-[var(--green-vivid)] 
+      hover:bg-[var(--green-vivid-30)] 
       hover:border-white 
       hover:text-[var(--white)]
-      focus:bg-[var(--green-pale)] 
+      focus:bg-[var(--green-vivid-30)] 
       focus:border-white 
       focus:text-[var(--primary-color)] 
-      focus:hover:bg-[var(--green-pale)] 
+      focus:hover:bg-[var(--green-vivid-30)] 
       focus:hover:border-white 
-      focus:hover:text-[var(--primary-color)] 
+      focus:hover:text-[var(--green-vivid)] 
       disabled:opacity-80 
       disabled:bg-[#008B4833] 
       disabled:cursor-not-allowed 
