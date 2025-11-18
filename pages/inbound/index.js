@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 
-import PageTitle from "@/components/common/pageTitle";
+import PageTitle from "@/components/common/pageHeader/pageTitle";
 import { useSelector } from "react-redux";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import Table from "@/components/common/table/table";
-import NoCheckBoxTable from "@/components/common/table/noCheckboxTable";
+import NoCheckBoxTable from "@/components/common/table/noCheckBoxTable";
 
 export default function Inbound() {
   const currentStep = useSelector((state) => state.page.currentStep);
