@@ -161,7 +161,9 @@ export default function ActionBtn({
         className={` ${clsx(base, variants[variant])} ${className}`}
         onClick={onClick}
         disabled={disabled}>
-        {icon && <span className={`${icon} text-[60px]`}></span>}
+        {icon && (
+          <span className={`${icon} text-[length:var(--font-size-6xl)]`}></span>
+        )}
         <div className="md:text-[length:var(--middle-fontSize)] lg:text-[length:var(--font-size-4xl)]">
           {text}
         </div>

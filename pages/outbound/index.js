@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import OutboundTable from "@/components/outbound/outboundTable";
 import { CountAbnormalModal } from "@/components/common/modal/modal-list";
 import Alert from "@/components/common/alert/alert";
-import PageTitle from "@/components/common/pageTitle";
+import PageTitle from "@/components/common/pageHeader/pageTitle";
 import { useSelector } from "react-redux";
 import ActionBtn from "@/components/common/btns/actionBtn";
 
