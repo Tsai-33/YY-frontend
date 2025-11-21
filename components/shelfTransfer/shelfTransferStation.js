@@ -79,74 +79,76 @@ export default function ShelfTransferStation() {
                     </div>
                 </div>
                 {/* 貨架Table(固定五個) */}
-                <div className="flex gap-4 mb-4">
-                    {shelvePositions.map((shelveId, index) => {
-                        {/* 取貨架資料 */}
-                        const data = shelveData[shelveId] || [];
-                        const hasData = data.length > 0;
-                        const isLastOne = shelveId === "貨架代號";
+                <div className="flex-1 flex flex-col">
+                    <div className="flex gap-4 mb-4 flex-1">
+                        {shelvePositions.map((shelveId, index) => {
+                            {/* 取貨架資料 */}
+                            const data = shelveData[shelveId] || [];
+                            const hasData = data.length > 0;
+                            const isLastOne = shelveId === "貨架代號";
 
-                        return (
-                            <div
-                                key={index}
-                                className="flex-1 bg-white rounded-lg shadow-md p-4 flex flex-col"
-                            >
-                                {/* 貨架編號 */}
-                                <div className={`text-2xl font-bold text-center mb-3 pb-3 border-b-2 border-gray-300 ${
-                                    isLastOne ? 'text-gray-400' : ''
-                                }`}>
-                                    {shelveId}
-                                </div>
-                                {hasData ? (
-                                    <>
-                                        <div className="flex-1 overflow-hidden mb-4">
-                                            <Table 
-                                                variant="green"
-                                                type="checkbox"
-                                                name={`shelve-${shelveId}`}
-                                                data={data}
-                                                needInput={true}
-                                                idKey="id"
-                                                height="50vh"
-                                                checked={selectedItems}
-                                                // onChange={(item) => handleItemChange(shelveId, item)}
-                                            />
-                                        </div>
-                                        {/* 退回貨架 */}
-                                        <ActionBtn 
-                                            icon="icon-returnShelf"
-                                            text={"退回貨架"}
-                                            variant={"orange"}
-                                            disabled={false}
-                                        />
-                                    </>
-                                ) : (
-                                    // {/* 沒有資料時 */}
-                                    <div className="flex-1 flex items-center justify-center text-gray-300">
-                                        {isLastOne ? "" : "無資料"}
+                            return (
+                                <div
+                                    key={index}
+                                    className="flex-1 bg-white rounded-lg shadow-md p-4 flex flex-col"
+                                >
+                                    {/* 貨架編號 */}
+                                    <div className={`text-2xl font-bold text-center mb-3 pb-3 border-b-2 border-gray-300 ${
+                                        isLastOne ? 'text-gray-400' : ''
+                                    }`}>
+                                        {shelveId}
                                     </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-                {/* 站點 */}                                                                                        
-                <div className="flex gap-2">
-                    <button className="flex-1 bg-blue-400 text-white py-4 rounded-lg text-xl font-bold hover:bg-blue-500 transition-colors">
-                        站點 1
-                    </button>
-                    <button className="flex-1 bg-blue-400 text-white py-4 rounded-lg text-xl font-bold hover:bg-blue-500 transition-colors">
-                        站點 2
-                    </button>
-                    <button className="flex-1 bg-blue-400 text-white py-4 rounded-lg text-xl font-bold hover:bg-blue-500 transition-colors">
-                        站點 3
-                    </button>
-                    <button className="flex-1 bg-blue-400 text-white py-4 rounded-lg text-xl font-bold hover:bg-blue-500 transition-colors">
-                        站點 4
-                    </button>
-                    <button className="flex-1 bg-green-600 text-white py-4 rounded-lg text-xl font-bold hover:bg-green-700 transition-colors">
-                        站點 5
-                    </button>
+                                    {hasData ? (
+                                        <>
+                                            <div className="flex-1 overflow-hidden mb-4">
+                                                <Table 
+                                                    variant="green"
+                                                    type="checkbox"
+                                                    name={`shelve-${shelveId}`}
+                                                    data={data}
+                                                    needInput={true}
+                                                    idKey="id"
+                                                    height="100%"
+                                                    checked={selectedItems}
+                                                    // onChange={(item) => handleItemChange(shelveId, item)}
+                                                />
+                                            </div>
+                                            {/* 退回貨架 */}
+                                            <ActionBtn 
+                                                icon="icon-returnShelf"
+                                                text={"退回貨架"}
+                                                variant={"orange"}
+                                                disabled={false}
+                                            />
+                                        </>
+                                    ) : (
+                                        // {/* 沒有資料時 */}
+                                        <div className="flex-1 flex items-center justify-center text-gray-300">
+                                            {isLastOne ? "" : "無資料"}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    {/* 站點 */}                                                                                        
+                    <div className="flex gap-2">
+                        <button className="flex-1 bg-blue-400 text-white py-4 rounded-lg text-xl font-bold hover:bg-blue-500 transition-colors">
+                            站點 1
+                        </button>
+                        <button className="flex-1 bg-blue-400 text-white py-4 rounded-lg text-xl font-bold hover:bg-blue-500 transition-colors">
+                            站點 2
+                        </button>
+                        <button className="flex-1 bg-blue-400 text-white py-4 rounded-lg text-xl font-bold hover:bg-blue-500 transition-colors">
+                            站點 3
+                        </button>
+                        <button className="flex-1 bg-blue-400 text-white py-4 rounded-lg text-xl font-bold hover:bg-blue-500 transition-colors">
+                            站點 4
+                        </button>
+                        <button className="flex-1 bg-green-600 text-white py-4 rounded-lg text-xl font-bold hover:bg-green-700 transition-colors">
+                            站點 5
+                        </button>
+                    </div>
                 </div>
             </div>
         </>
