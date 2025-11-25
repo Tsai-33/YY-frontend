@@ -1,7 +1,7 @@
 import Table from "@/components/common/table/table";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import InputFrame from "@/components/common/input/inputFrame";
-import PageTitle from "@/components/common/pageTitle";
+import PageTitle from "@/components/common/pageHeader/pageTitle";
 import Loading from "../common/loading/loading";
 import { testTable, testShelve } from "./testData";
 import Link from "next/link";
@@ -10,9 +10,16 @@ import { useState, useMemo } from "react";
 export default function OutboundExternalTable() {
     const [isLoading, setIsLoading] = useState(false);
     const headers = [
-        { label: "銷貨單號", key: "orderNumber", width: "70%" },
+        { label: "", key: "checkbox", width: "10%" },
+        { label: "銷貨單號", key: "orderNumber", width: "60%" },
         { label: "出庫日期", key: "outbound_date", width: "30%" },
     ];
+
+    const detailHeaders = [
+        { label: "", key: "checkbox", width: "10%" },
+        { label: "產品品號", key: "material", width: "60%" },
+        { label: "總包數", key: "bag", width: "30%" },
+    ]
 
     // =====過濾Table選中的資料=====
     const [selectedOrder, setSelectedOrder] = useState(null);
@@ -43,6 +50,7 @@ export default function OutboundExternalTable() {
 
     // 試著用useMemo排序資料
     const sortedData = useMemo(() => {
+        console.log('testTable: ', testTable)
         return [...testTable].sort((a, b) => {
             // 降序
             return a.outbound_date - b.outbound_date;
@@ -50,8 +58,10 @@ export default function OutboundExternalTable() {
     }, []);
 
     // 確定按鈕
+    const [test, setTest] = useState(1);
     const handleConfirm = () => {
         setIsLoading(true);
+        setTest(2);
         setTimeout(() => {
             setIsLoading(false);
         }, 2000)
@@ -70,7 +80,7 @@ export default function OutboundExternalTable() {
                     </Link>
                 </div>
                 {/* input */}
-                <div className="flex gap-2 flex-1 mb-1">
+                <div className="flex gap-2 flex-1">
                     {/* Table */}
                     <div className="w-1/2">
                         <Table 
@@ -79,7 +89,6 @@ export default function OutboundExternalTable() {
                             name="shelfTransferList"
                             headers={headers}
                             data={sortedData}
-                            needInput={false}
                             idKey="orderNumber"
                             height="70vh"
                             checked={selectedOrder}
@@ -168,13 +177,23 @@ export default function OutboundExternalTable() {
                             )}
                             {/* 確定按鈕 */}
                             <div className="mt-auto flex items-center justify-center">
-                                <ActionBtn 
-                                    icon="icon-check" 
-                                    text="確定" 
-                                    variant="orange" 
-                                    disabled={!selectedOrder}
-                                    onClick={handleConfirm}
-                                />
+                                {
+                                    test === 1 ?
+                                    <ActionBtn 
+                                        icon="icon-check" 
+                                        text="確定" 
+                                        variant="orange" 
+                                        disabled={!selectedOrder}
+                                        onClick={handleConfirm}
+                                    /> : 
+                                    <ActionBtn 
+                                        icon="icon-return" 
+                                        text="退回貨架" 
+                                        variant="orange" 
+                                        disabled={!selectedOrder}
+                                        onClick={handleConfirm}
+                                    />
+                                }
                             </div>
                         </div>
                     </div>
