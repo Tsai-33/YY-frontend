@@ -84,11 +84,11 @@ export default function Inbound() {
   return (
     <>
       {/* 頂部區域 */}
-      {step === 1 && <PageHeader title={`請點擊清單內入倉單號、掃描入倉單條碼`} backTo="/workspace" />}
-      {orderCode && step === 2 && <PageHeader title={`檢視完入庫資訊確認沒問題，請點擊確定按鈕`} />}
-      {step === 3 && <PageHeader title={`貨架到站點，請掃外箱條碼或點擊介面清單方框確定已將產品放上貨架`} />}
-      {step === 4 && <PageHeader title={`上架完請點擊退回貨架按鈕`} />}
-      {step === 5 && <PageHeader title={`等待無人車將貨架搬回庫區`} />}
+      {step === 1 && <PageHeader title={`請點擊清單內入倉單號、掃描入倉單條碼`} close={true} backTo="/workspace" />}
+      {orderCode && step === 2 && <PageHeader title={`檢視完入庫資訊確認沒問題，請點擊確定按鈕`} close={true}  />}
+      {step === 3 && <PageHeader title={`貨架到站點，請掃外箱條碼或點擊介面清單方框確定已將產品放上貨架`} close={false} />}
+      {step === 4 && <PageHeader title={`上架完請點擊退回貨架按鈕`} close={false} />}
+      {step === 5 && <PageHeader title={`等待無人車將貨架搬回庫區`} close={false} />}
       {/* 主要內容區域 */}
       <div className="flex flex-1 gap-4 px-2 py-8 items-stretch">
         {/* 左側 */}
@@ -118,51 +118,50 @@ export default function Inbound() {
             <div className="flex flex-col gap-8 h-100 overflow-y-auto">
               {step <= 2 ? (
                 orderCode &&
-                tableData.map((v, i) => (
-                  <SchematicDiagramList key={i}>
-                    <div className="flex flex-col">
-                      <div className="flex justify-between">
-                        <div>貨架編號:{v?.car}</div>
-                        <div>出庫庫別:{v?.area}</div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div>產品品號:{v?.product}</div>
-                        <div>棧板規格:{v?.rule}</div>
-                      </div>
-                      {v?.products?.map((p, idx) => (
-                        <div key={idx} className="mt-2 p-2 border-gray-300">
-                          <div>品名: {p?.productName}</div>
-                          <div className="flex justify-between">
-                            <div>箱數: {p?.bag}</div>
-                            <div>包數: {p?.count}</div>
-                            <div>1/1</div>
-                          </div>
+                tableData.map((v, i) => {
+                  if (orderCode !== v.orderId) return;
+                  return (
+                    <SchematicDiagramList key={i}>
+                      <div className="flex flex-col">
+                        <div className="flex justify-between">
+                          <div>入倉單單號:{v?.orderId}</div>
+                          <div>入庫庫別:{v?.area}</div>
                         </div>
-                      ))}
-                    </div>
-                  </SchematicDiagramList>
-                ))
+                        <div className="flex justify-between">
+                          <div>產品品號:{v?.product}</div>
+                        </div>
+                        {v?.products?.map((p, idx) => (
+                          <div key={idx} className="mt-2 border-gray-300">
+                            <div>品名: {p?.productName}</div>
+                            <div className="w-50 flex justify-between">
+                              <div>箱數: {p?.bag}</div>
+                              <div>單位: {p?.count}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </SchematicDiagramList>
+                  );
+                })
               ) : (
                 <SchematicDiagram>
                   <div className="flex flex-col">
                     <div className="flex justify-between">
-                      <div>貨架編號:{v?.car}</div>
-                      <div>出庫庫別:{v?.area}</div>
+                      <div>貨架編號:</div>
+                      <div>出庫庫別:</div>
                     </div>
                     <div className="flex justify-between">
-                      <div>產品品號:{v?.product}</div>
-                      <div>棧板規格:{v?.rule}</div>
+                      <div>產品品號:</div>
+                      <div>棧板規格:</div>
                     </div>
-                    {v?.products?.map((p, idx) => (
-                      <div key={idx} className="mt-2 p-2 border-gray-300">
-                        <div>品名: {p?.productName}</div>
-                        <div className="flex justify-between">
-                          <div>箱數: {p?.bag}</div>
-                          <div>包數: {p?.count}</div>
-                          <div>1/1</div>
-                        </div>
+                    <div className="mt-2 p-2 border-gray-300">
+                      <div>品名:</div>
+                      <div className="flex justify-between">
+                        <div>箱數:</div>
+                        <div>包數:</div>
+                        <div>1/1</div>
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </SchematicDiagram>
               )}
