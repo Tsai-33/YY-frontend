@@ -1,31 +1,38 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialState = {
-  currentPage: "home", // 預設在第一頁
-  currentStep: 1,
-  ip: "",
-  history: [], // 記錄走過的頁面
-};
+const stationList = ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"];
 
-const pageSlice = createSlice({
+const createStation = () => ({
+  step: 1,
+  screen: "idle",
+  orderCode: "",
+  taskdone: {},
+});
+
+const initialState = stationList.reduce(
+  (acc, id) => {
+    acc[id] = createStation();
+    return acc;
+  },
+  { orderList: [] }
+);
+
+const inboundSlice = createSlice({
   name: "inbound",
   initialState,
   reducers: {
-    setPage: (state, action) => {
-      const page = action.payload;
-      state.currentPage = page;
-      state.history.push(page);
-    },
-    setStep: (state, action) => {
-      const step = action.payload;
-      state.currentStep = step;
-    },
-    setIP: (state, action) => {
-      state.ip = action.payload;
+    setInbound: (state, action) => {
+      const { orderList, station, step, screen, orderCode, taskdone } = action.payload;
+      if (!state[station]) return;
+
+      if (step !== undefined) state[station].step = step;
+      if (screen !== undefined) state[station].screen = screen;
+      if (orderCode !== undefined) state[station].orderCode = orderCode;
+      if (taskdone !== undefined) state[station].taskdone = taskdone;
+      if (orderList !== undefined) state.orderList = [...new Set([...state.orderList, orderList])];
     },
   },
 });
 
-export const { setPage, setStep, setIP } = pageSlice.actions;
-
-export default pageSlice.reducer;
+export const { setInbound } = inboundSlice.actions;
+export default inboundSlice.reducer;

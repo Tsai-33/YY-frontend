@@ -1,13 +1,12 @@
 import { useEffect, useRef } from "react";
-import { useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import Swal from "sweetalert2";
-
+import { setInbound } from "@/redux/reducer/reducerInbound";
 
 export default function SocketManager() {
   const dispatch = useDispatch();
   const socketRef = useRef(null); // socket連線
   const retryTimeoutRef = useRef(null); // 重試秒數
-
   const isConnectingRef = useRef(false);
 
   // socket連線
@@ -55,20 +54,13 @@ export default function SocketManager() {
         console.log("socket接收到的資料 :", eventData);
 
         const command = eventData?.command?.toUpperCase(); // 忽略大小寫
-
-        if (
-          eventData?.action === "taskdone" &&
-          command !== "RETURN" &&
-          command !== "CANCEL"
-        ) {
+        if (eventData?.action === "taskdone" && command !== "RETURN" && command !== "CANCEL") {
           if (eventData?.PURPOSE === 0) {
-        
           } else if (eventData?.PURPOSE === 1) {
-          
+            // 入庫
+            dispatch(setInbound({ station: eventData.STATION, screen: "working", taskdone: eventData ,step:3}));
           } else if (eventData?.PURPOSE === 2) {
-         
           } else if (eventData?.PURPOSE === 3) {
-
           }
         }
         if (eventData?.action === "push_button") {

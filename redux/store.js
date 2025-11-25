@@ -16,6 +16,7 @@ import outboundReducer from "./reducer/reducerOutbound";
 import inboundReducer from "./reducer/reducerInbound";
 import userReducer from "./reducer/reducerUser";
 import workStationsReducer from "@/redux/reducer/reducerWorkStations";
+import transferReducer from './reducer/reducerTransfer'
 
 const pagePersistConfig = {
   key: "page",
@@ -32,6 +33,12 @@ const inboundPersistConfig = {
   storage,
 };
 
+const transferPersistConfig = {
+  key: "transfer",
+  storage,
+};
+
+
 const userPersistConfig = {
   key: "user",
   storage,
@@ -46,6 +53,7 @@ const rootReducer = combineReducers({
   page: persistReducer(pagePersistConfig, pageReducer),
   outbound: persistReducer(outboundPersistConfig, outboundReducer),
   inbound: persistReducer(inboundPersistConfig, inboundReducer),
+  transfer: persistReducer(transferPersistConfig, transferReducer),
   user: persistReducer(userPersistConfig, userReducer),
   workstation: persistReducer(workStationsPersistConfig, workStationsReducer),
 });

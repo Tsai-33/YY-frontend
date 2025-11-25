@@ -40,7 +40,7 @@ export const initWorkstation = (ip) => (dispatch) => {
         ip,
         stations: config.A.stations,
         jobs: config.A.jobs,
-        currentStation: null,
+        currentStation: 'A01',
         currentJob: null,
       })
     );

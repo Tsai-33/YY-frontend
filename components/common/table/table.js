@@ -16,10 +16,10 @@ export default function Table({ headers = [], data = [], type, name, onChange, c
     return String(checked) === String(row[idKey]);
   };
 
-  const containerHeight = height || "50vh";
+  const containerHeight = height || "65vh";
   const innerHeight = height
     ? `calc(${height} - 1vh)` // 如果有傳，動態計算
-    : "49vh"; // 沒傳就用原本的
+    : "65vh"; // 沒傳就用原本的
 
   return (
     <div className="w-full bg-[var(--white)] border border-white rounded-md text-center overflow-x-auto" style={{ height: containerHeight }}>

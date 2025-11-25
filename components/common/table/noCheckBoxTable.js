@@ -15,12 +15,12 @@ export default function NoCheckBoxTable({ headers = [], data = [], type, name, o
         }}
       >
         {/* 表頭 */}
-        <table className="table-auto w-full sticky top-0 bg-white z-5">
+        <table className="table-auto w-full sticky top-0 bg-white z-5 font-bold">
           <thead>
-            <tr className={`font-bold text-black bg-[var(--gray-light)] `}>
-              {headers.map((header, idx) => (
-                <th
-                  key={idx}
+            <tr className={`text-black bg-[var(--gray-light)] `}>
+              {headers.map((header, hidx) => (
+               <th 
+                  key={hidx}
                   className="px-4 py-2 border border-white"
                   style={{
                     width: `${header.width}`,
@@ -31,28 +31,26 @@ export default function NoCheckBoxTable({ headers = [], data = [], type, name, o
               ))}
             </tr>
           </thead>
+          <tbody>
+            {data.map((row, ridx) => (
+              <tr
+                key={ridx}
+                className={`hover:bg-[var(--green-pale)] cursor-pointer ${checked === row[idKey] ? "bg-[var(--green-vivid-50)] text-white" : ""}`}
+                onClick={() => onChange("radio", row, idKey)} // ✅ 整行點擊選
+              >
+                <td className="absolute hidden">
+                  <input type="radio" checked={checked === row[idKey]} readOnly className="opacity-0 w-0 h-0 pointer-events-none" />
+                </td>
+                {headers.map((header, i) => (
+                  <td key={i} style={{ width: header.width }} className="border-[var(--green-vivid)] px-4 py-2 border-b truncate">
+                    {header.render ? header.render(row) : row[header.key]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
         </table>
-        {/* 內容 */}
-        <div className="overflow-y-auto ">
-          <table className=" w-full text-black font-bold">
-            <tbody>
-              {data.map((row, idx) => (
-                <tr
-                  key={idx}
-                  className={`hover:bg-green-100 cursor-pointer ${checked === row[idKey] ? "bg-[var(--green-vivid-50)] text-white" : ""}`}
-                  onClick={() => onChange("radio", row, idKey)} // ✅ 整行點擊選
-                >
-                  <input type="radio" checked={checked === row[idKey]} readOnly className="absolute hidden opacity-0 w-0 h-0 pointer-events-none" />
-                  {headers.map((header, i) => (
-                    <td key={i} style={{ width: header.width }} className="border-[var(--green-vivid)] px-4 py-2 text-center border-b truncate">
-                      {header.render ? header.render(row) : row[header.key]}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+       
       </div>
     </div>
   );
