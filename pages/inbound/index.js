@@ -8,18 +8,18 @@ import InputFrame from "@/components/common/input/inputFrame";
 import { setWorkstation, setCurrentStation, setCurrentJob } from "@/redux/reducer/reducerWorkStations";
 import { setInbound } from "@/redux/reducer/reducerInbound";
 import { getInbound } from "../api";
-import SchematicDiagram from "../../components/schematicDiagram";
+import SchematicDiagram from "../../components/diagram/schematicDiagram";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import InboundTable from "@/components/inbound/inboundTable";
+import Loading from "@/components/common/loading/loading";
+import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 
 export default function Inbound() {
   const dispatch = useDispatch();
   const { area, ip, stations, jobs, currentStation, currentJob } = useSelector((s) => s.workstation);
   const [loading, setLoading] = useState(false);
   const [tableData, setTableData] = useState([]);
-    const [selectedArray, setSelectedArray] = useState([]);
-  // console.log(area, ip,stations,jobs, currentStation, currentJob);
-  //A 172.16.11.99 ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10']  [{…}, {…}, {…}, {…}] A01 入庫
+  const [selectedArray, setSelectedArray] = useState([]);
 
   // 目前選擇的工作站
   const handleSwitchStation = (station) => {
@@ -114,10 +114,12 @@ export default function Inbound() {
           </div>
           {/* 資料 */}
           <div className="flex flex-col flex-1 bg-white p-8 pb-4">
+            {/* 內容區 */}
             <div className="flex flex-col gap-8 h-100 overflow-y-auto">
-              {orderCode &&
+              {step <= 2 ? (
+                orderCode &&
                 tableData.map((v, i) => (
-                  <SchematicDiagram key={i}>
+                  <SchematicDiagramList key={i}>
                     <div className="flex flex-col">
                       <div className="flex justify-between">
                         <div>貨架編號:{v?.car}</div>
@@ -138,9 +140,34 @@ export default function Inbound() {
                         </div>
                       ))}
                     </div>
-                  </SchematicDiagram>
-                ))}
+                  </SchematicDiagramList>
+                ))
+              ) : (
+                <SchematicDiagram>
+                  <div className="flex flex-col">
+                    <div className="flex justify-between">
+                      <div>貨架編號:{v?.car}</div>
+                      <div>出庫庫別:{v?.area}</div>
+                    </div>
+                    <div className="flex justify-between">
+                      <div>產品品號:{v?.product}</div>
+                      <div>棧板規格:{v?.rule}</div>
+                    </div>
+                    {v?.products?.map((p, idx) => (
+                      <div key={idx} className="mt-2 p-2 border-gray-300">
+                        <div>品名: {p?.productName}</div>
+                        <div className="flex justify-between">
+                          <div>箱數: {p?.bag}</div>
+                          <div>包數: {p?.count}</div>
+                          <div>1/1</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </SchematicDiagram>
+              )}
             </div>
+            {/* 按鈕區 */}
             <div className="flex flex-1 flex-col justify-end items-center">
               {step <= 2 && <ActionBtn text="確定" variant="orange" onClick={handleOrderConfrim} />}
               {step > 2 && (
@@ -162,6 +189,7 @@ export default function Inbound() {
       </div>
       {/* loading */}
       {screen === "loading" && <LoadingShelf />}
+      {loading && <Loading />}
     </>
   );
 }
