@@ -2,10 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
-import NoCheckBoxTable from "@/components/common/table/noCheckBoxTable";
-import Table from "@/components/common/table/table";
 import InputFrame from "@/components/common/input/inputFrame";
-import { setWorkstation, setCurrentStation, setCurrentJob } from "@/redux/reducer/reducerWorkStations";
+import {  setCurrentStation } from "@/redux/reducer/reducerWorkStations";
 import { setInbound } from "@/redux/reducer/reducerInbound";
 import { getInbound } from "../api";
 import SchematicDiagram from "../../components/diagram/schematicDiagram";
@@ -30,31 +28,31 @@ export default function Inbound() {
   const { step, screen, orderCode, taskdone } = useSelector((s) => s.inbound[currentStationSafe] || {});
 
   // 掃描 QR code
-  const orderBarCodeRef = useRef(null);
-  const handleOrderBarCode = (e) => {
+  const barCodeRef = useRef(null);
+  const handleBarCode = (e) => {
     if (screen === "loading") return;
     if (e.key !== "Enter") return;
     const inputBarCode = e.target.value.trim();
     const result = tableData.some((item) => item.orderId === inputBarCode);
     if (result) {
       dispatch(setInbound({ station: currentStation, orderCode: inputBarCode, step: 2 }));
-      orderBarCodeRef.current.value = "";
+      barCodeRef.current.value = "";
     }
   };
 
   // 確認此入庫單
-  const handleOrderConfrim = async () => {
+  const handleConfrim = async () => {
     setLoading(true);
     try {
       // 傳給WMS
-      // const res = await sendToWms(selected)
+      // const res = await sendToWms()
       // if(res.data.success){
       // 應該會告訴我有哪些station被占用，這裡可能是map方式全部設定
       dispatch(setInbound({ station: currentStation, screen: "loading", orderList: orderCode }));
       setTableData((prev) => prev.filter((v) => v.orderId !== orderCode)); // 把已選定單排除
       // }
     } catch (err) {
-      console.warn("handleOrderConfrim :", err);
+      console.warn("handleConfrim :", err);
     } finally {
       setLoading(false);
     }
@@ -63,7 +61,7 @@ export default function Inbound() {
   const handleConfrimShelf = async () => {};
   const handleReturnShelf = async () => {};
 
-  // =============== 初入畫面 ====================
+  // =============== 初入畫面 =============== 
   useEffect(() => {
     getInboundTable();
   }, []);
@@ -74,7 +72,7 @@ export default function Inbound() {
         // 排除掉重複訂單
         const newData = res.data.data.filter((v) => !orderList.includes(v.orderId));
         setTableData(newData);
-        orderBarCodeRef?.current?.focus();
+        barCodeRef?.current?.focus();
       }
     } catch (err) {
       console.warn(`getInboundTable:`, err);
@@ -84,11 +82,11 @@ export default function Inbound() {
   return (
     <>
       {/* 頂部區域 */}
-      {step === 1 && <PageHeader title={`請點擊清單內入倉單號、掃描入倉單條碼`} close={true} backTo="/workspace" />}
-      {orderCode && step === 2 && <PageHeader title={`檢視完入庫資訊確認沒問題，請點擊確定按鈕`} close={true}  />}
-      {step === 3 && <PageHeader title={`貨架到站點，請掃外箱條碼或點擊介面清單方框確定已將產品放上貨架`} close={false} />}
-      {step === 4 && <PageHeader title={`上架完請點擊退回貨架按鈕`} close={false} />}
-      {step === 5 && <PageHeader title={`等待無人車將貨架搬回庫區`} close={false} />}
+      {step === 1 && <PageHeader title={`請點擊清單內入倉單號、掃描入倉單條碼`} close={false} backTo="/workspace" />}
+      {orderCode && step === 2 && <PageHeader title={`檢視完入庫資訊確認沒問題，請點擊確定按鈕`} close={false}  />}
+      {step === 3 && <PageHeader title={`貨架到站點，請掃外箱條碼或點擊介面清單方框確定已將產品放上貨架`} close={true} />}
+      {step === 4 && <PageHeader title={`上架完請點擊退回貨架按鈕`} close={true} />}
+      {step === 5 && <PageHeader title={`等待無人車將貨架搬回庫區`} close={true} />}
       {/* 主要內容區域 */}
       <div className="flex flex-1 gap-4 px-2 py-8 items-stretch">
         {/* 左側 */}
@@ -105,7 +103,7 @@ export default function Inbound() {
               </label>
               {step <= 2 ? (
                 <div className="w-75">
-                  <InputFrame type="text" name="orderCode" id="order" ref={orderBarCodeRef} onKeyDown={handleOrderBarCode} />
+                  <InputFrame type="text" name="orderCode" id="order" ref={barCodeRef} onKeyDown={handleBarCode} />
                 </div>
               ) : (
                 orderCode
@@ -168,7 +166,7 @@ export default function Inbound() {
             </div>
             {/* 按鈕區 */}
             <div className="flex flex-1 flex-col justify-end items-center">
-              {step <= 2 && <ActionBtn text="確定" variant="orange" onClick={handleOrderConfrim} />}
+              {step <= 2 && <ActionBtn text="確定" variant="orange" onClick={handleConfrim} />}
               {step > 2 && (
                 <div className="w-full flex justify-between">
                   <ActionBtn icon="" text="新增貨架" variant="orange" onClick={handleAddShelf} />
@@ -192,7 +190,3 @@ export default function Inbound() {
     </>
   );
 }
-
-// 一開始A01~A10都能叫車，初始進入在A01
-// 第一個畫面時，選擇訂單，右邊顯示所有車資訊，確認發送，回復告知占用哪幾道站點，把那幾個站點都寫上訂單號並且等待taskdone
-// 第二個畫面等taskdone到時塞入資訊才結束loading

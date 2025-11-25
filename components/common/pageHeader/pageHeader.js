@@ -19,7 +19,7 @@ export default function PageHeader({ title, backTo = "/", close }) {
       </div>
 
       {/* 右邊 */}
-      {close && <Link href={backTo}>
+      {!close && <Link href={backTo}>
         <ActionBtn icon="icon-goback" text="返回" variant="darkBlue" onClick={() => dispatch(setCurrentJob(null))} />
       </Link>}
     </div>
