@@ -1,16 +1,25 @@
 import Table from "@/components/common/table/table";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import InputFrame from "@/components/common/input/inputFrame";
-import PageTitle from "@/components/common/pageHeader/pageTitle";
-import { testTable } from "./testTable";
+import PageTitle from "@/components/common/pageTitle";
+import { testTable } from "./testData";
 import Link from "next/link";
+import { useState, useMemo } from "react";
 
 export default function OutboundTable() {
 
     const headers = [
-        { label: "訂單單號/制令單號", key: "orderNumber", width: "70%" },
+        { label: "領用單號", key: "orderNumber", width: "70%" },
         { label: "出庫日期", key: "outbound_date", width: "30%" },
     ];
+
+    // 試著用useMemo排序資料
+    const sortedData = useMemo(() => {
+        return [...testTable].sort((a, b) => {
+            // 降序
+            return a.outbound_date - b.outbound_date;
+        })
+    }, []);
     
     return (
         <>
@@ -32,7 +41,7 @@ export default function OutboundTable() {
                             type="checkbox"
                             name="shelfTransferList"
                             headers={headers}
-                            data={testTable}
+                            data={sortedData}
                             needInput={false}
                             idKey="orderNumber"
                             height="70vh"
@@ -44,23 +53,11 @@ export default function OutboundTable() {
                             <div className="mb-6">
                                 <div className="flex items-center gap-3 mb-2">
                                     <label className="text-lg font-medium whitespace-nowrap">
-                                        訂單/工單條碼：
+                                        領用單條碼：
                                     </label>
                                     <InputFrame 
                                         type="text"
                                         name="orderNo"
-                                        className="w-[400px]"
-                                    />
-                                </div>
-                            </div>
-                            <div className="mb-6">
-                                <div className="flex items-center gap-3">
-                                    <label className="text-lg font-medium whitespace-nowrap">
-                                        外箱條碼：
-                                    </label>
-                                    <InputFrame 
-                                        type="text"
-                                        name="boxNo"
                                         className="w-[400px]"
                                     />
                                 </div>
