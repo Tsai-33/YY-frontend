@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import Swal from "sweetalert2";
 import { setInbound } from "@/redux/reducer/reducerInbound";
+import { setTransfer } from "@/redux/reducer/reducerTransfer";
 
 export default function SocketManager() {
   const dispatch = useDispatch();
@@ -58,8 +59,10 @@ export default function SocketManager() {
           if (eventData?.PURPOSE === 0) {
           } else if (eventData?.PURPOSE === 1) {
             // 入庫
-            dispatch(setInbound({ station: eventData.STATION, screen: "working", taskdone: eventData ,step:3}));
+            dispatch(setInbound({ station: eventData.STATION, screen: "working", shelf: eventData, shelfItem: eventData?.ITEMS, step: 3 }));
           } else if (eventData?.PURPOSE === 2) {
+            // 調撥
+            dispatch(setTransfer({ station: eventData.STATION, screen: "working", taskdone: eventData, step: 3 }));
           } else if (eventData?.PURPOSE === 3) {
           }
         }
