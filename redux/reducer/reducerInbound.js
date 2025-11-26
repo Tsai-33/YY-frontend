@@ -6,8 +6,12 @@ const createStation = () => ({
   step: 1,
   screen: "idle",
   orderCode: "",
-  taskdone: {},
+  waveNo: null,
+  order: {},
+  shelf: {},
+  shelfItem: [],
 });
+
 
 const initialState = stationList.reduce(
   (acc, id) => {
@@ -16,23 +20,37 @@ const initialState = stationList.reduce(
   },
   { orderList: [] }
 );
-
 const inboundSlice = createSlice({
   name: "inbound",
   initialState,
   reducers: {
     setInbound: (state, action) => {
-      const { orderList, station, step, screen, orderCode, taskdone } = action.payload;
+      const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, station } = action.payload;
       if (!state[station]) return;
 
       if (step !== undefined) state[station].step = step;
       if (screen !== undefined) state[station].screen = screen;
+      if (order !== undefined) state[station].order = order;
       if (orderCode !== undefined) state[station].orderCode = orderCode;
-      if (taskdone !== undefined) state[station].taskdone = taskdone;
+      if (waveNo !== undefined) state[station].waveNo = waveNo;
+      if (shelf !== undefined) state[station].shelf = shelf;
+      if (shelfItem !== undefined) state[station].shelfItem = shelfItem;
       if (orderList !== undefined) state.orderList = [...new Set([...state.orderList, orderList])];
     },
+    // 管理員控制面板
+    managerInbound: (state, action) => {
+      const { station, name, value, index } = action.payload;
+      if (!state[station]) return;
+
+      if (name === "step") {
+        state[station][name] = Number(value);
+      } else {
+        state[station][name] = value;
+      }
+    },
+    resetInbound: () => initialState
   },
 });
 
-export const { setInbound } = inboundSlice.actions;
+export const { setInbound, managerInbound,resetInbound } = inboundSlice.actions;
 export default inboundSlice.reducer;
