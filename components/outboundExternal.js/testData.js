@@ -5,7 +5,7 @@ export const testTable = [
     { orderNumber: "F220-11401230004", outbound_date: 20250301 },
     { orderNumber: "M510-11403050032", outbound_date: 20251230 },
     { orderNumber: "F220-11403110001", outbound_date: 20251017 },
-    { orderNumber: "M510-11403200041", outbound_date: 20250916 },
+    { orderNumber: "M510-11403220041", outbound_date: 20250916 },
     { orderNumber: "F220-11402180010", outbound_date: 20251111 },
     { orderNumber: "F220-11402200004", outbound_date: 20251017 },
 ]

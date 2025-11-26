@@ -1,7 +1,7 @@
 import Table from "@/components/common/table/table";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import InputFrame from "@/components/common/input/inputFrame";
-import PageTitle from "@/components/common/pageTitle";
+import PageTitle from "@/components/common/pageHeader/pageTitle";
 import { testShelveGroups } from "./testData";
 import Link from "next/link";
 import { useState } from "react";
