@@ -24,12 +24,12 @@ const pagePersistConfig = {
 };
 
 const outboundExternalPersistConfig = {
-  key: "outbound",
+  key: "outboundExternal",
   storage,
 };
 
 const inboundPersistConfig = {
-  key: "outboundExternal",
+  key: "inbound",
   storage,
 };
 

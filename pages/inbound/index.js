@@ -19,7 +19,8 @@ export default function Inbound() {
   const [loading, setLoading] = useState(false);
   const [tableData, setTableData] = useState([]); // 入庫單資訊
   const [selectedArray, setSelectedArray] = useState([]); // 選擇的入庫單細項
-  const [lackStation, setLackStation] = useState([]); //鎖住的站點
+
+  
 
   // 目前選擇的工作站
   const handleSwitchStation = (station) => {
@@ -27,7 +28,7 @@ export default function Inbound() {
   };
   const currentStationSafe = currentStation || stations?.[0] || "";
   const { orderList } = useSelector((s) => s.inbound);
-  const { step, screen, orderCode, order, shelf, shelfItem } = useSelector((s) => s.inbound[currentStationSafe] || {});
+  const { step, screen, orderCode, order, shelf, shelfItem,lackStation } = useSelector((s) => s.inbound[currentStationSafe] || {});
 
   console.log(shelf, "redux");
   // 掃描 QR code
@@ -65,10 +66,9 @@ export default function Inbound() {
             lack_station = []; // fallback 防止爆掉
           }
         }
-        setLackStation((prev) => [...prev, ...lack_station]); // 鎖住使用的工作站
         if (lack_station.length > 0) {
           lack_station.map((station) => {
-            dispatch(setInbound({ station: station, screen: "loading", orderList: orderCode }));
+            dispatch(setInbound({ station: station, screen: "loading", orderList: orderCode,lackStation:lack_station }));
           });
         }
         setTableData((prev) => prev.filter((v) => v.INSTOCK_NO !== orderCode)); // 把已選定單排除

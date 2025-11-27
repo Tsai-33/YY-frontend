@@ -37,14 +37,14 @@ export default function InboundTable({ data, selectedArray, setSelectedArray }) 
   // =============== 畫面二 ====================
   // checkbox table
   const tableHeader2 = [
-    { label: "", key: "checkbox", width: `5%` },
+    { label: "", key: "checkbox", width: `8%` },
     {  label: "產品品號", key: "PRT_CODE", width: `60%` },
-    { label: "每箱包數", key: "BOX_PACK", width: `35%` },
+    { label: "每箱包數", key: "BOX_PACK", width: `32%` },
   ];
   useEffect(() => {
     if (!waveNo) return;
     getList();
-  }, [waveNo]);
+  }, [shelfItem]);
   const getList = async () => {
     try {
       const res = await getInboundByWID(waveNo);
