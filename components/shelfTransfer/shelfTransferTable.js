@@ -8,8 +8,9 @@ import { useState } from "react";
 
 export default function ShelfTransferTable() {
     const headers = [
+        { label: "", key: "checkbox", width: "10%" },
         { label: "訂單單號", key: "orderNumber", width: "50%" },
-        { label: "配置貨架數量", key: "deploy", width: "40%" },
+        { label: "配置貨架數量", key: "deploy", width: "30%" },
         { label: "箱數", key: "box", width: "10%" },
     ];
 

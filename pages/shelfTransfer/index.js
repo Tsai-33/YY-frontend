@@ -3,7 +3,7 @@ import ShelfTransferStation from "@/components/shelfTransfer/shelfTransferStatio
 
 export default function shelfTransfer() {
     return (
-        // <ShelfTransferStation />
-        <ShelfTransferTable />
+        <ShelfTransferStation />
+        // <ShelfTransferTable />
     )
 }

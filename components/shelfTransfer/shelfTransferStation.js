@@ -15,7 +15,8 @@ export default function ShelfTransferStation() {
     const [targetShelve, setTargetShelve] = useState("");
     // 控制下拉選單
     const headers = [
-        { label: "項目編號", key: "id", width: "100%" }
+        { label: "", key: "checkbox", width: "20%" },
+        { label: "項目編號", key: "id", width: "80%" }
     ]
     const shelvePositions = ["R0002", "R0003", "R0004", "R0005", "貨架代號"]
     const [shelveData, setShelveData] = useState({

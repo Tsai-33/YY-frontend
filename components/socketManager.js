@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import Swal from "sweetalert2";
 import { setInbound } from "@/redux/reducer/reducerInbound";
 import { setTransfer } from "@/redux/reducer/reducerTransfer";
+import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
 
 export default function SocketManager() {
   const dispatch = useDispatch();
@@ -57,6 +58,8 @@ export default function SocketManager() {
         const command = eventData?.command?.toUpperCase(); // 忽略大小寫
         if (eventData?.action === "taskdone" && command !== "RETURN" && command !== "CANCEL") {
           if (eventData?.PURPOSE === 0) {
+            // 出庫
+            dispatch(setOutboundExternal({ station: eventData.STATION, screen: "working", shelf: eventData, shelfItem: eventData?.ITEMS, step: 3 }));
           } else if (eventData?.PURPOSE === 1) {
             // 入庫
             dispatch(setInbound({ station: eventData.STATION, screen: "working", shelf: eventData, shelfItem: eventData?.ITEMS, step: 3 }));

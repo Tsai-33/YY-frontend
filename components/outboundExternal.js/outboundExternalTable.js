@@ -30,15 +30,22 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
                 return newArray;
             });
         } else if (name === "radio") {
-          dispatch(setOutboundExternal({ station: currentStationSafe, orderCode: valueId, step: 2 }));
+            dispatch(
+                setOutboundExternal({ 
+                    station: currentStationSafe, 
+                    order: value, 
+                    orderCode: value?.SALE_NO, 
+                    waveNo: value?.W_ID, 
+                    step: 2 
+                }));        
         }
     };
 
     // =============== 畫面二 ====================
     const detailHeaders = [
         { label: "", key: "checkbox", width: "10%" },
-        { label: "產品品號", key: "material", width: "60%" },
-        { label: "總包數", key: "bag", width: "30%" },
+        { label: "產品品號", key: "PRT_NO", width: "60%" },
+        { label: "總包數", key: "BOX_PACK", width: "30%" },
     ]
 
     return (
