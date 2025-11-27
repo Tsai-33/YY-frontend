@@ -6,7 +6,10 @@ import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
 import { getOutboundExternal } from "../api";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import Loading from "@/components/common/loading/loading";
-import { testTable, testShelve } from "./testData";
+import PageHeader from "@/components/common/pageHeader/pageHeader";
+import InputFrame from "@/components/common/input/inputFrame";
+import ActionBtn from "@/components/common/btns/actionBtn";
+import SchematicDiagram from "@/components/diagram/schematicDiagram";
 
 export default function OutboundExternal() {
   const dispatch = useDispatch();
@@ -21,10 +24,10 @@ export default function OutboundExternal() {
   };
 
   // 防止currentStation還沒好就使用會壞掉
-  const currentStationSafe = currentStation || stations?.[0] || "";
+  const currentStationSafe = currentStation || stations?.[0] || "B01"; // TODO
   // 避免同一張單被很多站使用
   const { orderList } = useSelector((s) => s.outboundExternal);
-  const { step, screen, orderCode, taskdone } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
+  const { step = 1, screen, orderCode, taskdone } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
 
   // =====掃銷貨單條碼=====
   const orderBarCodeRef = useRef(null);
@@ -32,9 +35,9 @@ export default function OutboundExternal() {
     if (screen === "loading") return;
     if (e.key !== "Enter") return;
     const inputBarCode = e.target.value.trim();
-    const result = tableData.some((item) => item.orderId === inputBarCode);
+    const result = tableData.some((item) => item.SALE_NO === inputBarCode);
     if (result) {
-      dispatch(setOutboundExternal({ station: currentStation, screen: "loading", orderList: orderCode }));
+      dispatch(setOutboundExternal({ station: currentStationSafe, orderCode: inputBarCode, step: 2 }));
       orderBarCodeRef.current.value = "";
     }
   }
@@ -45,7 +48,7 @@ export default function OutboundExternal() {
     try {
       // const res = await sendToWms(selected)
       dispatch(setOutboundExternal({ station: currentStation, screen: "loading", orderList: orderCode }));
-      setTableData((prev) => prev.filter((v) => v.orderId))
+      setTableData((prev) => prev.filter((v) => v.SALE_NO))
     } catch (error) {
       console.warn("出庫確認 :", err);
     } finally {
@@ -61,15 +64,12 @@ export default function OutboundExternal() {
   }, []);
   const getOutboundExternalTable = async () => {
     try {
-      const newData = testTable.filter((v) => !orderList.includes(v.orderId));
-      setTableData(newData);
-      orderBarCodeRef?.current?.focus();
-      // const res = getOutboundExternal();
-      // if (res.data.success) {
-      //   const newData = res.data.data.filter((v) => !orderList.includes(v.orderId));
-      //   setTableData(newData);
-      //   orderBarCodeRef?.current?.focus();
-      // }
+      const res = await getOutboundExternal();
+      if (res.data.success) {
+        const newData = res.data.data.recordset.filter((v) => !orderList.includes(v.SALE_NO));
+        setTableData(newData);
+        orderBarCodeRef?.current?.focus();
+      }
     } catch (error) {
       console.warn(`getOutboundExternalTable:`, error);
     }

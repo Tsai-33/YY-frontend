@@ -18,3 +18,4 @@ export const getOutboundExternal = () => api.get("/outbound");
 
 /* 傳給labview */
 export const sendToWMS = (payload) => api.post("/send-to-wms", payload, { timeout: 45000 });
+
