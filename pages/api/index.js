@@ -12,5 +12,5 @@ export const getInbound = () => api.get("/inbound");
 export const getInboundById = (id) => api.get(`/inbound/${id}`);
 
 /* 取得出庫單(銷貨) */
-export const getOutboundExternal = () => api.get("/outbound");
+export const getOutboundExternal = () => api.get("/outboundExternal/getOutBoundExternal");
 /* 取得出庫單(領用) */

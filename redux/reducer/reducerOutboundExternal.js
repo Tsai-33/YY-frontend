@@ -47,19 +47,3 @@ const outboundExternalSlice = createSlice({
 
 export const { setOutboundExternal } = outboundExternalSlice.actions;
 export default outboundExternalSlice.reducer;
-
-// const initialState = {
-//   page: 'A01',
-//   step: 1,
-//   A01: "",
-// };
-
-// const pageSlice = createSlice({
-//   name: "outbound",
-//   initialState,
-//   reducers: {},
-// });
-
-// export const {} = pageSlice.actions;
-
-// export default pageSlice.reducer;

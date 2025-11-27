@@ -54,7 +54,7 @@ export const initWorkstation = (ip) => (dispatch) => {
         ip,
         stations: config.B.stations[ip], // 每台電腦管自己的 station
         jobs: config.B.jobs,
-        currentStation: null,
+        currentStation: 'B01',
         currentJob: null,
       })
     );
