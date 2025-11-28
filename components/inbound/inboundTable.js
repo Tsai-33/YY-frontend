@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import Table from "../common/table/table";
+import TableAll from "../common/table/tableAll";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
-import { setInbound } from "@/redux/reducer/reducerInbound";
+import { setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
 import { getInboundByWID } from "@/pages/api";
-export default function InboundTable({ data, selectedArray, setSelectedArray }) {
+export default function InboundTable({ data, setSelectedArray }) {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { waveNo, orderCode, step, shelfItem } = useSelector((s) => s.inbound[currentStationSafe] || {});
+  const { waveNo, orderCode, step, shelfItem, selected } = useSelector((s) => s.inbound[currentStationSafe] || {});
   const [tableData2, setTableData2] = useState([]);
 
   // =============== 畫面一 ====================
@@ -20,15 +20,13 @@ export default function InboundTable({ data, selectedArray, setSelectedArray }) 
   const handleSelectedOption = (name, value, idKey) => {
     const valueId = value[idKey];
     if (name === "checkbox") {
-      setSelectedArray((prev) => {
-        let newArray;
-        if (prev.includes(valueId)) {
-          newArray = prev.filter((id) => id !== valueId);
-        } else {
-          newArray = [...prev, valueId];
-        }
-        return newArray;
-      });
+      let allIds;
+      if (selected.some((item) => item[idKey] === valueId)) {
+        allIds = selected.filter((item) => item[idKey] !== valueId);
+      } else {
+        allIds = [...selected, value];
+      }
+      dispatch(setInbound({ station: currentStation, selected: allIds }));
     } else if (name === "radio") {
       dispatch(setInbound({ station: currentStation, order: value, orderCode: value?.INSTOCK_NO, waveNo: value?.W_ID, step: 2 }));
     }
@@ -37,9 +35,9 @@ export default function InboundTable({ data, selectedArray, setSelectedArray }) 
   // =============== 畫面二 ====================
   // checkbox table
   const tableHeader2 = [
-    { label: "", key: "checkbox", width: `8%` },
-    {  label: "產品品號", key: "PRT_CODE", width: `60%` },
-    { label: "每箱包數", key: "BOX_PACK", width: `32%` },
+    { label: "", key: "checkbox", width: `48px` },
+    { label: "產品品號", key: "PRT_CODE", width: `60%` },
+    { label: "每箱包數", key: "BOX_PACK", width: `30%` },
   ];
   useEffect(() => {
     if (!waveNo) return;
@@ -49,18 +47,32 @@ export default function InboundTable({ data, selectedArray, setSelectedArray }) 
     try {
       const res = await getInboundByWID(waveNo);
       if (res.data.success) {
-        // const all = {shelf.} // 物件
         const detail = res.data.data; // 陣列
-        setTableData2([...detail])
+        const newDetail = detail.map((v) => ({ ...v, type: "new", checked: false }));
+        setTableData2(newDetail);
       }
     } catch (err) {
       console.warn("getList :", err);
     }
   };
+
+  // ======== select ==========
+  //  全選 / 全不選
+  const selectAllRef = useRef(null);
+  const handleSelectAll = (allData, idKey) => {
+    const isChecked = selectAllRef.current.checked;
+    const allIds = allData.filter((item) => !item.shortage);
+    if (isChecked) {
+      dispatch(setInbound({ station: currentStation, selected: allIds }));
+    } else {
+      dispatch(setInbound({ station: currentStation, selected: [] }));
+    }
+  };
+
   return (
     <>
       {step <= 2 && <NoCheckBoxTable headers={tableHeader} data={data} type="radio" name="inbound" variants="green" idKey="INSTOCK_NO" checked={orderCode} onChange={handleSelectedOption} />}
-      {step > 2 && <Table headers={tableHeader2} data={tableData2} type="checkbox" name="inbound2" variants="green" idKey="INSTOCK_NO" checked={selectedArray} onChange={handleSelectedOption} />}
+      {step > 2 && <TableAll height={`59vh`} headers={tableHeader2} data={tableData2} type="checkbox" name="inbound2" variants="green" idKey="INSTOCK_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} />}
     </>
   );
 }
