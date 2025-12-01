@@ -4,13 +4,15 @@ import { useSelector, useDispatch } from "react-redux";
 import Link from "next/link";
 import ActionBtn from "../common/btns/actionBtn";
 import InboundManager from "../inbound/inboundManager";
+import OutboundExternalManager from "../outboundExternal/outboundExternalManager";
 
 // 控制面板
 
 // 頁面標題配置
 const PAGE_TITLES = {
   "/workspace": "工作站工作列表",
-  "/outbound": "揀貨出庫",
+  "/outboundExternal": "銷貨出庫",
+  "/outboundInternal": "領用出庫",
   "/inbound": "補貨上架",
   "/warehousing": "儲位調整",
   "/warehousing/shelfInventory": "貨架位置調整",
@@ -70,6 +72,7 @@ export default function Layout({ children }) {
 
       {/* 依照路由渲染不同面板 */}
       {path.startsWith("/inbound") && <InboundManager isOpen={open} onClose={() => setOpen(false)} />}
+      {path.startsWith("/outboundExternal") && <OutboundExternalManager isOpen={open} onClose={() => setOpen(false)} />}
     </div>
   );
 }

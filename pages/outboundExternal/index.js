@@ -1,16 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import OutboundExternalTable from "@/components/outboundExternal.js/outboundExternalTable";
+import OutboundExternalTable from "@/components/outboundExternal/outboundExternalTable";
 import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
 import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
-import { getOutboundExternal, getOutBoundExternalOrderDetail, sendToWMS } from "../api";
+import { getOutboundExternal, getOutBoundExternalOrderDetailBySaleNo, sendToWMS } from "../api";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import Loading from "@/components/common/loading/loading";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
 import InputFrame from "@/components/common/input/inputFrame";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import SchematicDiagram from "@/components/diagram/schematicDiagram";
+import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import { generateRandomNumber } from "@/utils/random";
+import Alert from "@/components/common/alert/alert";
 
 export default function OutboundExternal() {
   const dispatch = useDispatch();
@@ -28,8 +30,8 @@ export default function OutboundExternal() {
   // 防止currentStation還沒好就使用會壞掉
   const currentStationSafe = currentStation || stations?.[0] || "B01"; // TODO
   // 避免同一張單被很多站使用
-  const { orderList } = useSelector((s) => s.outboundExternal);
-  const { step = 1, screen, orderCode, order, shelf, shelfItem, lackStation } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
+  const { orderList, lackStation } = useSelector((s) => s.outboundExternal);
+  const { step = 1, screen, orderCode, order, shelf, shelfItem } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
 
   // =====根據銷貨單取得細節=====
   useEffect(() => {
@@ -42,7 +44,7 @@ export default function OutboundExternal() {
 
   const fetchOrderDetail = async (saleNo) => {
     try {
-      const res = await getOutBoundExternalOrderDetail(saleNo);
+      const res = await getOutBoundExternalOrderDetailBySaleNo(saleNo);
       if (res.data.success) {
         setOrderDetail(res.data.data || []);
       }
@@ -59,7 +61,6 @@ export default function OutboundExternal() {
     if (e.key !== "Enter") return;
     const inputBarCode = e.target.value.trim();
     const result = tableData.some((item) => item.SALE_NO === inputBarCode);
-    console.log("tableData: ", tableData)
     const [value] = tableData.filter((item) => item.SALE_NO === inputBarCode);
     if (result) {
       dispatch(setOutboundExternal({ station: currentStationSafe, order: value, orderCode: inputBarCode, step: 2 }));
@@ -71,6 +72,7 @@ export default function OutboundExternal() {
   const handleOrderConfrim = async () => {
     setLoading(true);
     try {
+      dispatch(setOutboundExternal({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
       const dataId = generateRandomNumber();
       const data = {
         action: "ask_wave",
@@ -78,28 +80,32 @@ export default function OutboundExternal() {
         wave_no: String(order.W_ID),
         station_no: "B"
       }
+      console.log('data: ', data)
       const res = await sendToWMS(data);
       console.log('res: ', res)
       if (res.data.success && !res.data.data?.error) {
         // 存被占用的站點
-        let lock_station = res.data.data.message2 || [];
-        if (!Array.isArray(lock_station)) {
+        let lack_station = res.data.data.message2 || [];
+        if (!Array.isArray(lack_station)) {
           try {
             // 把單引號換成雙引號後解析
-            lock_station = JSON.parse(lock_station.replace(/'/g, '"'));
+            lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
           } catch (error) {
-            console.error("lock_station 格式錯誤:", lock_station, error);
-            lock_station = [];
+            console.error("lack_station 格式錯誤:", lack_station, error);
+            lack_station = [];
           }
         }
         // 把每個被占用的站點設成loading狀態
-        if (lock_station.length > 0) {
-          lock_station.map((station) => {
+        if (lack_station.length > 0) {
+          lack_station.map((station) => {
             dispatch(setOutboundExternal({ 
               station: station, 
               screen: "loading", 
-              orderList: orderCode, 
-              lockStation:lock_station
+              orderCode: orderCode,
+              orderList: orderCode,
+              waveNo: order.W_ID,
+              order: order,
+              lackStation:station
             }));
           });
         }
@@ -115,8 +121,32 @@ export default function OutboundExternal() {
 
   // 退回貨架
   const handleReturnShelf = async () => {
+    if (!currentStation) {
+      Alert({ text: "抓不到站點位置"});
+      return;
+    }
+    setLoading(true);
+    try {
+      const dataId = generateRandomNumber();
+      const data = {
+        action: "wcstask",
+        dataid: dataId,
+        command: "RETURN",
+        SHELVE_ID: shelf?.SHELVE_ID,
+        FACE: 2,
+        STATION: currentStation,
+        PURPOSE: 0
+      };
+      const res = await sendToWMS(data);
 
-
+      if (res.data.success) {
+        console.log(res.data, "wcstask接收到資料");
+      }
+    } catch (error) {
+      console.warn("handleReturnShelf", error);
+    } finally {
+      setLoading(false);
+    }
   }; 
 
   // ===== table資料 =====
@@ -127,7 +157,7 @@ export default function OutboundExternal() {
     try {
       const res = await getOutboundExternal();
       if (res.data.success) {
-        const newData = res.data.data.filter((v) => !orderList.includes(v.SALE_NO));
+        const newData = res.data.data.filter((v) => !orderList.includes(v.OUTSTOCK_NO));
         setTableData(newData);
         orderBarCodeRef?.current?.focus();
       }
@@ -137,7 +167,6 @@ export default function OutboundExternal() {
   }
   return (
     <>
-    {console.log('step: ', step)}
       {/* 頂部區域 */}
       {step === 1 && <PageHeader title={`請點擊清單銷貨單號、銷貨單條碼`} backTo="/workspace" />}
       {orderCode && step === 2 && <PageHeader title={`檢視完出庫資訊確認沒問題，請點擊確定按鈕`} />}
@@ -171,8 +200,8 @@ export default function OutboundExternal() {
             <div className="flex flex-col gap-8 h-100 overflow-y-auto">
               {step <= 2 ? (
                 orderCode &&
-                orderDetail.map((v, i) => (
-                  <SchematicDiagram key={i}>
+                orderDetail?.map((v, i) => (
+                  <SchematicDiagramList key={i}>
                     <div className="flex flex-col text-3xl">
                       <div className="flex justify-between">
                         <div>貨架編號:{v?.car}</div>
@@ -186,10 +215,10 @@ export default function OutboundExternal() {
                         <div className="flex justify-between">
                           <div>箱數: {v?.BOX_NO} 箱</div>
                           <div>包數: {v?.BOX_PACK} 包</div>
-                          <div>{i + 1}/{orderDetail.length}</div>
+                          <div>{i + 1}/{orderDetail?.length}</div>
                         </div>
                     </div>
-                  </SchematicDiagram>
+                  </SchematicDiagramList>
                 ))
               ) : (
                 <SchematicDiagram>
@@ -199,7 +228,7 @@ export default function OutboundExternal() {
                       <div>出庫庫別:{shelf?.STOCK_AREA}</div>
                     </div>
                   </div>
-                  {shelfItem.map((item, index) => (
+                  {shelfItem?.map((item, index) => (
                     <>
                       <div className="flex justify-between">
                         <div>產品品號:{item?.PRT_NO}</div>
@@ -209,7 +238,7 @@ export default function OutboundExternal() {
                         <div className="flex justify-between">
                         <div>箱數: {item?.BOX_NO} 箱</div>
                         <div>包數: {item?.PP_NO} 包</div>
-                        <div>{i + 1}/{shelfItem.length}</div>
+                        <div>{index + 1}/{shelfItem?.length}</div>
                       </div>
                     </>
                   ))}
@@ -229,7 +258,13 @@ export default function OutboundExternal() {
       {/* 站點 */}
       <div className="w-full flex justify-between z-15">
         {stations.map((station, i) => (
-          <ActionBtn key={i} text={station} variant="green" disabled={currentStation === station ? true : false} onClick={() => handleSwitchStation(station)} />
+          <ActionBtn 
+            key={i} 
+            text={station} 
+            variant={lackStation?.includes(station) ? "orange" : "green"} 
+            disabled={currentStation === station ? true : false} 
+            onClick={() => handleSwitchStation(station)} 
+          />
         ))}
       </div>
       {/* loading */}

@@ -13,8 +13,8 @@ export const getInboundByWID = (id) => api.get(`/inbound/${id}`);
 
 /* 取得出庫單(銷貨) */
 export const getOutboundExternal = () => api.get("/outboundExternal/getOutBoundExternal");
-export const getOutBoundExternalOrderDetail = (sale_no) => api.get(`/outboundExternal/getOutBoundExternalOrderDetail`, {params: {sale_no}});
-
+export const getOutBoundExternalOrderDetailBySaleNo = (sale_no) => api.get(`/outboundExternal/getOutBoundExternalOrderDetailBySaleNo`, {params: {sale_no}});
+export const getOutBoundExternalOrderDetailByWID = (w_id) => api.get(`/outboundExternal/getOutBoundExternalOrderDetailByWID`, {params: {w_id}});
 /* 取得出庫單(領用) */
 
 
