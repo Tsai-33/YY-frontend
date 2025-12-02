@@ -1,0 +1,20 @@
+export const testTable = [
+    { orderNumber: "M510-11403200017", outbound_date: 20251207 },
+    { orderNumber: "F220-11402180005", outbound_date: 20251017 },
+    { orderNumber: "M510-11403200041", outbound_date: 20251027 },
+    { orderNumber: "F220-11401230004", outbound_date: 20250301 },
+    { orderNumber: "M510-11403050032", outbound_date: 20251230 },
+    { orderNumber: "F220-11403110001", outbound_date: 20251017 },
+    { orderNumber: "M510-11403200041", outbound_date: 20250916 },
+    { orderNumber: "F220-11402180010", outbound_date: 20251111 },
+    { orderNumber: "F220-11402200004", outbound_date: 20251017 },
+]
+
+export const testShelve = [
+    { orderNumber: "M510-11403200017", shelve_Id:"R0001", box: 9, bag: 2250, stock_class: "美規", stock: "D01", material:"Y01TSL025100YB", materialSpec: "黑色束帶,100條/包,250包/箱" },
+    { orderNumber: "F220-11402180005", shelve_Id:"R0100", box: 13, bag: 1820, stock_class: "歐規", stock: "F02", material:"Y01TSL025100YB", materialSpec: "黑色束帶,100條/包,700包/箱" },
+    { orderNumber: "F220-11402180005", shelve_Id:"R0100", box: 9, bag: 810, stock_class: "歐規", stock: "F02", material:" Y01TSL036150YB", materialSpec: "黑色束帶,100條/包,400包/箱" },
+    { orderNumber: "M510-11403200041", shelve_Id:"R0200", box: 41, bag: 2050, stock_class: "美規", stock: "F02", material:"Y01TSL045300YB", materialSpec: "黑色束帶,100條/包,140包/箱" },
+    { orderNumber: "F220-11401230004", shelve_Id:"R0250", box: 15, bag: 750, stock_class: "歐規", stock: "F02", material:"Y01TSL076290YB", materialSpec: "黑色束帶,100條/包,75包/箱" },
+    { orderNumber: "F220-11401230004", shelve_Id:"R0250", box: 27, bag: 4050, stock_class: "歐規", stock: "F02", material:"Y01TSL033290YT", materialSpec: "黑色束帶,100條/包,200包/箱" },
+]

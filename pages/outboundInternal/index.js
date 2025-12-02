@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import OutboundTable from "@/components/outbound/outboundTable";
+import OutboundTable from "@/components/outboundInternal/outboundTable";
 import { CountAbnormalModal } from "@/components/common/modal/modal-list";
 import Alert from "@/components/common/alert/alert";
 import PageTitle from "@/components/common/pageHeader/pageTitle";
 import { useSelector } from "react-redux";
 import ActionBtn from "@/components/common/btns/actionBtn";
 
-export default function Outbound() {
+export default function OutboundInternal() {
   const currentStep = useSelector((state) => state.page.currentStep);
   return (
     <OutboundTable />

@@ -1,14 +1,14 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const stationList = ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"];
+const stationList = ["B01", "B02", "B03", "B04", "B05"];
 
 const createStation = () => ({
-  step: 1,
+  step: 1,  // 1: 選擇訂單階段, 2: 揀貨階段
   screen: "idle",
   orderCode: "",
   waveNo: null,
   order: {},
-  shelf: {},
+  shelf: {},// 貨架到站後的資料
   shelfItem: [],
 });
 
@@ -17,28 +17,32 @@ const initialState = stationList.reduce(
     acc[id] = createStation();
     return acc;
   },
-  { orderList: [], lackStation: [] }
-);
-const inboundSlice = createSlice({
-  name: "inbound",
+  { orderList: [], lockStation: [] } // 訂單列表
+)
+
+
+const outboundExternalSlice = createSlice({
+  name: "outboundExternal",
   initialState,
   reducers: {
-    setInbound: (state, action) => {
-      const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, station,lackStation } = action.payload;
+    setOutboundExternal: (state, action) => {
+      const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, station, lockStation } = action.payload;
+      // 沒有指定站點的話不執行
       if (!state[station]) return;
 
+      // 更新欄位
       if (step !== undefined) state[station].step = step;
       if (screen !== undefined) state[station].screen = screen;
-      if (order !== undefined) state[station].order = order;
       if (orderCode !== undefined) state[station].orderCode = orderCode;
+      if (order !== undefined) state[station].order = order;
       if (waveNo !== undefined) state[station].waveNo = waveNo;
       if (shelf !== undefined) state[station].shelf = shelf;
       if (shelfItem !== undefined) state[station].shelfItem = shelfItem;
       if (orderList !== undefined) state.orderList = [...new Set([...state.orderList, orderList])];
-      if (lackStation !== undefined) state.lackStation = [...new Set([...state.lackStation, lackStation])];
+      if (lockStation !== undefined) state.lockStation = [...new Set([...state.lockStation, lockStation])];
     },
-    // 管理員控制面板
-    managerInbound: (state, action) => {
+
+    managerOutboundExternal: (state, action) => {
       const { station, name, value, index } = action.payload;
       if (!state[station]) return;
 
@@ -48,9 +52,10 @@ const inboundSlice = createSlice({
         state[station][name] = value;
       }
     },
-    resetInbound: () => initialState,
-  },
+
+    resetOutboundExternal: () => initialState
+  }
 });
 
-export const { setInbound, managerInbound, resetInbound } = inboundSlice.actions;
-export default inboundSlice.reducer;
+export const { setOutboundExternal, managerOutboundExternal, resetOutboundExternal } = outboundExternalSlice.actions;
+export default outboundExternalSlice.reducer;

@@ -6,32 +6,21 @@ import ActionBtn from "../common/btns/actionBtn";
 import { logout } from "@/redux/reducer/reducerUser";
 import { logout as logoutAPI } from "@/pages/api/authService";
 import ProtectedRoute from "../common/ProtectedRoute";
+import InboundManager from "../inbound/inboundManager";
+
 
 // 控制面板
 
 // 頁面標題配置
 const PAGE_TITLES = {
   "/workspace": "工作站工作列表",
-  "/outbound": "揀貨出庫",
-  "/inbound": "補貨上架",
-  "/warehousing": "儲位調整",
-  "/warehousing/shelfInventory": "貨架位置調整",
-  "/warehousing/binInventory": "儲位位置調整",
-  "/warehousing/shelfBinAdjust": "貨架儲位調整",
-  "/shelveSetting": "貨架設定",
-  "/shelveSetting/createType": "建立貨架類型",
-  "/shelveSetting/typeSettings": "貨架類型設定",
-  "/shelveSetting/shelveList": "貨架清單",
-  "/inventory": "庫存盤點",
-  "/inventory/fullCheck": "全區盤點",
-  "/inventory/cycleCheck": "波動盤點",
-  "/inventory/abnormalCheck": "異常盤點清單",
-  "/packageMaterial": "包材零件",
-  "/packageMaterial/stockOut": "包材零件出庫",
-  "/packageMaterial/stockIn": "包材零件入庫",
+  "/outboundExternal": "銷貨",
+  "/outboundInternal": "領用",
+  "/shelfTransfer": "理貨",
+  "/inbound": "入倉",
   "/stockQuery": "庫存查詢",
-  "/centralpanel": "中央控制面板",
-  "/centralpanel/detail": "中控頁面詳細",
+  "/transfer": "調撥",
+  "/inventory": "盤點",
   default: "",
 };
 
@@ -47,6 +36,7 @@ export default function Layout({ children }) {
 
   const mainClass =
     path === "/" ? "flex-1" : "flex-1 flex flex-col gap-2 my-5 mx-4 relative";
+
 
   // 處理登出
   const handleLogout = async () => {
@@ -67,6 +57,20 @@ export default function Layout({ children }) {
   const handleLogin = () => {
     router.push("/auth/login");
   };
+
+
+  // ====== 控制面板 =====
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const listener = (e) => {
+      if (e.key === "F2") {
+        e.preventDefault();
+        setOpen(true);
+      }
+    };
+    window.addEventListener("keydown", listener);
+    return () => window.removeEventListener("keydown", listener);
+  }, []);
 
   return (
     <div className="flex flex-col h-screen">
@@ -120,9 +124,18 @@ export default function Layout({ children }) {
         </div>
       </header>
       {/* 主內容區域 */}
+
       <main className={mainClass}>
         <ProtectedRoute>{children}</ProtectedRoute>
       </main>
+
+      <main className={mainClass}>{children}</main>
+
+      {/* 依照路由渲染不同面板 */}
+      {path.startsWith("/inbound") && (
+        <InboundManager isOpen={open} onClose={() => setOpen(false)} />
+      )}
+
     </div>
   );
 }

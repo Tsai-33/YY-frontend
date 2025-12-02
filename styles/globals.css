@@ -3,6 +3,9 @@
 :root {
   /* ==== 顏色管理 ==== */
   --gray: #727c88;
+  --gray-light :#D9D9D9;
+  --gray-deep:#878787;
+  
   --purple: #865281;
   --white: #f5f5f5;
   --black: #282828;
@@ -15,10 +18,13 @@
   --green-dark: #046a38;
   /* 深 */
   --green-vivid: #008b48;
+  --green-vivid-30: #008B484D;
+  --green-vivid-50: #008B4880;
   /* 鮮豔 */
   --green-fresh: #2da26a;
   /* 清新 */
   --green-pale: #c3ddd6;
+  --green-pale-80: #c3ddd6CC;
   /* 淺 */
 
   --green-teal: #288c71;

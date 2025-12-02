@@ -69,6 +69,7 @@ export default function Home() {
     }
     router.push("/workspace");
   };
+
   return (
     <div
       className="relative w-full h-full bg-[url(/common/background-home.svg)] bg-center bg-cover bg-no-repeat cursor-pointer"
@@ -81,6 +82,8 @@ export default function Home() {
           navigateToWorkspace();
         }
       }}
-      aria-label="點擊進入工作站"></div>
+      aria-label="點擊進入工作站"
+    ></div>
+    
   );
 }
