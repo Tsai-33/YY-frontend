@@ -1,27 +1,46 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { setCurrentJob } from "@/redux/reducer/reducerWorkStations";
+import {
+  setCurrentJob,
+  setCurrentStation,
+} from "@/redux/reducer/reducerWorkStations";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 export default function PageHeader({ title, backTo = "/", close }) {
   const dispatch = useDispatch();
+  const router = useRouter();
   const { currentStation, currentJob } = useSelector((s) => s.workstation);
 
+  const handleBack = () => {
+    dispatch(setCurrentJob(null));
+    router.push(backTo);
+  };
+
   return (
-    <div className="relative w-full flex items-center justify-between ps-4">
+    <div className="relative w-full flex items-center justify-between">
       {/* 左邊 */}
-      <div className="text-[length:var(--font-size-6xl)] font-bold text-[var(--green-deep)]">{`${currentJob}${currentStation || ""}`}</div>
+      <div className="text-[length:var(--font-size-6xl)] font-bold text-[var(--green-deep)]">
+        {router.pathname === "/stockQuery"
+          ? currentJob || ""
+          : `${currentJob || ""}${currentStation || ""}`}
+      </div>
 
       {/* 中間 */}
       <div className="absolute left-1/2 -translate-x-1/2">
-        <div className="flex justify-center font-bold text-black sm:text-[length:var(--font-size-4xl)]">{title}</div>
+        <div className="flex justify-center font-bold text-black sm:text-[length:var(--font-size-4xl)]">
+          {title}
+        </div>
       </div>
 
       {/* 右邊 */}
-      {!close && <Link href={backTo}>
-        <ActionBtn icon="icon-goback" text="返回" variant="darkBlue" onClick={() => dispatch(setCurrentJob(null))} />
-      </Link>}
+      <ActionBtn
+        icon="icon-goback"
+        text="返回"
+        variant="darkBlue"
+        onClick={handleBack}
+      />
     </div>
   );
 }
