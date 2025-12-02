@@ -21,8 +21,9 @@ export const getOutBoundExternalOrderDetail = (sale_no) =>
 
 /* 取得出庫單(領用) */
 
+/* 庫存查詢 */
+export const searchStock = (payload) => api.post("/stock/stockQuery", payload);
+
 /* 傳給labview */
 export const sendToWMS = (payload) =>
   api.post("/send-to-wms", payload, { timeout: 45000 });
-
-export const searchStock = (payload) => api.post("/stock/stockQuery", payload);

@@ -42,7 +42,7 @@ export const initWorkstation = (ip) => (dispatch) => {
         ip,
         stations: config.A.stations,
         jobs: config.A.jobs,
-        currentStation: "A01",
+        currentStation: null,
         currentJob: null,
       })
     );
@@ -61,7 +61,7 @@ export const initWorkstation = (ip) => (dispatch) => {
         ip,
         stations: config.B.stations[ip], // 每台電腦管自己的 station
         jobs: config.B.jobs,
-        currentStation: 'B01',
+        currentStation: null,
         currentJob: null,
       })
     );

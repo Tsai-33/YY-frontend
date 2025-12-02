@@ -8,6 +8,7 @@ export default function Inventory() {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
 
+  // 目前選擇的工作站
   const handleSwitchStation = (station) => {
     dispatch(setCurrentStation(station));
   };
