@@ -8,7 +8,7 @@ export default function TextInput({
   className,
 }) {
   return (
-    <div className={`flex items-center ${className || ""}`}>
+    <div className={`flex items-center gap-2 ${className || ""}`}>
       <label className="text-[24px] font-bold text-black">{label}</label>
       <input
         type={type}
