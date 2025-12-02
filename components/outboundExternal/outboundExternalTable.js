@@ -8,8 +8,8 @@ import { getOutBoundExternalOrderDetailByWID } from "@/pages/api";
 export default function OutboundExternalTable({ data, selectedArray, setSelectedArray }) {
     const dispatch = useDispatch();
     const { stations, currentStation } = useSelector((s) => s.workstation);
-    const currentStationSafe = currentStation || stations?.[0] || "B01"; // TODO
-    const { orderCode, step = 1, waveNo, shelfItem, selected } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
+    const currentStationSafe = currentStation || stations?.[0] || "";
+    const { orderCode, step, waveNo, shelfItem, selected } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
     const [detailTableData, setDetailTableData] = useState([]);
 
     // =============== 畫面一 ====================
@@ -56,9 +56,7 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
     }, [shelfItem]);
     const getList = async () => {
         try {
-            console.log('waveNo: ', waveNo)
             const res = await getOutBoundExternalOrderDetailByWID(waveNo);
-            console.log('getOutBoundExternalOrderDetailByWID:', res)
             if (res.data.success) {
                 const detail = res.data.data;
                 setDetailTableData(detail);

@@ -28,7 +28,7 @@ export const workstationConfig = {
       "172.168.1.67": ["B06", "B07", "B08", "B09", "B10"],
     },
     jobs: [
-      { key: "outbound", text: "出庫", path: "/outbound", icon: "" },
+      { key: "outboundExternal", text: "銷貨出庫", path: "/outboundExternal", icon: "" },
       { key: "inventory", text: "庫存查詢", path: "/inventory", icon: "" },
       { key: "sorting", text: "理貨", path: "/sorting", icon: "" },
     ],

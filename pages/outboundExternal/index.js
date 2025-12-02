@@ -13,6 +13,7 @@ import SchematicDiagram from "@/components/diagram/schematicDiagram";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "@/components/common/alert/alert";
+import { initWorkstation } from "@/redux/reducer/reducerWorkStations";
 
 export default function OutboundExternal() {
   const dispatch = useDispatch();
@@ -22,16 +23,23 @@ export default function OutboundExternal() {
   const [selectedArray, setSelectedArray] = useState([]);
   const [orderDetail, setOrderDetail] = useState([]);
 
+  // TODO 暫時不透過workspace進來
+  useEffect(() => {
+    if (!currentStation) {
+      dispatch(initWorkstation("172.16.11.75"));
+    }
+  }, [currentStation, dispatch]);
+  
   // 目前選擇的工作站
   const handleSwitchStation = (station) => {
     dispatch(setCurrentStation(station));
   };
 
   // 防止currentStation還沒好就使用會壞掉
-  const currentStationSafe = currentStation || stations?.[0] || "B01"; // TODO
+  const currentStationSafe = currentStation || stations?.[0] || "";
   // 避免同一張單被很多站使用
   const { orderList, lackStation } = useSelector((s) => s.outboundExternal);
-  const { step = 1, screen, orderCode, order, shelf, shelfItem } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
+  const { step, screen, orderCode, order, shelf, shelfItem } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
 
   // =====根據銷貨單取得細節=====
   useEffect(() => {
@@ -258,13 +266,16 @@ export default function OutboundExternal() {
       {/* 站點 */}
       <div className="w-full flex justify-between z-15">
         {stations.map((station, i) => (
-          <ActionBtn 
-            key={i} 
-            text={station} 
-            variant={lackStation?.includes(station) ? "orange" : "green"} 
-            disabled={currentStation === station ? true : false} 
-            onClick={() => handleSwitchStation(station)} 
-          />
+          <div key={i} className="flex-1">
+            <ActionBtn 
+              key={i} 
+              text={`站點${i + 1}`} 
+              variant={lackStation?.includes(station) ? "orange" : "green"} 
+              disabled={currentStation === station ? true : false} 
+              onClick={() => handleSwitchStation(station)} 
+              className="w-80 flex justify-center"
+            />
+          </div>
         ))}
       </div>
       {/* loading */}

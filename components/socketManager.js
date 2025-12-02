@@ -60,6 +60,7 @@ export default function SocketManager() {
           if (eventData?.PURPOSE === 0) {
             // 出庫
             dispatch(setOutboundExternal({ station: eventData.STATION, screen: "working", shelf: eventData, shelfItem: eventData?.ITEMS, step: 3 }));
+            // 理貨
           } else if (eventData?.PURPOSE === 1) {
             // 入庫
             dispatch(setInbound({ station: eventData.STATION, screen: "working", shelf: eventData, shelfItem: eventData?.ITEMS, step: 3 }));
