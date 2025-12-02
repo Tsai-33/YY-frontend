@@ -34,6 +34,8 @@ export const initWorkstation = (ip) => (dispatch) => {
 
   // --- A 區 (一台電腦，十個站台)
   if (config.A.computers.includes(ip)) {
+    const stations = config.A.stations;
+
     dispatch(
       setWorkstation({
         area: "A",
@@ -44,10 +46,15 @@ export const initWorkstation = (ip) => (dispatch) => {
         currentJob: null,
       })
     );
+
+    // ⬅️ 如果 currentStation 為 null，自動設定為 A01
+    dispatch(setCurrentStation(stations[0]));
     return { success: true };
   }
   // --- B 區 (兩台電腦，各管 5 個站)
   if (config.B.computers.includes(ip)) {
+    const stations = config.B.stations[ip];
+
     dispatch(
       setWorkstation({
         area: "B",
@@ -58,6 +65,8 @@ export const initWorkstation = (ip) => (dispatch) => {
         currentJob: null,
       })
     );
+    // ⬅️ 自動設定成 B01 或 B06（依據 IP）
+    dispatch(setCurrentStation(stations[0]));
     return { success: true };
   }
 

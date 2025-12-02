@@ -29,8 +29,9 @@ export const workstationConfig = {
     },
     jobs: [
       { key: "outbound", text: "出庫", path: "/outbound", icon: "" },
-      { key: "inventory", text: "庫存查詢", path: "/inventory", icon: "" },
+      { key: "stockQuery", text: "庫存查詢", path: "/stockQuery", icon: "" },
       { key: "sorting", text: "理貨", path: "/sorting", icon: "" },
+      { key: "inventory", text: "盤點", path: "/inventory", icon: "" },
     ],
   },
 };
