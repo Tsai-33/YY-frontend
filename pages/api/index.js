@@ -13,10 +13,13 @@ export const getInboundByWID = (id) => api.get(`/inbound/${id}`);
 
 /* 取得出庫單(銷貨) */
 export const getOutboundExternal = () => api.get("/outboundExternal/getOutBoundExternal");
-export const getOutBoundExternalOrderDetailBySaleNo = (sale_no) => api.get(`/outboundExternal/getOutBoundExternalOrderDetailBySaleNo`, {params: {sale_no}});
-export const getOutBoundExternalOrderDetailByWID = (w_id) => api.get(`/outboundExternal/getOutBoundExternalOrderDetailByWID`, {params: {w_id}});
+export const getOutBoundExternalOrderDetailBySaleNo = (sale_no) => api.get(`/outboundExternal/getOutBoundExternalOrderDetailBySaleNo`, { params: { sale_no } });
+export const getOutBoundExternalOrderDetailByWID = (w_id) => api.get(`/outboundExternal/getOutBoundExternalOrderDetailByWID`, { params: { w_id } });
 /* 取得出庫單(領用) */
 
+/* 理貨 */
+export const getShelfTransfer = () => api.get("/shelfTransfer/getShelfTransfer");
+export const getWMSBySaleNo = (sale_no) => api.get("/shelfTransfer/getWMSBySaleNo", { params: { sale_no } });
 
 /* 傳給labview */
 export const sendToWMS = (payload) => api.post("/send-to-wms", payload, { timeout: 45000 });

@@ -2,41 +2,135 @@ import Table from "@/components/common/table/table";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import InputFrame from "@/components/common/input/inputFrame";
 import PageTitle from "@/components/common/pageHeader/pageTitle";
-import { testTable, testShelve } from "./testData";
+import { useDispatch, useSelector } from "react-redux";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { getShelfTransfer, getWMSBySaleNo, sendToWMS } from "@/pages/api";
+import { generateRandomNumber } from "@/utils/random";
+import SchematicDiagram from "../diagram/schematicDiagram";
+import { setShelfTransfer } from "@/redux/reducer/reducerShelfTransfer";
+import { initWorkstation } from "@/redux/reducer/reducerWorkStations";
+import Alert from "../common/alert/alert";
 
 export default function ShelfTransferTable() {
+    const dispatch = useDispatch();
+    const { stations, currentStation } = useSelector((s) => s.workstation);
+
+    // TODO 暫時不透過workspace進來
+    useEffect(() => {
+        if (!currentStation) {
+            dispatch(initWorkstation("172.16.11.75"));
+        }
+    }, [currentStation, dispatch]);
+    const currentStationSafe = currentStation || stations?.[0] || "";
+    const { orderList, lackStation } = useSelector((s) => s.shelfTransfer);
+    const { step, screen, orderCode, order, selectedShelves } = useSelector(
+        (s) => s.shelfTransfer[currentStationSafe] || {}
+    );
+
     const headers = [
         { label: "", key: "checkbox", width: "10%" },
-        { label: "訂單單號", key: "orderNumber", width: "50%" },
-        { label: "配置貨架數量", key: "deploy", width: "30%" },
-        { label: "箱數", key: "box", width: "10%" },
+        { label: "訂單單號", key: "SALE_NO", width: "50%" },
+        { label: "配置貨架數量", key: "SHELVE_COUNT", width: "30%" },
+        { label: "箱數", key: "BOX_NO_SUM", width: "10%" },
     ];
+
+    // ===== 理貨單 =====
+    const [tableData, setTableData] = useState([]);
+    useEffect(() => {
+        fetchList();
+    }, []);
+    const fetchList = async () => {
+        try {
+            const res = await getShelfTransfer();
+            if (res.data.success) {
+                const detail = res.data.data;
+                setTableData(detail);
+            }
+        } catch (error) {
+            console.warn("getShelfTransfer: ", error);
+        }
+    }
+
+    // ===== 貨架內容 =====
+    const [shelveData, setShelveData] = useState([]);
+    const fetchShelveData = async (sale_no) => {
+        if (!sale_no) {
+            setShelveData([]);
+            return;
+        }
+        try {
+            const res = await getWMSBySaleNo(sale_no);
+            console.log('res: ', res)
+            if (res.data.success) {
+                const detail = res.data.data;
+                setShelveData(detail);
+            } else {
+                setShelveData([]);
+            }
+        } catch (error) {
+            console.warn("getWMSBySaleNo: ", error);
+        }
+    }
+
+    // ===== 根據相同的SHELVE_ID資料分組 =====
+    const groupedShelveData = useMemo(() => {
+        const grouped = {};
+        shelveData.forEach(item => {
+            const id = item.SHELVE_ID;
+            if (!grouped[id]) {
+                grouped[id] = {
+                    SHELVE_ID: id,
+                    STOCK_AREA: item.STOCK_AREA,
+                    SHELVE_TYPE: item.SHELVE_TYPE,
+                    items:[]
+                };
+            }
+            grouped[id].items.push(item);
+        });
+        return Object.values(grouped);
+    }, [shelveData]);
 
     // =====過濾Table選中的資料=====
     const [selectedOrder, setSelectedOrder] = useState(null);
-    const selectedShelveData = selectedOrder
-        ? testShelve.filter(item => item.orderNumber === selectedOrder.orderNumber)
-        : [];
+    // const selectedShelveData = selectedOrder
+    //     ? testShelve.filter(item => item.SALE_NO === selectedOrder.SALE_NO)
+    //     : [];
     const handleRowClick = (row) => {
-        setSelectedOrder(row);
-        setOrderInput(row.orderNumber);
+        setOrderInput(row.SALE_NO);
         setSelectedShelve([]);
+        fetchShelveData(row.SALE_NO);
+        dispatch(setShelfTransfer({
+            station: currentStationSafe,
+            orderCode: row.SALE_NO,
+            order: row,
+            waveNo: row.W_ID,
+            selectedShelves: [],
+            step: 1,
+        }));
     }
 
     // =====處理訂單單號Input=====
     const [orderInput, setOrderInput] = useState("");
+    useEffect(() => {
+        if (orderCode) {
+            setOrderInput(orderCode);
+        }
+        if (selectedShelves?.length > 0) {
+            setSelectedShelve(selectedShelves);
+        }
+    }, [orderCode, selectedShelves]);
     const handleInputChange = (e) => {
         const value = e.target.value;
         setOrderInput(value);
         // 匹配
-        const matchOrder = testTable.find(
-            item => item.orderNumber === value
+        const matchOrder = tableData.find(
+            item => item.SALE_NO === value
         );
 
         if (matchOrder) {
             setSelectedOrder(matchOrder);
+            fetchShelveData(matchOrder.SALE_NO);
         } else {
             setSelectedOrder(null);
         }
@@ -44,19 +138,73 @@ export default function ShelfTransferTable() {
 
     // =====處理右側貨架點擊=====
     const [selectedShelve, setSelectedShelve] = useState([]);
-    const handleShelveClick = (shelve) => {
-        setSelectedShelve(prev => {
-            const isAlreadySelected = prev.some(s => s.shelve_Id === shelve.shelve_Id);
-            // 選中->移除
-            if (isAlreadySelected) {
-                return prev.filter(s => s.shelve_Id !== shelve.shelve_Id);
-            }
-            // 未選->加入
-            else {
-                return [...prev, shelve];
-            }
-        })
+    const handleShelveClick = (shelveGroup) => {
+        const shelveId = shelveGroup.SHELVE_ID;
+        const newSelected = selectedShelve.includes(shelveId)
+            ? selectedShelve.filter(id => id !== shelveId)
+            : [...selectedShelve, shelveId];
+        setSelectedShelve(newSelected);
+        dispatch(setShelfTransfer({
+            station: currentStationSafe,
+            selectedShelves: newSelected,
+        }));
     }
+
+    // 確定按鈕叫車 TODO 要改成直接寫入資料庫
+    const handleConfirm = async () => {
+        console.log('selectedShelve: ', selectedShelve)
+        if (selectedShelve.length < 2 || selectedShelve.length > 5) {
+            Alert({text: "請選擇2~5個貨架"});
+            return;
+        }
+        try {
+            console.log("AAAAAAAAAAAAAAA")
+            // const dataId = generateRandomNumber();
+            // const data = {
+            //     action: "wcstask",
+            //     dataid: dataId,
+            //     command: "MOVE",
+            //     wave_no: String(order?.W_ID),
+            //     FACE: 2,
+            //     STATION: "",
+            //     PURPOSE: 0
+            // }
+            // const res = await sendToWMS(data);
+            // if (res.data.success && !res.data.data?.error) {
+            //     let lack_station = res.data.data.message2 || [];
+            //     if (!Array.isArray(lack_station)) {
+            //         try {
+            //             lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
+            //         } catch (error) {
+            //             lack_station = [];
+            //         }
+            //     }
+
+            //     // 把各站點設成 loading
+            //     if (lack_station.length > 0) {
+            //         lack_station.forEach((station) => {
+            //             dispatch(setShelfTransfer({
+            //                 station: station,
+            //                 screen: "loading",
+            //                 orderCode: orderInput,
+            //                 orderList: orderInput,
+            //                 waveNo: order?.W_ID,
+            //                 order: order,
+            //                 selectedShelves: selectedShelve,
+            //                 lackStation: station,
+            //             }));
+            //         });
+            //     }
+
+            //     // 從清單移除已選訂單
+            //     setTableData((prev) => prev.filter((v) => v.SALE_NO !== orderInput));
+            // }
+        } catch (error) {
+            console.warn("handleConfirm:", error);
+        }
+    }
+
+
     // 檢查是否可以按確定(至少2個最多5個)
     const canConfirm = selectedShelve.length >= 2 && selectedShelve.length <= 5;
     
@@ -81,9 +229,9 @@ export default function ShelfTransferTable() {
                             type="checkbox"
                             name="shelfTransferList"
                             headers={headers}
-                            data={testTable}
+                            data={tableData}
                             needInput={true}
-                            idKey="orderNumber"
+                            idKey="SALE_NO"
                             height="76vh"
                             checked={selectedOrder}
                             onChange={handleRowClick}
@@ -107,84 +255,88 @@ export default function ShelfTransferTable() {
                             </div>
                         </div>
                         <div className="bg-gray-50 rounded-lg p-6 flex flex-col h-[70vh]">
-                            {selectedOrder && selectedShelveData.length > 0 ? (
+                            {selectedOrder && groupedShelveData.length > 0 ? (
                                 <>
                                     <div className="flex-1 overflow-auto space-y-6 mb-6">
-                                        {console.log('selectedShelveData: ', selectedShelveData)}
-                                        {selectedShelveData.map((shelve, index) => {
-                                            const isSelected = selectedShelve.some(s => s.shelve_Id === shelve.shelve_Id);
+                                        {groupedShelveData.map((shelveGroup, index) => {
+                                            const isSelected = selectedShelve.includes(shelveGroup.SHELVE_ID);
                                             return (
-                                                <button
-                                                    key={index}
-                                                    onClick={() => handleShelveClick(shelve)}
+                                                <div
+                                                    key={shelveGroup.SHELVE_ID}
+                                                    onClick={() => handleShelveClick(shelveGroup)}
                                                     className={`
-                                                        w-full bg-[#DCB692] rounded-lg p-6 shadow-md 
-                                                        relative transition-all
+                                                        cursor-pointer transition-all
                                                         ${isSelected 
-                                                            ? 'ring-4 ring-green-500 ring-offset-4' 
+                                                            ? 'ring-4 ring-green-500 ring-offset-4 rounded-3xl' 
                                                             : 'hover:shadow-lg'
                                                         }
                                                     `}
                                                 >
-                                                    {/* 貨架、庫別 */}
-                                                    <div className="flex justify-between items-center mb-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="text-2xl font-bold">
-                                                                貨架編號：{shelve.shelve_Id}
-                                                            </div>
-                                                            {/* 打勾 */}
-                                                            {isSelected && (
-                                                                <div className="bg-green-500 rounded-full w-8 h-8 flex items-center justify-center">
-                                                                    <svg 
-                                                                        className="w-5 h-5 text-white" 
-                                                                        fill="none" 
-                                                                        stroke="currentColor" 
-                                                                        viewBox="0 0 24 24"
-                                                                    >
-                                                                        <path 
-                                                                            strokeLinecap="round" 
-                                                                            strokeLinejoin="round" 
-                                                                            strokeWidth={3} 
-                                                                            d="M5 13l4 4L19 7" 
-                                                                        />
-                                                                    </svg>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="text-2xl font-bold">
-                                                            入庫庫別：{shelve.stock}
-                                                        </div>
-                                                    </div>
-                                                    {/* 產品品號、棧板規格 */}
-                                                    <div className="flex justify-between items-center mb-4">
-                                                        <div className="text-2xl font-bold">
-                                                            產品品號：{shelve.material}
-                                                        </div>
-                                                        <div className="text-2xl font-bold">
-                                                            棧板規格：{shelve.stock_class}
-                                                        </div>
-                                                    </div>
-                                                    {/* 品名、配置貨架數 */}
-                                                    <div className="flex justify-between items-center mb-4">
-                                                        <div className="text-2xl font-bold">
-                                                            品名：{shelve.materialSpec}
-                                                        </div>
-                                                    </div>
-                                                    {/* 箱數、包數、進度 */}
-                                                    <div className="flex justify-between items-center mb-4">
+                                                    <SchematicDiagram>
+                                                        {/* 貨架、庫別 */}
                                                         <div className="flex justify-between items-center mb-4">
-                                                            <div className="text-2xl font-bold mr-12">
-                                                                箱數：{shelve.box}
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="text-2xl font-bold">
+                                                                    貨架編號：{shelveGroup.SHELVE_ID}
+                                                                </div>
+                                                                {/* 打勾 */}
+                                                                {isSelected && (
+                                                                    <div className="bg-green-500 rounded-full w-8 h-8 flex items-center justify-center">
+                                                                        <svg 
+                                                                            className="w-5 h-5 text-white" 
+                                                                            fill="none" 
+                                                                            stroke="currentColor" 
+                                                                            viewBox="0 0 24 24"
+                                                                        >
+                                                                            <path 
+                                                                                strokeLinecap="round" 
+                                                                                strokeLinejoin="round" 
+                                                                                strokeWidth={3} 
+                                                                                d="M5 13l4 4L19 7" 
+                                                                            />
+                                                                        </svg>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                             <div className="text-2xl font-bold">
-                                                                包數：{shelve.bag}包
+                                                                入庫庫別：{shelveGroup.STOCK_AREA}
                                                             </div>
                                                         </div>
-                                                        <div className="text-2xl font-bold">
-                                                            {index + 1}/{selectedShelveData.length}
+
+                                                        {/* 該貨架的所有產品 */}
+                                                        {shelveGroup.items.map((item, itemIndex) => (
+                                                            <div key={itemIndex} className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0">
+                                                                {/* 產品品號、棧板規格 */}
+                                                                <div className="flex justify-between items-center mb-2">
+                                                                    <div className="text-2xl font-bold">
+                                                                        產品品號：{item.PRT_NO}
+                                                                    </div>
+                                                                    <div className="text-2xl font-bold">
+                                                                        棧板規格：{item.SHELVE_TYPE}
+                                                                    </div>
+                                                                </div>
+                                                                {/* 品名 */}
+                                                                <div className="text-2xl font-bold mb-2">
+                                                                    品名：{item.PRT_NAME}
+                                                                </div>
+                                                                {/* 箱數、包數 */}
+                                                                <div className="flex gap-12">
+                                                                    <div className="text-2xl font-bold">
+                                                                        箱數：{item.BOX_NO} 箱
+                                                                    </div>
+                                                                    <div className="text-2xl font-bold">
+                                                                        包數：{item.BOX_PACK} 包
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+
+                                                        {/* 進度 */}
+                                                        <div className="text-2xl font-bold text-right mt-4">
+                                                            {index + 1}/{groupedShelveData.length}
                                                         </div>
-                                                    </div>
-                                                </button>
+                                                    </SchematicDiagram>
+                                                </div>
                                             );
                                         })}
                                     </div>
@@ -196,7 +348,7 @@ export default function ShelfTransferTable() {
                             )}
                             {/* 確定按鈕 */}
                             <div className="mt-auto flex items-center justify-center">
-                                <ActionBtn icon="icon-check" text="確定" variant="orange" disabled={!canConfirm}/>
+                                <ActionBtn icon="icon-check" text="確定" variant="orange" disabled={!canConfirm} onClick={handleConfirm}/>
                             </div>
                         </div>
                     </div>

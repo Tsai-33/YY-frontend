@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import { setInbound } from "@/redux/reducer/reducerInbound";
 import { setTransfer } from "@/redux/reducer/reducerTransfer";
 import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
+import { setShelfTransfer } from "@/redux/reducer/reducerShelfTransfer";
 
 export default function SocketManager() {
   const dispatch = useDispatch();
@@ -61,6 +62,7 @@ export default function SocketManager() {
             // 出庫
             dispatch(setOutboundExternal({ station: eventData.STATION, screen: "working", shelf: eventData, shelfItem: eventData?.ITEMS, step: 3 }));
             // 理貨
+            dispatch(setShelfTransfer({ station: eventData.STATION, screen: "working", shelf: eventData, shelfItem: eventData?.ITEMS, step: 3 }));
           } else if (eventData?.PURPOSE === 1) {
             // 入庫
             dispatch(setInbound({ station: eventData.STATION, screen: "working", shelf: eventData, shelfItem: eventData?.ITEMS, step: 3 }));
