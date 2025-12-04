@@ -4,8 +4,8 @@ import ActionBtn from "@/components/common/btns/actionBtn";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
 import InputFrame from "@/components/common/input/inputFrame";
 import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
-import { setInbound } from "@/redux/reducer/reducerInbound";
-import { getInbound, sendToWMS, updateShelfItemAPI } from "../api";
+import { resetInbound, setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
+import { getInbound, finishInboundOrder, sendToWMS, updateInboundWMS, addShelf, cancelShelf, addInboundWCS } from "../api";
 import SchematicDiagram from "../../components/diagram/schematicDiagram";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import InboundTable from "@/components/inbound/inboundTable";
@@ -19,7 +19,8 @@ export default function Inbound() {
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const [loading, setLoading] = useState(false);
   const [tableData, setTableData] = useState([]); // 入庫單資訊
-  const [newItem, setNewItem] = useState([]);
+  const [tableData2, setTableData2] = useState([]); // 入庫單上的明細
+
   // 目前選擇的工作站
   const handleSwitchStation = (station) => {
     dispatch(setCurrentStation(station));
@@ -70,7 +71,7 @@ export default function Inbound() {
             dispatch(setInbound({ station: station, screen: "loading", orderCode: orderCode, waveNo: order.W_ID, order: order, orderList: orderCode, lackStation: station }));
           });
         }
-        setTableData((prev) => prev.filter((v) => v.INSTOCK_NO !== orderCode)); // 把已選定單排除
+        setTableData((prev) => prev.filter((v) => v.INSTOCK_NO !== orderCode && v.STATUS == 0)); // 把已選定單排除
       }
     } catch (err) {
       console.warn("handleConfrim :", err);
@@ -92,24 +93,45 @@ export default function Inbound() {
 
     try {
       // 傳給WMS
-      const res = await updateShelfItemAPI(selected);
+      const data = { itemArray: selected, area: shelf.area, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO };
+      const res = await updateInboundWMS(data);
       if (res.data.success) {
-        console.log(res.data, "wcstask收到資料");
+        let newShelf = shelfItem.map((s) => ({ ...s })); // ⬅ 防止 freeze
+
+        selected.forEach((v) => {
+          const index = newShelf.findIndex((s) => s.PRT_NO === v.PRT_NO);
+
+          if (index !== -1) {
+            // 建立新物件覆蓋，不 mutate 舊物件
+            newShelf[index] = {
+              ...newShelf[index],
+              PP_NO: (Number(newShelf[index].PP_NO) || 0) + (Number(v.PP_NO) || 0),
+              BOX_NO: (Number(newShelf[index].BOX_NO) || 0) + (Number(v.BOX_NO) || 0),
+            };
+          } else {
+            // 新增也要建立副本
+            newShelf.push({ ...v });
+          }
+        });
+
+        dispatch(updateShelfItem({ station: currentStation, items: newShelf }));
+
+        setTableData2((prev) => {
+          return prev.filter((row) => !selected.some((v) => v.INSTOCK_NO === row.INSTOCK_NO));
+        });
       }
     } catch (err) {
       console.warn("handleConfrimShelf :", err);
     } finally {
       setLoading(false);
+      dispatch(setInbound({ station: currentStation, selected: [] }));
     }
   };
   // 新增貨架
   const handleAddShelf = async () => {
     setLoading(true);
     try {
-      // 傳給WMS
-      const random9 = generateRandomNumber();
-      const data = { action: "wcstask", dataid: random9, command: "XFER", SHELVE_ID: shelf?.SHELVE_ID, FACE: 2, STATION: currentStation, PURPOSE: 1 };
-      const res = await sendToWMS(data);
+      const res = await addInboundWCS({ area: shelf?.area, W_ID: order?.W_ID });
       if (res.data.success) {
         console.log(res.data, "wcstask收到資料");
       }
@@ -125,14 +147,18 @@ export default function Inbound() {
       Alert({ text: "抓不到站點位置" });
       return;
     }
+    if (tableData2.length <= 0) {
+      Alert({ title:"入庫單完成",text: `此入庫單已經完成，請選擇「 入庫單完成 」。` });
+      return;
+    }
     setLoading(true);
     try {
       // 傳給WMS
       const random9 = generateRandomNumber();
-      const data = { action: "wcstask", dataid: random9, command: "RETURN", SHELVE_ID: shelf?.SHELVE_ID, FACE: 2, STATION: currentStation, PURPOSE: 1 };
-      const res = await sendToWMS(data);
+      const data = { Command: "RETURN", SHELVE_ID: shelf?.SHELVE_ID, BAR_CODE: "", FACE: 2, STATION: "", PURPOSE: 1, STATUS: 0, CART_ID: "", DATA_ID: random9, WAVENO: String(order.W_ID), GGROUP: String(order.W_ID) };
+      const res = await addShelf(data);
       if (res.data.success) {
-        console.log(res.data, "wcstask收到資料");
+        dispatch(resetInbound({ type: "one", station: currentStation }));
       }
     } catch (err) {
       console.warn("handleReturnShelf :", err);
@@ -159,6 +185,23 @@ export default function Inbound() {
     }
   };
 
+  // =============== 訂單完成 ===============
+  const handlefinishInboundOrder = async () => {
+    setLoading(true);
+    try {
+      const res = await finishInboundOrder({ W_ID: order.W_ID });
+      if (res.data.success) {
+        console.log(res.data.data,'tttttttt')
+        dispatch(resetInbound({ type: "wave", W_ID: res.data.data }));
+        Alert({ title: "此單已完成" });
+      }
+    } catch (err) {
+      console.warn(`handlefinishInboundOrder :`, err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       {/* 頂部區域 */}
@@ -172,11 +215,14 @@ export default function Inbound() {
         {/* 左側 */}
         <div className="w-3/7">
           {step > 2 && (
-            <div className="flex  font-bold text-black space-x-4 p-4">
-              <div className="flex flex-1 items-center">建議入倉總包數：2200包(8箱)</div>
+            <div className="flex  font-bold text-black space-x-4 p-2">
+              <div className="flex flex-1 items-center">
+                建議入倉總包數：{shelf?.EstPP}包({shelf?.EstBoxes}箱)
+              </div>
+              <ActionBtn text="入庫單完成" variant="green" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handlefinishInboundOrder} />
             </div>
           )}
-          <InboundTable data={tableData} newItem={newItem} setNewItem={setNewItem} />
+          <InboundTable data={tableData} data2={tableData2} setData2={setTableData2} />
         </div>
         {/* 右側 */}
         <div className="w-4/7 font-bold text-black p-4 flex flex-col">
@@ -224,7 +270,7 @@ export default function Inbound() {
                     <div className="flex flex-col">
                       <div className="flex justify-between">
                         <div>貨架編號: {shelf?.SHELVE_ID}</div>
-                        <div>入庫庫別: {shelf?.ITEMS[0]?.STOCK_AREA}</div>
+                        <div>入庫庫別: {shelf?.area}</div>
                       </div>
 
                       {(() => {

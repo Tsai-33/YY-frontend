@@ -47,7 +47,7 @@ export default function TableAll({ headers = [], data = [], type, name, onChange
               {headers.map((header, idx) => {
                 if (idx === 0) {
                   return (
-                    <th className="border border-white relative">
+                    <th key={idx} className="border border-white relative">
                       <div className="w-5 h-5 border bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
                       <label className="relative w-10 h-10 mx-auto cursor-pointer">
                         <input type={type} name={name ? name : "all"} className="peer absolute w-0 h-0" onChange={() => onChangeAll(data, idKey)} ref={selectAllRef} />
@@ -82,7 +82,7 @@ export default function TableAll({ headers = [], data = [], type, name, onChange
                   {headers.map((header, i) => {
                     if (i === 0) {
                       return (
-                        <td>
+                        <td key={i}>
                           <label className="relative cursor-pointer flex items-center justify-center">
                             {/* 隱藏 checkbox */}
                             <input type={type} name={name ? name : "option"} className="peer absolute w-6 h-6 opacity-0 cursor-pointer z-10" checked={isRowChecked(row)} onChange={() => onChange("checkbox", row, idKey)} />

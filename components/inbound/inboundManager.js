@@ -3,7 +3,7 @@ import { managerInbound, resetInbound, updateLackStation, updateOrderList } from
 
 import Alert from "../common/alert/alert";
 import { useEffect, useState } from "react";
-import { getInbound, getInboundALL } from "@/pages/api";
+import { getInbound, getInboundByCMDID } from "@/pages/api";
 
 export default function InboundManager({ isOpen, onClose }) {
   const dispatch = useDispatch();
@@ -58,9 +58,15 @@ export default function InboundManager({ isOpen, onClose }) {
     getInboundData();
   }, []);
   const getInboundData = async () => {
-    const res = await getInboundALL();
-    if (res.data.success) {
-      setAllOrderList(res.data.data);
+    try {
+      const res = await getInboundByCMDID();
+      if (res.data.success) {
+        setAllOrderList(res.data.data);
+      }
+    } catch (err) {
+      Alert({ title: "網路不穩定，請稍後在試！" });
+      console.warn(`getInboundData :`, err);
+    } finally {
     }
   };
 
@@ -107,7 +113,7 @@ export default function InboundManager({ isOpen, onClose }) {
             <div className="text-lg font-bold flex items-center">
               <div>忙線站點：</div>
               <div className="flex">
-                <select name="station" value={s} className="px-4 py-1 border border-gray-300 rounded-md shadow-sm" onChange={(e) => setS(e.target.value)}>
+                <select name="station" value={s || ''} className="px-4 py-1 border border-gray-300 rounded-md shadow-sm" onChange={(e) => setS(e.target.value)}>
                   <option value="A01">A01</option>
                   <option value="A02">A02</option>
                   <option value="A03">A03</option>
@@ -150,7 +156,7 @@ export default function InboundManager({ isOpen, onClose }) {
             <div className="text-lg font-bold flex items-center">
               <div>排除訂單：</div>
               <div className="flex">
-                <select name="station" value={o} className="px-4 py-1 border border-gray-300 rounded-md shadow-sm" onChange={(e) => setO(e.target.value)}>
+                <select name="station" value={o || ''} className="px-4 py-1 border border-gray-300 rounded-md shadow-sm" onChange={(e) => setO(e.target.value)}>
                   {allOrderList.map((v, i) => (
                     <option key={i} value={v.INSTOCK_NO}>
                       {v.INSTOCK_NO}

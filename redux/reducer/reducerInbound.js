@@ -1,4 +1,3 @@
-import { updateShelfItemAPI } from "@/pages/api";
 import { createSlice } from "@reduxjs/toolkit";
 
 const stationList = ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"];
@@ -65,16 +64,8 @@ const inboundSlice = createSlice({
       }
     },
     updateShelfItem: (state, action) => {
-      const { type, items } = action.payload;
-      if (type === "all") {
-        // 全選
-      } else if (type === "noAll") {
-        // 全不選
-      } else if (type === "add") {
-        // 加1
-      } else if (type === "sub") {
-        //減1
-      }
+      const { station, items } = action.payload;
+      state[station].shelfItem = items;
     },
 
     // 控制面板
@@ -90,11 +81,35 @@ const inboundSlice = createSlice({
     },
     // 重置
     resetInbound: (state, action) => {
-      const { type, station } = action.payload;
+      const { type, station, W_ID } = action.payload;
       if (type === "one") {
-        state[station] = createStation();
+          state[station].screen = 'loading'
+  
       } else if (type === "all") {
         return initialState;
+      } else if (type === "wave") {
+        // 1️⃣ 先清除 lackStation 中跟這個 wave 有關的 stationId
+        if (Array.isArray(state.lackStation)) {
+          state.lackStation = state.lackStation.filter((stationId) => {
+            const s = state[stationId];
+            return !(s && s.waveNo === W_ID);
+          });
+        }
+
+        // 2️⃣ 先清除 orderList 中跟這個 wave 有關的訂單
+        if (Array.isArray(state.orderList)) {
+          state.orderList = state.orderList.filter((orderId) => {
+            return !Object.values(state).some((s) => s.waveNo === W_ID && s.order?.orderCode === orderId);
+          });
+        }
+
+        // 3️⃣ 再重置 waveNo === W_ID 的 station
+        Object.keys(state).forEach((key) => {
+          const s = state[key];
+          if (s && typeof s === "object" && "waveNo" in s && s.waveNo === W_ID) {
+            state[key] = createStation();
+          }
+        });
       }
     },
   },
