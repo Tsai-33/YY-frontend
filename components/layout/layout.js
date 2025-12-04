@@ -30,7 +30,7 @@ const LOGO_PATH = "/common/YY-Logo.svg";
 export default function Layout({ children }) {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { isAuthenticated, userName } = useSelector((state) => state.user);
+  const { isAuthenticated, userName, userRole } = useSelector((state) => state.user);
 
   const path = router.pathname;
 
@@ -90,21 +90,23 @@ export default function Layout({ children }) {
           {isAuthenticated ? (
             <>
               {userName && (() => {
-                const role = typeof window !== "undefined" ? localStorage.getItem('role') : null;
+                const role = userRole;
+                console.log("role", role);
                 if (role !== "user") {
                   return (
                     <Link href="/usermanage">
-                      <span className="text-gray-700 font-medium  cursor-pointer hover:underline">
+                      <span className="text-gray-700 font-medium cursor-pointer hover:underline">
                       <i className="icon-user"></i>{userName}
                       </span>
                     </Link>
                   );
+                }else{
+                  return (
+                    <span className="text-gray-700 font-medium">
+                      <i className="icon-user "></i>{userName}
+                    </span>
+                  );  
                 }
-                return (
-                  <span className="text-gray-700 font-medium text-2xl">
-                    <i className="icon-user "></i> {userName}
-                  </span>
-                );
               })()}
               <button
                 onClick={handleLogout}
@@ -124,12 +126,9 @@ export default function Layout({ children }) {
         </div>
       </header>
       {/* 主內容區域 */}
-
       <main className={mainClass}>
         <ProtectedRoute>{children}</ProtectedRoute>
       </main>
-
-      <main className={mainClass}>{children}</main>
 
       {/* 依照路由渲染不同面板 */}
       {path.startsWith("/inbound") && (

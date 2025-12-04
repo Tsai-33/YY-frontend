@@ -13,7 +13,6 @@ import Modal from "@/components/common/modal/modal";
 import InputFrame from "@/components/common/input/inputFrame";
 import Loading from "@/components/common/loading/loading";
 import Alert from "@/components/common/alert/alert";
-import { withAuth } from "@/components/common/ProtectedRoute";
 
 function UserManage() {
   const router = useRouter();
@@ -26,24 +25,35 @@ function UserManage() {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 新用户表单
+  // 權限映射 (英文 -> 中文顯示)
+  const PERMISSION_MAP = {
+    inbound: "入倉",
+    transfer: "調撥",
+    outboundExternal: "銷貨",
+    shelfTransfer: "理貨",
+    stockQuery: "庫存查詢",
+    inventory: "盤點",
+    outboundInternal: "領用",
+  };
+
+  // 新用户表单 (使用英文權限名稱)
   const [newUser, setNewUser] = useState({
     username: "",
     email: "",
     accountNumber: "",
     role: "user",
     permissions: {
-      入庫: false,
-      調撥: false,
-      銷貨: false,
-      理貨: false,
-      庫存查詢: false,
-      盤點: false,
-      領出: false,
+      inbound: false,
+      transfer: false,
+      outboundExternal: false,
+      shelfTransfer: false,
+      stockQuery: false,
+      inventory: false,
+      outboundInternal: false,
     },
   });
 
-  // 编辑用户表单
+  // 编辑用户表单 (使用英文權限名稱)
   const [editingUser, setEditingUser] = useState({
     userId: null,
     username: "",
@@ -51,13 +61,13 @@ function UserManage() {
     accountNumber: "",
     role: "user",
     permissions: {
-      入庫: false,
-      調撥: false,
-      銷貨: false,
-      理貨: false,
-      庫存查詢: false,
-      盤點: false,
-      領出: false,
+      inbound: false,
+      transfer: false,
+      outboundExternal: false,
+      shelfTransfer: false,
+      stockQuery: false,
+      inventory: false,
+      outboundInternal: false,
     },
   });
 
@@ -68,23 +78,7 @@ function UserManage() {
       router.push("/auth/login");
       return;
     }
-    
-    // 如果已登錄但不是admin，顯示權限不足並重定向
-    if (userRole !== "admin") {
-      Alert({
-        title: "權限不足",
-        text: "您沒有權限訪問此頁面",
-        confirmButtonColor: "#b32627",
-        onConfirm: () => {
-          router.push("/workspace");
-        },
-      });
-      // 即使alert chưa confirm，也重定向
-      router.push("/workspace");
-    } else {
-      // 只有admin才能fetch users
-      fetchUsers();
-    }
+    fetchUsers();
   }, [userRole, isAuthenticated, router]);
 
   // 获取用户列表
@@ -147,17 +141,30 @@ function UserManage() {
     }));
   };
 
+  // 權限名稱映射 (中文 -> 英文)
+  const PERMISSION_CN_TO_EN = {
+    "入庫": "inbound",
+    "入倉": "inbound",
+    "調撥": "transfer",
+    "銷貨": "outboundExternal",
+    "理貨": "shelfTransfer",
+    "庫存查詢": "stockQuery",
+    "盤點": "inventory",
+    "領出": "outboundInternal",
+    "領用": "outboundInternal",
+  };
+
   // 打开编辑模态框并加载用户数据
   const handleEditUser = (user) => {
-    // 解析权限 (如果权限是字符串JSON)
+    // 解析权限 (如果权限是字符串JSON) - 轉換為英文權限名稱
     let permissions = {
-      入庫: false,
-      調撥: false,
-      銷貨: false,
-      理貨: false,
-      庫存查詢: false,
-      盤點: false,
-      領出: false,
+      inbound: false,
+      transfer: false,
+      outboundExternal: false,
+      shelfTransfer: false,
+      stockQuery: false,
+      inventory: false,
+      outboundInternal: false,
     };
     
     try {
@@ -165,11 +172,17 @@ function UserManage() {
         const parsedPermissions = typeof user.Permissions === 'string' 
           ? JSON.parse(user.Permissions) 
           : user.Permissions;
-        const mappedPermissions = {};
-        Object.keys(permissions).forEach(key => {
-          mappedPermissions[key] = parsedPermissions[key];
+        
+        // 轉換中文權限名稱為英文
+        Object.keys(parsedPermissions).forEach(cnKey => {
+          const enKey = PERMISSION_CN_TO_EN[cnKey] || cnKey;
+          if (permissions.hasOwnProperty(enKey)) {
+            permissions[enKey] = parsedPermissions[cnKey];
+          } else if (permissions.hasOwnProperty(cnKey)) {
+            // 如果已經是英文，直接使用
+            permissions[cnKey] = parsedPermissions[cnKey];
+          }
         });
-        permissions = { ...permissions, ...mappedPermissions };
       }
     } catch (e) {
       console.warn("解析權限失敗:", e);
@@ -240,13 +253,13 @@ function UserManage() {
           accountNumber: "",
           role: "user",
           permissions: {
-            入庫: false,
-            調撥: false,
-            銷貨: false,
-            理貨: false,
-            庫存查詢: false,
-            盤點: false,
-            領出: false,
+            inbound: false,
+            transfer: false,
+            outboundExternal: false,
+            shelfTransfer: false,
+            stockQuery: false,
+            inventory: false,
+            outboundInternal: false,
           },
         });
 
@@ -318,13 +331,13 @@ function UserManage() {
           accountNumber: "",
           role: "user",
           permissions: {
-            入庫: false,
-            調撥: false,
-            銷貨: false,
-            理貨: false,
-            庫存查詢: false,
-            盤點: false,
-            領出: false,
+            inbound: false,
+            transfer: false,
+            outboundExternal: false,
+            shelfTransfer: false,
+            stockQuery: false,
+            inventory: false,
+            outboundInternal: false,
           },
         });
 
@@ -419,11 +432,6 @@ function UserManage() {
       user.Email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.AccountNumber?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  // 如果未登錄或不是admin，不渲染內容 (等待redirect)
-  if (!isAuthenticated || userRole !== "admin") {
-    return <Loading />;
-  }
 
   return (
     <>
@@ -622,7 +630,7 @@ function UserManage() {
                       onChange={() => handlePermissionChange(permission)}
                       className="w-5 h-5"
                     />
-                    <span className="text-lg">{permission}</span>
+                    <span className="text-lg">{PERMISSION_MAP[permission] || permission}</span>
                   </label>
                 ))}
               </div>
@@ -716,7 +724,7 @@ function UserManage() {
                       onChange={() => handleEditPermissionChange(permission)}
                       className="w-5 h-5"
                     />
-                    <span className="text-lg">{permission}</span>
+                    <span className="text-lg">{PERMISSION_MAP[permission] || permission}</span>
                   </label>
                 ))}
               </div>
@@ -728,6 +736,6 @@ function UserManage() {
   );
 }
 
-// 使用 withAuth HOC 保护页面（仅管理员可访问）
-export default withAuth(UserManage);
+
+export default UserManage;
 
