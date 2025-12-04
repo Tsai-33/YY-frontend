@@ -54,8 +54,8 @@ export default function Table({ headers = [], data = [], type, name, onChange, c
           <table className="table-auto w-full text-black font-bold">
             <tbody className="h-100 overflow-y-scroll scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200 ">
               {data.map((row, idx) => (
-                <tr key={idx}>
-                  <td className={`px-4 py-2 text-center border-b border-[var(--green-vivid)] text-center`} style={{ width: headers[0].width }}>
+                <tr key={idx} className={`px-4 py-2 text-center border-b border-[var(--green-vivid)] text-center`} style={{ width: headers[0].width }}>
+                  <td>
                     <label className="relative cursor-pointer flex items-center justify-center">
                       {/* 隱藏 checkbox */}
                       <input type={type} name={name ? name : "option"} className="peer absolute w-6 h-6 opacity-0 cursor-pointer z-10" checked={isRowChecked(row)} onChange={() => onChange('checkbox', row, idKey)} />
