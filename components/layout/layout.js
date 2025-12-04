@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import Link from "next/link";
 import ActionBtn from "../common/btns/actionBtn";
 import InboundManager from "../inbound/inboundManager";
+import OutboundExternalManager from "../outboundExternal/outboundExternalManager";
 
 // 控制面板
 
@@ -63,6 +64,9 @@ export default function Layout({ children }) {
       {/* 依照路由渲染不同面板 */}
       {path.startsWith("/inbound") && (
         <InboundManager isOpen={open} onClose={() => setOpen(false)} />
+      )}
+      {path.startsWith("/outboundExternal") && (
+        <OutboundExternalManager isOpen={open} onClose={() => setOpen(false)} />
       )}
     </div>
   );

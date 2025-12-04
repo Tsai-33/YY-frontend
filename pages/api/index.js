@@ -18,11 +18,26 @@ export const getOutBoundExternalOrderDetail = (sale_no) =>
   api.get(`/outboundExternal/getOutBoundExternalOrderDetail`, {
     params: { sale_no },
   });
+export const getOutBoundExternalOrderDetailBySaleNo = (sale_no) => 
+    api.get(`/outboundExternal/getOutBoundExternalOrderDetailBySaleNo`, { 
+        params: { sale_no } 
+    });
+export const getOutBoundExternalOrderDetailByWID = (w_id) => 
+    api.get(`/outboundExternal/getOutBoundExternalOrderDetailByWID`, { 
+        params: { w_id } 
+    });
 
 /* 取得出庫單(領用) */
 
 /* 庫存查詢 */
 export const searchStock = (payload) => api.post("/stock/stockQuery", payload);
+
+
+/* 理貨 */
+export const getShelfTransfer = () => api.get("/shelfTransfer/getShelfTransfer");
+export const getWMSBySaleNo = (sale_no) => api.get("/shelfTransfer/getWMSBySaleNo", { params: { sale_no } });
+export const insertShelfTask = (data) => api.post("/shelfTransfer/insertShelfTask", data);
+export const updateTransferItems = (data) => api.post("/shelfTransfer/updateTransferItems", data);
 
 /* 傳給labview */
 export const sendToWMS = (payload) =>

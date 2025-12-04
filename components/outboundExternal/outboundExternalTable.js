@@ -1,14 +1,15 @@
 import Table from "@/components/common/table/table";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
+import { getOutBoundExternalOrderDetailByWID } from "@/pages/api";
 
 export default function OutboundExternalTable({ data, selectedArray, setSelectedArray }) {
     const dispatch = useDispatch();
     const { stations, currentStation } = useSelector((s) => s.workstation);
-    const currentStationSafe = currentStation || stations?.[0] || "B01"; // TODO
-    const { orderCode, step = 1 } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
+    const currentStationSafe = currentStation || stations?.[0] || "";
+    const { orderCode, step, waveNo, shelfItem, selected } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
     const [detailTableData, setDetailTableData] = useState([]);
 
     // =============== 畫面一 ====================
@@ -34,7 +35,7 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
                 setOutboundExternal({ 
                     station: currentStationSafe, 
                     order: value, 
-                    orderCode: value?.SALE_NO, 
+                    orderCode: value?.OUTSTOCK_NO, 
                     waveNo: value?.W_ID, 
                     step: 2 
                 }));        
@@ -47,6 +48,23 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
         { label: "產品品號", key: "PRT_NO", width: "60%" },
         { label: "總包數", key: "BOX_PACK", width: "30%" },
     ]
+
+    // ============= 根據波次拿訂單的細節 =============
+    useEffect(() => {
+        if (!waveNo) return;
+        getList();
+    }, [shelfItem]);
+    const getList = async () => {
+        try {
+            const res = await getOutBoundExternalOrderDetailByWID(waveNo);
+            if (res.data.success) {
+                const detail = res.data.data;
+                setDetailTableData(detail);
+            }
+        } catch (error) {
+            console.warn("getList: ", error);
+        }
+    };
 
     return (
         <>

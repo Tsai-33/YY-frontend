@@ -17,6 +17,8 @@ import inboundReducer from "./reducer/reducerInbound";
 import userReducer from "./reducer/reducerUser";
 import workStationsReducer from "@/redux/reducer/reducerWorkStations";
 import transferReducer from './reducer/reducerTransfer'
+import shelfTransferReducer from "./reducer/reducerShelfTransfer";
+import shelfTransfer from "@/pages/shelfTransfer";
 
 const pagePersistConfig = {
   key: "page",
@@ -27,6 +29,11 @@ const outboundExternalPersistConfig = {
   key: "outboundExternal",
   storage,
 };
+
+const shelfTransferPersistConfig = {
+  key: "shelfTransfer",
+  storage,
+}
 
 const inboundPersistConfig = {
   key: "inbound",
@@ -52,6 +59,7 @@ const workStationsPersistConfig = {
 const rootReducer = combineReducers({
   page: persistReducer(pagePersistConfig, pageReducer),
   outboundExternal: persistReducer(outboundExternalPersistConfig, outboundExternalReducer),
+  shelfTransfer: persistReducer(shelfTransferPersistConfig, shelfTransferReducer),
   inbound: persistReducer(inboundPersistConfig, inboundReducer),
   transfer: persistReducer(transferPersistConfig, transferReducer),
   user: persistReducer(userPersistConfig, userReducer),
