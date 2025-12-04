@@ -5,7 +5,7 @@ import PageTitle from "@/components/common/pageHeader/pageTitle";
 import { useDispatch, useSelector } from "react-redux";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { getShelfTransfer, getWMSBySaleNo, sendToWMS } from "@/pages/api";
+import { getShelfTransfer, getWMSBySaleNo, insertShelfTask } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import SchematicDiagram from "../diagram/schematicDiagram";
 import { setShelfTransfer } from "@/redux/reducer/reducerShelfTransfer";
@@ -43,6 +43,7 @@ export default function ShelfTransferTable() {
     const fetchList = async () => {
         try {
             const res = await getShelfTransfer();
+            console.log('res: ', res)
             if (res.data.success) {
                 const detail = res.data.data;
                 setTableData(detail);
@@ -97,6 +98,7 @@ export default function ShelfTransferTable() {
     //     ? testShelve.filter(item => item.SALE_NO === selectedOrder.SALE_NO)
     //     : [];
     const handleRowClick = (row) => {
+        setSelectedOrder(row);
         setOrderInput(row.SALE_NO);
         setSelectedShelve([]);
         fetchShelveData(row.SALE_NO);
@@ -152,62 +154,57 @@ export default function ShelfTransferTable() {
 
     // 確定按鈕叫車 TODO 要改成直接寫入資料庫
     const handleConfirm = async () => {
-        console.log('selectedShelve: ', selectedShelve)
         if (selectedShelve.length < 2 || selectedShelve.length > 5) {
             Alert({text: "請選擇2~5個貨架"});
             return;
         }
         try {
-            console.log("AAAAAAAAAAAAAAA")
-            // const dataId = generateRandomNumber();
-            // const data = {
-            //     action: "wcstask",
-            //     dataid: dataId,
-            //     command: "MOVE",
-            //     wave_no: String(order?.W_ID),
-            //     FACE: 2,
-            //     STATION: "",
-            //     PURPOSE: 0
-            // }
-            // const res = await sendToWMS(data);
-            // if (res.data.success && !res.data.data?.error) {
-            //     let lack_station = res.data.data.message2 || [];
-            //     if (!Array.isArray(lack_station)) {
-            //         try {
-            //             lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
-            //         } catch (error) {
-            //             lack_station = [];
-            //         }
-            //     }
+            const tasks = selectedShelve.map((shelveId, index) => ({
+                Command: "MOVE",
+                SHELVE_ID: shelveId,
+                BAR_CODE: null,
+                FACE: 2,
+                STATION: `B0${index + 1}`,
+                PURPOSE: 0,
+                STATUS: 0,
+                CART_ID: "",
+                DATA_ID: generateRandomNumber(),
+                WAVENO: selectedOrder?.W_ID || 0,
+                GGROUP: "",
+            }));
+            console.log("tasks: ", tasks)
+            const res = await insertShelfTask({ tasks });
 
-            //     // 把各站點設成 loading
-            //     if (lack_station.length > 0) {
-            //         lack_station.forEach((station) => {
-            //             dispatch(setShelfTransfer({
-            //                 station: station,
-            //                 screen: "loading",
-            //                 orderCode: orderInput,
-            //                 orderList: orderInput,
-            //                 waveNo: order?.W_ID,
-            //                 order: order,
-            //                 selectedShelves: selectedShelve,
-            //                 lackStation: station,
-            //             }));
-            //         });
-            //     }
+            if (res.data.success) {
+                const initialShelveStatus = {};
+                selectedShelve.forEach(shelveId => {
+                    initialShelveStatus[shelveId] = "loading";
+                });
 
-            //     // 從清單移除已選訂單
-            //     setTableData((prev) => prev.filter((v) => v.SALE_NO !== orderInput));
-            // }
+                selectedShelve.forEach((shelveId, index) => {
+                    const stationId = `B0${index + 1}`;
+                    dispatch(setShelfTransfer({
+                        station: stationId,
+                        step: 3,
+                        screen: "working",
+                        orderCode: orderInput,
+                        selectedShelves: selectedShelve,
+                        shelveStatus: initialShelveStatus,
+                        shelveData: {},
+                    }));
+                });
+
+                setTableData((prev) => prev.filter((v) => v.SALE_NO !== orderInput));
+            } else {
+                Alert({ text: res.data.message || "派車失敗", icon: "error" });
+            }
         } catch (error) {
             console.warn("handleConfirm:", error);
         }
     }
 
-
     // 檢查是否可以按確定(至少2個最多5個)
     const canConfirm = selectedShelve.length >= 2 && selectedShelve.length <= 5;
-    
 
     return (
         <>

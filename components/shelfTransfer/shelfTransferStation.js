@@ -1,55 +1,43 @@
 import Table from "@/components/common/table/table";
 import ActionBtn from "@/components/common/btns/actionBtn";
-import InputFrame from "@/components/common/input/inputFrame";
-import PageTitle from "@/components/common/pageHeader/pageTitle";
-import { testShelveGroups } from "./testData";
-import Link from "next/link";
+import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
+import { 
+    updateShelveData, 
+    updateSelectedItems, 
+    setTargetShelve,
+    resetStation 
+} from "@/redux/reducer/reducerShelfTransfer";
+import { updateTransferItems, sendToWMS } from "@/pages/api";
+import { generateRandomNumber } from "@/utils/random";
+import Alert from "../common/alert/alert";
 
 export default function ShelfTransferStation() {
-    const [orderNumber] = useState("D200-11403030002");
-    const [workStation] = useState("理貨工作站B01-B05");
-    // 選中的項目
-    const [selectedItems, setSelectedItems] = useState({}); 
-    // 目的貨架
-    const [targetShelve, setTargetShelve] = useState("");
+    const dispatch = useDispatch();
+    const { stations, currentStation } = useSelector((s) => s.workstation);
+    const currentStationSafe = currentStation || stations?.[0] || "";
+
+    const {
+        orderCode,
+        selectedShelves,
+        shelveData,
+        shelveStatus,
+        targetShelve,
+        selectedItems,
+    } = useSelector((s) => s.shelfTransfer[currentStationSafe] || {});
+
     // 控制下拉選單
     const headers = [
         { label: "", key: "checkbox", width: "20%" },
-        { label: "項目編號", key: "id", width: "80%" }
-    ]
-    const shelvePositions = ["R0002", "R0003", "R0004", "R0005", "貨架代號"]
-    const [shelveData, setShelveData] = useState({
-        "R0002": [
-            { id: "M510-11403200013-0001" }
-        ],
-        "R0003": [
-            { id: "M510-11403200017-0012" },
-            { id: "M510-11403200017-0013" },
-            { id: "M510-11403200017-0014" },
-            { id: "M510-11403200017-0015" },
-            { id: "M510-11403200017-0016" },
-            { id: "M510-11403200017-0017" },
-            { id: "M510-11403200017-0018" },
-            { id: "M510-11403200017-0019" },
-            { id: "M510-11403200017-0020" }
-        ],
-        "R0004": [
-            { id: "M510-11403200020-0001" }
-        ],
-        "R0005": [
-            { id: "M510-11403200041-0001" },
-            { id: "M510-11403200041-0002" },
-            { id: "M510-11403200041-0003" },
-            { id: "M510-11403200041-0004" },
-            { id: "M510-11403200041-0005" },
-            { id: "M510-11403200041-0006" },
-            { id: "M510-11403200041-0007" },
-            { id: "M510-11403200041-0008" },
-            { id: "M510-11403200041-0009" }
-        ]
-        // "貨架代號" 沒有資料
-    });
+        { label: "項目編號", key: "PRT_NO", width: "80%" }
+    ];
+
+    // ===== 固定 5 個Table 選了幾個貨架就有幾個有值 =====
+    const totalSlots = 5;
+    const shelvePositions = [
+        ...(selectedShelves || []), 
+        ...Array(Math.max(0, totalSlots - selectedShelves.length)).fill("貨架代號")
+    ];
 
     // =====找出選到的項目他的貨架ID=====
     const getActiveShelveId = () => {
@@ -64,27 +52,11 @@ export default function ShelfTransferStation() {
 
     // =====處理資料的勾選取消=====
     const handleItemChange = (shelveId, item) => {
-        setSelectedItems(prev => {
-            // 取那個貨架目前選到的項目
-            const currentSelected = prev[shelveId] || [];
-            const itemId = item.id;
-
-            // 檢查有沒有選中
-            const isSelected = currentSelected.includes(itemId);
-
-            // 如果原本是選中的就移除
-            if (isSelected) {
-                return {
-                    ...prev,
-                    [shelveId]: currentSelected.filter(id => id !== itemId)
-                };
-            } else {
-                return {
-                    ...prev,
-                    [shelveId]: [...currentSelected, itemId]
-                };
-            }
-        });
+        dispatch(updateSelectedItems({
+            station: currentStationSafe,
+            shelveId,
+            itemId: item.id,
+        }));
     };
 
     // =====處理下拉式選單的內容=====
@@ -96,50 +68,92 @@ export default function ShelfTransferStation() {
     };
 
     const handleTargetSelect = (shelveId) => {
-        setTargetShelve(shelveId);
+        dispatch(setTargetShelve({
+            station: currentStationSafe,
+            targetShelve: shelveId,
+        }));
         setIsDropdownOpen(false);
     }
 
     // =====按下確定後轉移項目=====
     const confirmCheck = () => {
-        const hasSelectedItems = selectedItems[activeShelveId]?.length > 0;
+        const hasSelectedItems = selectedItems?.[activeShelveId]?.length > 0;
         const hasTargetShelve = targetShelve !== "";
         return hasSelectedItems && hasTargetShelve;
     }
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (!confirmCheck()) {
             alert("請確認已選擇的貨架");
             return;
         }
+        try {
+            const selectedItemsIds = selectedItems[activeShelveId] || [];
+            const sourceData = shelveData[activeShelveId] || [];
 
-        // 來源貨架的ID
-        const selectedItemIds = selectedItems[activeShelveId] || [];
-
-        // 要移動的項目
-        const itemsToMove = shelveData[activeShelveId].filter(
-            item => selectedItemIds.includes(item.id)
-        );
-
-        // 更新貨架資料
-        setShelveData(prev => {
-            // 來源貨架要移除的項目
-            const sourceShelveItems = prev[activeShelveId].filter(
-                item => !selectedItemIds.includes(item.id)
+            const itemsToMove = sourceData.filter(item =>
+                selectedItemsIds.includes(item.id)
             );
+            
+            const res = await updateTransferItems({
+                items: itemsToMove,
+                targetShelveId: targetShelve
+            });
 
-            // 把項目入到目的貨架
-            const targetShelveItems = [...(prev[targetShelve] || []), ...itemsToMove];
-
-            return {
-                ...prev,
-                [activeShelveId]: sourceShelveItems,
-                [targetShelve]: targetShelveItems
+            if (res.data.success) {
+                dispatch(updateShelveData({
+                    station: currentStationSafe,
+                    sourceShelve: activeShelveId,
+                    targetShelve: targetShelve,
+                    itemIds: selectedItemsIds,
+                }));
+            } else {
+                alert(res.data.message || "轉移失敗");
             }
-        });
+        } catch (error) {
+            console.warn("handleConfirm:", error);
+        }
+    };
 
-        setSelectedItems({});
-        setTargetShelve("");
+    // 退回貨架
+    const handleReturnShelve = async (shelveId) => {
+        // TODO: 呼叫 API 退回該貨架
+        console.log("退回貨架:", shelveId);
+        if (!shelveId) {
+            Alert({ text: "抓不到站點位置" });
+            return;
+        }
+
+        // 找出該貨架對應的站點
+        const shelveIndex = selectedShelves?.indexOf(shelveId);
+        if (shelveIndex === -1) {
+            Alert({ text: "找不到對應的站點" });
+            return;
+        }
+        const stationId = `B0${shelveIndex + 1}`;
+        // setLoading(true);
+        try {
+            // 傳給WMS
+            const dataId = generateRandomNumber();
+            const data = { 
+                action: "wcstask", 
+                dataid: dataId, 
+                command: "RETURN", 
+                SHELVE_ID: shelveId, 
+                FACE: 2, 
+                STATION: stationId, 
+                PURPOSE: 0 
+            };
+            console.log('data: ', data)
+            const res = await sendToWMS(data);
+            if (res.data.success) {
+                console.log(res.data, "wcstask收到資料");
+            }
+        } catch (err) {
+            console.warn("handleReturnShelf :", err);
+        } finally {
+            // setLoading(false);
+        }
     };
 
     return (
@@ -147,13 +161,13 @@ export default function ShelfTransferStation() {
             <div className="flex flex-col h-screen p-4 bg-gray-100">
                 <div className="bg-white rounded-lg shadow-md p-4 mb-4">
                     <div className="flex items-center justify-between mb-2">
-                        <div className="text-2xl font-bold">{workStation}</div>
+                        <div className="text-2xl font-bold">理貨工作站B01-B05</div>
                         <div className="text-2xl flex justify-center flex-1 text-black font-bold">
                             請在一個貨架編號下方選擇理貨的貨物,再選擇要移動到的目的貨架編號點擊確定按鈕
                         </div>
                     </div>
                     <div className="text-lg text-gray-600 mb-3">
-                        訂單單號：{orderNumber}
+                        訂單單號：{orderCode}
                     </div>
                     {/* 下拉選貨架、確定按鈕 */}
                     <div className="flex gap-4 justify-center">
@@ -208,13 +222,17 @@ export default function ShelfTransferStation() {
                 <div className="flex-1 flex flex-col">
                     <div className="flex gap-2 mb-3 flex-1">
                         {shelvePositions.map((shelveId, index) => {
+                            // 判斷是不是空白欄位貨架
+                            const isEmptySlot = shelveId === "貨架代號";
+
                             {/* 取貨架資料 */}
-                            const data = shelveData[shelveId] || [];
-                            const hasData = data.length > 0;
                             const isLastOne = shelveId === "貨架代號";
+                            const status = !isEmptySlot ? shelveStatus?.[shelveId] : undefined;
+                            const data = !isEmptySlot ? (shelveData?.[shelveId] || []) : [];
+                            const hasData = data.length > 0;
 
                             // 拿到那個貨架的陣列
-                            const checkedItems = selectedItems[shelveId] || [];
+                            const checkedItems = selectedItems?.[shelveId] || [];
 
                             // 如果不是當前的貨架就鎖起來
                             const isDisabled = activeShelveId && activeShelveId !== shelveId;
@@ -225,7 +243,6 @@ export default function ShelfTransferStation() {
                             return (
                                 <div
                                     key={index}
-                                    // className="flex-1 bg-white rounded-lg shadow-md p-4 flex flex-col"
                                     className={`
                                         flex-1 bg-white rounded-lg shadow-md p-4 flex flex-col transition-all ${
                                             isDisabled ? 'opacity-50' : ''
@@ -248,28 +265,43 @@ export default function ShelfTransferStation() {
                                     </div>
                                     {hasData ? (
                                         <>
-                                            <div className={`flex-1 overflow-hidden mb-3 ${
-                                                isDisabled ? 'pointer-events-none' : ''
-                                            }`}>
-                                                <Table 
-                                                    variant="green"
-                                                    type="checkbox"
-                                                    name={`shelve-${shelveId}`}
-                                                    headers={headers}
-                                                    data={data}
-                                                    needInput={true}
-                                                    idKey="id"
-                                                    height="100%"
-                                                    checked={checkedItems}
-                                                    onChange={(item) => handleItemChange(shelveId, item)}
-                                                />
-                                            </div>
+                                            <div className={`flex-1 overflow-auto mb-3 ${
+            isDisabled ? 'pointer-events-none' : ''
+        }`}>
+            {/* 簡單的 checkbox 列表 */}
+            <div className="space-y-1">
+                {data.map((item) => {
+                    const isChecked = checkedItems.includes(item.id);
+                    return (
+                        <label
+                            key={item.id}
+                            className={`
+                                flex items-center gap-2 px-2 py-1 cursor-pointer
+                                border border-gray-300 rounded
+                                hover:bg-gray-50 transition-colors
+                            `}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => handleItemChange(shelveId, item)}
+                                className="w-4 h-4 "
+                            />
+                            <span className="text-xl truncate">
+                                {item.PRT_NO}
+                            </span>
+                        </label>
+                    );
+                })}
+            </div>
+        </div>
                                             {/* 退回貨架 */}
                                             <ActionBtn 
                                                 icon="icon-returnShelf"
                                                 text={"退回貨架"}
                                                 variant={"orange"}
                                                 disabled={isDisabled}
+                                                onClick={() => handleReturnShelve(shelveId)}
                                             />
                                         </>
                                     ) : (
@@ -285,36 +317,27 @@ export default function ShelfTransferStation() {
                     {/* 站點 */}                                                                                        
                     <div className="flex gap-2">
                         {shelvePositions.slice(0, 5).map((shelveId, index) => {
-                            const hasData = shelveData[shelveId] && shelveData[shelveId].length > 0;
+                            const isEmptySlot = shelveId === "貨架代號";
+                            const status = shelveStatus?.[shelveId];
+                            const hasData = shelveData?.[shelveId]?.length > 0;
 
                             return (
                                 <button
                                     key={index}
                                     className={`flex-1 text-white py-3 rounded-lg text-lg font-bold transition-colors ${
-                                        hasData
-                                            ? "bg-blue-400 hover:bg-blue-500"
-                                            : "bg-green-600 hover:bg-green-700"
+                                        isEmptySlot
+                                            ? "bg-green-600"                          // 空白欄位固定綠色
+                                            : hasData
+                                            ? "bg-blue-400 hover:bg-blue-500"       // 有資料藍色
+                                            : status === "loading"
+                                            ? "bg-yellow-500"                         // loading
+                                            : "bg-green-600 hover:bg-green-700"     // 其他
                                     }`}
                                 >
                                     站點 { index + 1 }
                                 </button>
                             );
                         })}
-                        {/* <button className="flex-1 bg-blue-400 text-white py-4 rounded-lg text-xl font-bold hover:bg-blue-500 transition-colors">
-                            站點 1
-                        </button>
-                        <button className="flex-1 bg-blue-400 text-white py-4 rounded-lg text-xl font-bold hover:bg-blue-500 transition-colors">
-                            站點 2
-                        </button>
-                        <button className="flex-1 bg-blue-400 text-white py-4 rounded-lg text-xl font-bold hover:bg-blue-500 transition-colors">
-                            站點 3
-                        </button>
-                        <button className="flex-1 bg-blue-400 text-white py-4 rounded-lg text-xl font-bold hover:bg-blue-500 transition-colors">
-                            站點 4
-                        </button>
-                        <button className="flex-1 bg-green-600 text-white py-4 rounded-lg text-xl font-bold hover:bg-green-700 transition-colors">
-                            站點 5
-                        </button> */}
                     </div>
                 </div>
             </div>

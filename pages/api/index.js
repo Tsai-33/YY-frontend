@@ -20,6 +20,8 @@ export const getOutBoundExternalOrderDetailByWID = (w_id) => api.get(`/outboundE
 /* 理貨 */
 export const getShelfTransfer = () => api.get("/shelfTransfer/getShelfTransfer");
 export const getWMSBySaleNo = (sale_no) => api.get("/shelfTransfer/getWMSBySaleNo", { params: { sale_no } });
+export const insertShelfTask = (data) => api.post("/shelfTransfer/insertShelfTask", data);
+export const updateTransferItems = (data) => api.post("/shelfTransfer/updateTransferItems", data);
 
 /* 傳給labview */
 export const sendToWMS = (payload) => api.post("/send-to-wms", payload, { timeout: 45000 });
