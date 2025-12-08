@@ -42,6 +42,7 @@ export const getShelfTransfer = () => api.get("/shelfTransfer/getShelfTransfer")
 export const getWMSBySaleNo = (sale_no) => api.get("/shelfTransfer/getWMSBySaleNo", { params: { sale_no } });
 export const insertShelfTask = (data) => api.post("/shelfTransfer/insertShelfTask", data);
 export const updateTransferItems = (data) => api.post("/shelfTransfer/updateTransferItems", data);
+export const updateShelveCheck = (data) => api.post(`/shelfTransfer/updateShelveCheck`, data);
 
 /* 傳給labview */
 export const sendToWMS = (payload) => api.post("/send-to-wms", payload, { timeout: 45000 });

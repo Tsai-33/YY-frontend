@@ -76,6 +76,9 @@ export default function SocketManager() {
         }
         if (eventData?.action === "show_msg") {
         }
+        if (eventData?.action === "taskdone" && command === "RETURN" && eventData?.PURPOSE === 0) {
+          dispatch(setShelfTransfer({ shelf: eventData, isReturn: true }));
+        }
       };
 
       newSocket.onclose = (event) => {

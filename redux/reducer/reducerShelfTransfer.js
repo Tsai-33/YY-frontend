@@ -12,7 +12,8 @@ const createStation = () => ({
     shelveData: {},         // 每個貨架的物品
     shelveStatus: {},       // 每個貨架的狀態
     targetShelve: "",       // 目的貨架
-    selectedItems: {}       // 選中的項目
+    selectedItems: {},      // 選中的項目
+    shelveChecks: {}        // 護角/封膜checkbox狀態
 });
 
 const initialState = stationList.reduce(
@@ -29,8 +30,35 @@ const shelfTransferSlice = createSlice({
     reducers: {
         setShelfTransfer: (state, action) => {
             const { station, step, screen, orderCode, waveNo, order, selectedShelves, 
-                shelveData, shelveStatus, targetShelve, selectedItems, orderList, lackStation, shelf, shelfItem
+                shelveData, shelveStatus, targetShelve, selectedItems, orderList, lackStation, shelf, shelfItem, isReturn
             } = action.payload;
+
+            // 處理退回貨架
+            if (isReturn && shelf) {
+                const shelveId = shelf.SHELVE_ID;
+                
+                for (const stationId of stationList) {
+                    const stationData = state[stationId];
+                    if (!stationData?.selectedShelves?.includes(shelveId)) continue;
+                    
+                    // 標記貨架退回
+                    stationData.shelveStatus[shelveId] = "returned";
+
+                    // 清空該貨架的資料
+                    delete stationData.shelveData[shelveId];
+                    delete stationData.shelveChecks[shelveId];
+
+                    // 檢查是否所有貨架都退回了
+                    const allReturned = stationData.selectedShelves.every(
+                        id => stationData.shelveStatus[id] === "returned"
+                    );
+                    if (allReturned) {
+                        state[stationId] = createStation();
+                    }
+                    break;
+                }
+                return;
+            }
         
             if (!state[station]) return;
 
@@ -59,6 +87,13 @@ const shelfTransferSlice = createSlice({
 
                         state[stationId].shelveData[shelveId] = itemsWithId;
                         state[stationId].shelveStatus[shelveId] = "ready";
+
+                        // 拿到SEAL
+                        if (!state[stationId].shelveChecks) {
+                            state[stationId].shelveChecks = {};
+                        }
+                        const sealValue = parseInt(shelfItem[0]?.SEAL, 10) || 0;
+                        state[stationId].shelveChecks[shelveId] = sealValue;
                     }
                 }
             }
@@ -160,6 +195,42 @@ const shelfTransferSlice = createSlice({
             }
         },
 
+        // 護角 / 封膜 / 打包
+        setShelveCheck: (state, action) => {
+            const { station, shelveId, value } = action.payload;
+            if (!state[station]) return;
+
+            if (!state[station].shelveChecks) {
+                state[station].shelveChecks = {};
+            }
+            
+            state[station].shelveChecks[shelveId] = value;
+        },
+
+        // 退回貨架
+        handleShelveReturn: (state, action) => {
+            const { shelveId } = action.payload;
+            
+            for (const stationId of stationList) {
+                const station = state[stationId];
+                if (!station?.selectedShelves?.includes(shelveId)) continue;
+
+                station.selectedShelves = station.selectedShelves.filter(id => id !== shelveId);
+
+                // 清空已被退回貨架資料
+                delete station.shelveData[shelveId];
+                delete station.shelveStatus[shelveId];
+                delete station.shelveChecks[shelveId];
+
+                // 如果所有貨架都退回了 重置站點
+                if (station.selectedShelves.length === 0) {
+                    state[stationId] = createStation();
+                }
+
+                break;
+            }
+        },
+
         // 控制面板用
         managerShelfTransfer: (state, action) => {
             const { station, name, value } = action.payload;
@@ -185,13 +256,15 @@ const shelfTransferSlice = createSlice({
 });
 
 export const {
-setShelfTransfer,
+    setShelfTransfer,
     updateShelveArrival,
     updateShelveData,
     updateSelectedItems,
     setTargetShelve,
     updateLackStation,
     updateOrderList,
+    setShelveCheck,
+    handleShelveReturn,
     managerShelfTransfer,
     resetStation,
     resetShelfTransfer,
