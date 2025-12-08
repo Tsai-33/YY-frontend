@@ -12,6 +12,7 @@ import { api } from "./service";
  */
 export const getAllUsers = async (params = {}) => {
   const response = await api.get("/users", { params });
+  
   return response.data;
 };
 
@@ -55,6 +56,16 @@ export const batchDeleteUsers = async (userIds) => {
  */
 export const getUserStats = async () => {
   const response = await api.get("/users/stats");
+  return response.data;
+};
+
+/**
+ * 获取用户操作日志
+ * @param {Object} params - 查询参数 {userId, startTime, endTime, page, pageSize}
+ * @returns {Promise} 用户日志列表
+ */
+export const getUserLogs = async (params = {}) => {
+  const response = await api.get("/users/logs", { params });
   return response.data;
 };
 

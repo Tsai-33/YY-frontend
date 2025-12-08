@@ -5,8 +5,10 @@ import {
   getAllUsers,
   batchDeleteUsers,
   updateUser,
+  getUserLogs,
 } from "../api/userService";
 import { register } from "../api/authService";
+import { exportUserLogsToExcel } from "@/utils/exportExcel";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import Modal from "@/components/common/modal/modal";
@@ -22,8 +24,14 @@ function UserManage() {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [downloadTimeRange, setDownloadTimeRange] = useState({
+    startTime: "",
+    endTime: "",
+  });
+  const [downloadUserId, setDownloadUserId] = useState(null);
 
   // 權限映射 (英文 -> 中文顯示)
   const PERMISSION_MAP = {
@@ -88,6 +96,12 @@ function UserManage() {
       const response = await getAllUsers();
       if (response.success) {
         setUsers(response.data.users);
+      }else{
+        Alert({
+          title: "錯誤",
+          text: response,
+          confirmButtonColor: "#b32627",
+        });
       }
     } catch (error) {
       console.error("獲取用戶列表失敗:", error);
@@ -104,14 +118,29 @@ function UserManage() {
   // 处理新用户输入
   const handleNewUserChange = (e) => {
     const { name, value } = e.target;
-    setNewUser((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setNewUser((prev) => {
+      const updated = {
+        ...prev,
+        [name]: value,
+      };
+      // 如果 role 是 admin 或 manager，自動設置所有權限為 true
+      if (name === "role" && (value === "admin" || value === "manager")) {
+        const allPermissionsTrue = {};
+        Object.keys(prev.permissions).forEach((key) => {
+          allPermissionsTrue[key] = true;
+        });
+        updated.permissions = allPermissionsTrue;
+      }
+      return updated;
+    });
   };
 
   // 处理权限变更
   const handlePermissionChange = (permissionName) => {
+    // 如果 role 是 admin 或 manager，不允許修改權限
+    if (newUser.role === "admin" || newUser.role === "manager") {
+      return;
+    }
     setNewUser((prev) => ({
       ...prev,
       permissions: {
@@ -124,14 +153,29 @@ function UserManage() {
   // 处理编辑用户输入
   const handleEditUserChange = (e) => {
     const { name, value } = e.target;
-    setEditingUser((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setEditingUser((prev) => {
+      const updated = {
+        ...prev,
+        [name]: value,
+      };
+      // 如果 role 是 admin 或 manager，自動設置所有權限為 true
+      if (name === "role" && (value === "admin" || value === "manager")) {
+        const allPermissionsTrue = {};
+        Object.keys(prev.permissions).forEach((key) => {
+          allPermissionsTrue[key] = true;
+        });
+        updated.permissions = allPermissionsTrue;
+      }
+      return updated;
+    });
   };
 
   // 处理编辑权限变更
   const handleEditPermissionChange = (permissionName) => {
+    // 如果 role 是 admin 或 manager，不允許修改權限
+    if (editingUser.role === "admin" || editingUser.role === "manager") {
+      return;
+    }
     setEditingUser((prev) => ({
       ...prev,
       permissions: {
@@ -188,13 +232,21 @@ function UserManage() {
       console.warn("解析權限失敗:", e);
     }
 
+    // 如果 role 是 admin 或 manager，自動設置所有權限為 true
+    const finalPermissions = (user.Role === "admin" || user.Role === "manager")
+      ? Object.keys(permissions).reduce((acc, key) => {
+          acc[key] = true;
+          return acc;
+        }, {})
+      : permissions;
+
     setEditingUser({
       userId: user.UserId,
       username: user.Username || "",
       email: user.Email || "",
       accountNumber: user.AccountNumber || "",
       role: user.Role || "user",
-      permissions: permissions,
+      permissions: finalPermissions,
     });
     setShowEditModal(true);
   };
@@ -277,6 +329,60 @@ function UserManage() {
       Alert({
         title: "更新錯誤",
         text: error.response?.data?.message || "更新用戶失敗",
+        confirmButtonColor: "#b32627",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 下载用户日志
+  const handleDownloadLogs = async () => {
+    setLoading(true);
+    try {
+      const response = await getUserLogs({
+        UserId: downloadUserId,
+        StartTime: downloadTimeRange.startTime,
+        EndTime: downloadTimeRange.endTime,
+      });
+
+      if (response.success && response.data) {
+        if(response.data.length > 0){
+          exportUserLogsToExcel(
+            response.data,
+            downloadUserId,
+            downloadTimeRange.startTime,
+            downloadTimeRange.endTime
+          );
+          Alert({
+            title: "成功",
+            text: "下載用戶日志成功",
+            confirmButtonColor: "#008b48",
+          });
+        }
+        else{
+          Alert({
+            title: "無資料",
+            text: "無資料可下載",
+            confirmButtonColor: "#b32627",
+          });
+        }
+        // 關閉 modal
+        setShowDownloadModal(false);
+        setDownloadTimeRange({ startTime: "", endTime: "" });
+        setDownloadUserId(null);
+      } else {
+        Alert({
+          title: "錯誤",
+          text: response.message || "發生未知錯誤",
+          confirmButtonColor: "#b32627",
+        });
+      }
+    } catch (error) {
+      console.error("下載日誌失敗:", error);
+      Alert({
+        title: "錯誤",
+        text: error.message || "下載用戶日志失敗",
         confirmButtonColor: "#b32627",
       });
     } finally {
@@ -526,8 +632,11 @@ function UserManage() {
                     </td>
                     <td className="p-4 text-center">
                       <button
-                       
-                        className=" hover:text-[var(--red-vivid)] transition-colors">
+                        onClick={() => {
+                          setDownloadUserId(user.UserId);
+                          setShowDownloadModal(true);
+                        }}
+                        className="hover:text-[var(--red-vivid)] transition-colors">
                         <span className="text-2xl"><i className="icon-download"></i></span>
                       </button>
                     </td>
@@ -620,19 +729,27 @@ function UserManage() {
                 權限：
               </label>
               <div className="grid grid-cols-2 gap-2 mt-2">
-                {Object.keys(newUser.permissions).map((permission) => (
-                  <label
-                    key={permission}
-                    className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={newUser.permissions[permission]}
-                      onChange={() => handlePermissionChange(permission)}
-                      className="w-5 h-5"
-                    />
-                    <span className="text-lg">{PERMISSION_MAP[permission] || permission}</span>
-                  </label>
-                ))}
+                {Object.keys(newUser.permissions).map((permission) => {
+                  const isDisabled = newUser.role === "admin" || newUser.role === "manager";
+                  return (
+                    <label
+                      key={permission}
+                      className={`flex items-center gap-3 p-2 rounded transition-colors ${
+                        isDisabled 
+                          ? "cursor-not-allowed opacity-60 bg-gray-100" 
+                          : "cursor-pointer hover:bg-gray-50"
+                      }`}>
+                      <input
+                        type="checkbox"
+                        checked={newUser.permissions[permission]}
+                        onChange={() => handlePermissionChange(permission)}
+                        disabled={isDisabled}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-lg">{PERMISSION_MAP[permission] || permission}</span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -714,20 +831,89 @@ function UserManage() {
                 權限：
               </label>
               <div className="grid grid-cols-2 gap-2 mt-2">
-                {Object.keys(editingUser.permissions).map((permission) => (
-                  <label
-                    key={permission}
-                    className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={editingUser.permissions[permission]}
-                      onChange={() => handleEditPermissionChange(permission)}
-                      className="w-5 h-5"
-                    />
-                    <span className="text-lg">{PERMISSION_MAP[permission] || permission}</span>
-                  </label>
-                ))}
+                {Object.keys(editingUser.permissions).map((permission) => {
+                  const isDisabled = editingUser.role === "admin" || editingUser.role === "manager";
+                  return (
+                    <label
+                      key={permission}
+                      className={`flex items-center gap-3 p-2 rounded transition-colors ${
+                        isDisabled 
+                          ? "cursor-not-allowed opacity-60 bg-gray-100" 
+                          : "cursor-pointer hover:bg-gray-50"
+                      }`}>
+                      <input
+                        type="checkbox"
+                        checked={editingUser.permissions[permission]}
+                        onChange={() => handleEditPermissionChange(permission)}
+                        disabled={isDisabled}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-lg">{PERMISSION_MAP[permission] || permission}</span>
+                    </label>
+                  );
+                })}
               </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 下載紀錄模态框 */}
+      <Modal
+        showModal={showDownloadModal}
+        title="下載紀錄"
+        onClose={() => {
+          setShowDownloadModal(false);
+          setDownloadTimeRange({ startTime: "", endTime: "" });
+          setDownloadUserId(null);
+        }}
+        onConfirm={handleDownloadLogs}
+        width="40vw"
+        height="auto">
+        <div className="py-4">
+          <p className="text-center text-gray-700 mb-6">
+            請輸入下載紀錄時間區間
+          </p>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <label className="block text-[var(--green-deep)] font-bold mb-2">
+                起始年/月/日時間：
+              </label>
+              <InputFrame
+                type="datetime-local"
+                name="startTime"
+                value={downloadTimeRange.startTime}
+                onChange={(e) =>
+                  setDownloadTimeRange((prev) => ({
+                    ...prev,
+                    startTime: e.target.value,
+                  }))
+                }
+                borderColor="var(--green-vivid)"
+                className="w-full"
+              />
+            </div>
+            
+            <span className="text-2xl text-gray-400 mt-8">~</span>
+            
+            <div className="flex-1">
+              <label className="block text-[var(--green-deep)] font-bold mb-2">
+                結束年/月/日時間：
+              </label>
+              <InputFrame
+                type="datetime-local"
+                name="endTime"
+                value={downloadTimeRange.endTime}
+                onChange={(e) =>
+                  setDownloadTimeRange((prev) => ({
+                    ...prev,
+                    endTime: e.target.value,
+                  }))
+                }
+                borderColor="var(--green-vivid)"
+                className="w-full"
+              />
             </div>
           </div>
         </div>

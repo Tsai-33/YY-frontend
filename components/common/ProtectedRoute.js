@@ -38,130 +38,6 @@ const PERMISSION_DISPLAY_NAMES = {
   "inventory": "盤點",
 };
 
-/**
- * Protected Route Component
- */
-// export default function ProtectedRoute({ children, requiredPermission = null }) {
-//   const router = useRouter();
-//   const { isAuthenticated, permissions, userRole } = useSelector(
-//     (state) => state.user
-//   );
-//   const hasShownAlert = useRef(false); 
-//   const lastPathname = useRef(router.pathname); 
-
-//   useEffect(() => {
-//     // Reset alert khi đổi route
-//     if (lastPathname.current !== router.pathname) {
-//       hasShownAlert.current = false;
-//       lastPathname.current = router.pathname;
-//     }
-
-//     // Kiểm tra public route
-//     const isPublicRoute = PUBLIC_ROUTES.some((route) =>
-//       router.pathname.startsWith(route)
-//     );
-
-//     // Nếu không phải public và chưa login → quay lại login
-//     if (!isPublicRoute && !isAuthenticated) {
-//       router.replace("/auth/login");
-//       return;
-//     }
-
-//     // Nếu đã login và cố vào /auth/login → redirect về workspace
-//     if (isAuthenticated && router.pathname === "/auth/login") {
-//       router.replace("/workspace");
-//       return;
-//     }
-
-//     // Tự động tìm permission theo route
-//     const autoDetectedPermission =
-//       requiredPermission || PERMISSION_ROUTES[router.pathname];
-
-//     // --- RULE 1: User cần permission ở các PERMISSION_ROUTES ---
-//     if (
-//       isAuthenticated &&
-//       userRole !== "admin" &&
-//       userRole !== "manager" && // manager cũng bypass PERMISSION
-//       autoDetectedPermission
-//     ) {
-//       const hasPermission = permissions[autoDetectedPermission];
-//       if (!hasPermission && !hasShownAlert.current) {
-//         hasShownAlert.current = true;
-
-//         const displayName =
-//           PERMISSION_DISPLAY_NAMES[autoDetectedPermission] ||
-//           autoDetectedPermission;
-
-//         Alert({
-//           title: "權限不足",
-//           text: `您沒有「${displayName}」權限，無法訪問此頁面`,
-//           confirmButtonColor: "#b32627",
-//           onConfirm: () => router.replace("/workspace"),
-//         });
-
-//         router.replace("/workspace");
-//         return;
-//       }
-//     }
-
-//     // --- RULE 2: Các route KHÔNG khai báo → chỉ Admin & Manager ---
-//     if (
-//       isAuthenticated &&
-//       !isPublicRoute &&
-//       !autoDetectedPermission && // không có permission mapping
-//       userRole === "user"        // user thì bị chặn
-//     ) {
-//       if (!hasShownAlert.current) {
-//         hasShownAlert.current = true;
-
-//         Alert({
-//           title: "權限不足",
-//           text: "此頁面僅限管理員或管理人員訪問",
-//           confirmButtonColor: "#b32627",
-//           onConfirm: () => router.replace("/workspace"),
-//         });
-//       }
-
-//       router.replace("/workspace");
-//       return;
-//     }
-
-//   }, [isAuthenticated, router, requiredPermission, permissions, userRole]);
-
-//   // Public route → render ngay
-//   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
-//     router.pathname.startsWith(route)
-//   );
-//   if (isPublicRoute) return <>{children}</>;
-
-//   // Chưa login → show loading trong lúc useEffect redirect
-//   if (!isAuthenticated) return <Loading />;
-
-//   // Kiểm tra lại permission để component phần dưới an toàn
-//   const autoDetectedPermission =
-//     requiredPermission || PERMISSION_ROUTES[router.pathname];
-
-//   if (
-//     userRole === "user" &&
-//     autoDetectedPermission &&
-//     !permissions[autoDetectedPermission]
-//   ) {
-//     return <Loading />;
-//   }
-
-//   // --- RULE 2 MIRROR (UI-phase): route không khai báo → user bị cấm ---
-//   if (
-//     userRole === "user" &&
-//     !isPublicRoute &&
-//     !autoDetectedPermission
-//   ) {
-//     return <Loading />;
-//   }
-
-//   return <>{children}</>;
-// }
-
-
 export default function ProtectedRoute({ children, requiredPermission = null }) {
   const router = useRouter();
   const { isAuthenticated, permissions = {}, userRole } = useSelector(
@@ -171,16 +47,16 @@ export default function ProtectedRoute({ children, requiredPermission = null }) 
   const alertShown = useRef(false);
   const pathname = router.pathname;
 
-  // Public check: "/" phải so sánh chính xác; các route khác có thể dùng startsWith
+  // 公開路由檢查: "/" 必須精確比較; 其他路由可以使用 startsWith
   const isPublicRoute = PUBLIC_ROUTES.some((r) =>
     r === "/" ? pathname === "/" : pathname.startsWith(r)
   );
 
   useEffect(() => {
-    // reset alert khi đổi đường dẫn
+    // 切換路徑時重置 alert
     alertShown.current = false;
 
-    // 1) Nếu public route: cho vào; nhưng nếu already logged in và đang ở /auth/login thì redirect workspace
+    // 1) 如果是公開路由: 允許進入; 但如果已登入且正在 /auth/login 則重定向到 workspace
     if (isPublicRoute) {
       if (isAuthenticated && pathname === "/auth/login") {
         router.replace("/workspace");
@@ -188,37 +64,37 @@ export default function ProtectedRoute({ children, requiredPermission = null }) 
       return;
     }
 
-    // 2) Chưa đăng nhập => bắt về login
+    // 2) 未登入 => 導向登入頁
     if (!isAuthenticated) {
       router.replace("/auth/login");
       return;
     }
 
-    // 3) Admin / Manager => bypass hết
+    // 3) Admin / Manager => 全部 bypass
     if (userRole === "admin" || userRole === "manager") {
       return;
     }
 
-    // 4) User => kiểm tra PERMISSION_ROUTES
+    // 4) User => 檢查 PERMISSION_ROUTES
     if (userRole === "user") {
-      // autoPermission: nếu truyền requiredPermission thì ưu tiên, nếu không thì tìm trong map
-      // Lưu ý: PERMISSION_ROUTES có thể dùng exact key hoặc prefix; ở đây ta hỗ trợ prefix (startsWith)
+      // autoPermission: 如果傳入 requiredPermission 則優先使用, 否則在 map 中尋找
+      // 注意: PERMISSION_ROUTES 可以使用精確 key 或前綴; 這裡我們支援前綴 (startsWith)
       const autoPermissionKey = requiredPermission
         ? requiredPermission
         : (() => {
-            // tìm key trong PERMISSION_ROUTES mà pathname bắt đầu với key
+            // 在 PERMISSION_ROUTES 中尋找 pathname 以 key 開頭的 key
             for (const k in PERMISSION_ROUTES) {
               if (k === "/") {
                 if (pathname === "/") return PERMISSION_ROUTES[k];
               } else if (pathname === k || pathname.startsWith(k + "/") || pathname.startsWith(k)) {
-                // hỗ trợ chính xác và các đường con
+                // 支援精確匹配和子路徑
                 return PERMISSION_ROUTES[k];
               }
             }
             return null;
           })();
 
-      // Nếu route không được khai báo => chặn user
+      // 如果路由未宣告 => 阻擋 user
       if (!autoPermissionKey) {
         if (!alertShown.current) {
           alertShown.current = true;
@@ -233,7 +109,7 @@ export default function ProtectedRoute({ children, requiredPermission = null }) 
         return;
       }
 
-      // Nếu route có mapping nhưng user không có quyền => chặn
+      // 如果路由有映射但 user 沒有權限 => 阻擋
       const hasPerm = !!permissions[autoPermissionKey];
       if (!hasPerm) {
         if (!alertShown.current) {
@@ -250,25 +126,25 @@ export default function ProtectedRoute({ children, requiredPermission = null }) 
         return;
       }
 
-      // nếu có permission => cho vào (nothing to do here)
+      // 如果有權限 => 允許進入 (nothing to do here)
       return;
     }
 
-    // Fallback: nếu userRole không phải admin/manager/user, mặc định chặn
+    // Fallback: 如果 userRole 不是 admin/manager/user, 預設阻擋
     router.replace("/workspace");
   }, [pathname, isPublicRoute, isAuthenticated, userRole, permissions, requiredPermission, router]);
 
-  // RENDER LOGIC — hoàn toàn minh bạch, không render Loading
+  // RENDER LOGIC — 完全透明，不渲染 Loading
   // 1) Public route → render
   if (isPublicRoute) return <>{children}</>;
 
-  // 2) Nếu chưa login => null (redirect đã thực hiện)
+  // 2) 如果未登入 => null (redirect 已執行)
   if (!isAuthenticated) return null;
 
   // 3) Admin/Manager => render
   if (userRole === "admin" || userRole === "manager") return <>{children}</>;
 
-  // 4) User: chỉ render khi route được mapped và user có permission
+  // 4) User: 僅在路由被映射且 user 有權限時渲染
   const autoPermissionKey = requiredPermission
     ? requiredPermission
     : (() => {
@@ -286,6 +162,6 @@ export default function ProtectedRoute({ children, requiredPermission = null }) 
     return <>{children}</>;
   }
 
-  // 5) Các trường hợp khác: không render (useEffect sẽ redirect + alert)
+  // 5) 其他情況: 不渲染 (useEffect 會執行 redirect + alert)
   return null;
 }

@@ -39,7 +39,7 @@ export default function ForgotPassword() {
           confirmButtonColor: "#008b48",
         });
       } else {
-        // Validation errors (format sai, thiếu field) → hiển thị error message
+        // Validation errors (格式錯誤，缺少欄位) → 顯示錯誤訊息
         Alert({
           title: "錯誤",
           text: response.message || "發送失敗，請重試",
@@ -92,7 +92,7 @@ export default function ForgotPassword() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="帳號 Account Number"
+                      placeholder="輸入您的郵箱 Email"
                       borderColor=""
                       className="text-base w-full"
                     />

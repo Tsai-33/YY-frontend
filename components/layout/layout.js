@@ -91,7 +91,6 @@ export default function Layout({ children }) {
             <>
               {userName && (() => {
                 const role = userRole;
-                console.log("role", role);
                 if (role !== "user") {
                   return (
                     <Link href="/usermanage">
