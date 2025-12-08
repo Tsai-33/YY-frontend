@@ -6,6 +6,7 @@ import {
     updateSelectedItems, 
     setTargetShelve,
     setShelveCheck,
+    setShelfTransfer,
     resetStation 
 } from "@/redux/reducer/reducerShelfTransfer";
 import { updateTransferItems, sendToWMS, updateShelveCheck } from "@/pages/api";
@@ -111,7 +112,7 @@ export default function ShelfTransferStation() {
         }
     };
 
-    // ===== 處理護角/封膜checkbox =====
+    // ===== 處理護角/封膜/打包 checkbox =====
     const CHECK_VALUES = {
         CORNER: 1,  // 護角
         SEAL: 2,    // 封膜
@@ -144,7 +145,6 @@ export default function ShelfTransferStation() {
     
     // ===== 退回貨架 =====
     const handleReturnShelve = async (shelveId) => {
-        console.log("退回貨架:", shelveId);
         if (!shelveId) {
             Alert({ text: "抓不到站點位置" });
             return;
@@ -159,7 +159,6 @@ export default function ShelfTransferStation() {
         const stationId = `B0${shelveIndex + 1}`;
         // setLoading(true);
         try {
-            // 傳給WMS
             const dataId = generateRandomNumber();
             const data = { 
                 action: "wcstask", 
@@ -173,7 +172,7 @@ export default function ShelfTransferStation() {
             console.log('data: ', data)
             const res = await sendToWMS(data);
             if (res.data.success) {
-                console.log(res.data, "wcstask收到資料");
+                console.log(stationId + "退回");
             }
         } catch (err) {
             console.warn("handleReturnShelf :", err);
@@ -254,6 +253,7 @@ export default function ShelfTransferStation() {
                             {/* 取貨架資料 */}
                             const isLastOne = shelveId === "貨架代號";
                             const status = !isEmptySlot ? shelveStatus?.[shelveId] : undefined;
+                            const isReturned = status === "returned";
                             const data = !isEmptySlot ? (shelveData?.[shelveId] || []) : [];
                             const hasData = data.length > 0;
 
@@ -292,7 +292,11 @@ export default function ShelfTransferStation() {
                                     }`}>
                                         {shelveId}
                                     </div>
-                                    {hasData ? (
+                                    {isReturned ? (
+                                        <div className="flex-1 flex items-center justify-center text-gray-300">
+                                            已退回
+                                        </div>
+                                    ) : hasData ? (
                                         <>
                                             <div className={`flex-1 overflow-auto mb-3 ${
                                                 isDisabled ? 'pointer-events-none' : ''
