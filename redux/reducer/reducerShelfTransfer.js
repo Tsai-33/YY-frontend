@@ -12,7 +12,8 @@ const createStation = () => ({
     shelveData: {},         // 每個貨架的物品
     shelveStatus: {},       // 每個貨架的狀態
     targetShelve: "",       // 目的貨架
-    selectedItems: {}       // 選中的項目
+    selectedItems: {},      // 選中的項目
+    shelveChecks: {}        // 護角/封膜checkbox狀態
 });
 
 const initialState = stationList.reduce(
@@ -59,6 +60,13 @@ const shelfTransferSlice = createSlice({
 
                         state[stationId].shelveData[shelveId] = itemsWithId;
                         state[stationId].shelveStatus[shelveId] = "ready";
+
+                        // 拿到SEAL
+                        if (!state[stationId].shelveChecks) {
+                            state[stationId].shelveChecks = {};
+                        }
+                        const sealValue = parseInt(shelfItem[0]?.SEAL, 10) || 0;
+                        state[stationId].shelveChecks[shelveId] = sealValue;
                     }
                 }
             }
@@ -160,6 +168,18 @@ const shelfTransferSlice = createSlice({
             }
         },
 
+        // 護角 / 封膜 / 打包
+        setShelveCheck: (state, action) => {
+            const { station, shelveId, value } = action.payload;
+            if (!state[station]) return;
+
+            if (!state[station].shelveChecks) {
+                state[station].shelveChecks = {};
+            }
+            
+            state[station].shelveChecks[shelveId] = value;
+        },
+
         // 控制面板用
         managerShelfTransfer: (state, action) => {
             const { station, name, value } = action.payload;
@@ -185,13 +205,14 @@ const shelfTransferSlice = createSlice({
 });
 
 export const {
-setShelfTransfer,
+    setShelfTransfer,
     updateShelveArrival,
     updateShelveData,
     updateSelectedItems,
     setTargetShelve,
     updateLackStation,
     updateOrderList,
+    setShelveCheck,
     managerShelfTransfer,
     resetStation,
     resetShelfTransfer,

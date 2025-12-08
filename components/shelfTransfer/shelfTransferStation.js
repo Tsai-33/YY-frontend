@@ -1,4 +1,3 @@
-import Table from "@/components/common/table/table";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
@@ -6,11 +5,13 @@ import {
     updateShelveData, 
     updateSelectedItems, 
     setTargetShelve,
+    setShelveCheck,
     resetStation 
 } from "@/redux/reducer/reducerShelfTransfer";
-import { updateTransferItems, sendToWMS } from "@/pages/api";
+import { updateTransferItems, sendToWMS, updateShelveCheck } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
+import InputFrame from "../common/input/inputFrame";
 
 export default function ShelfTransferStation() {
     const dispatch = useDispatch();
@@ -24,13 +25,8 @@ export default function ShelfTransferStation() {
         shelveStatus,
         targetShelve,
         selectedItems,
+        shelveChecks = {}
     } = useSelector((s) => s.shelfTransfer[currentStationSafe] || {});
-
-    // 控制下拉選單
-    const headers = [
-        { label: "", key: "checkbox", width: "20%" },
-        { label: "項目編號", key: "PRT_NO", width: "80%" }
-    ];
 
     // ===== 固定 5 個Table 選了幾個貨架就有幾個有值 =====
     const totalSlots = 5;
@@ -84,7 +80,7 @@ export default function ShelfTransferStation() {
 
     const handleConfirm = async () => {
         if (!confirmCheck()) {
-            alert("請確認已選擇的貨架");
+            Alert("請確認已選擇的貨架");
             return;
         }
         try {
@@ -108,16 +104,46 @@ export default function ShelfTransferStation() {
                     itemIds: selectedItemsIds,
                 }));
             } else {
-                alert(res.data.message || "轉移失敗");
+                Alert(res.data.message || "轉移失敗");
             }
         } catch (error) {
             console.warn("handleConfirm:", error);
         }
     };
 
-    // 退回貨架
+    // ===== 處理護角/封膜checkbox =====
+    const CHECK_VALUES = {
+        CORNER: 1,  // 護角
+        SEAL: 2,    // 封膜
+        PACK: 4     // 打包
+    };
+    // 檢查是否打勾
+    const hasCheck = (value, bit) => (value & bit) !== 0;
+
+    const handleShelveCheck = async (shelveId, bitValue) => {
+        try {
+            const res = await updateShelveCheck({
+                shelveId,
+                bitValue
+            });
+
+            if (res.data.success) {
+                dispatch(setShelveCheck({
+                    station: currentStationSafe,
+                    shelveId,
+                    value: res.data.data.newValue
+                }));
+            } else {
+                Alert({ text: "更新失敗" });
+            }
+        } catch (error) {
+            console.warn("updateShelveCheck: ", error);
+        }
+    };
+
+    
+    // ===== 退回貨架 =====
     const handleReturnShelve = async (shelveId) => {
-        // TODO: 呼叫 API 退回該貨架
         console.log("退回貨架:", shelveId);
         if (!shelveId) {
             Alert({ text: "抓不到站點位置" });
@@ -240,6 +266,9 @@ export default function ShelfTransferStation() {
                             // 判斷這個貨架是不是被勾選的貨架
                             const isActive = activeShelveId === shelveId;
 
+                            // 護角 / 封膜 / 打包 checkbox 判斷
+                            const checkValue = shelveChecks[shelveId] || 0;
+
                             return (
                                 <div
                                     key={index}
@@ -266,35 +295,67 @@ export default function ShelfTransferStation() {
                                     {hasData ? (
                                         <>
                                             <div className={`flex-1 overflow-auto mb-3 ${
-            isDisabled ? 'pointer-events-none' : ''
-        }`}>
-            {/* 簡單的 checkbox 列表 */}
-            <div className="space-y-1">
-                {data.map((item) => {
-                    const isChecked = checkedItems.includes(item.id);
-                    return (
-                        <label
-                            key={item.id}
-                            className={`
-                                flex items-center gap-2 px-2 py-1 cursor-pointer
-                                border border-gray-300 rounded
-                                hover:bg-gray-50 transition-colors
-                            `}
-                        >
-                            <input
-                                type="checkbox"
-                                checked={isChecked}
-                                onChange={() => handleItemChange(shelveId, item)}
-                                className="w-4 h-4 "
-                            />
-                            <span className="text-xl truncate">
-                                {item.PRT_NO}
-                            </span>
-                        </label>
-                    );
-                })}
-            </div>
-        </div>
+                                                isDisabled ? 'pointer-events-none' : ''
+                                            }`}>
+                                                <div className="space-y-1">
+                                                    {data.map((item) => {
+                                                        const isChecked = checkedItems.includes(item.id);
+                                                        return (
+                                                            <label
+                                                                key={item.id}
+                                                                className={`
+                                                                    flex items-center gap-2 px-2 py-1 cursor-pointer
+                                                                    border border-gray-300 rounded
+                                                                    hover:bg-gray-50 transition-colors
+                                                                `}
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={isChecked}
+                                                                    onChange={() => handleItemChange(shelveId, item)}
+                                                                    className="w-4 h-4 "
+                                                                />
+                                                                <span className="text-xl truncate">
+                                                                    {item.PRT_NO}
+                                                                </span>
+                                                            </label>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                            {/* 護角 / 封膜 / 打包 checkbox */}
+                                            <div className="flex gap-4 mb-3 justify-between">
+                                                <label className="flex items-center gap-2 cursor-pointer border rounded-md bg-gray-500 text-white">
+                                                    <input 
+                                                        type="checkbox"
+                                                        checked={hasCheck(checkValue, CHECK_VALUES.CORNER)}
+                                                        onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.CORNER)}
+                                                        disabled={isDisabled}
+                                                        className="w-5 h-5 m-2"
+                                                    />
+                                                    <span className="text-2xl mx-4 my-2">護角</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer border rounded-md bg-gray-500 text-white">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={hasCheck(checkValue, CHECK_VALUES.SEAL)}
+                                                        onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.SEAL)}
+                                                        disabled={isDisabled}
+                                                        className="w-5 h-5 m-2"
+                                                    />
+                                                    <span className="text-2xl mx-4 my-2">封膜</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer border rounded-md bg-gray-500 text-white">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={hasCheck(checkValue, CHECK_VALUES.PACK)}
+                                                        onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.PACK)}
+                                                        disabled={isDisabled}
+                                                        className="w-5 h-5 m-2"
+                                                    />
+                                                    <span className="text-2xl mx-4 my-2">打包</span>
+                                                </label>
+                                            </div>
                                             {/* 退回貨架 */}
                                             <ActionBtn 
                                                 icon="icon-returnShelf"
