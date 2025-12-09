@@ -54,32 +54,46 @@ export function exportUserLogsToExcel(logs, userId = null, startTime = '', endTi
     const worksheetData = logs.map((log) => {
       const row = {};
       fields.forEach((field, index) => {
-        let value = log[field];
+        // 處理 UserName: 查找不區分大小寫 (SQL Server 可能返回不同的 case)
+        let value;
+        if (field === 'UserName') {
+          // 嘗試多種可能的 key 名稱 (case-insensitive)
+          value = log[field] || log['username'] || log['userName'] || log['USERNAME'] || null;
+        } else {
+          // 其他欄位正常讀取
+          value = log[field];
+        }
         
         // 處理特殊欄位
         if (field === 'Success') {
           value = value ? '是' : '否';
-        } else if (field === 'CreatedAt') {
+        } 
+        else if (field === 'CreatedAt') {
           // 格式化日期時間
-          if (value) {
-            const date = new Date(value);
-            value = date.toLocaleString('zh-TW', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false
-            });
+          if (value instanceof Date) {
+            value = value
+              .toISOString()
+              .replace("T", " ")
+              .replace("Z", "")
+              .slice(0, 19);
           }
-        } else if (field === 'RequestData' || field === 'ResponseData') {
+          // 如果是字串，就直接處理
+          else if (typeof value === "string") {
+            value = value.replace("T", " ").replace("Z", "").slice(0, 19);
+          }
+          // 如果 value 為 null/undefined，設為空字串
+          else if (value == null) {
+            value = '';
+          }
+        }
+        else if (field === 'RequestData' || field === 'ResponseData') {
           // 如果數據太長，截斷顯示
           if (value && value.length > 100) {
             value = value.substring(0, 100) + '...';
           }
         }
         
+        // 將處理後的值賦予對應的表頭
         row[headers[index]] = value ?? '';
       });
       return row;

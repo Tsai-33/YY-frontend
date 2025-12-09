@@ -20,7 +20,8 @@ const userSlice = createSlice({
   reducers: {
     // 设置用户信息
     setUser: (state, action) => {
-      const { id, name, email, role, accountNumber, permissions, isFirstLogin } = action.payload;
+      const { id, name, email, role, accountNumber, permissions, isFirstLogin,ipAddress } = action.payload;
+
       if (id !== undefined) state.userId = id;
       if (name !== undefined) state.userName = name;
       if (email !== undefined) state.userEmail = email;
@@ -28,6 +29,7 @@ const userSlice = createSlice({
       if (accountNumber !== undefined) state.accountNumber = accountNumber;
       if (permissions !== undefined) state.permissions = permissions;
       if (isFirstLogin !== undefined) state.isFirstLogin = isFirstLogin;
+      if (ipAddress !== undefined) state.userIP = ipAddress;
     },
     
     // 设置IP地址
@@ -45,6 +47,7 @@ const userSlice = createSlice({
       state.accountNumber = user.accountNumber;
       state.permissions = user.permissions || {};
       state.isFirstLogin = user.isFirstLogin;
+      state.userIP = user.ipAddress;
       state.isAuthenticated = true;
       state.accessToken = accessToken;
       state.refreshToken = refreshToken;
