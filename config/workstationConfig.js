@@ -1,6 +1,6 @@
 export const workstationConfig = {
   A: {
-    computers: ["172.16.11.99", "172.16.11.74"],
+    computers: ["172.16.11.99", "172.16.11.74","localhost"],
     stations: [
       "A01",
       "A02",

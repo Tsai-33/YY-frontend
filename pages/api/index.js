@@ -47,6 +47,8 @@ export const updateTransferItems = (data) => api.post("/shelfTransfer/updateTran
 export const sendToWMS = (payload) => api.post("/send-to-wms", payload, { timeout: 45000 });
 
 /* 叫車 */
+export const checkWCS = (payload) => api.post("/wcs/check", payload);
+export const checkNODEPOS = (payload) => api.post("/wcs/check/nodepos", payload);
 export const addWCS = (payload) => api.post("/wcs/add", payload);
 export const addWCSGroup = (payload) => api.post("/wcs/add/group", payload);
 export const addShelf = (payload) => api.post("/wcs/add", payload);

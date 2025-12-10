@@ -155,7 +155,7 @@ export default function ShelfTransferTable() {
     // 確定按鈕叫車 TODO 要改成直接寫入資料庫
     const handleConfirm = async () => {
         if (selectedShelve.length < 2 || selectedShelve.length > 5) {
-            Alert({text: "請選擇2~5個貨架"});
+            Alert({html: "請選擇2~5個貨架"});
             return;
         }
         try {

@@ -120,14 +120,14 @@ export default function ShelfTransferStation() {
         // TODO: 呼叫 API 退回該貨架
         console.log("退回貨架:", shelveId);
         if (!shelveId) {
-            Alert({ text: "抓不到站點位置" });
+            Alert({ html: "抓不到站點位置" });
             return;
         }
 
         // 找出該貨架對應的站點
         const shelveIndex = selectedShelves?.indexOf(shelveId);
         if (shelveIndex === -1) {
-            Alert({ text: "找不到對應的站點" });
+            Alert({ html: "找不到對應的站點" });
             return;
         }
         const stationId = `B0${shelveIndex + 1}`;

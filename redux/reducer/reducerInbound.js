@@ -83,8 +83,7 @@ const inboundSlice = createSlice({
     resetInbound: (state, action) => {
       const { type, station, W_ID } = action.payload;
       if (type === "one") {
-          state[station].screen = 'loading'
-  
+        state[station].screen = "loading";
       } else if (type === "all") {
         return initialState;
       } else if (type === "wave") {
@@ -99,13 +98,16 @@ const inboundSlice = createSlice({
         // 2️⃣ 先清除 orderList 中跟這個 wave 有關的訂單
         if (Array.isArray(state.orderList)) {
           state.orderList = state.orderList.filter((orderId) => {
-            return !Object.values(state).some((s) => s.waveNo === W_ID && s.order?.orderCode === orderId);
+            const s = state[station];
+            return  !(s && s.waveNo === W_ID);
           });
         }
 
         // 3️⃣ 再重置 waveNo === W_ID 的 station
+        // 沒寫成功，只清除了一個
         Object.keys(state).forEach((key) => {
           const s = state[key];
+          console.log(s,'重置wave顯示內容')
           if (s && typeof s === "object" && "waveNo" in s && s.waveNo === W_ID) {
             state[key] = createStation();
           }

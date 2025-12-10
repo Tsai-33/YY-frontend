@@ -67,9 +67,9 @@ export default function SocketManager() {
             // 入庫
             dispatch(setInbound({ station: eventData.STATION, screen: "working", shelf: eventData, shelfItem: eventData?.ITEMS, step: 3 }));
           } else if (eventData?.PURPOSE === 2) {
+          } else if (eventData?.PURPOSE === 3) {
             // 調撥
             dispatch(setTransfer({ station: eventData.STATION, screen: "working", taskdone: eventData, step: 3 }));
-          } else if (eventData?.PURPOSE === 3) {
           }
         }
         if (eventData?.action === "push_button") {
