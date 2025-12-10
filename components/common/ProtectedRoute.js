@@ -13,7 +13,6 @@ const PUBLIC_ROUTES = [
   "/auth/change-password",
   "/auth/reset-password",
   "/auth/logout",
-  "/workspace",
 ];
 
 // 需要特定权限的路由配置 (使用英文權限名稱)
