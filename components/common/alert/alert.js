@@ -10,7 +10,7 @@ const MySwal = withReactContent(Swal);
  */
 export default function Alert({
   title,                     // 必傳標題
-  text = "",                  // 文字內容
+  html = ``,                  // 文字內容
   showConfirm = true,         // 預設都有確認按鈕
   confirmButtonText = "確定", // 預設文字 "確定"
   confirmButtonColor = "#008b48",
@@ -23,7 +23,7 @@ export default function Alert({
 }) {
   const options = {
     title,
-    text,
+    html,
     timer,
     showConfirmButton: showConfirm,
     showCancelButton: showCancel,

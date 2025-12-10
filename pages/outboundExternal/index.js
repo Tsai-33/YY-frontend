@@ -130,7 +130,7 @@ export default function OutboundExternal() {
   // 退回貨架
   const handleReturnShelf = async () => {
     if (!currentStation) {
-      Alert({ text: "抓不到站點位置"});
+      Alert({ html: "抓不到站點位置"});
       return;
     }
     setLoading(true);

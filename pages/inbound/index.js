@@ -5,7 +5,7 @@ import PageHeader from "@/components/common/pageHeader/pageHeader";
 import InputFrame from "@/components/common/input/inputFrame";
 import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
 import { resetInbound, setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
-import { getInbound, finishInboundOrder, sendToWMS, updateInboundWMS, addShelf, cancelShelf, addInboundWCS } from "../api";
+import { getInbound, finishInboundOrder, sendToWMS, updateInboundWMS, addShelf, cancelShelf, addInboundWCS, checkNODEPOS, checkWCS } from "../api";
 import SchematicDiagram from "../../components/diagram/schematicDiagram";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import InboundTable from "@/components/inbound/inboundTable";
@@ -13,6 +13,7 @@ import Loading from "@/components/common/loading/loading";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "@/components/common/alert/alert";
+import Modal from "@/components/common/modal/modal";
 
 export default function Inbound() {
   const dispatch = useDispatch();
@@ -27,19 +28,29 @@ export default function Inbound() {
   };
   const currentStationSafe = currentStation || stations?.[0] || "";
   const { orderList, lackStation } = useSelector((s) => s.inbound);
-  const { step, screen, orderCode, order, shelf, shelfItem, selected } = useSelector((s) => s.inbound[currentStationSafe] || {});
+  const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo } = useSelector((s) => s.inbound[currentStationSafe] || {});
 
-  // 掃描 QR code
+  // 掃描 QR code (ERP抓取新資料)
   const barCodeRef = useRef(null);
-  const handleBarCode = (e) => {
+  const handleBarCode = async (e) => {
     if (screen === "loading") return;
     if (e.key !== "Enter") return;
     const inputBarCode = e.target.value.trim();
     const result = tableData.some((item) => item.INSTOCK_NO === inputBarCode);
-    const [value] = tableData.filter((item) => item.INSTOCK_NO === inputBarCode);
     if (result) {
-      dispatch(setInbound({ station: currentStation, order: value, orderCode: inputBarCode, step: 2 }));
       barCodeRef.current.value = "";
+    } else {
+      try {
+        const random = generateRandomNumber();
+        const data = { action: "ask_order", no: inputBarCode, dataid: random };
+        const res = await sendToWMS(data);
+        if (res.data.success) {
+          // 完成後更新畫面列表
+          getInboundTable();
+        }
+      } catch (error) {
+        console.warn(`ask_order handleBarCode :`, error);
+      }
     }
   };
 
@@ -80,14 +91,15 @@ export default function Inbound() {
     }
   };
   // 確定上架
+  const [confirmModal, setConfirmModal] = useState(false);
   const handleConfrimShelf = async () => {
     setLoading(true);
     if (!currentStation) {
-      Alert({ text: "抓不到站點位置" });
+      Alert({ html: "抓不到站點位置" });
       return;
     }
     if (selected.length <= 0) {
-      Alert({ text: "沒有選擇項目" });
+      Alert({ html: "沒有選擇項目" });
       return;
     }
 
@@ -125,11 +137,17 @@ export default function Inbound() {
     } finally {
       setLoading(false);
       dispatch(setInbound({ station: currentStation, selected: [] }));
+      setConfirmModal(false);
     }
   };
   // 新增貨架
+  const [addModal, setAddModal] = useState(false);
   const handleAddShelf = async () => {
     setLoading(true);
+    if (tableData2.length <= 0) {
+      Alert({ title: "入庫單完成", html: `此入庫單已經完成，請選擇「 入庫單完成 」。` });
+      return;
+    }
     try {
       const res = await addInboundWCS({ area: shelf?.area, W_ID: order?.W_ID });
       if (res.data.success) {
@@ -139,18 +157,39 @@ export default function Inbound() {
       console.warn("handleAddShelf :", err);
     } finally {
       setLoading(false);
+      setAddModal(false);
     }
   };
   // 退回貨架
+  const [returnModal, setReturnModal] = useState(false);
   const handleReturnShelf = async () => {
+    setReturnModal(false);
+
     if (!currentStation) {
-      Alert({ text: "抓不到站點位置" });
+      Alert({ html: "抓不到站點位置" });
       return;
     }
     if (tableData2.length <= 0) {
-      Alert({ title:"入庫單完成",text: `此入庫單已經完成，請選擇「 入庫單完成 」。` });
+      Alert({ title: "入庫單完成", html: `此入庫單已經完成<br>請選擇「 入庫單完成 」` });
       return;
     }
+    if (tableData2.length > 0) {
+      try {
+        const [wcs, nodepos] = await Promise.all([checkWCS({ W_ID: waveNo }), checkNODEPOS({ W_ID: waveNo })]);
+        if (wcs.data.success && nodepos.data.success) {
+          if (wcs.data.data.length <= 0 && nodepos.data.data.length <= 1) {
+            // 沒有這個GGROUP的車了 只剩下一台車在站點了
+            Alert({ title: "入庫單未完成", html: `此入庫單未完成且只剩下一台車<br>如果退回將返回選單列表`, showCancel: true, onConfirm: () => {} });
+          }
+        }
+      } catch (err) {
+        console.warn(`handleReturnShelf:`, err);
+      }
+
+      return;
+    }
+
+    // 開始退回
     setLoading(true);
     try {
       // 傳給WMS
@@ -170,6 +209,7 @@ export default function Inbound() {
   // =============== 初入畫面 ===============
   useEffect(() => {
     getInboundTable();
+    barCodeRef?.current?.focus();
   }, []);
   const getInboundTable = async () => {
     try {
@@ -178,7 +218,6 @@ export default function Inbound() {
         // 排除掉重複訂單
         const newData = res.data.data.filter((v) => !orderList.includes(v.INSTOCK_NO));
         setTableData(newData);
-        barCodeRef?.current?.focus();
       }
     } catch (err) {
       console.warn(`getInboundTable:`, err);
@@ -191,7 +230,6 @@ export default function Inbound() {
     try {
       const res = await finishInboundOrder({ W_ID: order.W_ID });
       if (res.data.success) {
-        console.log(res.data.data,'tttttttt')
         dispatch(resetInbound({ type: "wave", W_ID: res.data.data }));
         Alert({ title: "此單已完成" });
       }
@@ -205,8 +243,8 @@ export default function Inbound() {
   return (
     <>
       {/* 頂部區域 */}
-      {step === 1 && <PageHeader title={`請點擊清單內入倉單號、掃描入倉單條碼`} close={false} backTo="/workspace" />}
-      {orderCode && step === 2 && <PageHeader title={`檢視完入庫資訊確認沒問題，請點擊確定按鈕`} close={false} />}
+      {step === 1 && <PageHeader title={`請掃描入倉單條碼，點擊左側清單內入倉單號`} close={false} backTo="/workspace" />}
+      {orderCode && step === 2 && <PageHeader title={`檢視完入倉資訊確認沒問題，請點擊確定按鈕`} close={false} />}
       {step === 3 && <PageHeader title={`貨架到站點，請掃外箱條碼或點擊介面清單方框確定已將產品放上貨架`} close={true} />}
       {step === 4 && <PageHeader title={`上架完請點擊退回貨架按鈕`} close={true} />}
       {step === 5 && <PageHeader title={`等待無人車將貨架搬回庫區`} close={true} />}
@@ -217,7 +255,8 @@ export default function Inbound() {
           {step > 2 && (
             <div className="flex  font-bold text-black space-x-4 p-2">
               <div className="flex flex-1 items-center">
-                建議入倉總包數：{shelf?.EstPP}包({shelf?.EstBoxes}箱)
+                建議入倉總數：{shelf?.EstPPs}
+                {shelf?.UNIT} ({shelf?.EstBoxes}箱)
               </div>
               <ActionBtn text="入庫單完成" variant="green" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handlefinishInboundOrder} />
             </div>
@@ -230,7 +269,7 @@ export default function Inbound() {
           <div className="flex space-x-4 pb-4">
             <div className="flex flex-1 items-center">
               <label htmlFor="order" className="font-bold text-black">
-                訂單/工單條碼:
+                入庫單條碼:
               </label>
               {step <= 2 ? (
                 <div className="w-75">
@@ -259,8 +298,11 @@ export default function Inbound() {
                       <div className="mt-2 border-gray-300">
                         <div>品名: {order?.PRT_NAME}</div>
                         <div className="w-50 flex justify-between">
-                          <div>箱數: {order?.BOX_NOS}</div>
-                          <div>單位: {order?.PP_NOS}</div>
+                          <div>箱數: {order?.BOX_NOS}箱</div>
+                          <div>
+                            數量: {order?.PP_NOS}
+                            {order?.UNIT}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -269,38 +311,49 @@ export default function Inbound() {
                   <SchematicDiagram>
                     <div className="flex flex-col">
                       <div className="flex justify-between">
-                        <div>貨架編號: {shelf?.SHELVE_ID}</div>
-                        <div>入庫庫別: {shelf?.area}</div>
+                        <div>{shelf ? `貨架編號: ${shelf?.SHELVE_ID}` : ""}</div>
+                        <div>{shelf ? `入庫庫別: ${shelf?.area}` : ""}</div>
                       </div>
 
                       {(() => {
-                        // Step 1: 建立 PRT_NO -> item 的 Map
-                        const tempMap = new Map(shelfItem.map((item) => [item.PRT_NO, { ...item, selectedBox: 0, selectedPP: 0, isNew: false }]));
+                        // Step 1: 安全處理 shelfItem
+                        const shelfList = Array.isArray(shelfItem) ? shelfItem : [];
+                        const selectedList = Array.isArray(selected) ? selected : [];
 
-                        // Step 2: 將 selectedArray 的資料加入或累加
-                        (selected || []).forEach((sel) => {
+                        // Step 2: 建立 Map
+                        const tempMap = new Map(shelfList.map((item) => [item.PRT_NO, { ...item, selectedBox: 0, selectedPP: 0, isNew: false }]));
+
+                        // Step 3: 合併 selected
+                        selectedList.forEach((sel) => {
+                          if (!sel?.PRT_NO) return; // 保護無效資料
+
                           if (tempMap.has(sel.PRT_NO)) {
                             const exist = tempMap.get(sel.PRT_NO);
-                            exist.selectedBox += sel.BOX_NO;
-                            exist.selectedPP += sel.PP_NO;
+                            exist.selectedBox += sel.BOX_NO || 0;
+                            exist.selectedPP += sel.PP_NO || 0;
                           } else {
                             tempMap.set(sel.PRT_NO, {
                               ...sel,
-                              BOX_NO: 0, // 原本沒有就設 0
-                              PP_NO: 0, // 原本沒有就設 0
-                              selectedBox: sel.BOX_NO,
-                              selectedPP: sel.PP_NO,
+                              BOX_NO: 0,
+                              PP_NO: 0,
+                              selectedBox: sel.BOX_NO || 0,
+                              selectedPP: sel.PP_NO || 0,
                               isNew: true,
                             });
                           }
                         });
 
-                        // Step 3: 轉回陣列
                         const displayItems = Array.from(tempMap.values());
+
+                        // 🚨 如果沒有資料 → 顯示空畫面，不要 map
+                        if (displayItems.length === 0) {
+                          return <div className="text-gray-400 p-4"></div>;
+                        }
 
                         // Step 4: 渲染
                         return displayItems.map((item, index) => {
-                          const isNew = item.isNew || (item.selectedBox > 0 && item.BOX_NO === 0 && item.PP_NO === 0);
+                          const isNew = item.isNew || (item.selectedBox > 0 && (item.BOX_NO || 0) === 0 && (item.PP_NO || 0) === 0);
+
                           const textClass = isNew ? "text-red-500" : "";
 
                           return (
@@ -313,15 +366,14 @@ export default function Inbound() {
                               </div>
                               <div className="flex justify-between">
                                 <div>
-                                  箱數: {item.BOX_NO}
-                                  {item.selectedBox > 0 && <span className="text-red-500">{`(+${item.selectedBox})`}</span>}
+                                  箱數: {item.BOX_NO} 箱{item.selectedBox > 0 && <span className="text-red-500">{`(+${item.selectedBox})`}</span>}
                                 </div>
                                 <div>
-                                  包數: {item.PP_NO}
+                                  數量: {item.PP_NO} {item.UNIT}
                                   {item.selectedPP > 0 && <span className="text-red-500">{`(+${item.selectedPP})`}</span>}
                                 </div>
                                 <div>
-                                  {index + 1}/{displayItems.length}
+                                  車數 (還沒給我) {index + 1}/{displayItems.length}
                                 </div>
                               </div>
                             </div>
@@ -337,12 +389,12 @@ export default function Inbound() {
             </div>
             {/* 按鈕區 */}
             <div className="flex flex-1 flex-col justify-end items-center">
-              {step <= 2 && <ActionBtn text="確定" variant="orange" onClick={handleConfrim} />}
+              {step <= 2 && <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfrim} />}
               {step > 2 && (
                 <div className="w-full flex justify-between">
-                  <ActionBtn icon="" text="新增貨架" variant="orange" onClick={handleAddShelf} />
-                  <ActionBtn icon="" text="確定上架" variant="orange" onClick={handleConfrimShelf} disabled={selected?.length <= 0} />
-                  <ActionBtn icon="" text="退回貨架" variant="orange" onClick={handleReturnShelf} />
+                  <ActionBtn icon="" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
+                  <ActionBtn icon="" text="確定上架" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
+                  <ActionBtn icon="" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} disabled={tableData2?.length <= 0} />
                 </div>
               )}
             </div>
@@ -358,6 +410,18 @@ export default function Inbound() {
       {/* loading */}
       {screen === "loading" && <LoadingShelf />}
       {loading && <Loading />}
+      {/* Modal - 確定 */}
+      <Modal showModal={confirmModal} title="確認上架" onClose={() => setConfirmModal(false)} onConfirm={handleConfrimShelf} width={`30vw`} height={`35vh`}>
+        請確定是否上架以下品項
+      </Modal>
+      {/* Modal - 新增貨架 */}
+      <Modal showModal={addModal} title="新增貨架" onClose={() => setAddModal(false)} onConfirm={handleAddShelf} width={`30vw`} height={`35vh`}>
+        確定是否新增貨架
+      </Modal>
+      {/* Modal - 退回貨架 */}
+      <Modal showModal={returnModal} title="退回貨架" onClose={() => setReturnModal(false)} onConfirm={handleReturnShelf} width={`30vw`} height={`35vh`}>
+        確定是否返回貨架
+      </Modal>
     </>
   );
 }

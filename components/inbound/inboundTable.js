@@ -12,8 +12,8 @@ export default function InboundTable({ data,data2,setData2 }) {
   // =============== 畫面一 ====================
   // radio table (左)
   const tableHeader = [
-    { label: "訂單單號/製令單號", key: "INSTOCK_NO", width: `60%` },
-    { label: "入庫日期", key: "BILL_TIME", width: `35%` },
+    { label: "入倉單號", key: "INSTOCK_NO", width: `60%` },
+    { label: "單據日期", key: "BILL_TIME", width: `35%` },
   ];
   const handleSelectedOption = (name, value, idKey) => {
     const valueId = value[idKey];
