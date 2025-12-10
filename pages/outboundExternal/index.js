@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import OutboundExternalTable from "@/components/outboundExternal/outboundExternalTable";
 import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
 import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
-import { getOutboundExternal, getOutBoundExternalOrderDetailBySaleNo, sendToWMS } from "../api";
+import { getOutboundExternal, getOutBoundExternalOrderDetailBySaleNo, sendToWMS, shiftOutByBarcode } from "../api";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import Loading from "@/components/common/loading/loading";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
@@ -64,17 +64,120 @@ export default function OutboundExternal() {
 
   // =====掃銷貨單條碼=====
   const orderBarCodeRef = useRef(null);
-  const handleOrderBarCode = (e) => {
+  const [askingOrder, setAskingOrder] = useState(false);
+
+  const handleOrderBarCode = async (e) => {
     if (screen === "loading") return;
     if (e.key !== "Enter") return;
+
     const inputBarCode = e.target.value.trim();
+    if (!inputBarCode) return;
+
+    // 檢查清單中是否配對到
     const result = tableData.some((item) => item.SALE_NO === inputBarCode);
     const [value] = tableData.filter((item) => item.SALE_NO === inputBarCode);
     if (result) {
       dispatch(setOutboundExternal({ station: currentStationSafe, order: value, orderCode: inputBarCode, step: 2 }));
       orderBarCodeRef.current.value = "";
+    } else {
+      setAskingOrder(true);
+      try {
+        const dataId = generateRandomNumber();
+        const data = {
+          action: "ask_order",
+          no: inputBarCode,
+          dataid: dataId
+        }
+        console.log("data: ", data)
+        const res = await sendToWMS(data);
+        console.log("res: ", res);
+        if (res.data.success && res.data.data?.result?.toUpperCase() === "OK") {
+          // 重取訂單
+          const tableRes = await getOutboundExternal();
+          if (tableRes.data.success) {
+            const newData = tableRes.data.data.filter((v) => !orderList.includes(v.OUTSTOCK_NO));
+            setTableData(newData);
+          
+            // 再配對一次
+            const newMatchedOrder = newData.find((item) => item.SALE_NO === inputBarCode);
+            if (newMatchedOrder) {
+              dispatch(setOutboundExternal({
+                station: currentStationSafe,
+                order: newMatchedOrder,
+                orderCode: inputBarCode,
+                step: 2
+              }));
+            } else {
+              Alert({ text: "單號已更新但清單中找不到該筆資料，請稍後再試" });
+            }
+          }
+        } else if (result === "NG") {
+          Alert({ text: res.data.data?.message || "無此單號" });
+        } else {
+          Alert({ text: "查詢單號失敗" });
+        }
+      } catch (error) {
+        console.warn("ask_order 錯誤:", error);
+      } finally {
+        setAskingOrder(false);
+        orderBarCodeRef.current.value = "";
+      }
     }
   }
+
+  // ===== 掃外箱條碼 =====
+  const boxBarcodeRef = useRef(null);
+  const [scanning, setScanning] = useState(false);
+  const handleBoxBarcode = async (e) => {
+    if (e.key !== "Enter") return;
+    
+    const barcode = e.target.value.trim();
+    if (!barcode) return;
+    if (scanning) return;
+
+    setScanning(true);
+    try {
+      // 出庫API
+      const res = await shiftOutByBarcode({
+        barcode,
+        waveNo: order.W_ID,
+        saleNo: orderCode,
+        shelveId: shelf?.SHELVE_ID
+      });
+
+      if (res.data.success) {
+        const { PRT_NO, PRT_NAME, outBoxNo, outPpNo } = res.data.data;
+        // 找到對應的產品更新checkbox
+        // const prtNo = res.data.data.PRT_NO;
+        setSelectedArray(prev => [...new Set([...prev, PRT_NO])]);
+        
+        // 回報report_shiftout
+        await sendToWMS({
+          action: "report_shiftout",
+          wave_no: String(order.W_ID),
+          dataid: generateRandomNumber()
+        });
+        
+        // 重新拿table資料
+        await getList();
+      } else {
+        Alert({ text: res.data.message || "條碼不符合" });
+      }
+    } catch (error) {
+      console.warn("handleBoxBarcode:", error);
+      Alert({ text: "出庫失敗" });
+    } finally {
+      setScanning(false);
+      boxBarcodeRef.current.value = "";
+      boxBarcodeRef.current.focus();
+    }
+  };
+  // step 3 時自動focus外箱條碼
+  useEffect(() => {
+    if (step === 3 && boxBarcodeRef.current) {
+      boxBarcodeRef.current.focus();
+    }
+  }, [step]);
 
   // ===== 確認出庫 =====
   const handleOrderConfrim = async () => {
@@ -189,18 +292,42 @@ export default function OutboundExternal() {
         <div className="w-4/7 font-bold text-black p-4 flex flex-col">
           {/* 條碼 */}
           <div className="flex space-x-4 pb-4">
+            {/* 銷貨單條碼 */}
             <div className="flex flex-1 items-center">
               <label htmlFor="order" className="font-bold text-black">
                 銷貨單條碼:
               </label>
               {step <= 2 ? (
-                <div className="w-75">
-                  <InputFrame type="text" name="orderCode" id="order" ref={orderBarCodeRef} onKeyDown={handleOrderBarCode} />
+                <div className="w-50 flex items-center gap-2">
+                  <InputFrame 
+                    type="text" 
+                    name="orderCode" 
+                    id="order" 
+                    ref={orderBarCodeRef} 
+                    onKeyDown={handleOrderBarCode}
+                    disabled={askingOrder}
+                  />
+                  {askingOrder && <span className="text-orange-500">查詢中...</span>}
                 </div>
               ) : (
-                orderCode
+                <span className="ml-2">{orderCode}</span>
               )}
             </div>
+            {/* 外箱條碼 */}
+            {step === 3 && (
+              <div className="flex flex-1 items-center">
+                <label className="font-bold text-black">外箱條碼:</label>
+                <div className="w-50 flex items-center gap-2">
+                  <InputFrame 
+                    type="text" 
+                    ref={boxBarcodeRef} 
+                    onKeyDown={handleBoxBarcode}
+                    disabled={scanning}
+                  />
+                  {scanning && <span className="text-orange-500">處理中...</span>}
+                </div>
+              </div>
+            )}
           </div>
           {/* 資料 */}
           <div className="flex flex-col flex-1 bg-white p-8 pb-4">
@@ -230,7 +357,7 @@ export default function OutboundExternal() {
                 ))
               ) : (
                 <SchematicDiagram>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-3xl">
                     <div className="flex justify-between">
                       <div>貨架編號:{shelf?.SHELVE_ID}</div>
                       <div>出庫庫別:{shelf?.STOCK_AREA}</div>
@@ -238,15 +365,17 @@ export default function OutboundExternal() {
                   </div>
                   {shelfItem?.map((item, index) => (
                     <>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-3xl">
                         <div>產品品號:{item?.PRT_NO}</div>
                         <div>棧板規格:{item?.type}</div>
                       </div>
-                      <div>品名: {item?.PRT_NAME}</div>
-                        <div className="flex justify-between">
-                        <div>箱數: {item?.BOX_NO} 箱</div>
-                        <div>包數: {item?.PP_NO} 包</div>
-                        <div>{index + 1}/{shelfItem?.length}</div>
+                      <div className="text-3xl">
+                        <div>品名: {item?.PRT_NAME}</div>
+                          <div className="flex justify-between">
+                          <div>箱數: {item?.BOX_NO} 箱</div>
+                          <div>包數: {item?.PP_NO} 包</div>
+                          <div>{index + 1}/{shelfItem?.length}</div>
+                        </div>
                       </div>
                     </>
                   ))}
@@ -270,7 +399,7 @@ export default function OutboundExternal() {
             <ActionBtn 
               key={i} 
               text={`站點${i + 1}`} 
-              variant={lackStation?.includes(station) ? "orange" : "green"} 
+              variant={lackStation?.includes(station) ? "" : "green"} 
               disabled={currentStation === station ? true : false} 
               onClick={() => handleSwitchStation(station)} 
               className="w-80 flex justify-center"

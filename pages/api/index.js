@@ -30,6 +30,7 @@ export const getOutBoundExternalOrderDetailByWID = (w_id) =>
     api.get(`/outboundExternal/getOutBoundExternalOrderDetailByWID`, { 
         params: { w_id } 
     });
+export const shiftOutByBarcode = (data) => api.post("/api/outboundExternal/shiftout", data);
 
 /* 取得出庫單(領用) */
 
