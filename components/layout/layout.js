@@ -7,6 +7,7 @@ import { logout } from "@/redux/reducer/reducerUser";
 import { logout as logoutAPI } from "@/pages/api/authService";
 import ProtectedRoute from "../common/ProtectedRoute";
 import InboundManager from "../inbound/inboundManager";
+import OutboundExternalManager from "../outboundExternal/outboundExternalManager";
 
 
 // 控制面板
@@ -133,7 +134,6 @@ export default function Layout({ children }) {
       {path.startsWith("/inbound") && (
         <InboundManager isOpen={open} onClose={() => setOpen(false)} />
       )}
-
     </div>
   );
 }

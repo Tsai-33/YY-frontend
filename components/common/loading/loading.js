@@ -3,7 +3,6 @@ import clsx from "clsx";
 export default function Loading() {
     const base = `
   transition-colors duration-500 ease-in-out
-  backdrop-blur-[12px]
   shadow-[0px_1px_8px_0px_#0000001A,
           0px_0px_2px_0px_#0000001A,
           inset_0px_0px_8px_0px_#F2F2F2,

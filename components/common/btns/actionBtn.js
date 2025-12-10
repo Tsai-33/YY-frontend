@@ -1,14 +1,7 @@
 import React from "react";
 import clsx from "clsx";
 
-export default function ActionBtn({
-  icon,
-  text,
-  variant,
-  onClick,
-  disabled,
-  className,
-}) {
+export default function ActionBtn({ icon, text, variant, onClick, disabled, className, textSize }) {
   const base = `
     px-6 
     rounded-2xl 
@@ -157,16 +150,9 @@ export default function ActionBtn({
   };
   return (
     <>
-      <button
-        className={` ${clsx(base, variants[variant])} ${className}`}
-        onClick={onClick}
-        disabled={disabled}>
-        {icon && (
-          <span className={`${icon} text-[length:var(--font-size-6xl)]`}></span>
-        )}
-        <div className="md:text-[length:var(--middle-fontSize)] lg:text-[length:var(--font-size-4xl)]">
-          {text}
-        </div>
+      <button className={` ${clsx(base, variants[variant])}  ${className}`} onClick={onClick} disabled={disabled}>
+        {icon && <span className={`${icon} text-[length:var(--font-size-6xl)]`}></span>}
+        <div className={`md:text-[length:var(--font-size-2xl)] lg:text-[length:var(--font-size-4xl)]`}   style={{ fontSize: textSize }}>{text}</div>
       </button>
     </>
   );
