@@ -59,6 +59,43 @@ const shelfTransferSlice = createSlice({
                 }
                 return;
             }
+
+            if (shelf && shelfItem) {
+                const shelveId = shelf.SHELVE_ID;
+                for (const stationId of stationList) {
+                    const stationData = state[stationId];
+                    // 檢查這個貨架是否在selectedShelves裡面確保是理貨的車
+                    if (stationData.selectedShelves?.includes(shelveId)) {        
+                        const itemsWithId = shelfItem.map(item => ({
+                            ...item,
+                            id: item.MAKE_NO
+                        }));
+
+                        stationData.shelveData[shelveId] = itemsWithId;
+                        stationData.shelveStatus[shelveId] = "ready";
+
+                        // 拿到SEAL
+                        if (!stationData.shelveChecks) {
+                            stationData.shelveChecks = {};
+                        }
+
+                        const sealValue = parseInt(shelfItem[0]?.SEAL, 10) || 0;
+                        stationData.shelveChecks[shelveId] = sealValue;
+
+                        // ===== 檢查是否所有貨架都到站了 =====
+                        const allShelves = stationData.selectedShelves || [];
+                        const allReady = allShelves.every(id => {
+                            const status = stationData.shelveStatus[id];
+                            return status === "ready";
+                        });
+                        
+                        if (allReady) {
+                            stationData.screen = "working";
+                        }
+                    }
+                }
+                return; 
+            }
         
             if (!state[station]) return;
 
@@ -74,29 +111,6 @@ const shelfTransferSlice = createSlice({
             if (selectedItems !== undefined) state[station].selectedItems = selectedItems;
             if (orderList !== undefined) state.orderList = [...new Set([...state.orderList, orderList])];
             if (lackStation !== undefined) state.lackStation = [...new Set([...state.lackStation, lackStation])];
-
-            if (shelf && shelfItem) {
-                const shelveId = shelf.SHELVE_ID;
-                for (const stationId of stationList) {
-                    // 檢查這個貨架是否在selectedShelves裡面確保是理貨的車
-                    if (state[stationId].selectedShelves?.includes(shelveId)) {
-                        const itemsWithId = shelfItem.map(item => ({
-                            ...item,
-                            id: item.MAKE_NO
-                        }));
-
-                        state[stationId].shelveData[shelveId] = itemsWithId;
-                        state[stationId].shelveStatus[shelveId] = "ready";
-
-                        // 拿到SEAL
-                        if (!state[stationId].shelveChecks) {
-                            state[stationId].shelveChecks = {};
-                        }
-                        const sealValue = parseInt(shelfItem[0]?.SEAL, 10) || 0;
-                        state[stationId].shelveChecks[shelveId] = sealValue;
-                    }
-                }
-            }
         },
 
         // 單一貨架到站時更新

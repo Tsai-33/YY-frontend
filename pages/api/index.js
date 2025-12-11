@@ -44,6 +44,9 @@ export const getWMSBySaleNo = (sale_no) => api.get("/shelfTransfer/getWMSBySaleN
 export const insertShelfTask = (data) => api.post("/shelfTransfer/insertShelfTask", data);
 export const updateTransferItems = (data) => api.post("/shelfTransfer/updateTransferItems", data);
 export const updateShelveCheck = (data) => api.post(`/shelfTransfer/updateShelveCheck`, data);
+export const getStockAreas = () => api.get("/shelfTransfer/getStockAreas");
+export const getWMSByAreaAndPrtNo = (area, prtNo) => 
+    api.get(`/shelfTransfer/getWMSByAreaAndPrtNo?area=${area}&prtNo=${prtNo}`);
 
 /* 傳給labview */
 export const sendToWMS = (payload) => api.post("/send-to-wms", payload, { timeout: 45000 });
