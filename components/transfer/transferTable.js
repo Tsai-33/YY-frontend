@@ -3,19 +3,19 @@ import { useSelector, useDispatch } from "react-redux";
 import Table from "../common/table/table";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setTransfer } from "@/redux/reducer/reducerTransfer";
+
 export default function TransferTable({ data, selectedArray, setSelectedArray }) {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { orderCode, step } = useSelector((s) => s.transfer[currentStationSafe] || {});
+  const { orderCode, step } = useSelector((s) => s.transfer[currentStationSafe] || { step: 1, orderCode: "" });
   const [tableData2, setTableData2] = useState([]);
 
   // =============== 畫面一 ====================
   // radio table (左)
   const tableHeader = [
     { label: "調撥單號", key: "orderId", width: `50%` },
-    { label: "來源庫區", key: "area", width: `20%` },
-    { label: "目的庫區", key: "area2", width: `20%` },
+    { label: "調撥備註", key: "remark", width: `50%` },
   ];
   const handleSelectedOption = (name, value, idKey) => {
     const valueId = value[idKey];

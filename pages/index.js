@@ -9,6 +9,7 @@ export default function Home() {
   const router = useRouter();
   const dispatch = useDispatch();
   const IP = useSelector((state) => state.user.userIP);
+  const isAuthenticated = useSelector((state) => state.user.isAuthenticated);
 
   const fetchClientIP = async () => {
     try {
@@ -27,6 +28,12 @@ export default function Home() {
 
   // 首頁載入時就進行初始化流程
   useEffect(() => {
+    // 如果未登入，直接跳轉到登入頁
+    if (!isAuthenticated) {
+      router.push("/auth/login");
+      return;
+    }
+
     async function init() {
       // 若 Redux 已有 station 和 ip，代表已初始化過
       if (IP) {
@@ -51,10 +58,15 @@ export default function Home() {
     }
 
     init();
-  }, []);
+  }, [isAuthenticated, router, IP, dispatch]);
 
   // 導航到工作站
   const navigateToWorkspace = () => {
+    // 如果未登入，跳轉到登入頁
+    if (!isAuthenticated) {
+      router.push("/auth/login");
+      return;
+    }
     router.push("/workspace");
   };
 

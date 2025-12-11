@@ -25,7 +25,7 @@ export default function Transfer() {
     dispatch(setCurrentStation(station));
   };
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { step, screen, orderCode, taskdone } = useSelector((t) => t.transfer[currentStationSafe] || {});
+  const { step, screen, orderCode, taskdone } = useSelector((t) => t.transfer[currentStationSafe] || { step: 1, screen: "idle", orderCode: "" });
 
   // 掃描 QR code
   const barCodeRef = useRef(null);
@@ -106,71 +106,69 @@ export default function Transfer() {
                 orderCode
               )}
             </div>
-            <div className="text-3xl"> {step > 2 ? "判斷一個東西" ? "目的站點" : "來源站點" : ""}</div>
           </div>
           {/* 資料 */}
           <div className="flex flex-col flex-1 bg-white p-8 pb-4">
             {/* 內容區 */}
             <div className="flex flex-col gap-8 h-100 overflow-y-auto">
-              {step <= 2 ? (
-                orderCode &&
-                tableData.map((v, i) => {
-                  if (orderCode !== v.orderId) return;
-                  return (
-                    <SchematicDiagramList key={i}>
-                      <div className="flex flex-col">
-                        <div className="flex justify-between">
-                          <div>調撥單號:{v?.orderId}</div>
-                          <div>
-                            <div>來庫庫別:{v?.area}</div>
-                            <div>目的庫別:{v?.area2}</div>
-                          </div>
-                        </div>
-                        <div className="flex justify-between">
-                          <div>產品品號:{v?.product}</div>
-                        </div>
-                        {v?.products?.map((p, idx) => (
-                          <div key={idx} className="mt-2 border-gray-300">
-                            <div>品名: {p?.productName}</div>
-                            <div className="w-50 flex justify-between">
-                              <div>箱數: {p?.bag}</div>
-                              <div>包數: {p?.count}</div>
+              {step === 2 && orderCode
+                ? tableData.map((v, i) => {
+                    if (orderCode !== v.orderId) return null;
+                    return (
+                      <SchematicDiagramList key={i}>
+                        <div className="flex flex-col">
+                          <div className="flex justify-between">
+                            <div>調撥單號:{v?.orderId}</div>
+                            <div>
+                              <div>目的庫別: {v?.area2}</div>
+                              <div className="text-red-500">來源庫別: {v?.area}</div>
                             </div>
                           </div>
-                        ))}
+                          <div className="flex justify-between">
+                            <div>產品品號:{v?.product}</div>
+                          </div>
+                          {v?.products?.map((p, idx) => (
+                            <div key={idx} className="mt-2 border-gray-300">
+                              <div>品名: {p?.productName}</div>
+                              <div className="w-50 flex justify-between">
+                                <div>箱數: {p?.bag}箱</div>
+                                <div>包數: {p?.count}包</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </SchematicDiagramList>
+                    );
+                  })
+                : step > 2 && (
+                    <SchematicDiagram>
+                      <div className="flex flex-col">
+                        <div className="flex justify-between">
+                          <div>貨架編號:</div>
+                          <div>出庫庫別:</div>
+                        </div>
+                        <div className="flex justify-between">
+                          <div>產品品號:</div>
+                          <div>棧板規格:</div>
+                        </div>
+                        <div className="mt-2 p-2 border-gray-300">
+                          <div>品名:</div>
+                          <div className="flex justify-between">
+                            <div>箱數:</div>
+                            <div>包數:</div>
+                            <div>1/1</div>
+                          </div>
+                        </div>
                       </div>
-                    </SchematicDiagramList>
-                  );
-                })
-              ) : (
-                <SchematicDiagram>
-                  <div className="flex flex-col">
-                    <div className="flex justify-between">
-                      <div>貨架編號:</div>
-                      <div>出庫庫別:</div>
-                    </div>
-                    <div className="flex justify-between">
-                      <div>產品品號:</div>
-                      <div>棧板規格:</div>
-                    </div>
-                    <div className="mt-2 p-2 border-gray-300">
-                      <div>品名:</div>
-                      <div className="flex justify-between">
-                        <div>箱數:</div>
-                        <div>包數:</div>
-                        <div>1/1</div>
-                      </div>
-                    </div>
-                  </div>
-                </SchematicDiagram>
-              )}
+                    </SchematicDiagram>
+                  )}
             </div>
             {/* 按鈕區 */}
             <div className="flex flex-1 flex-col justify-end items-center">
-              {step <= 2 && <ActionBtn text="確定" variant="orange" onClick={handleConfrim} />}
+              {step === 2 && <ActionBtn text="確定" variant="orange" onClick={handleConfrim} />}
               {step > 2 && (
                 <div className="w-full flex justify-center">
-                  <ActionBtn icon="" text="退回貨架" variant="orange" onClick={handleConfrimShelf} />
+                  <ActionBtn icon="" text="退回貨架" variant="orange" onClick={handleReturnShelf} />
                 </div>
               )}
             </div>
@@ -179,8 +177,8 @@ export default function Transfer() {
       </div>
       {/* 底部按鈕區域 */}
       <div className="w-full flex justify-between z-15">
-        {stations.map((station) => (
-          <ActionBtn text={station} variant="green" disabled={currentStation === station ? true : false} onClick={() => handleSwitchStation(station)} />
+        {stations.map((station, i) => (
+          <ActionBtn key={i} text={`站點${i + 1}`} variant="green" disabled={currentStation === station ? true : false} onClick={() => handleSwitchStation(station)} />
         ))}
       </div>
       {/* loading */}
