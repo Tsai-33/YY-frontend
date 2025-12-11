@@ -6,7 +6,7 @@ import PageHeader from "@/components/common/pageHeader/pageHeader";
 import TextInput from "@/components/common/input/textInput";
 import SelectInput from "@/components/common/input/selectInput";
 import OnlyReadTable from "@/components/common/table/onlyReadTable";
-import { searchStock, createInventoryTask } from "../../pages/api";
+import { getInventoryItems, createInventoryTask } from "../../pages/api";
 
 export default function InventoryTable() {
   const dispatch = useDispatch();
@@ -46,10 +46,10 @@ export default function InventoryTable() {
       ...filters,
     };
     try {
-      const res = await searchStock(payload);
+      const res = await getInventoryItems(payload);
       if (res.data.success) {
         const data = res.data.data;
-        // console.log("data:", data);
+        console.log("data:", data);
         if (payload.PRT_NO) {
           dispatch(
             setInventory({
@@ -103,7 +103,7 @@ export default function InventoryTable() {
   return (
     <>
       {/* 頂部區域 */}
-      {stockData.length === 0 ? (
+      {stockData?.length === 0 ? (
         <PageHeader
           title="請輸入下方盤點參數查詢盤點貨架，輸入完請點擊檢視按鈕"
           backTo="/workspace"
@@ -172,7 +172,7 @@ export default function InventoryTable() {
         <div>
           <OnlyReadTable
             headers={tableHeader}
-            data={stockData}
+            data={stockData || []}
             type="radio"
             name="stockQuery"
             variants="green"

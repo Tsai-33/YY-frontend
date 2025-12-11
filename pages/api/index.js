@@ -50,6 +50,8 @@ export const updateTransferItems = (data) =>
 export const updateShelveCheck = (data) =>
   api.post(`/shelfTransfer/updateShelveCheck`, data);
 /* 盤點任務下發 */
+export const getInventoryItems = (payload) =>
+  api.post("/inventory/getInventoryItems", payload);
 export const createInventoryTask = (payload) =>
   api.post("/inventory/createInventoryTask", payload);
 
