@@ -21,14 +21,14 @@ export default function OnlyReadTable({
         "--scrollbar-thumb-color": `var(--green-vivid)`,
         "--scrollbar-thumb-hover-color": `var(--green-vivid)`,
       }}>
-      <table className="table-fixed min-w-max text-black text-[24px] font-bold">
+      <table className="table-fixed min-w-max text-black text-(length:--font-size-2xl) font-bold">
         <colgroup>
           {headers.map((header, idx) => (
             <col key={idx} style={{ width: header.width }} />
           ))}
         </colgroup>
 
-        <thead className="sticky top-0 bg-[var(--gray-light)] z-20">
+        <thead className="sticky top-0 bg-(--gray-light) z-5">
           <tr>
             {headers.map((header, idx) => (
               <th
@@ -45,14 +45,12 @@ export default function OnlyReadTable({
             <tr
               key={idx}
               className={`hover:bg-green-100  ${
-                checked === row[idKey]
-                  ? "bg-[var(--green-vivid-50)] text-white"
-                  : ""
+                checked === row[idKey] ? "bg-(--green-vivid-50) text-white" : ""
               }`}>
               {headers.map((header, i) => (
                 <td
                   key={i}
-                  className="px-4 py-2 text-center border-b border-[var(--green-vivid)] truncate">
+                  className="px-4 py-2 text-center border-b border-(--green-vivid) truncate">
                   {row[header.key]}
                 </td>
               ))}

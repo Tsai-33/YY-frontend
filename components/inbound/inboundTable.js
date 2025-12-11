@@ -4,11 +4,17 @@ import Table from "../common/table/table";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setInbound } from "@/redux/reducer/reducerInbound";
 import { getInboundByWID } from "@/pages/api";
-export default function InboundTable({ data, selectedArray, setSelectedArray }) {
+export default function InboundTable({
+  data,
+  selectedArray,
+  setSelectedArray,
+}) {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { waveNo, orderCode, step, shelfItem } = useSelector((s) => s.inbound[currentStationSafe] || {});
+  const { waveNo, orderCode, step, shelfItem } = useSelector(
+    (s) => s.inbound[currentStationSafe] || {}
+  );
   const [tableData2, setTableData2] = useState([]);
 
   // =============== 畫面一 ====================
@@ -30,7 +36,15 @@ export default function InboundTable({ data, selectedArray, setSelectedArray }) 
         return newArray;
       });
     } else if (name === "radio") {
-      dispatch(setInbound({ station: currentStation, order: value, orderCode: value?.INSTOCK_NO, waveNo: value?.W_ID, step: 2 }));
+      dispatch(
+        setInbound({
+          station: currentStation,
+          order: value,
+          orderCode: value?.INSTOCK_NO,
+          waveNo: value?.W_ID,
+          step: 2,
+        })
+      );
     }
   };
 
@@ -38,7 +52,7 @@ export default function InboundTable({ data, selectedArray, setSelectedArray }) 
   // checkbox table
   const tableHeader2 = [
     { label: "", key: "checkbox", width: `8%` },
-    {  label: "產品品號", key: "PRT_CODE", width: `60%` },
+    { label: "產品品號", key: "PRT_CODE", width: `60%` },
     { label: "每箱包數", key: "BOX_PACK", width: `32%` },
   ];
   useEffect(() => {
@@ -51,7 +65,7 @@ export default function InboundTable({ data, selectedArray, setSelectedArray }) 
       if (res.data.success) {
         // const all = {shelf.} // 物件
         const detail = res.data.data; // 陣列
-        setTableData2([...detail])
+        setTableData2([...detail]);
       }
     } catch (err) {
       console.warn("getList :", err);
@@ -59,8 +73,30 @@ export default function InboundTable({ data, selectedArray, setSelectedArray }) 
   };
   return (
     <>
-      {step <= 2 && <NoCheckBoxTable headers={tableHeader} data={data} type="radio" name="inbound" variants="green" idKey="INSTOCK_NO" checked={orderCode} onChange={handleSelectedOption} />}
-      {step > 2 && <Table headers={tableHeader2} data={tableData2} type="checkbox" name="inbound2" variants="green" idKey="INSTOCK_NO" checked={selectedArray} onChange={handleSelectedOption} />}
+      {step <= 2 && (
+        <NoCheckBoxTable
+          headers={tableHeader}
+          data={data}
+          type="radio"
+          name="inbound"
+          variants="green"
+          idKey="INSTOCK_NO"
+          checked={orderCode}
+          onChange={handleSelectedOption}
+        />
+      )}
+      {step > 2 && (
+        <Table
+          headers={tableHeader2}
+          data={tableData2}
+          type="checkbox"
+          name="inbound2"
+          variants="green"
+          idKey="INSTOCK_NO"
+          checked={selectedArray}
+          onChange={handleSelectedOption}
+        />
+      )}
     </>
   );
 }
