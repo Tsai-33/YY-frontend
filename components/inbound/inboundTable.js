@@ -1,16 +1,14 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, {  useRef} from "react";
 import { useSelector, useDispatch } from "react-redux";
 import TableAll from "../common/table/tableAll";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
-import { setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
+import { setInbound } from "@/redux/reducer/reducerInbound";
 import { getInboundByWID } from "@/pages/api";
-export default function InboundTable({ data, data2, setData2 }) {
+export default function InboundTable({ data,data2 }) {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { waveNo, orderCode, step, shelfItem, selected } = useSelector(
-    (s) => s.inbound[currentStationSafe] || {}
-  );
+  const {  orderCode, step,  selected } = useSelector((s) => s.inbound[currentStationSafe] || {});
   // =============== 畫面一 ====================
   // radio table (左)
   const tableHeader = [

@@ -5,7 +5,7 @@ import PageHeader from "@/components/common/pageHeader/pageHeader";
 import InputFrame from "@/components/common/input/inputFrame";
 import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
 import { resetInbound, setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
-import { getInbound, finishInboundOrder, sendToWMS, updateInboundWMS, addShelf, cancelShelf, addInboundWCS, checkNODEPOS, checkWCS } from "../api";
+import { getInbound, finishInboundOrder, sendToWMS, updateInboundWMS, addShelf, cancelShelf, addInboundWCS, checkNODEPOS, checkWCS, getInboundByWID, restoreOrders } from "../api";
 import SchematicDiagram from "../../components/diagram/schematicDiagram";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import InboundTable from "@/components/inbound/inboundTable";
@@ -56,6 +56,11 @@ export default function Inbound() {
 
   // 確認此入庫單
   const handleConfrim = async () => {
+    if (!waveNo) {
+      Alert({ title: "您未選擇入倉單" });
+      return;
+    }
+
     setLoading(true);
     try {
       // 先清空原本的此站的選擇
@@ -160,7 +165,7 @@ export default function Inbound() {
       setAddModal(false);
     }
   };
-  // 退回貨架
+  // =============== 退回貨架 (強制結束入庫單) ===============
   const [returnModal, setReturnModal] = useState(false);
   const handleReturnShelf = async () => {
     setReturnModal(false);
@@ -176,28 +181,67 @@ export default function Inbound() {
     if (tableData2.length > 0) {
       try {
         const [wcs, nodepos] = await Promise.all([checkWCS({ W_ID: waveNo }), checkNODEPOS({ W_ID: waveNo })]);
+
         if (wcs.data.success && nodepos.data.success) {
           if (wcs.data.data.length <= 0 && nodepos.data.data.length <= 1) {
             // 沒有這個GGROUP的車了 只剩下一台車在站點了
-            Alert({ title: "入庫單未完成", html: `此入庫單未完成且只剩下一台車<br>如果退回將返回選單列表`, showCancel: true, onConfirm: () => {} });
+            Alert({
+              title: "入庫單未完成",
+              html: `此入庫單未完成且只剩下一台車在工作站<br>如果退回將返回選單列表`,
+              showCancel: true,
+              onConfirm: async () => {
+                // 目前不想做完此張入庫單的恢復
+                try {
+                  const res = await restoreOrders({ W_ID: waveNo });
+                  if (res.data.success) {
+                    startCancelReturn();
+                    return;
+                  }
+                } catch (err) {
+                  console.warn(`結束未完成的入庫單失敗`, err);
+                }
+              },
+              onCancel: () => {
+                return;
+              },
+            });
+            return;
           }
+        } else {
+          return;
         }
       } catch (err) {
         console.warn(`handleReturnShelf:`, err);
       }
-
-      return;
     }
 
+    await startReturn();
+  };
+  const startCancelReturn = async () => {
     // 開始退回
     setLoading(true);
     try {
       // 傳給WMS
       const random9 = generateRandomNumber();
-      const data = { Command: "RETURN", SHELVE_ID: shelf?.SHELVE_ID, BAR_CODE: "", FACE: 2, STATION: "", PURPOSE: 1, STATUS: 0, CART_ID: "", DATA_ID: random9, WAVENO: String(order.W_ID), GGROUP: String(order.W_ID) };
+      const data = { action: "cancel", dataid: random9, STATION: currentStation };
+      const res = await sendToWMS(data);
+      if (res.data.success) {
+        dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: waveNo }));
+      }
+    } catch (err) {
+      console.warn("handleReturnShelf :", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const startReturn = async () => {
+    setLoading(true);
+    try {
+      const random9 = generateRandomNumber();
+      const data = { Command: "RETURN", SHELVE_ID: shelf?.SHELVE_ID, BAR_CODE: "", FACE: 2, STATION: currentStation, PURPOSE: 1, STATUS: 0, CART_ID: "", DATA_ID: random9, WAVENO: String(order.W_ID), GGROUP: String(order.W_ID) };
       const res = await addShelf(data);
       if (res.data.success) {
-        dispatch(resetInbound({ type: "one", station: currentStation }));
+        dispatch(resetInbound({ type: "one", station: currentStation, W_ID: waveNo }));
       }
     } catch (err) {
       console.warn("handleReturnShelf :", err);
@@ -206,6 +250,10 @@ export default function Inbound() {
     }
   };
 
+  // ============ 更新訂單順序時重抓資料 ==========
+  useEffect(() => {
+    getInboundTable();
+  }, [orderList]);
   // =============== 初入畫面 ===============
   useEffect(() => {
     getInboundTable();
@@ -223,14 +271,32 @@ export default function Inbound() {
       console.warn(`getInboundTable:`, err);
     }
   };
+  // =============== 抓detail畫面 ===============
+  useEffect(() => {
+    if (!waveNo) return;
+    getList();
+  }, [shelfItem]);
+  const getList = async () => {
+    try {
+      const res = await getInboundByWID(waveNo);
+      if (res.data.success) {
+        const detail = res.data.data; // 陣列
+        const newDetail = detail.map((v) => ({ ...v, type: "new", checked: false }));
+        setTableData2(newDetail);
+      }
+    } catch (err) {
+      console.warn("getList :", err);
+    }
+  };
 
-  // =============== 訂單完成 ===============
+  // =============== 入庫單完成 ===============
+
   const handlefinishInboundOrder = async () => {
     setLoading(true);
     try {
       const res = await finishInboundOrder({ W_ID: order.W_ID });
       if (res.data.success) {
-        dispatch(resetInbound({ type: "wave", W_ID: res.data.data }));
+        dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res.data.data }));
         Alert({ title: "此單已完成" });
       }
     } catch (err) {
@@ -239,6 +305,7 @@ export default function Inbound() {
       setLoading(false);
     }
   };
+
 
   return (
     <>
@@ -261,7 +328,7 @@ export default function Inbound() {
               <ActionBtn text="入庫單完成" variant="green" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handlefinishInboundOrder} />
             </div>
           )}
-          <InboundTable data={tableData} data2={tableData2} setData2={setTableData2} />
+          <InboundTable data={tableData} data2={tableData2} />
         </div>
         {/* 右側 */}
         <div className="w-4/7 font-bold text-black p-4 flex flex-col">
@@ -297,11 +364,10 @@ export default function Inbound() {
                       </div>
                       <div className="mt-2 border-gray-300">
                         <div>品名: {order?.PRT_NAME}</div>
-                        <div className="w-50 flex justify-between">
+                        <div className="w-100 flex justify-between">
                           <div>箱數: {order?.BOX_NOS}箱</div>
                           <div>
-                            數量: {order?.PP_NOS}
-                            {order?.UNIT}
+                            數量: {order?.PP_NOS} {order?.UNIT}
                           </div>
                         </div>
                       </div>
@@ -389,7 +455,7 @@ export default function Inbound() {
             </div>
             {/* 按鈕區 */}
             <div className="flex flex-1 flex-col justify-end items-center">
-              {step <= 2 && <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfrim} />}
+              {step <= 2 && <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfrim} disabled={!waveNo} />}
               {step > 2 && (
                 <div className="w-full flex justify-between">
                   <ActionBtn icon="" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
@@ -411,8 +477,35 @@ export default function Inbound() {
       {screen === "loading" && <LoadingShelf />}
       {loading && <Loading />}
       {/* Modal - 確定 */}
-      <Modal showModal={confirmModal} title="確認上架" onClose={() => setConfirmModal(false)} onConfirm={handleConfrimShelf} width={`30vw`} height={`35vh`}>
-        請確定是否上架以下品項
+      <Modal showModal={confirmModal} title="確認上架" onClose={() => setConfirmModal(false)} onConfirm={handleConfrimShelf} width={`30vw`} height={`auto`}>
+        <>
+          <div>請確定是否上架以下品項</div>
+          <div>
+            {selected &&
+              selected.length > 0 &&
+              (() => {
+                const grouped = selected.reduce((acc, item) => {
+                  if (!acc[item.PRT_NO]) {
+                    acc[item.PRT_NO] = {
+                      ...item,
+                      PP_NO: Number(item.PP_NO) || 0,
+                    };
+                  } else {
+                    acc[item.PRT_NO].PP_NO += Number(item.PP_NO) || 0;
+                  }
+                  return acc;
+                }, {});
+
+                const result = Object.values(grouped);
+
+                return result.map((v) => (
+                  <div key={v.PRT_NO}>
+                    {v.PRT_NO} {v.PP_NO} {v.UNIT}
+                  </div>
+                ));
+              })()}
+          </div>
+        </>
       </Modal>
       {/* Modal - 新增貨架 */}
       <Modal showModal={addModal} title="新增貨架" onClose={() => setAddModal(false)} onConfirm={handleAddShelf} width={`30vw`} height={`35vh`}>

@@ -37,6 +37,7 @@ export default function SocketManager() {
 
     try {
       isConnectingRef.current = true;
+      // const newSocket = new WebSocket(`${process.env.NEXT_PUBLIC_SOCKET_URL}?nocache=${Date.now()}`);
       const newSocket = new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL);
 
       newSocket.onopen = () => {
@@ -86,15 +87,7 @@ export default function SocketManager() {
             );
           } else if (eventData?.PURPOSE === 1) {
             // 入庫
-            dispatch(
-              setInbound({
-                station: eventData.STATION,
-                screen: "working",
-                shelf: eventData,
-                shelfItem: eventData?.ITEMS,
-                step: 3,
-              })
-            );
+            dispatch(setInbound({ station: eventData.STATION, shelf: eventData, shelfItem: eventData?.ITEMS, screen: "working", step: 3 }));
           } else if (eventData?.PURPOSE === 2) {
             // 盤點
             dispatch(
