@@ -56,6 +56,11 @@ export default function Inbound() {
 
   // 確認此入庫單
   const handleConfrim = async () => {
+    if (!waveNo) {
+      Alert({ title: "您未選擇入倉單" });
+      return;
+    }
+
     setLoading(true);
     try {
       // 先清空原本的此站的選擇
@@ -182,7 +187,7 @@ export default function Inbound() {
             // 沒有這個GGROUP的車了 只剩下一台車在站點了
             Alert({
               title: "入庫單未完成",
-              html: `此入庫單未完成且只剩下一台車<br>如果退回將返回選單列表`,
+              html: `此入庫單未完成且只剩下一台車在工作站<br>如果退回將返回選單列表`,
               showCancel: true,
               onConfirm: async () => {
                 // 目前不想做完此張入庫單的恢復
@@ -285,12 +290,11 @@ export default function Inbound() {
   };
 
   // =============== 入庫單完成 ===============
-  console.log(order)
+
   const handlefinishInboundOrder = async () => {
     setLoading(true);
     try {
       const res = await finishInboundOrder({ W_ID: order.W_ID });
-      console.log(res.data.data,'有回傳?')
       if (res.data.success) {
         dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res.data.data }));
         Alert({ title: "此單已完成" });
@@ -301,6 +305,7 @@ export default function Inbound() {
       setLoading(false);
     }
   };
+
 
   return (
     <>
@@ -359,11 +364,10 @@ export default function Inbound() {
                       </div>
                       <div className="mt-2 border-gray-300">
                         <div>品名: {order?.PRT_NAME}</div>
-                        <div className="w-50 flex justify-between">
+                        <div className="w-100 flex justify-between">
                           <div>箱數: {order?.BOX_NOS}箱</div>
                           <div>
-                            數量: {order?.PP_NOS}
-                            {order?.UNIT}
+                            數量: {order?.PP_NOS} {order?.UNIT}
                           </div>
                         </div>
                       </div>
@@ -451,7 +455,7 @@ export default function Inbound() {
             </div>
             {/* 按鈕區 */}
             <div className="flex flex-1 flex-col justify-end items-center">
-              {step <= 2 && <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfrim} />}
+              {step <= 2 && <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfrim} disabled={!waveNo} />}
               {step > 2 && (
                 <div className="w-full flex justify-between">
                   <ActionBtn icon="" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
