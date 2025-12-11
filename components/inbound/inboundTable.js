@@ -4,7 +4,7 @@ import TableAll from "../common/table/tableAll";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
 import { getInboundByWID } from "@/pages/api";
-export default function InboundTable({ data,data2,setData2 }) {
+export default function InboundTable({ data,data2 }) {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
@@ -37,23 +37,6 @@ export default function InboundTable({ data,data2,setData2 }) {
     { label: "產品品號", key: "PRT_CODE", width: `60%` },
     { label: "每箱包數", key: "BOX_PACK", width: `30%` },
   ];
-  useEffect(() => {
-    if (!waveNo) return;
-    getList();
-  }, [shelfItem]);
-  const getList = async () => {
-    try {
-      const res = await getInboundByWID(waveNo);
-      if (res.data.success) {
-        const detail = res.data.data; // 陣列
-        const newDetail = detail.map((v) => ({ ...v, type: "new", checked: false }));
-        setData2(newDetail);
-      }
-    } catch (err) {
-      console.warn("getList :", err);
-    }
-  };
-
   // ======== select ==========
   //  全選 / 全不選
   const selectAllRef = useRef(null);

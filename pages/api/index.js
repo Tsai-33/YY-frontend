@@ -14,7 +14,7 @@ export const getInboundByWID = (wid) => api.get(`/inbound/${wid}`);
 export const addInboundWCS = (payload) => api.post("/inbound/add/wcs", payload);
 export const updateInboundWMS = (payload) => api.post("/inbound/update/wms", payload);
 export const finishInboundOrder = (payload) => api.post("/inbound/finish/order", payload);
-
+export const restoreOrders =  (payload) => api.post("/inbound/restore/orders", payload);
 /* 取得出庫單(銷貨) */
 export const getOutboundExternal = () =>
   api.get("/outboundExternal/getOutBoundExternal");
@@ -48,9 +48,8 @@ export const updateShelveCheck = (data) => api.post(`/shelfTransfer/updateShelve
 export const sendToWMS = (payload) => api.post("/send-to-wms", payload, { timeout: 45000 });
 
 /* 叫車 */
-export const checkWCS = (payload) => api.post("/wcs/check", payload);
-export const checkNODEPOS = (payload) => api.post("/wcs/check/nodepos", payload);
-export const addWCS = (payload) => api.post("/wcs/add", payload);
-export const addWCSGroup = (payload) => api.post("/wcs/add/group", payload);
-export const addShelf = (payload) => api.post("/wcs/add", payload);
-export const cancelShelf = (payload) => api.post("/wcs/cancel", payload);
+export const checkWCS = (payload) => api.post("/wcs/check", payload); // 檢查WCSTASK
+export const checkNODEPOS = (payload) => api.post("/wcs/check/nodepos", payload); // 檢查nodepos
+export const addWCSGroup = (payload) => api.post("/wcs/add/group", payload); // 新增WCSTASK的GGROUP
+export const addShelf = (payload) => api.post("/wcs/add", payload); // 新增WCSTASK
+export const cancelShelf = (payload) => api.post("/wcs/cancel", payload); //
