@@ -76,7 +76,7 @@ export default function Layout({ children }) {
   return (
     <div className="flex flex-col h-screen">
       {/* 頂部導航欄 */}
-      <header className="shrink-0 h-19 w-full max-w-full px-4 bg-white flex items-center justify-between">
+      <header className="shrink-0 h-19 w-full max-w-full px-4 bg-white flex items-center justify-between z-20">
         {/* Logo */}
         <Link href="/">
           <img
