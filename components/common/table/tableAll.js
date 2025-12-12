@@ -1,7 +1,8 @@
 import React from "react";
 
 export default function TableAll({ headers = [], data = [], type, name, onChange, checked, idKey, height, selectAllRef, onChangeAll }) {
- const isRowChecked = (row) => {
+
+  const isRowChecked = (row) => {
   const rowId = String(row[idKey]);
 
   // 1) checked 是陣列 → 逐筆比對

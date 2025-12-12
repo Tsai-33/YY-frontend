@@ -1,14 +1,14 @@
-import React, {  useRef} from "react";
+import React, { useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import TableAll from "../common/table/tableAll";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setInbound } from "@/redux/reducer/reducerInbound";
 import { getInboundByWID } from "@/pages/api";
-export default function InboundTable({ data,data2 }) {
+export default function InboundTable({ data, data2 }) {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const {  orderCode, step,  selected } = useSelector((s) => s.inbound[currentStationSafe] || {});
+  const { orderCode, step, selected, shelfItem, waveNo } = useSelector((s) => s.inbound[currentStationSafe] || {});
   // =============== 畫面一 ====================
   // radio table (左)
   const tableHeader = [
@@ -42,7 +42,7 @@ export default function InboundTable({ data,data2 }) {
   // checkbox table
   const tableHeader2 = [
     { label: "", key: "checkbox", width: `48px` },
-    { label: "產品品號", key: "PRT_CODE", width: `60%` },
+    { label: "產品品號", key: "PRT_NO", width: `60%` },
     { label: "每箱包數", key: "BOX_PACK", width: `30%` },
   ];
   useEffect(() => {
@@ -81,33 +81,8 @@ export default function InboundTable({ data,data2 }) {
 
   return (
     <>
-      {step <= 2 && (
-        <NoCheckBoxTable
-          headers={tableHeader}
-          data={data}
-          type="radio"
-          name="inbound"
-          variants="green"
-          idKey="INSTOCK_NO"
-          checked={orderCode}
-          onChange={handleSelectedOption}
-        />
-      )}
-      {step > 2 && (
-        <TableAll
-          height={`59vh`}
-          headers={tableHeader2}
-          data={data2}
-          type="checkbox"
-          name="inbound2"
-          variants="green"
-          idKey="INSTOCK_NO"
-          checked={selected}
-          onChange={handleSelectedOption}
-          selectAllRef={selectAllRef}
-          onChangeAll={handleSelectAll}
-        />
-      )}
+      {step <= 2 && <NoCheckBoxTable headers={tableHeader} data={data} type="radio" name="inbound" variants="green" idKey="INSTOCK_NO" checked={orderCode} onChange={handleSelectedOption} />}
+      {step > 2 && <TableAll height={`59vh`} headers={tableHeader2} data={data2} type="checkbox" name="inbound2" variants="green" idKey="INSTOCK_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} />}
     </>
   );
 }

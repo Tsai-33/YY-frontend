@@ -187,7 +187,6 @@ function UserManage() {
 
   // 權限名稱映射 (中文 -> 英文)
   const PERMISSION_CN_TO_EN = {
-    "入庫": "inbound",
     "入倉": "inbound",
     "調撥": "transfer",
     "銷貨": "outboundExternal",
