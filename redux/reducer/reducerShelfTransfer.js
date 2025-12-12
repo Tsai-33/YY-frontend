@@ -5,6 +5,7 @@ const stationList = ["B01", "B02", "B03", "B04", "B05"];
 const createStation = () => ({
     step: 1,                // 1: 選擇訂單, 2: 選擇貨架, 3: 理貨中
     screen: "idle",
+    mode: "",               // order, shelf
     orderCode: "",
     waveNo: null,
     order: {},              // 訂單內容
@@ -29,7 +30,7 @@ const shelfTransferSlice = createSlice({
     initialState,
     reducers: {
         setShelfTransfer: (state, action) => {
-            const { station, step, screen, orderCode, waveNo, order, selectedShelves, 
+            const { station, step, screen, mode, orderCode, waveNo, order, selectedShelves, 
                 shelveData, shelveStatus, targetShelve, selectedItems, orderList, lackStation, shelf, shelfItem, isReturn
             } = action.payload;
 
@@ -101,6 +102,7 @@ const shelfTransferSlice = createSlice({
 
             if (step !== undefined) state[station].step = step;
             if (screen !== undefined) state[station].screen = screen;
+            if (mode !== undefined) state[station].mode = mode;
             if (orderCode !== undefined) state[station].orderCode = orderCode;
             if (waveNo !== undefined) state[station].waveNo = waveNo;
             if (order !== undefined) state[station].order = order;

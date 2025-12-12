@@ -187,6 +187,7 @@ export default function ShelfTransferTable() {
                         station: stationId,
                         step: 3,
                         screen: "loading",
+                        mode: "order",
                         orderCode: orderInput,
                         selectedShelves: selectedShelve,
                         shelveStatus: initialShelveStatus,

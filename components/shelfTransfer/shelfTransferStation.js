@@ -9,7 +9,7 @@ import {
     setShelfTransfer,
     resetStation 
 } from "@/redux/reducer/reducerShelfTransfer";
-import { updateTransferItems, sendToWMS, updateShelveCheck } from "@/pages/api";
+import { updateTransferItems, sendToWMS, updateShelveCheck, transferItems } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 import InputFrame from "../common/input/inputFrame";
@@ -20,6 +20,7 @@ export default function ShelfTransferStation() {
     const currentStationSafe = currentStation || stations?.[0] || "";
 
     const {
+        mode,
         orderCode,
         selectedShelves,
         shelveData,
@@ -92,10 +93,22 @@ export default function ShelfTransferStation() {
                 selectedItemsIds.includes(item.id)
             );
             
-            const res = await updateTransferItems({
-                items: itemsToMove,
-                targetShelveId: targetShelve
-            });
+            let res;
+
+            if (mode === "shelf") {
+                // 貨架調整
+                res = await transferItems({
+                    items: itemsToMove,
+                    sourceShelveId: activeShelveId,
+                    targetShelveId: targetShelve
+                });
+            } else {
+                // 訂單理貨
+                res = await updateTransferItems({
+                    items: itemsToMove,
+                    targetShelveId: targetShelve
+                });
+            }
 
             if (res.data.success) {
                 dispatch(updateShelveData({
@@ -192,7 +205,7 @@ export default function ShelfTransferStation() {
                         </div>
                     </div>
                     <div className="text-lg text-gray-600 mb-3">
-                        訂單單號：{orderCode}
+                        {mode === "order" ? "訂單單號：" + orderCode : "入庫倉別：" + orderCode}
                     </div>
                     {/* 下拉選貨架、確定按鈕 */}
                     <div className="flex gap-4 justify-center">
@@ -292,74 +305,84 @@ export default function ShelfTransferStation() {
                                     }`}>
                                         {shelveId}
                                     </div>
-                                    {isReturned ? (
+                                    {isEmptySlot ? (
+                                        <div className="flex-1 flex items-center justify-center text-gray-300"></div>
+                                    ) : isReturned ? (
                                         <div className="flex-1 flex items-center justify-center text-gray-300">
                                             已退回
                                         </div>
-                                    ) : hasData ? (
+                                    ) : (
                                         <>
                                             <div className={`flex-1 overflow-auto mb-3 ${
                                                 isDisabled ? 'pointer-events-none' : ''
                                             }`}>
-                                                <div className="space-y-1">
-                                                    {data.map((item) => {
-                                                        const isChecked = checkedItems.includes(item.id);
-                                                        return (
-                                                            <label
-                                                                key={item.id}
-                                                                className={`
-                                                                    flex items-center gap-2 px-2 py-1 cursor-pointer
-                                                                    border border-gray-300 rounded
-                                                                    hover:bg-gray-50 transition-colors
-                                                                `}
-                                                            >
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={isChecked}
-                                                                    onChange={() => handleItemChange(shelveId, item)}
-                                                                    className="w-4 h-4 "
-                                                                />
-                                                                <span className="text-xl truncate">
-                                                                    {item.PRT_NO}
-                                                                </span>
-                                                            </label>
-                                                        );
-                                                    })}
-                                                </div>
+                                                {hasData ? (
+                                                    <div className="space-y-1">
+                                                        {data.map((item) => {
+                                                            const isChecked = checkedItems.includes(item.id);
+                                                            return (
+                                                                <label
+                                                                    key={item.id}
+                                                                    className={`
+                                                                        flex items-center gap-2 px-2 py-1 cursor-pointer
+                                                                        border border-gray-300 rounded
+                                                                        hover:bg-gray-50 transition-colors
+                                                                    `}
+                                                                >
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={isChecked}
+                                                                        onChange={() => handleItemChange(shelveId, item)}
+                                                                        className="w-4 h-4 "
+                                                                    />
+                                                                    <span className="text-xl truncate">
+                                                                        {item.PRT_NO}
+                                                                    </span>
+                                                                </label>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex-1 flex items-center justify-center text-gray-300 h-full">
+                                                        無資料
+                                                    </div>
+                                                )}
                                             </div>
                                             {/* 護角 / 封膜 / 打包 checkbox */}
-                                            <div className="flex gap-4 mb-3 justify-between">
-                                                <label className="flex items-center gap-2 cursor-pointer border rounded-md bg-gray-500 text-white">
-                                                    <input 
-                                                        type="checkbox"
-                                                        checked={hasCheck(checkValue, CHECK_VALUES.CORNER)}
-                                                        onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.CORNER)}
-                                                        disabled={isDisabled}
-                                                        className="w-5 h-5 m-2"
-                                                    />
-                                                    <span className="text-2xl mx-4 my-2">護角</span>
-                                                </label>
-                                                <label className="flex items-center gap-2 cursor-pointer border rounded-md bg-gray-500 text-white">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={hasCheck(checkValue, CHECK_VALUES.SEAL)}
-                                                        onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.SEAL)}
-                                                        disabled={isDisabled}
-                                                        className="w-5 h-5 m-2"
-                                                    />
-                                                    <span className="text-2xl mx-4 my-2">封膜</span>
-                                                </label>
-                                                <label className="flex items-center gap-2 cursor-pointer border rounded-md bg-gray-500 text-white">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={hasCheck(checkValue, CHECK_VALUES.PACK)}
-                                                        onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.PACK)}
-                                                        disabled={isDisabled}
-                                                        className="w-5 h-5 m-2"
-                                                    />
-                                                    <span className="text-2xl mx-4 my-2">打包</span>
-                                                </label>
-                                            </div>
+                                            {hasData && (
+                                                <div className="flex gap-4 mb-3 justify-between">
+                                                    <label className="flex items-center gap-2 cursor-pointer border rounded-md bg-gray-500 text-white">
+                                                        <input 
+                                                            type="checkbox"
+                                                            checked={hasCheck(checkValue, CHECK_VALUES.CORNER)}
+                                                            onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.CORNER)}
+                                                            disabled={isDisabled}
+                                                            className="w-5 h-5 m-2"
+                                                        />
+                                                        <span className="text-2xl mx-4 my-2">護角</span>
+                                                    </label>
+                                                    <label className="flex items-center gap-2 cursor-pointer border rounded-md bg-gray-500 text-white">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={hasCheck(checkValue, CHECK_VALUES.SEAL)}
+                                                            onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.SEAL)}
+                                                            disabled={isDisabled}
+                                                            className="w-5 h-5 m-2"
+                                                        />
+                                                        <span className="text-2xl mx-4 my-2">封膜</span>
+                                                    </label>
+                                                    <label className="flex items-center gap-2 cursor-pointer border rounded-md bg-gray-500 text-white">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={hasCheck(checkValue, CHECK_VALUES.PACK)}
+                                                            onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.PACK)}
+                                                            disabled={isDisabled}
+                                                            className="w-5 h-5 m-2"
+                                                        />
+                                                        <span className="text-2xl mx-4 my-2">打包</span>
+                                                    </label>
+                                                </div>
+                                            )}
                                             {/* 退回貨架 */}
                                             <ActionBtn 
                                                 icon="icon-returnShelf"
@@ -369,11 +392,6 @@ export default function ShelfTransferStation() {
                                                 onClick={() => handleReturnShelve(shelveId)}
                                             />
                                         </>
-                                    ) : (
-                                        // {/* 沒有資料時 */}
-                                        <div className="flex-1 flex items-center justify-center text-gray-300">
-                                            {isLastOne ? "" : "無資料"}
-                                        </div>
                                     )}
                                 </div>
                             );
