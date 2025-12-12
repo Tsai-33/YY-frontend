@@ -18,10 +18,10 @@ export default function InventoryShelf() {
   const rowState = stationState?.rowState || [];
   const SHELVE_ID = stationState?.shelf?.SHELVE_ID;
   const shelfItem = stationState?.shelfItem;
-  const currentSTOCKAREA = stationState?.stockArea;
-  const currentCUSNO = stationState?.cusNo;
-  const currentSALENO = stationState?.saleNo;
-  const currentPRTNO = stationState?.prtNo;
+  const currentSTOCKAREA = stationState?.filter?.stockArea;
+  const currentCUSNO = stationState?.filter?.cusNo;
+  const currentSALENO = stationState?.filter?.saleNo;
+  const currentPRTNO = stationState?.filter?.prtNo;
 
   // 目前選擇的工作站
   const handleSwitchStation = (station) => {
@@ -31,7 +31,8 @@ export default function InventoryShelf() {
   useEffect(() => {
     if (!Array.isArray(shelfItem) || shelfItem.length === 0) return;
 
-    if (rowState) {
+    if (Array.isArray(rowState) && rowState.length > 0) {
+      // 有舊資料 → 用舊資料（localStorage）
       dispatch(
         setInitialRowState({
           station: currentStation,
@@ -39,16 +40,16 @@ export default function InventoryShelf() {
           fromStorage: true,
         })
       );
-      return;
+    } else {
+      // 沒有舊資料 → 用 API 傳來的新 shelfItem 初始化
+      dispatch(
+        setInitialRowState({
+          station: currentStation,
+          shelfItem,
+          fromStorage: false,
+        })
+      );
     }
-
-    dispatch(
-      setInitialRowState({
-        station: currentStation,
-        shelfItem,
-        fromStorage: false,
-      })
-    );
   }, [dispatch, shelfItem, currentStation]);
 
   const filterLabel = useMemo(() => {
