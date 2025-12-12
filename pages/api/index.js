@@ -5,7 +5,9 @@ export const getIP = () => api.get("/system/getIP");
 
 /* 取得調撥單 */
 export const getTransfer = () => api.get("/transfer");
-export const getTransferById = (id) => api.get(`/transfer/${id}`);
+export const getTransferDetail = () => api.get("/transfer/detail");
+export const getTransferByCMDID = () => api.get(`/transfer/cmdid`);
+export const getTransferByWID = (wid) => api.get(`/transfer/${wid}`);
 
 /* 取得入庫單 */
 export const getInbound = () => api.get("/inbound");
@@ -15,6 +17,7 @@ export const addInboundWCS = (payload) => api.post("/inbound/add/wcs", payload);
 export const updateInboundWMS = (payload) => api.post("/inbound/update/wms", payload);
 export const finishInboundOrder = (payload) => api.post("/inbound/finish/order", payload);
 export const restoreOrders =  (payload) => api.post("/inbound/restore/orders", payload);
+
 /* 取得出庫單(銷貨) */
 export const getOutboundExternal = () =>
   api.get("/outboundExternal/getOutBoundExternal");

@@ -57,7 +57,7 @@ export default function Inbound() {
         const res = await sendToWMS(data);
         if (res.data.success) {
           // 完成後更新畫面列表
-          getInboundTable();
+          getTable();
         }
       } catch (error) {
         console.warn(`ask_order handleBarCode :`, error);
@@ -189,12 +189,12 @@ export default function Inbound() {
       Alert({ title: "入庫單完成", html: `此入庫單已經完成<br>請選擇「 入庫單完成 」` });
       return;
     }
+
     if (tableData2.length > 0) {
       try {
         const [wcs, nodepos] = await Promise.all([checkWCS({ W_ID: waveNo }), checkNODEPOS({ W_ID: waveNo })]);
-
         if (wcs.data.success && nodepos.data.success) {
-          if (wcs.data.data.length <= 0 && nodepos.data.data.length <= 1) {
+          if (wcs.data.data.length > 0 || nodepos.data.data.length < 2) {
             // 沒有這個GGROUP的車了 只剩下一台車在站點了
             Alert({
               title: "入倉單未完成",
@@ -219,6 +219,7 @@ export default function Inbound() {
             return;
           }
         } else {
+          console.log('wcs.nodepos未成功')
           return;
         }
       } catch (err) {
@@ -263,14 +264,14 @@ export default function Inbound() {
 
   // ============ 更新訂單順序時重抓資料 ==========
   useEffect(() => {
-    getInboundTable();
+    getTable();
   }, [orderList]);
   // =============== 初入畫面 ===============
   useEffect(() => {
-    getInboundTable();
+    getTable();
     barCodeRef?.current?.focus();
   }, []);
-  const getInboundTable = async () => {
+  const getTable = async () => {
     try {
       const res = await getInbound();
       if (res.data.success) {
@@ -279,7 +280,7 @@ export default function Inbound() {
         setTableData(newData);
       }
     } catch (err) {
-      console.warn(`getInboundTable:`, err);
+      console.warn(`Inbound getTable:`, err);
     }
   };
   // =============== 抓detail畫面 ===============
@@ -338,7 +339,7 @@ export default function Inbound() {
               <ActionBtn text="入倉單完成" variant="orange" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handlefinishInboundOrder} />
             </div>
           )}
-          <InboundTable data={tableData} data2={tableData2} />
+          <InboundTable data={tableData} data2={tableData2} setData2={setTableData2} />
         </div>
         {/* 右側 */}
         <div className="w-4/7 font-bold text-black p-4 flex flex-col">

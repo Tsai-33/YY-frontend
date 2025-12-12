@@ -4,7 +4,7 @@ import TableAll from "../common/table/tableAll";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setInbound } from "@/redux/reducer/reducerInbound";
 import { getInboundByWID } from "@/pages/api";
-export default function InboundTable({ data, data2 }) {
+export default function InboundTable({ data, data2, setData2 }) {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
@@ -78,6 +78,18 @@ export default function InboundTable({ data, data2 }) {
       dispatch(setInbound({ station: currentStation, selected: [] }));
     }
   };
+
+  useEffect(() => {
+    if (!selectAllRef.current) return;
+
+    // 本頁可選取的資料（排除 shortage）
+    const validData = data2.filter((item) => !item.shortage);
+
+    // 是否真的「全部都在 selected 裡」
+    const allSelected = validData.length > 0 && validData.every((v) => selected.some((s) => s.INSTOCK_NO === v.INSTOCK_NO));
+
+    selectAllRef.current.checked = allSelected;
+  }, [data2, selected]);
 
   return (
     <>

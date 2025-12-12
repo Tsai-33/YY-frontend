@@ -17,8 +17,7 @@ import inboundReducer from "./reducer/reducerInbound";
 import userReducer from "./reducer/reducerUser";
 import workStationsReducer from "@/redux/reducer/reducerWorkStations";
 import transferReducer from "./reducer/reducerTransfer";
-import shelfTransferReducer from "./reducer/reducerShelfTransfer";
-import shelfTransfer from "@/pages/shelfTransfer";
+import shelfTransferReducer from "./reducer/reducerShelfTransfer";;
 import inventoryReducer from "./reducer/reducerInventory";
 
 const pagePersistConfig = {
