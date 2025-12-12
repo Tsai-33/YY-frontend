@@ -50,21 +50,21 @@ export default function InventoryTable() {
       if (res.data.success) {
         const data = res.data.data;
         console.log("data:", data);
-        if (payload.PRT_NO) {
-          dispatch(
-            setInventory({
-              station: "*",
-              data: {
-                filter: {
-                  stockArea: payload.STOCK_AREA,
-                  cusNo: payload.CUS_NO,
-                  saleNo: payload.SALE_NO,
-                  prtNo: payload.PRT_NO,
-                },
+
+        dispatch(
+          setInventory({
+            station: "*",
+            data: {
+              filter: {
+                stockArea: payload.STOCK_AREA,
+                cusNo: payload.CUS_NO,
+                saleNo: payload.SALE_NO,
+                prtNo: payload.PRT_NO,
               },
-            })
-          );
-        }
+            },
+          })
+        );
+
         setStockData(data);
       }
     } catch (error) {
