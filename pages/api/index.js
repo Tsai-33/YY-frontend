@@ -22,14 +22,15 @@ export const getOutBoundExternalOrderDetail = (sale_no) =>
   api.get(`/outboundExternal/getOutBoundExternalOrderDetail`, {
     params: { sale_no },
   });
-export const getOutBoundExternalOrderDetailBySaleNo = (sale_no) =>
-  api.get(`/outboundExternal/getOutBoundExternalOrderDetailBySaleNo`, {
-    params: { sale_no },
-  });
-export const getOutBoundExternalOrderDetailByWID = (w_id) =>
-  api.get(`/outboundExternal/getOutBoundExternalOrderDetailByWID`, {
-    params: { w_id },
-  });
+export const getOutBoundExternalOrderDetailBySaleNo = (sale_no) => 
+    api.get(`/outboundExternal/getOutBoundExternalOrderDetailBySaleNo`, { 
+        params: { sale_no } 
+    });
+export const getOutBoundExternalOrderDetailByWID = (w_id) => 
+    api.get(`/outboundExternal/getOutBoundExternalOrderDetailByWID`, { 
+        params: { w_id } 
+    });
+export const shiftOutByBarcode = (data) => api.post("/api/outboundExternal/shiftout", data);
 
 /* 取得出庫單(領用) */
 
@@ -47,6 +48,13 @@ export const updateTransferItems = (data) =>
   api.post("/shelfTransfer/updateTransferItems", data);
 export const updateShelveCheck = (data) =>
   api.post(`/shelfTransfer/updateShelveCheck`, data);
+export const getStockAreas = () => 
+  api.get("/shelfTransfer/getStockAreas");
+export const getWMSByAreaAndPrtNo = (area, prtNo) => 
+  api.get(`/shelfTransfer/getWMSByAreaAndPrtNo?area=${area}&prtNo=${prtNo}`);
+export const transferItems = (data) => 
+  api.post("/shelfTransfer/transferItems", data);
+
 /* 盤點任務下發 */
 export const getInventoryItems = (payload) =>
   api.post("/inventory/getInventoryItems", payload);
