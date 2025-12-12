@@ -38,6 +38,17 @@ export default function Inbound() {
     const inputBarCode = e.target.value.trim();
     const result = tableData.some((item) => item.INSTOCK_NO === inputBarCode);
     if (result) {
+      const value = tableData.find((item) => item.INSTOCK_NO === inputBarCode);
+      dispatch(
+        setInbound({
+          station: currentStation,
+          order: value,
+          orderCode: value?.INSTOCK_NO,
+          waveNo: value?.W_ID,
+          step: 2,
+        })
+      );
+
       barCodeRef.current.value = "";
     } else {
       try {
@@ -186,8 +197,8 @@ export default function Inbound() {
           if (wcs.data.data.length <= 0 && nodepos.data.data.length <= 1) {
             // 沒有這個GGROUP的車了 只剩下一台車在站點了
             Alert({
-              title: "入庫單未完成",
-              html: `此入庫單未完成且只剩下一台車在工作站<br>如果退回將返回選單列表`,
+              title: "入倉單未完成",
+              html: `此入倉單未完成且只剩下一台車在工作站<br>如果退回將返回選單列表`,
               showCancel: true,
               onConfirm: async () => {
                 // 目前不想做完此張入庫單的恢復
@@ -223,7 +234,7 @@ export default function Inbound() {
     try {
       // 傳給WMS
       const random9 = generateRandomNumber();
-      const data = { action: "cancel", dataid: random9, STATION: currentStation };
+      const data = { action: "cancel", dataid: random9, STATION: currentStation }; 
       const res = await sendToWMS(data);
       if (res.data.success) {
         dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: waveNo }));
@@ -306,7 +317,6 @@ export default function Inbound() {
     }
   };
 
-
   return (
     <>
       {/* 頂部區域 */}
@@ -325,7 +335,7 @@ export default function Inbound() {
                 建議入倉總數：{shelf?.EstPPs}
                 {shelf?.UNIT} ({shelf?.EstBoxes}箱)
               </div>
-              <ActionBtn text="入庫單完成" variant="green" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handlefinishInboundOrder} />
+              <ActionBtn text="入倉單完成" variant="orange" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handlefinishInboundOrder} />
             </div>
           )}
           <InboundTable data={tableData} data2={tableData2} />
