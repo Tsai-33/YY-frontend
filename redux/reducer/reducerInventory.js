@@ -19,6 +19,7 @@ const inventorySlice = createSlice({
   name: "inventory",
   initialState: {
     page: "inventory-table",
+    batchNo: null,
   },
   reducers: {
     // 初始化某個站 (若不存在就建立)
@@ -55,9 +56,11 @@ const inventorySlice = createSlice({
         Object.assign(state.stations[station], data);
       });
     },
-    // 更新 page
     setPage(state, action) {
       state.page = action.payload;
+    },
+    setBatchNo(state, action) {
+      state.batchNo = action.payload;
     },
     setInitialRowState: (state, action) => {
       const { station, shelfItem, fromStorage } = action.payload;
@@ -100,6 +103,7 @@ export const {
   setInventory,
   setAllStations,
   setPage,
+  setBatchNo,
   setInitialRowState,
   updateRowState,
   resetRowState,

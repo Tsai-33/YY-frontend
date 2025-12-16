@@ -12,9 +12,12 @@ export const getInbound = () => api.get("/inbound");
 export const getInboundByCMDID = () => api.get("/inbound/cmdid");
 export const getInboundByWID = (wid) => api.get(`/inbound/${wid}`);
 export const addInboundWCS = (payload) => api.post("/inbound/add/wcs", payload);
-export const updateInboundWMS = (payload) => api.post("/inbound/update/wms", payload);
-export const finishInboundOrder = (payload) => api.post("/inbound/finish/order", payload);
-export const restoreOrders =  (payload) => api.post("/inbound/restore/orders", payload);
+export const updateInboundWMS = (payload) =>
+  api.post("/inbound/update/wms", payload);
+export const finishInboundOrder = (payload) =>
+  api.post("/inbound/finish/order", payload);
+export const restoreOrders = (payload) =>
+  api.post("/inbound/restore/orders", payload);
 /* 取得出庫單(銷貨) */
 export const getOutboundExternal = () =>
   api.get("/outboundExternal/getOutBoundExternal");
@@ -52,6 +55,8 @@ export const getInventoryItems = (payload) =>
   api.post("/inventory/getInventoryItems", payload);
 export const createInventoryTask = (payload) =>
   api.post("/inventory/createInventoryTask", payload);
+export const updateInventoryResult = (payload) =>
+  api.post("/inventory/updateInventoryResult", payload);
 
 /* 傳給labview */
 export const sendToWMS = (payload) =>
@@ -59,7 +64,8 @@ export const sendToWMS = (payload) =>
 
 /* 叫車 */
 export const checkWCS = (payload) => api.post("/wcs/check", payload);
-export const checkNODEPOS = (payload) => api.post("/wcs/check/nodepos", payload);
+export const checkNODEPOS = (payload) =>
+  api.post("/wcs/check/nodepos", payload);
 export const addWCS = (payload) => api.post("/wcs/add", payload);
 export const addWCSGroup = (payload) => api.post("/wcs/add/group", payload);
 export const addShelf = (payload) => api.post("/wcs/add", payload);

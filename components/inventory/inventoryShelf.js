@@ -5,15 +5,21 @@ import {
   resetRowState,
   setInitialRowState,
   updateRowState,
+  setBatchNo,
+  setPage,
+  setInventory,
 } from "@/redux/reducer/reducerInventory";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import PageHeader from "../common/pageHeader/pageHeader";
 import CheckTable from "../common/table/checkTable";
 import SchematicDiagram from "../diagram/schematicDiagram";
+import { updateInventoryResult } from "@/pages/api";
 
 export default function InventoryShelf() {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
+  const { userId } = useSelector((s) => s.user);
+  const { batchNo } = useSelector((state) => state.inventory);
   const stationState = useSelector((s) => s.inventory[currentStation]);
   const rowState = stationState?.rowState || [];
   const SHELVE_ID = stationState?.shelf?.SHELVE_ID;
@@ -205,6 +211,39 @@ export default function InventoryShelf() {
     },
   ];
 
+  const submitToBackend = async () => {
+    const payload = {
+      stations: stations,
+      STATION: currentStation,
+      batchNo: batchNo,
+      SHELVE_ID: SHELVE_ID,
+      rowState: rowState,
+      UserId: userId,
+    };
+    console.log("payload:", payload);
+    const res = await updateInventoryResult(payload);
+    if (res.data.data.success) {
+      console.log("res.data.data:", res.data.data);
+      if (res.data.data.data.remainCount === 0) {
+        dispatch(setPage("inventory-table"));
+        dispatch(setBatchNo(null));
+        dispatch(
+          setInventory({
+            station: "*",
+            data: { screen: "idle" },
+          })
+        );
+      } else {
+        dispatch(
+          setInventory({
+            station: currentStation,
+            data: { screen: "loading" },
+          })
+        );
+      }
+    }
+  };
+
   return (
     <>
       {/* 頂部區域 */}
@@ -261,7 +300,7 @@ export default function InventoryShelf() {
                 text="確定"
                 variant="orange"
                 disabled={!canSubmitToERP}
-                onClick={() => console.log("送出 ERP", rowState)}
+                onClick={submitToBackend}
               />
               <div className="absolute right-0">
                 <ActionBtn text="下線" variant="orange" />
