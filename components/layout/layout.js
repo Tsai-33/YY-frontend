@@ -8,7 +8,7 @@ import { logout as logoutAPI } from "@/pages/api/authService";
 import ProtectedRoute from "../common/ProtectedRoute";
 import InboundManager from "../inbound/inboundManager";
 import OutboundExternalManager from "../outboundExternal/outboundExternalManager";
-
+import TransferManager from "../transfer/transferManager";
 
 // 控制面板
 
@@ -35,9 +35,7 @@ export default function Layout({ children }) {
 
   const path = router.pathname;
 
-  const mainClass =
-    path === "/" ? "flex-1" : "flex-1 flex flex-col gap-2 my-5 mx-4 relative";
-
+  const mainClass = path === "/" ? "flex-1" : "flex-1 flex flex-col gap-2 my-5 mx-4 relative";
 
   // 處理登出
   const handleLogout = async () => {
@@ -59,7 +57,6 @@ export default function Layout({ children }) {
     router.push("/auth/login");
   };
 
-
   // ====== 控制面板 =====
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -79,47 +76,40 @@ export default function Layout({ children }) {
       <header className="shrink-0 h-19 w-full max-w-full px-4 bg-white flex items-center justify-between z-20">
         {/* Logo */}
         <Link href="/">
-          <img
-            src={LOGO_PATH}
-            alt="YOHO Logo"
-            className="h-12 w-auto object-contain"
-          />
+          <img src={LOGO_PATH} alt="YOHO Logo" className="h-12 w-auto object-contain" />
         </Link>
 
         {/* 登入/登出按鈕 */}
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <>
-              {userName && (() => {
-                const role = userRole;
-                if (role !== "user") {
-                  return (
-                    <Link href="/usermanage">
-                      <span className="text-gray-700 font-medium cursor-pointer hover:underline">
-                      <i className="icon-user"></i>{userName}
+              {userName &&
+                (() => {
+                  const role = userRole;
+                  if (role !== "user") {
+                    return (
+                      <Link href="/usermanage">
+                        <span className="text-gray-700 font-medium cursor-pointer hover:underline">
+                          <i className="icon-user"></i>
+                          {userName}
+                        </span>
+                      </Link>
+                    );
+                  } else {
+                    return (
+                      <span className="text-gray-700 font-medium">
+                        <i className="icon-user "></i>
+                        {userName}
                       </span>
-                    </Link>
-                  );
-                }else{
-                  return (
-                    <span className="text-gray-700 font-medium">
-                      <i className="icon-user "></i>{userName}
-                    </span>
-                  );  
-                }
-              })()}
-              <button
-                onClick={handleLogout}
-                className="text-gray-700 hover:text-red-600 font-medium transition-colors cursor-pointer"
-              >
+                    );
+                  }
+                })()}
+              <button onClick={handleLogout} className="text-gray-700 hover:text-red-600 font-medium transition-colors cursor-pointer">
                 登出 Logout
               </button>
             </>
           ) : (
-            <button
-              onClick={handleLogin}
-              className="text-gray-700 hover:text-[var(--green-vivid)] font-medium transition-colors cursor-pointer"
-            >
+            <button onClick={handleLogin} className="text-gray-700 hover:text-[var(--green-vivid)] font-medium transition-colors cursor-pointer">
               登入 Login
             </button>
           )}
@@ -131,9 +121,8 @@ export default function Layout({ children }) {
       </main>
 
       {/* 依照路由渲染不同面板 */}
-      {path.startsWith("/inbound") && (
-        <InboundManager isOpen={open} onClose={() => setOpen(false)} />
-      )}
+      {path.startsWith("/inbound") && <InboundManager isOpen={open} onClose={() => setOpen(false)} />}
+      {path.startsWith("/transfer") && <TransferManager isOpen={open} onClose={() => setOpen(false)} />}
     </div>
   );
 }

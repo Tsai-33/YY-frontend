@@ -53,11 +53,11 @@ export default function Inbound() {
     } else {
       try {
         const random = generateRandomNumber();
-        const data = { action: "ask_order", no: inputBarCode, dataid: random };
+        const data = { action: "ask_order", NO: inputBarCode, dataid: random };
         const res = await sendToWMS(data);
         if (res.data.success) {
           // 完成後更新畫面列表
-          getInboundTable();
+          getTable();
         }
       } catch (error) {
         console.warn(`ask_order handleBarCode :`, error);
@@ -189,12 +189,12 @@ export default function Inbound() {
       Alert({ title: "入庫單完成", html: `此入庫單已經完成<br>請選擇「 入庫單完成 」` });
       return;
     }
+
     if (tableData2.length > 0) {
       try {
         const [wcs, nodepos] = await Promise.all([checkWCS({ W_ID: waveNo }), checkNODEPOS({ W_ID: waveNo })]);
-
         if (wcs.data.success && nodepos.data.success) {
-          if (wcs.data.data.length <= 0 && nodepos.data.data.length <= 1) {
+          if (wcs.data.data.length > 0 || nodepos.data.data.length < 2) {
             // 沒有這個GGROUP的車了 只剩下一台車在站點了
             Alert({
               title: "入倉單未完成",
@@ -219,6 +219,7 @@ export default function Inbound() {
             return;
           }
         } else {
+          console.log("wcs.nodepos未成功");
           return;
         }
       } catch (err) {
@@ -234,7 +235,7 @@ export default function Inbound() {
     try {
       // 傳給WMS
       const random9 = generateRandomNumber();
-      const data = { action: "cancel", dataid: random9, STATION: currentStation }; 
+      const data = { action: "cancel", dataid: random9, STATION: currentStation };
       const res = await sendToWMS(data);
       if (res.data.success) {
         dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: waveNo }));
@@ -263,14 +264,14 @@ export default function Inbound() {
 
   // ============ 更新訂單順序時重抓資料 ==========
   useEffect(() => {
-    getInboundTable();
+    getTable();
   }, [orderList]);
   // =============== 初入畫面 ===============
   useEffect(() => {
-    getInboundTable();
+    getTable();
     barCodeRef?.current?.focus();
   }, []);
-  const getInboundTable = async () => {
+  const getTable = async () => {
     try {
       const res = await getInbound();
       if (res.data.success) {
@@ -279,7 +280,7 @@ export default function Inbound() {
         setTableData(newData);
       }
     } catch (err) {
-      console.warn(`getInboundTable:`, err);
+      console.warn(`Inbound getTable:`, err);
     }
   };
   // =============== 抓detail畫面 ===============
@@ -317,6 +318,27 @@ export default function Inbound() {
     }
   };
 
+  // =========== 測試單亂數產生
+  const handleTest = () => {
+    // ===== 前綴隨機 =====
+    const prefixes = ["M560", "M540"];
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+
+    // ===== 民國年月日 =====
+    const date = new Date()
+    const year = date.getFullYear() - 1911;
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    // ===== 3 碼序號 =====
+    const seq = String(Math.floor(Math.random() * 999) + 1).padStart(3, "0");
+
+      const passSN = `${prefix}-${year}${month}${day}${seq}`;
+
+       barCodeRef.current.value = passSN
+       barCodeRef.current.focus()
+  };
+
   return (
     <>
       {/* 頂部區域 */}
@@ -338,7 +360,7 @@ export default function Inbound() {
               <ActionBtn text="入倉單完成" variant="orange" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handlefinishInboundOrder} />
             </div>
           )}
-          <InboundTable data={tableData} data2={tableData2} />
+          <InboundTable data={tableData} data2={tableData2} setData2={setTableData2} />
         </div>
         {/* 右側 */}
         <div className="w-4/7 font-bold text-black p-4 flex flex-col">
@@ -525,6 +547,9 @@ export default function Inbound() {
       <Modal showModal={returnModal} title="退回貨架" onClose={() => setReturnModal(false)} onConfirm={handleReturnShelf} width={`30vw`} height={`35vh`}>
         確定是否返回貨架
       </Modal>
+
+      {/* 測試按鈕 */}
+      {step <= 2 &&<ActionBtn text="測試用-產生單據" className="absolute top-0 right-50" variant="yellow" onClick={handleTest} />}
     </>
   );
 }

@@ -59,11 +59,7 @@ export default function SocketManager() {
         console.log("socket接收到的資料 :", eventData);
 
         const command = eventData?.command?.toUpperCase(); // 忽略大小寫
-        if (
-          eventData?.action === "taskdone" &&
-          command !== "RETURN" &&
-          command !== "CANCEL"
-        ) {
+        if (eventData?.action === "taskdone" && command !== "RETURN" && command !== "CANCEL") {
           if (eventData?.PURPOSE === 0) {
             // 出庫
             dispatch(
@@ -88,6 +84,17 @@ export default function SocketManager() {
           } else if (eventData?.PURPOSE === 1) {
             // 入庫
             dispatch(setInbound({ station: eventData.STATION, shelf: eventData, shelfItem: eventData?.ITEMS, screen: "working", step: 3 }));
+
+            // 調撥 (等模擬器改好移動走)
+            dispatch(
+              setTransfer({
+                station: eventData.STATION,
+                screen: "working",
+                shelf: eventData,
+                shelfItem: eventData?.ITEMS,
+                step: 3,
+              })
+            );
           } else if (eventData?.PURPOSE === 2) {
             // 盤點
             dispatch(
@@ -102,27 +109,24 @@ export default function SocketManager() {
                 },
               })
             );
+          } else if (eventData?.PURPOSE === 3) {
             // 調撥
             dispatch(
               setTransfer({
                 station: eventData.STATION,
                 screen: "working",
-                taskdone: eventData,
+                shelf: eventData,
+                shelfItem: eventData?.ITEMS,
                 step: 3,
               })
             );
-          } else if (eventData?.PURPOSE === 3) {
           }
         }
         if (eventData?.action === "push_button") {
         }
         if (eventData?.action === "show_msg") {
         }
-        if (
-          eventData?.action === "taskdone" &&
-          command === "RETURN" &&
-          eventData?.PURPOSE === 0
-        ) {
+        if (eventData?.action === "taskdone" && command === "RETURN" && eventData?.PURPOSE === 0) {
           dispatch(setShelfTransfer({ shelf: eventData, isReturn: true }));
         }
       };

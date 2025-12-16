@@ -129,7 +129,7 @@ export default function Login() {
             <h2 className="text-2xl font-bold text-black mb-8 text-center">
               登入 Log in
               {/* 暫時使用--- 上線後刪除 */}
-              <ActionBtn text="管理者帳密" variant="green" className="absolute top-0" onClick={handleWriteIn} />
+              <ActionBtn text="測試用-帳密" variant="yellow" className="absolute top-0" onClick={handleWriteIn} />
               {/* 暫時使用--- 上線後刪除 */}
             </h2>
 
