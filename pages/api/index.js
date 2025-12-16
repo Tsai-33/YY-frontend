@@ -8,6 +8,7 @@ export const getTransfer = () => api.get("/transfer");
 export const getTransferDetail = () => api.get("/transfer/detail");
 export const getTransferByCMDID = () => api.get(`/transfer/cmdid`);
 export const getTransferByWID = (wid) => api.get(`/transfer/${wid}`);
+export const updateTransferWMS = (payload) => api.post("/transfer/update/wms", payload);
 
 /* 取得入庫單 */
 export const getInbound = () => api.get("/inbound");

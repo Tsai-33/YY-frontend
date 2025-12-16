@@ -53,7 +53,7 @@ export default function Inbound() {
     } else {
       try {
         const random = generateRandomNumber();
-        const data = { action: "ask_order", no: inputBarCode, dataid: random };
+        const data = { action: "ask_order", NO: inputBarCode, dataid: random };
         const res = await sendToWMS(data);
         if (res.data.success) {
           // 完成後更新畫面列表
@@ -219,7 +219,7 @@ export default function Inbound() {
             return;
           }
         } else {
-          console.log('wcs.nodepos未成功')
+          console.log("wcs.nodepos未成功");
           return;
         }
       } catch (err) {
@@ -235,7 +235,7 @@ export default function Inbound() {
     try {
       // 傳給WMS
       const random9 = generateRandomNumber();
-      const data = { action: "cancel", dataid: random9, STATION: currentStation }; 
+      const data = { action: "cancel", dataid: random9, STATION: currentStation };
       const res = await sendToWMS(data);
       if (res.data.success) {
         dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: waveNo }));
@@ -316,6 +316,27 @@ export default function Inbound() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // =========== 測試單亂數產生
+  const handleTest = () => {
+    // ===== 前綴隨機 =====
+    const prefixes = ["M560", "M540"];
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+
+    // ===== 民國年月日 =====
+    const date = new Date()
+    const year = date.getFullYear() - 1911;
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    // ===== 3 碼序號 =====
+    const seq = String(Math.floor(Math.random() * 999) + 1).padStart(3, "0");
+
+      const passSN = `${prefix}-${year}${month}${day}${seq}`;
+
+       barCodeRef.current.value = passSN
+       barCodeRef.current.focus()
   };
 
   return (
@@ -526,6 +547,9 @@ export default function Inbound() {
       <Modal showModal={returnModal} title="退回貨架" onClose={() => setReturnModal(false)} onConfirm={handleReturnShelf} width={`30vw`} height={`35vh`}>
         確定是否返回貨架
       </Modal>
+
+      {/* 測試按鈕 */}
+      {step <= 2 &&<ActionBtn text="測試用-產生單據" className="absolute top-0 right-50" variant="yellow" onClick={handleTest} />}
     </>
   );
 }

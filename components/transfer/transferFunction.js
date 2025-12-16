@@ -6,7 +6,7 @@ import { generateRandomNumber } from "@/utils/random";
 export const getEPRdata = async (inputBarCode, setTableData, setTableTotalData2) => {
   try {
     const random = generateRandomNumber();
-    const data = { action: "ask_order", no: inputBarCode, dataid: random };
+    const data = { action: "ask_order", NO: inputBarCode, dataid: random };
     const res = await sendToWMS(data);
     if (res.data.success) {
       getTable(setTableData, setTableTotalData2);

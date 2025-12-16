@@ -4,7 +4,7 @@ import ActionBtn from "@/components/common/btns/actionBtn";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
 import InputFrame from "@/components/common/input/inputFrame";
 import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
-import { sendToWMS, getTransfer } from "../api";
+import { sendToWMS, getTransfer, updateTransferWMS } from "../api";
 import SchematicDiagram from "../../components/diagram/schematicDiagram";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import Loading from "@/components/common/loading/loading";
@@ -13,7 +13,7 @@ import { generateRandomNumber } from "@/utils/random";
 import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
 import TransferTable from "@/components/transfer/transferTable";
-import { resetTransfer, setAllLoading, setTransfer } from "@/redux/reducer/reducerTransfer";
+import { resetTransfer, setAllLoading, setTransfer, updateShelfItem } from "@/redux/reducer/reducerTransfer";
 import { checkConfirmTransfer, getEPRdata, getList, getTable } from "@/components/transfer/transferFunction";
 
 export default function Transfer() {
@@ -29,6 +29,7 @@ export default function Transfer() {
     dispatch(setCurrentStation(station));
   };
   const currentStationSafe = currentStation || stations?.[0] || "";
+  const stationList = useSelector((s) => s.transfer);
   const { step, orderCode, order, lackStation, waveNo } = useSelector((s) => s.transfer);
   const { screen, shelf, shelfItem, selected } = useSelector((s) => s.transfer[currentStationSafe] || {});
 
@@ -69,10 +70,11 @@ export default function Transfer() {
       lack_station.map((station) => {
         dispatch(setTransfer({ station: station, orderCode: orderCode, waveNo: order.W_ID, order: order, lackStation: station }));
       });
-      dispatch(setAllLoading())
+      // 其他鎖住，等這波做完才能釋放
+      dispatch(setAllLoading());
     }
   };
-  // 確定上架
+  // 確定下架
   const [confirmModal, setConfirmModal] = useState(false);
   const handleConfirmShelf = async () => {
     setLoading(true);
@@ -87,8 +89,8 @@ export default function Transfer() {
 
     try {
       // 傳給WMS
-      const data = { itemArray: selected, area: shelf.area, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO };
-      const res = await updatetransferWMS(data);
+      const data = { itemArray: selected, area: shelf.area, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO, addShelf: stationList?.["A01"].shelf.SHELVE_ID };
+      const res = await updateTransferWMS(data);
       if (res.data.success) {
         let newShelf = shelfItem.map((s) => ({ ...s })); // ⬅ 防止 freeze
 
@@ -99,8 +101,8 @@ export default function Transfer() {
             // 建立新物件覆蓋，不 mutate 舊物件
             newShelf[index] = {
               ...newShelf[index],
-              PP_NO: (Number(newShelf[index].PP_NO) || 0) + (Number(v.PP_NO) || 0),
-              BOX_NO: (Number(newShelf[index].BOX_NO) || 0) + (Number(v.BOX_NO) || 0),
+              PP_NO: (Number(newShelf[index].PP_NO) || 0) - (Number(v.PP_NO) || 0),
+              BOX_NO: (Number(newShelf[index].BOX_NO) || 0) - (Number(v.BOX_NO) || 0),
             };
           } else {
             // 新增也要建立副本
@@ -240,15 +242,25 @@ export default function Transfer() {
     getList(waveNo, setTableData2);
   }, [shelfItem]);
 
-  // =============== 調撥完成 ===============
-  const handlefinishOrder = async () => {
-    setLoading(true);
-    try {
-    } catch (err) {
-      console.warn(`handlefinishOrder :`, err);
-    } finally {
-      setLoading(false);
-    }
+  // =========== 測試單亂數產生
+  const handleTest = () => {
+    // ===== 前綴隨機 =====
+    const prefixes = ["F120"];
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+
+    // ===== 民國年月日 =====
+    const date = new Date();
+    const year = date.getFullYear() - 1911;
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    // ===== 3 碼序號 =====
+    const seq = String(Math.floor(Math.random() * 999) + 1).padStart(3, "0");
+
+    const passSN = `${prefix}-${year}${month}${day}${seq}`;
+
+    barCodeRef.current.value = passSN;
+    barCodeRef.current.focus();
   };
 
   return (
@@ -256,8 +268,8 @@ export default function Transfer() {
       {/* 頂部區域 */}
       {step === 1 && <PageHeader title={`請點擊清單內的調撥單號或掃調撥單條碼`} close={true} backTo="/workspace" />}
       {step === 2 && <PageHeader title={`檢視調撥單內容後，請點擊確定 `} close={false} />}
-      {step === 3 && <PageHeader title={`貨架到站點，請掃外箱條碼或點擊介面清單方框，標示已將產品放上貨架`} close={true} />}
-      {step === 4 && <PageHeader title={`完成調撥後請點擊退回貨架按鈕，將貨架退回庫區`} close={true} />}
+      {step === 3 && <PageHeader title={`貨架到站點，請掃外箱條碼或點擊介面清單方框，標示已將產品放上貨架`} close={false} />}
+      {step === 4 && <PageHeader title={`完成調撥後請點擊退回貨架按鈕，將貨架退回庫區`} close={false} />}
       {/* 主要內容區域 */}
       <div className="flex flex-1 gap-4 px-2 py-8 items-stretch">
         {/* 左側 */}
@@ -293,33 +305,50 @@ export default function Transfer() {
                         <div>目的庫別:{order?.STOCK_AREA}</div>
                       </div>
                       {tableDataTotal2
-                        .filter((v) => v?.INSTOCK_NO === orderCode)
-                        .map((v) => (
-                          <>
-                            <div className="flex justify-end text-[var(--red)]">
-                              <div>來源庫別:{v?.MEMO}</div>
-                            </div>
-                            <div className="mt-2 border-gray-300">
+                        .filter((v) => v?.INSTOCK_NO == orderCode)
+                        .map((v, i) => (
+                          <div key={i} className="mt-2">
+                            <div className="flex justify-between">
                               <div>產品品號:{v?.PRT_NO}</div>
-                              <div>品名: {v?.PRT_NAME}</div>
-                              <div className="w-100 flex justify-between">
-                                <div>箱數: {v?.BOX_NO}箱</div>
-                                <div>
-                                  數量: {v?.PP_NO} {v?.UNIT}
-                                </div>
+                              <div className="text-[var(--red)]">來源庫別:{v?.MEMO}</div>
+                            </div>
+                            <div>品名: {v?.PRT_NAME}</div>
+                            <div className="w-100 flex justify-between">
+                              <div>箱數: {v?.BOX_NO}箱</div>
+                              <div>
+                                數量: {v?.PP_NO} {v?.UNIT}
                               </div>
                             </div>
-                          </>
+                          </div>
                         ))}
                     </div>
                   </SchematicDiagramList>
                 ) : (
                   <SchematicDiagram>
                     <div className="flex flex-col">
-                      <div className="flex justify-between">
-                        <div>{shelf ? `貨架編號: ${shelf?.SHELVE_ID}` : ""}</div>
-                        <div>{shelf ? `入庫庫別: ${shelf?.area}` : ""}</div>
-                      </div>
+                      {currentStation === "A01" ? (
+                        <div className="flex justify-between pb-2">
+                          <div
+                            className="text-[var(--blue-vivid)]"
+                            style={{
+                              textShadow: `
+                              -1px -1px 0 white,
+                              -1px 1px 0 white,
+                              1px -1px 0 white,
+                              1px 1px 0 white
+                            `,
+                            }}
+                          >
+                            {shelf ? `站點${currentStation}-目的貨架編號:${shelf?.SHELVE_ID}` : ""}
+                          </div>
+                          <div>{shelf ? `目的庫別: ${shelf?.area}` : ""}</div>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between text-[var(--red)] pb-2">
+                          <div>{shelf ? `站點${currentStation}-來源貨架編號:${shelf?.SHELVE_ID}` : ""}</div>
+                          <div>{shelf ? `來源庫別: ${shelf?.area}` : ""}</div>
+                        </div>
+                      )}
 
                       {(() => {
                         // Step 1: 安全處理 shelfItem
@@ -362,28 +391,47 @@ export default function Transfer() {
 
                           const textClass = isNew ? "text-red-500" : "";
 
-                          return (
-                            <div key={item.PRT_NO + index} className={`mb-4 ${textClass}`}>
-                              <div className="flex justify-between">
-                                <div>產品品號: {item.PRT_NO}</div>
-                              </div>
-                              <div className="flex justify-between">
-                                <div>產品品名: {item.PRT_NAME}</div>
-                              </div>
-                              <div className="flex justify-between">
-                                <div>
-                                  箱數: {item.BOX_NO} 箱{item.selectedBox > 0 && <span className="text-red-500">{`(+${item.selectedBox})`}</span>}
+                          if (currentStation === "A01") {
+                            return (
+                              <div key={item.PRT_NO + index} className={`mb-2 ${textClass}`}>
+                                <div className="flex justify-between">
+                                  <div>產品品號: {item.PRT_NO}</div>
                                 </div>
-                                <div>
-                                  數量: {item.PP_NO} {item.UNIT}
-                                  {item.selectedPP > 0 && <span className="text-red-500">{`(+${item.selectedPP})`}</span>}
+                                <div className="flex justify-between">
+                                  <div>產品品名: {item.PRT_NAME}</div>
                                 </div>
-                                <div>
-                                  車數 (還沒給我) {index + 1}/{displayItems.length}
+                                <div className="flex justify-between w-100">
+                                  <div>
+                                    箱數: {item.BOX_NO} 箱{item.selectedBox > 0 && <span className="text-red-500">{`(-${item.selectedBox})`}</span>}
+                                  </div>
+                                  <div>
+                                    數量: {item.PP_NO} {item.UNIT}
+                                    {item.selectedPP > 0 && <span className="text-red-500">{`(+${item.selectedPP})`}</span>}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
+                            );
+                          } else {
+                            return (
+                              <div key={item.PRT_NO + index} className={`mb-2 ${textClass}`}>
+                                <div className="flex justify-between">
+                                  <div>產品品號: {item.PRT_NO}</div>
+                                </div>
+                                <div className="flex justify-between">
+                                  <div>產品品名: {item.PRT_NAME}</div>
+                                </div>
+                                <div className="flex justify-between w-100">
+                                  <div>
+                                    箱數: {item.BOX_NO} 箱{item.selectedBox > 0 && <span className="text-red-500">{`(-${item.selectedBox})`}</span>}
+                                  </div>
+                                  <div>
+                                    數量: {item.PP_NO} {item.UNIT}
+                                    {item.selectedPP > 0 && <span className="text-red-500">{`(-${item.selectedPP})`}</span>}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
                         });
                       })()}
                     </div>
@@ -398,9 +446,19 @@ export default function Transfer() {
               {step <= 2 && <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfirm} disabled={!waveNo} />}
               {step > 2 && (
                 <div className="w-full flex justify-between">
-                  <ActionBtn icon="" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
-                  <ActionBtn icon="" text="確定上架" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
-                  <ActionBtn icon="" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} disabled={tableData2?.length <= 0} />
+                  {currentStation === "A01" ? (
+                    <>
+                      <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
+                      <ActionBtn icon="icon-locationSwap" text="完成調撥" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
+                    </>
+                  ) : (
+                    <>
+                      <ActionBtn className="w-25 pointer-events-none" disabled={true} />
+                      <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
+                    </>
+                  )}
+
+                  <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} disabled={tableData2?.length <= 0} />
                 </div>
               )}
             </div>
@@ -417,9 +475,9 @@ export default function Transfer() {
       {screen === "loading" && <LoadingShelf />}
       {loading && <Loading />}
       {/* Modal - 確定 */}
-      <Modal showModal={confirmModal} title="確認上架" onClose={() => setConfirmModal(false)} onConfirm={handleConfirmShelf} width={`30vw`} height={`auto`}>
+      <Modal showModal={confirmModal} title="確認" onClose={() => setConfirmModal(false)} onConfirm={handleConfirmShelf} width={`30vw`} height={`auto`}>
         <>
-          <div>請確定是否上架以下品項</div>
+          <div>請確定是否搬移以下品項</div>
           <div>
             {selected &&
               selected.length > 0 &&
@@ -455,6 +513,9 @@ export default function Transfer() {
       <Modal showModal={returnModal} title="退回貨架" onClose={() => setReturnModal(false)} onConfirm={handleReturnShelf} width={`30vw`} height={`35vh`}>
         確定是否返回貨架
       </Modal>
+
+      {/* 測試按鈕 */}
+      {step <= 2 && <ActionBtn text="測試用-產生單據" className="absolute top-0 right-50" variant="yellow" onClick={handleTest} />}
     </>
   );
 }

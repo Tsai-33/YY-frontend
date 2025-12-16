@@ -40,6 +40,10 @@ const transferSlice = createSlice({
         state[v].screen = "loading";
       });
     },
+    updateShelfItem: (state, action) => {
+      const { station, items } = action.payload;
+      state[station].shelfItem = items;
+    },
     // 控制面板
     managerTransfer: (state, action) => {
       const { station, name, value, checked, index } = action.payload;
@@ -89,6 +93,6 @@ const transferSlice = createSlice({
   },
 });
 
-export const { setAllLoading,setTransfer, managerTransfer, resetTransfer } = transferSlice.actions;
+export const { setAllLoading, setTransfer, updateShelfItem, managerTransfer, resetTransfer } = transferSlice.actions;
 
 export default transferSlice.reducer;

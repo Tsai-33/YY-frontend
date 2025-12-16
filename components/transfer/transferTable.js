@@ -4,6 +4,8 @@ import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setTransfer } from "@/redux/reducer/reducerTransfer";
 import TableAll from "../common/table/tableAll";
 import { getTransferByWID } from "@/pages/api";
+import PurposeTable from "./tables/purposeTable";
+import SourceTable from "./tables/sourceTable";
 
 export default function TransferTable({ data, data2, setData2 }) {
   const dispatch = useDispatch();
@@ -89,7 +91,8 @@ export default function TransferTable({ data, data2, setData2 }) {
   return (
     <>
       {step <= 2 && <NoCheckBoxTable headers={tableHeader} data={data} type="radio" name="transfer" variants="green" idKey="INSTOCK_NO" checked={orderCode} onChange={handleSelectedOption} />}
-      {step > 2 && <TableAll height={`59vh`} headers={tableHeader2} data={data2} type="checkbox" name="transfer2" variants="green" idKey="INSTOCK_NO" checked={selectedArray} onChange={handleSelectedOption} onChangeAll={handleSelectAll} />}
+      {currentStation === 'A01' && step > 2 && <PurposeTable height={`59vh`} headers={tableHeader2} data={data2} name="transfer2" idKey="INSTOCK_NO" />}
+      {currentStation !== 'A01' && step > 2 && <SourceTable height={`59vh`} headers={tableHeader2} data={data2} type="checkbox" name="transfer2" idKey="OUTSTOCK_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} />}
     </>
   );
 }

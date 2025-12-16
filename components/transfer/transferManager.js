@@ -52,7 +52,7 @@ export default function TransferManager({ isOpen, onClose }) {
     try {
       const res = await getTransferByCMDID();
       if (res.data.success) {
-        console.log(res.data.data, "res.data.data");
+        console.log(res.data.data, "transfer manager");
       }
     } catch (err) {
       Alert({ title: "網路不穩定，請稍後在試！" });
