@@ -70,7 +70,7 @@ export default function SourceTable({ headers = [], data = [], type, name, onCha
             })}
           </tr>
         </thead>
-        <tbody className="h-100 overflow-y-scroll scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200 ">
+        <tbody className="overflow-y-scroll scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200">
           {data.map((row, idx) => (
             <tr key={idx} className={`px-4 py-2 text-center border-b border-[var(--green-vivid)] text-center`}>
               {headers.map((header, i) => {
