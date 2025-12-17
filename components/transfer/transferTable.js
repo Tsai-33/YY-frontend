@@ -91,8 +91,8 @@ export default function TransferTable({ data, data2, setData2 }) {
   return (
     <>
       {step <= 2 && <NoCheckBoxTable headers={tableHeader} data={data} type="radio" name="transfer" variants="green" idKey="INSTOCK_NO" checked={orderCode} onChange={handleSelectedOption} />}
-      {currentStation === 'A01' && step > 2 && <PurposeTable height={`59vh`} headers={tableHeader2} data={data2} name="transfer2" idKey="INSTOCK_NO" />}
-      {currentStation !== 'A01' && step > 2 && <SourceTable height={`59vh`} headers={tableHeader2} data={data2} type="checkbox" name="transfer2" idKey="OUTSTOCK_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} />}
+      {currentStation === 'A01' && step > 2 && <PurposeTable height={`65vh`} headers={tableHeader2} data={data2} name="transfer2" idKey="INSTOCK_NO" />}
+      {currentStation !== 'A01' && step > 2 && <SourceTable height={`65vh`} headers={tableHeader2} data={data2} type="checkbox" name="transfer2" idKey="OUTSTOCK_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} />}
     </>
   );
 }
