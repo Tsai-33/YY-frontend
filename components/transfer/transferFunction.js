@@ -48,15 +48,16 @@ export const getList = async (waveNo, setTableData2) => {
 };
 
 // 確認要處理此張調撥單
-export const checkConfirmTransfer = async (setLoading,order) => {
+export const checkConfirmTransfer = async (setLoading, order) => {
   try {
     setLoading(true);
     // 傳給WMS
     const random9 = generateRandomNumber();
     const data = { action: "ask_wave", dataid: random9, wave_no: String(order.W_ID), station_no: "A" };
     const res = await sendToWMS(data);
-    // console.log("handleConfirm 回應 :", res.data);
-    if (res.data.success) {
+    // console.log("handleConfirm 回應 :", res);
+
+    if (res?.data?.success) {
       // 有派車的站，顯示不同顏色
       let lack_station = res.data.data.message2;
       if (!Array.isArray(lack_station)) {
@@ -64,14 +65,17 @@ export const checkConfirmTransfer = async (setLoading,order) => {
           // 嘗試把字串轉成陣列
           lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
         } catch (e) {
-          console.error("lack_station 格式錯誤:", lack_station, e);
+          console.warn("lack_station 格式錯誤:", lack_station, e);
           lack_station = []; // fallback 防止爆掉
         }
       }
-      return lack_station;
-}
+      return { success: res.data.success, data: lack_station };
+    } else {
+      return { success: res.data.success, data: res.error.status };
+    }
   } catch (err) {
     console.warn("handleConfirm :", err);
+    return err;
   } finally {
     setLoading(false);
   }

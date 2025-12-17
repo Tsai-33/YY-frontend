@@ -54,7 +54,7 @@ export default function Transfer() {
 
       barCodeRef.current.value = "";
     } else {
-      await getEPRdata(inputBarCode, setTableData);
+      await getEPRdata(inputBarCode, setTableData, setTableTotalData2);
     }
   };
 
@@ -64,14 +64,14 @@ export default function Transfer() {
       Alert({ title: "您未選擇調撥單" });
       return;
     }
-    const lack_station = await checkConfirmTransfer(setLoading, order);
-
-    if (lack_station.length > 0) {
+    const lack_station = await checkConfirmTransfer(setLoading, order);    if (lack_station?.length > 0) {
       lack_station.map((station) => {
         dispatch(setTransfer({ station: station, orderCode: orderCode, waveNo: order.W_ID, order: order, lackStation: station }));
       });
       // 其他鎖住，等這波做完才能釋放
       dispatch(setAllLoading());
+    } else {
+      Alert({ title: "目前系統忙碌中，請重新再試。" });
     }
   };
   // 確定下架
@@ -305,7 +305,7 @@ export default function Transfer() {
                         <div>目的庫別:{order?.STOCK_AREA}</div>
                       </div>
                       {tableDataTotal2
-                        .filter((v) => v?.INSTOCK_NO == orderCode)
+                        .filter((v) => v?.OUTSTOCK_NO == orderCode)
                         .map((v, i) => (
                           <div key={i} className="mt-2">
                             <div className="flex justify-between">
