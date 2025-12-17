@@ -89,6 +89,7 @@ export default function InventoryTable() {
       if (res.data.success) {
         // console.log("成功送出資料:", payload);
         dispatch(setPage("inventory-shelf"));
+        dispatch(setBatchNo(res.data.data.batchNo));
         dispatch(
           setInventory({
             station: "*",
