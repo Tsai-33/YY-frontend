@@ -3,7 +3,14 @@ import { useDispatch, useSelector } from "react-redux";
 import OutboundExternalTable from "@/components/outboundExternal/outboundExternalTable";
 import { setCurrentStation, updateLackStation } from "@/redux/reducer/reducerWorkStations";
 import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
-import { getOutboundExternal, getOutBoundExternalOrderDetailBySaleNo, sendToWMS, shiftOutOnReturn, updateStatusForOutboundCallCar } from "../api";
+import { 
+  getOutboundExternal, 
+  getOutBoundExternalOrderDetailBySaleNo, 
+  sendToWMS, 
+  shiftOutOnReturn, 
+  updateStatusForOutboundCallCar,
+  decryptBarcode
+} from "../api";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import Loading from "@/components/common/loading/loading";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
@@ -134,40 +141,65 @@ export default function OutboundExternal() {
     if (!barcode) return;
     if (scanning) return;
 
-    // 找對應的產品
-    const matchedItem = shelfItem?.find(item =>
-      item.MAKE_NO?.includes(barcode)
-    );
+    setScanning(true); // 防重複掃描
 
-    if (matchedItem) {
-      setSelectedArray(prev => {
+    try {
+      let decryptedBarcode = barcode;
+      // 如果條碼已經是MAKE_NO(M開頭 + 數字)就不解密
+      const isMakeNoFormat = /^M\d{3}-\d+(-\d+)?$/.test(barcode);
+      
+      if (!isMakeNoFormat) {
+        try {
+          const decryptRes = await decryptBarcode({ text: barcode });
+          if (decryptRes.data.data) {
+            decryptedBarcode = decryptRes.data.data;
+          }
+        } catch (decryptError) {
+          console.warn("解密失敗，使用原始條碼:", decryptError);
+        }
+      }
+      // 測試 wuc3LX4mNgiArT+JvMQBIFz8SMkpNlmd
+      console.log("原始條碼：", barcode);
+      console.log("解密後：", decryptedBarcode);
 
-        // if (prev.some(p => p.MAKE_NO === barcode)) {
-        //   return prev;
-        // }
-        const alreadyScanned = prev.some(p => 
-                p.MAKE_NO === barcode || 
-                p.MAKE_NO?.includes(barcode)
-            );
-            
-            if (alreadyScanned) {
-                Alert({ title: `已掃描過: ${barcode}`, icon: "warning", timer: 1000 });
-                return prev;
-            }
-        return [...prev, {
-          PRT_NO: matchedItem.PRT_NO,
-          MAKE_NO: barcode,
-          outBoxNo: 1,
-          outPpNo: matchedItem.BOX_PACK
-        }];
-      });
-      Alert({ title: `已掃描: ${barcode}`, icon: "success", timer: 1000 });
-    } else {
-      Alert({ title: "條碼不符合，找不到對應箱號" });
+      // 找對應的產品
+      const matchedItem = shelfItem?.find(item =>
+        item.MAKE_NO?.includes(decryptedBarcode)
+      );
+
+      if (matchedItem) {
+        setSelectedArray(prev => {
+
+          const alreadyScanned = prev.some(p => 
+                  p.MAKE_NO === decryptedBarcode || 
+                  p.MAKE_NO?.includes(decryptedBarcode)
+              );
+              
+              if (alreadyScanned) {
+                  Alert({ title: `已掃描過: ${decryptedBarcode}`, icon: "warning", timer: 1000 });
+                  return prev;
+              }
+          return [...prev, {
+            PRT_NO: matchedItem.PRT_NO,
+            MAKE_NO: decryptedBarcode,
+            outBoxNo: 1,
+            outPpNo: matchedItem.BOX_PACK
+          }];
+        });
+        Alert({ title: `已掃描: ${decryptedBarcode}`, icon: "success", timer: 1000 });
+      } else {
+        Alert({ title: "條碼不符合，找不到對應箱號" });
+      }
+    } catch (error) {
+      console.error("解密失敗:", error);
+      Alert({ title: "條碼解密失敗", icon: "error" });
+    } finally {
+      setScanning(false);
+      boxBarcodeRef.current.value = "";
+      boxBarcodeRef.current.focus();
     }
-    boxBarcodeRef.current.value = "";
-    boxBarcodeRef.current.focus();
   };
+
   // step 3 時自動focus外箱條碼
   useEffect(() => {
     if (step === 3 && boxBarcodeRef.current) {

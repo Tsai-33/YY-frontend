@@ -15,6 +15,7 @@ export const addInboundWCS = (payload) => api.post("/inbound/add/wcs", payload);
 export const updateInboundWMS = (payload) => api.post("/inbound/update/wms", payload);
 export const finishInboundOrder = (payload) => api.post("/inbound/finish/order", payload);
 export const restoreOrders =  (payload) => api.post("/inbound/restore/orders", payload);
+
 /* 取得出庫單(銷貨) */
 export const getOutboundExternal = () =>
   api.get("/outboundExternal/getOutBoundExternal");
@@ -73,3 +74,6 @@ export const addWCS = (payload) => api.post("/wcs/add", payload);
 export const addWCSGroup = (payload) => api.post("/wcs/add/group", payload);
 export const addShelf = (payload) => api.post("/wcs/add", payload);
 export const cancelShelf = (payload) => api.post("/wcs/cancel", payload);
+
+/* 解碼 */
+export const decryptBarcode = (payload) => api.post("/code/decrypt", payload);
