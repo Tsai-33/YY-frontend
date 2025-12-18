@@ -1,4 +1,4 @@
-import { addShelf, getTransfer, getTransferByWID, getTransferDetail, sendToWMS } from "@/pages/api";
+import { addShelf, addTransferWCS, getTransfer, getTransferByWID, getTransferDetail, sendToWMS } from "@/pages/api";
 import { resetTransfer } from "@/redux/reducer/reducerTransfer";
 import { generateRandomNumber } from "@/utils/random";
 
@@ -55,27 +55,66 @@ export const checkConfirmTransfer = async (setLoading, order) => {
     const random9 = generateRandomNumber();
     const data = { action: "ask_wave", dataid: random9, wave_no: String(order.W_ID), station_no: "A" };
     const res = await sendToWMS(data);
-    // console.log("handleConfirm 回應 :", res);
-
-    if (res?.data?.success) {
-      // 有派車的站，顯示不同顏色
-      let lack_station = res.data.data.message2;
-      if (!Array.isArray(lack_station)) {
-        try {
-          // 嘗試把字串轉成陣列
-          lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
-        } catch (e) {
-          console.warn("lack_station 格式錯誤:", lack_station, e);
-          lack_station = []; // fallback 防止爆掉
-        }
-      }
-      return { success: res.data.success, data: lack_station };
-    } else {
-      return { success: res.data.success, data: res.error.status };
-    }
+    return res.data.data;
   } catch (err) {
     console.warn("handleConfirm :", err);
     return err;
+  } finally {
+    setLoading(false);
+  }
+};
+
+// 新增貨架
+export const addTransferShelf = async (setLoading, setAddModal, shelf, order) => {
+  setLoading(true);
+  try {
+    return await addTransferWCS({ area: shelf?.area, W_ID: order?.W_ID });
+  } catch (err) {
+    console.warn("handleAddShelf :", err);
+  } finally {
+    setLoading(false);
+    setAddModal(false);
+  }
+};
+
+// 退回貨架
+export const returnTransferShelf = async (setLoading, currentStation, shelf, order) => {
+  try {
+    const random9 = generateRandomNumber();
+    const data = { Command: "RETURN", SHELVE_ID: shelf?.SHELVE_ID, BAR_CODE: "", FACE: 2, STATION: currentStation, PURPOSE: 3, STATUS: 0, CART_ID: "", DATA_ID: random9, WAVENO: String(order.W_ID), GGROUP: String(order.W_ID) };
+    return await addShelf(data);
+  } catch (err) {
+    console.warn("handleReturnShelf :", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+// 全退回貨架
+export const cancelTransferShelf = async (setLoading, currentStation) => {
+  setLoading(true);
+  try {
+    const random9 = generateRandomNumber();
+    const data = { action: "cancel", dataid: random9, STATION: currentStation };
+    return await sendToWMS(data);
+  } catch (err) {
+    console.warn("handleReturnShelf :", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+// 完成調撥單
+export const finishTransfer = async (setLoading, currentStation, order) => {
+  setLoading(true);
+  try {
+    const res = await finishTransferOrder({ W_ID: order.W_ID });
+    if (res.data.success) {
+      dispatch(resetTransfer({ type: "all", station: currentStation }));
+      Alert({ title: "此單已完成" });
+    }
+  } catch (err) {
+    console.warn(`handlefinishInboundOrder :`, err);
   } finally {
     setLoading(false);
   }

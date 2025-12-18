@@ -2,8 +2,6 @@ import clsx from "clsx";
 import React from "react";
 
 export default function PurposeTable({ headers = [], data = [], height }) {
-  console.log(data, "data");
-
   const containerHeight = height || "65vh";
   const innerHeight = height
     ? `calc(${height} - 1vh)` // 如果有傳，動態計算
@@ -50,7 +48,7 @@ export default function PurposeTable({ headers = [], data = [], height }) {
                   return (
                     <td key={i}>
                       <label className="relative cursor-pointer flex items-center justify-center">
-                        <span className="font-bold text-sm">{row.checked ? "V" : "X"}</span>
+                        <span className="font-bold text-sm">{row.STATUS === 2 ? "V" : "X"}</span>
                       </label>
                     </td>
                   );

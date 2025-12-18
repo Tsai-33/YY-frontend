@@ -5,15 +5,15 @@ import PageHeader from "@/components/common/pageHeader/pageHeader";
 import InputFrame from "@/components/common/input/inputFrame";
 import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
 import { resetInbound, setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
-import { getInbound, finishInboundOrder, sendToWMS, updateInboundWMS, addShelf, cancelShelf, addInboundWCS, checkNODEPOS, checkWCS, getInboundByWID, restoreOrders } from "../api";
 import SchematicDiagram from "../../components/diagram/schematicDiagram";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import InboundTable from "@/components/inbound/inboundTable";
 import Loading from "@/components/common/loading/loading";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
-import { generateRandomNumber } from "@/utils/random";
 import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
+
+import { getTable, getList, confrimList_in, onToShelf_in, addShelf_in, returnShelf_in, cancelShelf_in, finishList_in, checkCar, restoreList_in } from "@/components/inbound/inboundFunction";
 
 export default function Inbound() {
   const dispatch = useDispatch();
@@ -21,6 +21,11 @@ export default function Inbound() {
   const [loading, setLoading] = useState(false);
   const [tableData, setTableData] = useState([]); // 入庫單資訊
   const [tableData2, setTableData2] = useState([]); // 入庫單上的明細
+
+  // MODAL 開關
+  const [addModal, setAddModal] = useState(false);
+  const [returnModal, setReturnModal] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(false);
 
   // 目前選擇的工作站
   const handleSwitchStation = (station) => {
@@ -51,65 +56,45 @@ export default function Inbound() {
 
       barCodeRef.current.value = "";
     } else {
-      try {
-        const random = generateRandomNumber();
-        const data = { action: "ask_order", NO: inputBarCode, dataid: random };
-        const res = await sendToWMS(data);
-        if (res.data.success) {
-          // 完成後更新畫面列表
-          getTable();
-        }
-      } catch (error) {
-        console.warn(`ask_order handleBarCode :`, error);
+      const res = await getERP(setLoading, inputBarCode);
+      if (res.data.success) {
+        getTable();
       }
     }
   };
 
-  // 確認此入庫單
-  const handleConfrim = async () => {
+  // 確認入庫單
+  const handleConfrimList = async () => {
     if (!waveNo) {
       Alert({ title: "您未選擇入倉單" });
       return;
     }
+    // 先清空原本的此站的選擇
+    dispatch(setInbound({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
 
-    setLoading(true);
-    try {
-      // 先清空原本的此站的選擇
-      dispatch(setInbound({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
-      // 傳給WMS
-      const random9 = generateRandomNumber();
-      const data = { action: "ask_wave", dataid: random9, wave_no: String(order.W_ID), station_no: "A" };
-      const res = await sendToWMS(data);
-      // console.log("handleConfrim 回應 :", res.data);
-      if (res.data.success) {
-        // 應該會告訴我有哪些station被占用，這裡可能是map方式全部設定
-        let lack_station = res.data.data.message2;
-        if (!Array.isArray(lack_station)) {
-          try {
-            // 嘗試把字串轉成陣列
-            lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
-          } catch (e) {
-            console.error("lack_station 格式錯誤:", lack_station, e);
-            lack_station = []; // fallback 防止爆掉
-          }
+    const res = await confrimList_in(setLoading, order);
+    if (res.data.success) {
+      // 應該會告訴我有哪些station被占用，這裡可能是map方式全部設定
+      let lack_station = res.data.data.message2;
+      if (!Array.isArray(lack_station)) {
+        try {
+          // 嘗試把字串轉成陣列
+          lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
+        } catch (e) {
+          console.error("lack_station 格式錯誤:", lack_station, e);
+          lack_station = []; // fallback 防止爆掉
         }
-        if (lack_station.length > 0) {
-          lack_station.map((station) => {
-            dispatch(setInbound({ station: station, screen: "loading", orderCode: orderCode, waveNo: order.W_ID, order: order, orderList: orderCode, lackStation: station }));
-          });
-        }
-        setTableData((prev) => prev.filter((v) => v.INSTOCK_NO !== orderCode && v.STATUS == 0)); // 把已選定單排除
       }
-    } catch (err) {
-      console.warn("handleConfrim :", err);
-    } finally {
-      setLoading(false);
+      if (lack_station.length > 0) {
+        lack_station.map((station) => {
+          dispatch(setInbound({ station: station, screen: "loading", orderCode: orderCode, waveNo: order.W_ID, order: order, orderList: orderCode, lackStation: station }));
+        });
+      }
+      setTableData((prev) => prev.filter((v) => v.INSTOCK_NO !== orderCode && v.STATUS == 0)); // 把已選定單排除
     }
   };
   // 確定上架
-  const [confirmModal, setConfirmModal] = useState(false);
   const handleConfrimShelf = async () => {
-    setLoading(true);
     if (!currentStation) {
       Alert({ html: "抓不到站點位置" });
       return;
@@ -119,68 +104,44 @@ export default function Inbound() {
       return;
     }
 
-    try {
-      // 傳給WMS
-      const data = { itemArray: selected, area: shelf.area, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO };
-      const res = await updateInboundWMS(data);
-      if (res.data.success) {
-        let newShelf = shelfItem.map((s) => ({ ...s })); // ⬅ 防止 freeze
+    const res = await onToShelf_in(setLoading, selected, shelf, order, dispatch, setInbound, currentStation, setConfirmModal);
+    if (res.data.success) {
+      let newShelf = shelfItem.map((s) => ({ ...s })); // ⬅ 防止 freeze
 
-        selected.forEach((v) => {
-          const index = newShelf.findIndex((s) => s.PRT_NO === v.PRT_NO);
+      selected.forEach((v) => {
+        const index = newShelf.findIndex((s) => s.PRT_NO === v.PRT_NO);
 
-          if (index !== -1) {
-            // 建立新物件覆蓋，不 mutate 舊物件
-            newShelf[index] = {
-              ...newShelf[index],
-              PP_NO: (Number(newShelf[index].PP_NO) || 0) + (Number(v.PP_NO) || 0),
-              BOX_NO: (Number(newShelf[index].BOX_NO) || 0) + (Number(v.BOX_NO) || 0),
-            };
-          } else {
-            // 新增也要建立副本
-            newShelf.push({ ...v });
-          }
-        });
+        if (index !== -1) {
+          // 建立新物件覆蓋，不 mutate 舊物件
+          newShelf[index] = {
+            ...newShelf[index],
+            PP_NO: (Number(newShelf[index].PP_NO) || 0) + (Number(v.PP_NO) || 0),
+            BOX_NO: (Number(newShelf[index].BOX_NO) || 0) + (Number(v.BOX_NO) || 0),
+          };
+        } else {
+          // 新增也要建立副本
+          newShelf.push({ ...v });
+        }
+      });
 
-        dispatch(updateShelfItem({ station: currentStation, items: newShelf }));
+      dispatch(updateShelfItem({ station: currentStation, items: newShelf }));
 
-        setTableData2((prev) => {
-          return prev.filter((row) => !selected.some((v) => v.INSTOCK_NO === row.INSTOCK_NO));
-        });
-      }
-    } catch (err) {
-      console.warn("handleConfrimShelf :", err);
-    } finally {
-      setLoading(false);
-      dispatch(setInbound({ station: currentStation, selected: [] }));
-      setConfirmModal(false);
+      setTableData2((prev) => {
+        return prev.filter((row) => !selected.some((v) => v.INSTOCK_NO === row.INSTOCK_NO));
+      });
     }
   };
   // 新增貨架
-  const [addModal, setAddModal] = useState(false);
   const handleAddShelf = async () => {
-    setLoading(true);
     if (tableData2.length <= 0) {
       Alert({ title: "入庫單完成", html: `此入庫單已經完成，請選擇「 入庫單完成 」。` });
       return;
     }
-    try {
-      const res = await addInboundWCS({ area: shelf?.area, W_ID: order?.W_ID });
-      if (res.data.success) {
-        console.log(res.data, "wcstask收到資料");
-      }
-    } catch (err) {
-      console.warn("handleAddShelf :", err);
-    } finally {
-      setLoading(false);
-      setAddModal(false);
-    }
+    await addShelf_in(setLoading, setAddModal, shelf, order);
   };
-  // =============== 退回貨架 (強制結束入庫單) ===============
-  const [returnModal, setReturnModal] = useState(false);
+  // 退回貨架
   const handleReturnShelf = async () => {
     setReturnModal(false);
-
     if (!currentStation) {
       Alert({ html: "抓不到站點位置" });
       return;
@@ -189,135 +150,63 @@ export default function Inbound() {
       Alert({ title: "入庫單完成", html: `此入庫單已經完成<br>請選擇「 入庫單完成 」` });
       return;
     }
-
     if (tableData2.length > 0) {
-      try {
-        const [wcs, nodepos] = await Promise.all([checkWCS({ W_ID: waveNo }), checkNODEPOS({ W_ID: waveNo })]);
-        if (wcs.data.success && nodepos.data.success) {
-          if (wcs.data.data.length > 0 || nodepos.data.data.length < 2) {
-            // 沒有這個GGROUP的車了 只剩下一台車在站點了
-            Alert({
-              title: "入倉單未完成",
-              html: `此入倉單未完成且只剩下一台車在工作站<br>如果退回將返回選單列表`,
-              showCancel: true,
-              onConfirm: async () => {
-                // 目前不想做完此張入庫單的恢復
-                try {
-                  const res = await restoreOrders({ W_ID: waveNo });
-                  if (res.data.success) {
-                    startCancelReturn();
-                    return;
-                  }
-                } catch (err) {
-                  console.warn(`結束未完成的入庫單失敗`, err);
-                }
-              },
-              onCancel: () => {
-                return;
-              },
-            });
-            return;
-          }
-        } else {
-          console.log("wcs.nodepos未成功");
-          return;
-        }
-      } catch (err) {
-        console.warn(`handleReturnShelf:`, err);
+      const { wcs, nodepos } = checkCar(waveNo);
+      if (wcs.data.data.length > 0 || nodepos.data.data.length < 2) {
+        // 沒有這個GGROUP的車了 只剩下一台車在站點了
+        Alert({
+          title: "入倉單未完成",
+          html: `此入倉單未完成且只剩下一台車在工作站<br>如果退回將返回選單列表`,
+          showCancel: true,
+          onConfirm: async () => {
+            // 目前不想做完此張入庫單的恢復
+            const res = await restoreList_in(setLoading, waveNo);
+            if (res.data.success) {
+              await handleCancel();
+            }
+          },
+        });
+        return;
       }
     }
+    await handleReturn();
+  };
 
-    await startReturn();
-  };
-  const startCancelReturn = async () => {
-    // 開始退回
-    setLoading(true);
-    try {
-      // 傳給WMS
-      const random9 = generateRandomNumber();
-      const data = { action: "cancel", dataid: random9, STATION: currentStation };
-      const res = await sendToWMS(data);
-      if (res.data.success) {
-        dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: waveNo }));
-      }
-    } catch (err) {
-      console.warn("handleReturnShelf :", err);
-    } finally {
-      setLoading(false);
+  const handleCancel = async () => {
+    const res = await cancelShelf_in(setLoading, currentStation);
+    if (res.data.success) {
+      dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: waveNo }));
     }
   };
-  const startReturn = async () => {
-    setLoading(true);
-    try {
-      const random9 = generateRandomNumber();
-      const data = { Command: "RETURN", SHELVE_ID: shelf?.SHELVE_ID, BAR_CODE: "", FACE: 2, STATION: currentStation, PURPOSE: 1, STATUS: 0, CART_ID: "", DATA_ID: random9, WAVENO: String(order.W_ID), GGROUP: String(order.W_ID) };
-      const res = await addShelf(data);
-      if (res.data.success) {
-        dispatch(resetInbound({ type: "one", station: currentStation, W_ID: waveNo }));
-      }
-    } catch (err) {
-      console.warn("handleReturnShelf :", err);
-    } finally {
-      setLoading(false);
+  const handleReturn = async () => {
+    const res = await returnShelf_in(setLoading, shelf, currentStation, order);
+    if (res.data.success) {
+      dispatch(resetInbound({ type: "one", station: currentStation, W_ID: waveNo }));
+    }
+  };
+  const handleFinish = async () => {
+    const res = await finishList_in(setLoading, order);
+    if (res.data.success) {
+      dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res.data.data }));
+      Alert({ title: "此單已完成" });
     }
   };
 
   // ============ 更新訂單順序時重抓資料 ==========
   useEffect(() => {
-    getTable();
+    if (orderList.length <= 0) return;
+    getTable(setTableData, orderList);
   }, [orderList]);
   // =============== 初入畫面 ===============
   useEffect(() => {
-    getTable();
+    getTable(setTableData, orderList);
     barCodeRef?.current?.focus();
   }, []);
-  const getTable = async () => {
-    try {
-      const res = await getInbound();
-      if (res.data.success) {
-        // 排除掉重複訂單
-        const newData = res.data.data.filter((v) => !orderList.includes(v.INSTOCK_NO));
-        setTableData(newData);
-      }
-    } catch (err) {
-      console.warn(`Inbound getTable:`, err);
-    }
-  };
   // =============== 抓detail畫面 ===============
   useEffect(() => {
     if (!waveNo) return;
-    getList();
+    getList(waveNo, setTableData2);
   }, [shelfItem]);
-  const getList = async () => {
-    try {
-      const res = await getInboundByWID(waveNo);
-      if (res.data.success) {
-        const detail = res.data.data; // 陣列
-        const newDetail = detail.map((v) => ({ ...v, type: "new", checked: false }));
-        setTableData2(newDetail);
-      }
-    } catch (err) {
-      console.warn("getList :", err);
-    }
-  };
-
-  // =============== 入庫單完成 ===============
-
-  const handlefinishInboundOrder = async () => {
-    setLoading(true);
-    try {
-      const res = await finishInboundOrder({ W_ID: order.W_ID });
-      if (res.data.success) {
-        dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res.data.data }));
-        Alert({ title: "此單已完成" });
-      }
-    } catch (err) {
-      console.warn(`handlefinishInboundOrder :`, err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // =========== 測試單亂數產生
   const handleTest = () => {
     // ===== 前綴隨機 =====
@@ -325,7 +214,7 @@ export default function Inbound() {
     const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
 
     // ===== 民國年月日 =====
-    const date = new Date()
+    const date = new Date();
     const year = date.getFullYear() - 1911;
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
@@ -333,10 +222,10 @@ export default function Inbound() {
     // ===== 3 碼序號 =====
     const seq = String(Math.floor(Math.random() * 999) + 1).padStart(3, "0");
 
-      const passSN = `${prefix}-${year}${month}${day}${seq}`;
+    const passSN = `${prefix}-${year}${month}${day}${seq}`;
 
-       barCodeRef.current.value = passSN
-       barCodeRef.current.focus()
+    barCodeRef.current.value = passSN;
+    barCodeRef.current.focus();
   };
 
   return (
@@ -357,7 +246,7 @@ export default function Inbound() {
                 建議入倉總數：{shelf?.EstPPs}
                 {shelf?.UNIT} ({shelf?.EstBoxes}箱)
               </div>
-              <ActionBtn text="入倉單完成" variant="orange" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handlefinishInboundOrder} />
+              <ActionBtn text="入倉單完成" variant="orange" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handleFinish} />
             </div>
           )}
           <InboundTable data={tableData} data2={tableData2} setData2={setTableData2} />
@@ -487,7 +376,7 @@ export default function Inbound() {
             </div>
             {/* 按鈕區 */}
             <div className="flex flex-1 flex-col justify-end items-center">
-              {step <= 2 && <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfrim} disabled={!waveNo} />}
+              {step <= 2 && <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfrimList} disabled={!waveNo} />}
               {step > 2 && (
                 <div className="w-full flex justify-between">
                   <ActionBtn icon="" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
@@ -549,7 +438,7 @@ export default function Inbound() {
       </Modal>
 
       {/* 測試按鈕 */}
-      {step <= 2 &&<ActionBtn text="測試用-產生單據" className="absolute top-0 right-50" variant="yellow" onClick={handleTest} />}
+      {step <= 2 && <ActionBtn text="測試用-產生單據" className="absolute top-0 right-50" variant="yellow" onClick={handleTest} />}
     </>
   );
 }

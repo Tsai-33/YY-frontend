@@ -7,8 +7,13 @@ export const getIP = () => api.get("/system/getIP");
 export const getTransfer = () => api.get("/transfer");
 export const getTransferDetail = () => api.get("/transfer/detail");
 export const getTransferByCMDID = () => api.get(`/transfer/cmdid`);
-export const getTransferByWID = (wid) => api.get(`/transfer/${wid}`);
+export const getTransferByWID = (wid) => api.get(`/transfer/wid/${wid}`);
+export const addTransferWCS = (payload) => api.post("/transfer/add/wcs", payload);
 export const updateTransferWMS = (payload) => api.post("/transfer/update/wms", payload);
+export const finishTransferOrder = (payload) => api.post("/transfer/finish/order", payload);
+export const restoreTransfer =  (payload) => api.post("/transfer/restore/orders", payload);
+
+
 
 /* 取得入庫單 */
 export const getInbound = () => api.get("/inbound");
@@ -18,6 +23,7 @@ export const addInboundWCS = (payload) => api.post("/inbound/add/wcs", payload);
 export const updateInboundWMS = (payload) => api.post("/inbound/update/wms", payload);
 export const finishInboundOrder = (payload) => api.post("/inbound/finish/order", payload);
 export const restoreOrders =  (payload) => api.post("/inbound/restore/orders", payload);
+
 
 /* 取得出庫單(銷貨) */
 export const getOutboundExternal = () =>
@@ -61,6 +67,9 @@ export const sendToWMS = (payload) =>
 
 /* 叫車 */
 export const checkWCS = (payload) => api.post("/wcs/check", payload);
+export const checkWCSWaveno = (payload) => api.post("/wcs/check/waveno", payload);
+
+
 export const checkNODEPOS = (payload) => api.post("/wcs/check/nodepos", payload);
 export const addWCS = (payload) => api.post("/wcs/add", payload);
 export const addWCSGroup = (payload) => api.post("/wcs/add/group", payload);

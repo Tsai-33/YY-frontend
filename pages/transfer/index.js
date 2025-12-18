@@ -4,17 +4,16 @@ import ActionBtn from "@/components/common/btns/actionBtn";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
 import InputFrame from "@/components/common/input/inputFrame";
 import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
-import { sendToWMS, getTransfer, updateTransferWMS } from "../api";
+import { updateTransferWMS, restoreTransfer, checkWCSWaveno } from "../api";
 import SchematicDiagram from "../../components/diagram/schematicDiagram";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import Loading from "@/components/common/loading/loading";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
-import { generateRandomNumber } from "@/utils/random";
 import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
 import TransferTable from "@/components/transfer/transferTable";
 import { resetTransfer, setAllLoading, setTransfer, updateShelfItem } from "@/redux/reducer/reducerTransfer";
-import { checkConfirmTransfer, getEPRdata, getList, getTable } from "@/components/transfer/transferFunction";
+import { addTransferShelf, cancelTransferShelf, checkConfirmTransfer, getEPRdata, getList, getTable, returnTransferShelf } from "@/components/transfer/transferFunction";
 
 export default function Transfer() {
   const dispatch = useDispatch();
@@ -64,14 +63,17 @@ export default function Transfer() {
       Alert({ title: "您未選擇調撥單" });
       return;
     }
-    const lack_station = await checkConfirmTransfer(setLoading, order);    if (lack_station?.length > 0) {
-      lack_station.map((station) => {
+    const resiveData = await checkConfirmTransfer(setLoading, order);
+
+    if (resiveData?.result === "NG") {
+      Alert({ title: `${resiveData?.message}` });
+    } else if (resiveData?.message2.length > 0) {
+      resiveData?.message2?.map((station) => {
         dispatch(setTransfer({ station: station, orderCode: orderCode, waveNo: order.W_ID, order: order, lackStation: station }));
       });
-      // 其他鎖住，等這波做完才能釋放
       dispatch(setAllLoading());
     } else {
-      Alert({ title: "目前系統忙碌中，請重新再試。" });
+      Alert({ title: `伺服器有問題，請稍後再試。` });
     }
   };
   // 確定下架
@@ -91,33 +93,20 @@ export default function Transfer() {
       // 傳給WMS
       const data = { itemArray: selected, area: shelf.area, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO, addShelf: stationList?.["A01"].shelf.SHELVE_ID };
       const res = await updateTransferWMS(data);
-      if (res.data.success) {
-        let newShelf = shelfItem.map((s) => ({ ...s })); // ⬅ 防止 freeze
 
-        selected.forEach((v) => {
-          const index = newShelf.findIndex((s) => s.PRT_NO === v.PRT_NO);
+      // 更新目前來源 currentStation 的 PP_NO
+      //  currentStation 的 selected排除掉已經選的
+      // 更新目的 'A01' 的 PP_NO
+      // 'A01' 的 selected 把已經完成的 改為checked = true
 
-          if (index !== -1) {
-            // 建立新物件覆蓋，不 mutate 舊物件
-            newShelf[index] = {
-              ...newShelf[index],
-              PP_NO: (Number(newShelf[index].PP_NO) || 0) - (Number(v.PP_NO) || 0),
-              BOX_NO: (Number(newShelf[index].BOX_NO) || 0) - (Number(v.BOX_NO) || 0),
-            };
-          } else {
-            // 新增也要建立副本
-            newShelf.push({ ...v });
-          }
-        });
-
-        dispatch(updateShelfItem({ station: currentStation, items: newShelf }));
-
-        setTableData2((prev) => {
-          return prev.filter((row) => !selected.some((v) => v.INSTOCK_NO === row.INSTOCK_NO));
-        });
+      if (res?.data?.success) {
+        dispatch(updateShelfItem({ station: currentStation, items: selected }));
+      } else if (!res?.success) {
+        Alert({ html: `${res?.error.message}` });
       }
     } catch (err) {
       console.warn("handleConfirmShelf :", err);
+      console.log(err, "errr");
     } finally {
       setLoading(false);
       dispatch(setTransfer({ station: currentStation, selected: [] }));
@@ -127,22 +116,11 @@ export default function Transfer() {
   // 新增貨架
   const [addModal, setAddModal] = useState(false);
   const handleAddShelf = async () => {
-    setLoading(true);
     if (tableData2.length <= 0) {
       Alert({ title: "調撥單完成", html: `此調撥單已經完成，請選擇「 調撥單完成 」。` });
       return;
     }
-    try {
-      const res = await addtransferWCS({ area: shelf?.area, W_ID: order?.W_ID });
-      if (res.data.success) {
-        console.log(res.data, "wcstask收到資料");
-      }
-    } catch (err) {
-      console.warn("handleAddShelf :", err);
-    } finally {
-      setLoading(false);
-      setAddModal(false);
-    }
+    await addTransferShelf(setLoading, setAddModal, shelf, order);
   };
   // =============== 退回貨架 (強制結束調撥單) ===============
   const [returnModal, setReturnModal] = useState(false);
@@ -153,80 +131,43 @@ export default function Transfer() {
       Alert({ html: "抓不到站點位置" });
       return;
     }
-    if (tableData2.length <= 0) {
-      Alert({ title: "調撥單完成", html: `此調撥單已經完成<br>請選擇「 調撥單完成 」` });
-      return;
-    }
 
-    if (tableData2.length > 0) {
-      try {
-        const [wcs, nodepos] = await Promise.all([checkWCS({ W_ID: waveNo }), checkNODEPOS({ W_ID: waveNo })]);
-        if (wcs.data.success && nodepos.data.success) {
-          if (wcs.data.data.length <= 0 && nodepos.data.data.length <= 1) {
-            // 沒有這個GGROUP的車了 只剩下一台車在站點了
-            Alert({
-              title: "入倉單未完成",
-              html: `此入倉單未完成且只剩下一台車在工作站<br>如果退回將返回選單列表`,
-              showCancel: true,
-              onConfirm: async () => {
-                // 目前不想做完此張調撥單的恢復
-                try {
-                  const res = await restoreOrders({ W_ID: waveNo });
-                  if (res.data.success) {
-                    startCancelReturn();
-                    return;
-                  }
-                } catch (err) {
-                  console.warn(`結束未完成的調撥單失敗`, err);
-                }
-              },
-              onCancel: () => {
-                return;
-              },
-            });
-            return;
-          }
-        } else {
-          console.log("wcs.nodepos未成功");
-          return;
-        }
-      } catch (err) {
-        console.warn(`handleReturnShelf:`, err);
+    if (currentStation === "A01" && tableData2.length > 0) {
+      // 有別台車的跳回
+      const check = await checkWCSWaveno({ W_ID: waveNo });
+      if (check?.data?.data?.length <= 0) {
+        // 未完成退回
+        Alert({
+          title: "退回貨架",
+          html: "尚未完成調撥任務<br>你確定要結束此調撥單嗎?<br>(確認後將所有車次全部退回)",
+          showCancel: true,
+          onConfirm: async () => {
+            const res = await restoreTransfer({ W_ID: waveNo }); // 新增自走車紀錄
+            if (res.data.success) {
+              await startCancel(); // 刪除群組
+            }
+          },
+        });
+        return;
       }
+    }
+    if (currentStation === "A01" && tableData2.length <= 0) {
+      await startCancel();
+      return;
     }
 
     await startReturn();
   };
-  const startCancelReturn = async () => {
-    // 開始退回
-    setLoading(true);
-    try {
-      // 傳給WMS
-      const random9 = generateRandomNumber();
-      const data = { action: "cancel", dataid: random9, STATION: currentStation };
-      const res = await sendToWMS(data);
-      if (res.data.success) {
-        dispatch(resetTransfer({ type: "wave", station: currentStation, W_ID: waveNo }));
-      }
-    } catch (err) {
-      console.warn("handleReturnShelf :", err);
-    } finally {
-      setLoading(false);
+  const startCancel = async () => {
+    const result = await cancelTransferShelf(setLoading, currentStation);
+    if (result.data.success) {
+      dispatch(resetTransfer({ type: "all", station: currentStation }));
     }
   };
   const startReturn = async () => {
-    setLoading(true);
-    try {
-      const random9 = generateRandomNumber();
-      const data = { Command: "RETURN", SHELVE_ID: shelf?.SHELVE_ID, BAR_CODE: "", FACE: 2, STATION: currentStation, PURPOSE: 1, STATUS: 0, CART_ID: "", DATA_ID: random9, WAVENO: String(order.W_ID), GGROUP: String(order.W_ID) };
-      const res = await addShelf(data);
-      if (res.data.success) {
-        dispatch(resetTransfer({ type: "one", station: currentStation, W_ID: waveNo }));
-      }
-    } catch (err) {
-      console.warn("handleReturnShelf :", err);
-    } finally {
-      setLoading(false);
+    const result = await returnTransferShelf(setLoading, currentStation, shelf, order);
+    if (result.data.success) {
+      dispatch(resetTransfer({ type: "one", station: currentStation, W_ID: waveNo }));
     }
   };
 
@@ -263,6 +204,15 @@ export default function Transfer() {
     barCodeRef.current.focus();
   };
 
+  // =========== 完成調撥單
+  const [finishModal, setFinishModal] = useState(false);
+  const handlefinishTransfer = async () => {
+    const res = await handlefinishTransfer({ W_ID: order.W_ID });
+    if (res.data.success) {
+      dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res.data.data }));
+      Alert({ title: "此單已完成" });
+    }
+  };
   return (
     <>
       {/* 頂部區域 */}
@@ -449,7 +399,7 @@ export default function Transfer() {
                   {currentStation === "A01" ? (
                     <>
                       <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
-                      <ActionBtn icon="icon-locationSwap" text="完成調撥" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
+                      <ActionBtn icon="icon-locationSwap" text="完成調撥" variant="orange" onClick={() => setFinishModal(true)} />
                     </>
                   ) : (
                     <>
@@ -458,7 +408,7 @@ export default function Transfer() {
                     </>
                   )}
 
-                  <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} disabled={tableData2?.length <= 0} />
+                  <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
                 </div>
               )}
             </div>
