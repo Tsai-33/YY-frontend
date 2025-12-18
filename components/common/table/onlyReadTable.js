@@ -51,7 +51,7 @@ export default function OnlyReadTable({
                 <td
                   key={i}
                   className="px-4 py-2 text-center border-b border-(--green-vivid) truncate">
-                  {row[header.key]}
+                  {header.render ? header.render(row) : row[header.key]}
                 </td>
               ))}
             </tr>

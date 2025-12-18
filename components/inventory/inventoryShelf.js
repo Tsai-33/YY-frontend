@@ -2,12 +2,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
 import {
-  resetRowState,
+  setPage,
+  setBatchNo,
+  setInventory,
   setInitialRowState,
   updateRowState,
-  setBatchNo,
-  setPage,
-  setInventory,
+  resetRowState,
+  clearRowState,
 } from "@/redux/reducer/reducerInventory";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import PageHeader from "../common/pageHeader/pageHeader";
@@ -222,24 +223,44 @@ export default function InventoryShelf() {
     };
     console.log("payload:", payload);
     const res = await updateInventoryResult(payload);
-    if (res.data.data.success) {
+    if (res.data.success) {
       console.log("res.data.data:", res.data.data);
-      if (res.data.data.data.remainCount === 0) {
+      if (res.data.data.remainCount === 0) {
         dispatch(setPage("inventory-table"));
         dispatch(setBatchNo(null));
         dispatch(
           setInventory({
             station: "*",
-            data: { screen: "idle" },
+            data: {
+              screen: "idle",
+              filter: {
+                stockArea: "",
+                cusNo: "",
+                saleNo: "",
+                prtNo: "",
+              },
+              shelf: {
+                SHELVE_ID: "",
+              },
+              shelfItem: [],
+            },
           })
         );
+        dispatch(clearRowState({ station: "*" }));
       } else {
         dispatch(
           setInventory({
             station: currentStation,
-            data: { screen: "loading" },
+            data: {
+              screen: "loading",
+              shelf: {
+                SHELVE_ID: "",
+              },
+              shelfItem: [],
+            },
           })
         );
+        dispatch(clearRowState({ station: currentStation }));
       }
     }
   };

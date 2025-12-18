@@ -37,7 +37,13 @@ const inventorySlice = createSlice({
       // 更新所有站
       if (station === "*") {
         Object.keys(state)
-          .filter((key) => key !== "page") // 只更新站點
+          .filter(
+            (key) =>
+              key !== "page" &&
+              key !== "batchNo" &&
+              typeof state[key] === "object" &&
+              state[key] !== null
+          ) // 只更新站點
           .forEach((stationKey) => {
             Object.assign(state[stationKey], data);
           });
@@ -95,6 +101,25 @@ const inventorySlice = createSlice({
         row.PRT_NO === prtNo ? { ...row, confirmed: false, error: false } : row
       );
     },
+    clearRowState: (state, action) => {
+      const { station } = action.payload;
+      if (station === "*") {
+        Object.keys(state).forEach((key) => {
+          if (
+            typeof state[key] === "object" &&
+            state[key] !== null &&
+            Array.isArray(state[key].rowState)
+          ) {
+            state[key].rowState = [];
+          }
+        });
+        return;
+      }
+
+      // 清單一站
+      if (!state[station]) return;
+      state[station].rowState = [];
+    },
   },
 });
 
@@ -107,6 +132,7 @@ export const {
   setInitialRowState,
   updateRowState,
   resetRowState,
+  clearRowState,
 } = inventorySlice.actions;
 
 export default inventorySlice.reducer;
