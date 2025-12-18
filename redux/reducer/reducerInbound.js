@@ -1,8 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const stationList = ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"];
-
-const createStation = () => ({
+const createStation = (station) => ({
+  station: station,
   step: 1,
   screen: "idle",
   orderCode: "",
@@ -13,17 +12,17 @@ const createStation = () => ({
   selected: [], // 目前選擇
 });
 
-const initialState = stationList.reduce(
-  (acc, id) => {
-    acc[id] = createStation();
-    return acc;
-  },
-  { orderList: [], lackStation: [] }
-);
 const inboundSlice = createSlice({
   name: "inbound",
-  initialState,
+  initialState: { orderList: [], lackStation: [] },
   reducers: {
+    initStation(state, action) {
+      const station = action.payload;
+
+      if (!state[station]) {
+        state[station] = createStation(station);
+      }
+    },
     setInbound: (state, action) => {
       const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation } = action.payload;
       if (!state[station]) return;
@@ -111,5 +110,5 @@ const inboundSlice = createSlice({
   },
 });
 
-export const { setInbound, updateLackStation, updateOrderList, updateShelfItem, managerInbound, resetInbound } = inboundSlice.actions;
+export const { initStation, setInbound, updateLackStation, updateOrderList, updateShelfItem, managerInbound, resetInbound } = inboundSlice.actions;
 export default inboundSlice.reducer;
