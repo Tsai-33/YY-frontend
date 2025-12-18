@@ -1,18 +1,10 @@
 export const workstationConfig = {
   A: {
-    computers: ["172.16.11.99", "172.16.11.74","localhost"],
-    stations: [
-      "A01",
-      "A02",
-      "A03",
-      "A04",
-      "A05",
-      "A06",
-      "A07",
-      "A08",
-      "A09",
-      "A10",
-    ],
+    computers: ["172.16.11.99", "172.16.11.74", "localhost"],
+    stations: {
+      "172.16.11.99": ["A01", "A02", "A03", "A04", "A05"],
+      "172.16.11.74": ["A06", "A07", "A08", "A09", "A10"],
+    },
     jobs: [
       { key: "inbound", text: "入倉", path: "/inbound", icon: "" },
       { key: "stockQuery", text: "庫存查詢", path: "/stockQuery", icon: "" },

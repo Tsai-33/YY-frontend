@@ -34,13 +34,13 @@ export const initWorkstation = (ip) => (dispatch) => {
 
   // --- A 區 (一台電腦，十個站台)
   if (config.A.computers.includes(ip)) {
-    const stations = config.A.stations;
+    const stations = config.A.stations[ip];
 
     dispatch(
       setWorkstation({
         area: "A",
         ip,
-        stations: config.A.stations,
+        stations: config.A.stations[ip],
         jobs: config.A.jobs,
         currentStation: null,
         currentJob: null,
