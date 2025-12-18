@@ -24,7 +24,6 @@ export const updateInboundWMS = (payload) => api.post("/inbound/update/wms", pay
 export const finishInboundOrder = (payload) => api.post("/inbound/finish/order", payload);
 export const restoreOrders =  (payload) => api.post("/inbound/restore/orders", payload);
 
-
 /* 取得出庫單(銷貨) */
 export const getOutboundExternal = () =>
   api.get("/outboundExternal/getOutBoundExternal");
@@ -40,6 +39,8 @@ export const getOutBoundExternalOrderDetailByWID = (w_id) =>
   api.get(`/outboundExternal/getOutBoundExternalOrderDetailByWID`, {
     params: { w_id },
   });
+export const shiftOutByBarcode = (data) =>
+  api.post("/api/outboundExternal/shiftout", data);
 
 /* 取得出庫單(領用) */
 
@@ -57,9 +58,19 @@ export const updateTransferItems = (data) =>
   api.post("/shelfTransfer/updateTransferItems", data);
 export const updateShelveCheck = (data) =>
   api.post(`/shelfTransfer/updateShelveCheck`, data);
+export const getStockAreas = () => api.get("/shelfTransfer/getStockAreas");
+export const getWMSByAreaAndPrtNo = (area, prtNo) =>
+  api.get(`/shelfTransfer/getWMSByAreaAndPrtNo?area=${area}&prtNo=${prtNo}`);
+export const transferItems = (data) =>
+  api.post("/shelfTransfer/transferItems", data);
+
 /* 盤點任務下發 */
+export const getInventoryItems = (payload) =>
+  api.post("/inventory/getInventoryItems", payload);
 export const createInventoryTask = (payload) =>
   api.post("/inventory/createInventoryTask", payload);
+export const updateInventoryResult = (payload) =>
+  api.post("/inventory/updateInventoryResult", payload);
 
 /* 傳給labview */
 export const sendToWMS = (payload) =>

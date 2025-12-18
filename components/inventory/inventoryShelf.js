@@ -2,26 +2,33 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
 import {
-  resetRowState,
+  setPage,
+  setBatchNo,
+  setInventory,
   setInitialRowState,
   updateRowState,
+  resetRowState,
+  clearRowState,
 } from "@/redux/reducer/reducerInventory";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import PageHeader from "../common/pageHeader/pageHeader";
 import CheckTable from "../common/table/checkTable";
 import SchematicDiagram from "../diagram/schematicDiagram";
+import { updateInventoryResult } from "@/pages/api";
 
 export default function InventoryShelf() {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
+  const { userId } = useSelector((s) => s.user);
+  const { batchNo } = useSelector((state) => state.inventory);
   const stationState = useSelector((s) => s.inventory[currentStation]);
   const rowState = stationState?.rowState || [];
   const SHELVE_ID = stationState?.shelf?.SHELVE_ID;
   const shelfItem = stationState?.shelfItem;
-  const currentSTOCKAREA = stationState?.stockArea;
-  const currentCUSNO = stationState?.cusNo;
-  const currentSALENO = stationState?.saleNo;
-  const currentPRTNO = stationState?.prtNo;
+  const currentSTOCKAREA = stationState?.filter?.stockArea;
+  const currentCUSNO = stationState?.filter?.cusNo;
+  const currentSALENO = stationState?.filter?.saleNo;
+  const currentPRTNO = stationState?.filter?.prtNo;
 
   // 目前選擇的工作站
   const handleSwitchStation = (station) => {
@@ -31,7 +38,8 @@ export default function InventoryShelf() {
   useEffect(() => {
     if (!Array.isArray(shelfItem) || shelfItem.length === 0) return;
 
-    if (rowState) {
+    if (Array.isArray(rowState) && rowState.length > 0) {
+      // 有舊資料 → 用舊資料（localStorage）
       dispatch(
         setInitialRowState({
           station: currentStation,
@@ -39,16 +47,16 @@ export default function InventoryShelf() {
           fromStorage: true,
         })
       );
-      return;
+    } else {
+      // 沒有舊資料 → 用 API 傳來的新 shelfItem 初始化
+      dispatch(
+        setInitialRowState({
+          station: currentStation,
+          shelfItem,
+          fromStorage: false,
+        })
+      );
     }
-
-    dispatch(
-      setInitialRowState({
-        station: currentStation,
-        shelfItem,
-        fromStorage: false,
-      })
-    );
   }, [dispatch, shelfItem, currentStation]);
 
   const filterLabel = useMemo(() => {
@@ -204,6 +212,59 @@ export default function InventoryShelf() {
     },
   ];
 
+  const submitToBackend = async () => {
+    const payload = {
+      stations: stations,
+      STATION: currentStation,
+      batchNo: batchNo,
+      SHELVE_ID: SHELVE_ID,
+      rowState: rowState,
+      UserId: userId,
+    };
+    console.log("payload:", payload);
+    const res = await updateInventoryResult(payload);
+    if (res.data.success) {
+      console.log("res.data.data:", res.data.data);
+      if (res.data.data.remainCount === 0) {
+        dispatch(setPage("inventory-table"));
+        dispatch(setBatchNo(null));
+        dispatch(
+          setInventory({
+            station: "*",
+            data: {
+              screen: "idle",
+              filter: {
+                stockArea: "",
+                cusNo: "",
+                saleNo: "",
+                prtNo: "",
+              },
+              shelf: {
+                SHELVE_ID: "",
+              },
+              shelfItem: [],
+            },
+          })
+        );
+        dispatch(clearRowState({ station: "*" }));
+      } else {
+        dispatch(
+          setInventory({
+            station: currentStation,
+            data: {
+              screen: "loading",
+              shelf: {
+                SHELVE_ID: "",
+              },
+              shelfItem: [],
+            },
+          })
+        );
+        dispatch(clearRowState({ station: currentStation }));
+      }
+    }
+  };
+
   return (
     <>
       {/* 頂部區域 */}
@@ -260,7 +321,7 @@ export default function InventoryShelf() {
                 text="確定"
                 variant="orange"
                 disabled={!canSubmitToERP}
-                onClick={() => console.log("送出 ERP", rowState)}
+                onClick={submitToBackend}
               />
               <div className="absolute right-0">
                 <ActionBtn text="下線" variant="orange" />

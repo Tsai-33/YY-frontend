@@ -186,7 +186,8 @@ export default function ShelfTransferTable() {
                     dispatch(setShelfTransfer({
                         station: stationId,
                         step: 3,
-                        screen: "working",
+                        screen: "loading",
+                        mode: "order",
                         orderCode: orderInput,
                         selectedShelves: selectedShelve,
                         shelveStatus: initialShelveStatus,
@@ -213,7 +214,7 @@ export default function ShelfTransferTable() {
                 <div className="flex items-center justify-between mb-4">
                     <div className="text-4xl font-bold">理貨</div>
                     <PageTitle title="請輸入訂單單號"/>
-                    <Link href="/workspace">
+                    <Link href="/shelfTransfer">
                         <ActionBtn icon="icon-goback" text="返回" variant="darkBlue" />
                     </Link>
                 </div>

@@ -5,6 +5,7 @@ const stationList = ["B01", "B02", "B03", "B04", "B05"];
 const createStation = () => ({
     step: 1,                // 1: 選擇訂單, 2: 選擇貨架, 3: 理貨中
     screen: "idle",
+    mode: "",               // order, shelf
     orderCode: "",
     waveNo: null,
     order: {},              // 訂單內容
@@ -29,7 +30,7 @@ const shelfTransferSlice = createSlice({
     initialState,
     reducers: {
         setShelfTransfer: (state, action) => {
-            const { station, step, screen, orderCode, waveNo, order, selectedShelves, 
+            const { station, step, screen, mode, orderCode, waveNo, order, selectedShelves, 
                 shelveData, shelveStatus, targetShelve, selectedItems, orderList, lackStation, shelf, shelfItem, isReturn
             } = action.payload;
 
@@ -59,11 +60,49 @@ const shelfTransferSlice = createSlice({
                 }
                 return;
             }
+
+            if (shelf && shelfItem) {
+                const shelveId = shelf.SHELVE_ID;
+                for (const stationId of stationList) {
+                    const stationData = state[stationId];
+                    // 檢查這個貨架是否在selectedShelves裡面確保是理貨的車
+                    if (stationData.selectedShelves?.includes(shelveId)) {        
+                        const itemsWithId = shelfItem.map(item => ({
+                            ...item,
+                            id: item.MAKE_NO
+                        }));
+
+                        stationData.shelveData[shelveId] = itemsWithId;
+                        stationData.shelveStatus[shelveId] = "ready";
+
+                        // 拿到SEAL
+                        if (!stationData.shelveChecks) {
+                            stationData.shelveChecks = {};
+                        }
+
+                        const sealValue = parseInt(shelfItem[0]?.SEAL, 10) || 0;
+                        stationData.shelveChecks[shelveId] = sealValue;
+
+                        // ===== 檢查是否所有貨架都到站了 =====
+                        const allShelves = stationData.selectedShelves || [];
+                        const allReady = allShelves.every(id => {
+                            const status = stationData.shelveStatus[id];
+                            return status === "ready";
+                        });
+                        
+                        if (allReady) {
+                            stationData.screen = "working";
+                        }
+                    }
+                }
+                return; 
+            }
         
             if (!state[station]) return;
 
             if (step !== undefined) state[station].step = step;
             if (screen !== undefined) state[station].screen = screen;
+            if (mode !== undefined) state[station].mode = mode;
             if (orderCode !== undefined) state[station].orderCode = orderCode;
             if (waveNo !== undefined) state[station].waveNo = waveNo;
             if (order !== undefined) state[station].order = order;
@@ -74,29 +113,6 @@ const shelfTransferSlice = createSlice({
             if (selectedItems !== undefined) state[station].selectedItems = selectedItems;
             if (orderList !== undefined) state.orderList = [...new Set([...state.orderList, orderList])];
             if (lackStation !== undefined) state.lackStation = [...new Set([...state.lackStation, lackStation])];
-
-            if (shelf && shelfItem) {
-                const shelveId = shelf.SHELVE_ID;
-                for (const stationId of stationList) {
-                    // 檢查這個貨架是否在selectedShelves裡面確保是理貨的車
-                    if (state[stationId].selectedShelves?.includes(shelveId)) {
-                        const itemsWithId = shelfItem.map(item => ({
-                            ...item,
-                            id: item.MAKE_NO
-                        }));
-
-                        state[stationId].shelveData[shelveId] = itemsWithId;
-                        state[stationId].shelveStatus[shelveId] = "ready";
-
-                        // 拿到SEAL
-                        if (!state[stationId].shelveChecks) {
-                            state[stationId].shelveChecks = {};
-                        }
-                        const sealValue = parseInt(shelfItem[0]?.SEAL, 10) || 0;
-                        state[stationId].shelveChecks[shelveId] = sealValue;
-                    }
-                }
-            }
         },
 
         // 單一貨架到站時更新

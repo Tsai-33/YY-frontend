@@ -1,26 +1,38 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { setInventory, setPage } from "@/redux/reducer/reducerInventory";
+import {
+  setInventory,
+  setPage,
+  setBatchNo,
+} from "@/redux/reducer/reducerInventory";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
 import TextInput from "@/components/common/input/textInput";
 import SelectInput from "@/components/common/input/selectInput";
 import OnlyReadTable from "@/components/common/table/onlyReadTable";
-import { searchStock, createInventoryTask } from "../../pages/api";
+import { getInventoryItems, createInventoryTask } from "../../pages/api";
+import DateInput from "../common/input/dateInput";
+import Modal from "../common/modal/modal";
 
 export default function InventoryTable() {
   const dispatch = useDispatch();
   const { stations, currentJob } = useSelector((s) => s.workstation);
 
   const tableHeader = [
-    { label: "序號", key: "INDEX", width: 150 },
+    { label: "序號", key: "INDEX", width: 110 },
     { label: "產品品號", key: "PRT_NO", width: 300 },
-    { label: "產品數量", key: "PP_NO", width: 220 },
-    { label: "單位", key: "UNIT", width: 140 },
-    { label: "訂單/工單", key: "SALE_NO", width: 435 },
-    { label: "入庫庫別", key: "STOCK_AREA", width: 200 },
+    { label: "產品數量", key: "PP_NO", width: 170 },
+    { label: "單位", key: "UNIT", width: 120 },
+    { label: "訂單/工單", key: "SALE_NO", width: 300 },
+    { label: "入庫庫別", key: "STOCK_AREA", width: 150 },
     { label: "客戶代號", key: "CUS_NO", width: 250 },
-    { label: "貨架號", key: "SHELVE_ID", width: 190 },
+    { label: "貨架號", key: "SHELVE_ID", width: 160 },
+    {
+      label: "盤點時間",
+      key: "CHECK_TIME",
+      width: 325,
+      render: (row) => formatRawSQLDateTime(row.CHECK_TIME),
+    },
   ];
 
   const [filters, setFilters] = useState({
@@ -28,13 +40,64 @@ export default function InventoryTable() {
     SALE_NO: "",
     PRT_NO: "",
     CUS_NO: "",
+    CHECK_TIME_START: "",
+    CHECK_TIME_END: "",
   });
 
   const [stockData, setStockData] = useState([]);
+  const [timeModalOpen, setTimeModalOpen] = useState(false);
+  const [tempTime, setTempTime] = useState({
+    start: filters.CHECK_TIME_START,
+    end: filters.CHECK_TIME_END,
+  });
 
   const handleChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
+
+  function formatDate(dateStr) {
+    if (!dateStr) return "";
+
+    const d = new Date(dateStr);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+
+    return `${y}/${m}/${day}`;
+  }
+
+  function formatRawSQLDateTime(dateTime) {
+    if (!dateTime) return "";
+    // 如果已經是 Date 物件，轉成 ISO 字串後再裁切掉 T/Z
+    if (dateTime instanceof Date) {
+      return dateTime
+        .toISOString()
+        .replace("T", " ")
+        .replace("Z", "")
+        .slice(0, 19);
+    }
+
+    // 如果是字串，就直接處理
+    if (typeof dateTime === "string") {
+      return dateTime.replace("T", " ").replace("Z", "").slice(0, 19);
+    }
+  }
+
+  const timeRangeText = useMemo(() => {
+    const { CHECK_TIME_START, CHECK_TIME_END } = filters;
+
+    if (!CHECK_TIME_START && !CHECK_TIME_END) return "請選擇時間";
+
+    if (CHECK_TIME_START && CHECK_TIME_END)
+      return `排除${formatDate(CHECK_TIME_START)}~${formatDate(
+        CHECK_TIME_END
+      )}之中的資料`;
+
+    if (CHECK_TIME_START)
+      return `排除 ${formatDate(CHECK_TIME_START)} 之後的資料`;
+
+    return `排除 ${formatDate(CHECK_TIME_END)} 之前的資料`;
+  }, [filters]);
 
   const handleSearch = async () => {
     if (!filters.STOCK_AREA) {
@@ -46,25 +109,25 @@ export default function InventoryTable() {
       ...filters,
     };
     try {
-      const res = await searchStock(payload);
+      const res = await getInventoryItems(payload);
       if (res.data.success) {
         const data = res.data.data;
-        // console.log("data:", data);
-        if (payload.PRT_NO) {
-          dispatch(
-            setInventory({
-              station: "*",
-              data: {
-                filter: {
-                  stockArea: payload.STOCK_AREA,
-                  cusNo: payload.CUS_NO,
-                  saleNo: payload.SALE_NO,
-                  prtNo: payload.PRT_NO,
-                },
+        console.log("payload:", payload);
+
+        dispatch(
+          setInventory({
+            station: "*",
+            data: {
+              filter: {
+                stockArea: payload.STOCK_AREA,
+                cusNo: payload.CUS_NO,
+                saleNo: payload.SALE_NO,
+                prtNo: payload.PRT_NO,
               },
-            })
-          );
-        }
+            },
+          })
+        );
+
         setStockData(data);
       }
     } catch (error) {
@@ -89,6 +152,7 @@ export default function InventoryTable() {
       if (res.data.success) {
         // console.log("成功送出資料:", payload);
         dispatch(setPage("inventory-shelf"));
+        dispatch(setBatchNo(res.data.data.batchNo));
         dispatch(
           setInventory({
             station: "*",
@@ -103,7 +167,7 @@ export default function InventoryTable() {
   return (
     <>
       {/* 頂部區域 */}
-      {stockData.length === 0 ? (
+      {stockData?.length === 0 ? (
         <PageHeader
           title="請輸入下方盤點參數查詢盤點貨架，輸入完請點擊檢視按鈕"
           backTo="/workspace"
@@ -115,7 +179,7 @@ export default function InventoryTable() {
       {/* 主要內容區域 */}
       <div className="flex-1 flex flex-col justify-between">
         <div className="flex justify-between">
-          <div className="flex gap-10">
+          <div className="flex gap-4">
             <SelectInput
               label="入庫庫別:"
               value={filters.STOCK_AREA}
@@ -132,21 +196,35 @@ export default function InventoryTable() {
                 { label: "M02(原料倉)", value: "M02" },
               ]}
               onChange={(value) => handleChange("STOCK_AREA", value)}
+              disabled={stockData.length > 0}
             />
             <TextInput
               label="訂單/工單單號:"
               value={filters.SALE_NO}
               onChange={(e) => handleChange("SALE_NO", e.target.value)}
+              className="w-50"
+              disabled={stockData.length > 0}
             />
             <TextInput
               label="產品品號:"
               value={filters.PRT_NO}
               onChange={(e) => handleChange("PRT_NO", e.target.value)}
+              className="w-45"
+              disabled={stockData.length > 0}
             />
             <TextInput
               label="客戶代號:"
               value={filters.CUS_NO}
               onChange={(e) => handleChange("CUS_NO", e.target.value)}
+              className="w-40"
+              disabled={stockData.length > 0}
+            />
+            <DateInput
+              label="時間區間："
+              onClick={() => setTimeModalOpen(true)}
+              timeRangeText={timeRangeText}
+              className="w-70"
+              disabled={stockData.length > 0}
             />
           </div>
           <button
@@ -158,6 +236,7 @@ export default function InventoryTable() {
                 PRT_NO: "",
                 CUS_NO: "",
               });
+              setTempTime({ start: "", end: "" });
               setStockData([]);
               dispatch(
                 setInventory({
@@ -172,7 +251,7 @@ export default function InventoryTable() {
         <div>
           <OnlyReadTable
             headers={tableHeader}
-            data={stockData}
+            data={stockData || []}
             type="radio"
             name="stockQuery"
             variants="green"
@@ -188,6 +267,59 @@ export default function InventoryTable() {
           onClick={stockData.length === 0 ? handleSearch : handleComfirm}
         />
       </div>
+
+      <Modal
+        showModal={timeModalOpen}
+        title="時間區間"
+        onClose={() => setTimeModalOpen(false)}
+        onConfirm={() => {
+          setFilters((prev) => ({
+            ...prev,
+            CHECK_TIME_START: formatRawSQLDateTime(tempTime.start),
+            CHECK_TIME_END: formatRawSQLDateTime(tempTime.end),
+          }));
+          setTimeModalOpen(false);
+        }}
+        width={`35vw`}
+        height={`40vh`}>
+        <div className="flex flex-col items-center gap-2.5">
+          <div className="text-(length:--font-size-4xl) font-bold text-[#000E19]">
+            請輸入排除盤點紀錄時間區間
+          </div>
+          <div className="flex items-center gap-6 w-full text-[#000E19] ">
+            {/* 起始時間 */}
+            <div className="flex flex-col gap-1 w-full">
+              <label className="text-(length:--font-size-xl) font-bold">
+                起始時間
+              </label>
+              <input
+                type="datetime-local"
+                title="起始時間"
+                value={tempTime.start || ""}
+                onChange={(e) =>
+                  setTempTime((t) => ({ ...t, start: e.target.value }))
+                }
+                className="border rounded px-3 py-2 bg-[#878787] text-white border-[#878787] focus:outline-none focus:ring-2 focus:ring-white/40"
+              />
+            </div>
+            <div className="text-(length:--font-size-4xl) font-bold">~</div>
+            {/* 結束時間 */}
+            <div className="flex flex-col gap-1 w-full">
+              <label className="text-(length:--font-size-xl) font-bold">
+                結束時間
+              </label>
+              <input
+                type="datetime-local"
+                value={tempTime.end || ""}
+                onChange={(e) =>
+                  setTempTime((t) => ({ ...t, end: e.target.value }))
+                }
+                className="border rounded px-3 py-2 bg-[#878787] text-white border-[#878787] focus:outline-none focus:ring-2 focus:ring-white/40"
+              />
+            </div>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

@@ -23,10 +23,9 @@ export default function Table({ headers = [], data = [], type, name, onChange, c
 
   return (
     <div className="w-full bg-[var(--white)] border border-white rounded-md text-center overflow-y-auto custom-scrollbar" style={{ height: containerHeight, maxHeight: innerHeight, "--scrollbar-thumb-color": `var(--green-vivid)`, "--scrollbar-thumb-hover-color": `var(--green-vivid)` }}>
-      {/* 表頭 */}
-      <table className="table-auto w-full font-bold">
+      <table className="table-auto w-full font-bold text-black">
         <thead className="sticky top-0 bg-white z-5">
-          <tr className={`font-bold text-black bg-(--gray-light) `}>
+          <tr className={`bg-(--gray-light)`}>
             {headers.map((header, idx) => (
               <th
                 key={idx}
@@ -41,15 +40,15 @@ export default function Table({ headers = [], data = [], type, name, onChange, c
             ))}
           </tr>
         </thead>
-        <tbody className="h-100 overflow-y-scroll scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200 ">
+        <tbody className="overflow-y-scroll scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200 ">
           {data.map((row, idx) => (
-            <tr key={idx} className={`px-4 py-2 text-center border-b border-[var(--green-vivid)] text-center`} style={{ width: headers[0].width }}>
+            <tr key={idx} className={`px-4 py-2 text-center border-b border-(--green-vivid)`} style={{ width: headers[0].width }}>
               <td>
                 <label className="relative cursor-pointer flex items-center justify-center">
                   {/* 隱藏 checkbox */}
                   <input type={type} name={name ? name : "option"} className="peer absolute w-6 h-6 opacity-0 cursor-pointer z-10" checked={isRowChecked(row)} onChange={() => onChange("checkbox", row, idKey)} />
                   {/* 外框 */}
-                  <div className="w-6 h-6 rounded-sm border-2 border-[var(--green-vivid)] transition-colors duration-200 peer-checked:bg-[var(--green-vivid)]"></div>
+                  <div className="w-6 h-6 rounded-sm border-2 border-(--green-vivid) transition-colors duration-200 peer-checked:bg-(--green-vivid)"></div>
                   <span
                     className={`
                               absolute top-1/2 left-1/2 w-3 h-2
