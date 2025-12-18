@@ -98,5 +98,12 @@ const outboundExternalSlice = createSlice({
   }
 });
 
-export const { setOutboundExternal, updateLackStation, updateOrderList, managerOutboundExternal, resetOutboundExternal } = outboundExternalSlice.actions;
+export const { 
+  setOutboundExternal, 
+  updateLackStation, 
+  updateOrderList, 
+  managerOutboundExternal, 
+  resetOutboundExternal 
+} = outboundExternalSlice.actions;
+
 export default outboundExternalSlice.reducer;

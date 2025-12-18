@@ -1,5 +1,5 @@
 import Table from "@/components/common/table/table";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
@@ -22,13 +22,24 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
         const valueId = value[idKey];
         if (name === "checkbox") {
             setSelectedArray((prev) => {
-                let newArray;
-                if (prev.includes(valueId)) {
-                    newArray = prev.filter((id) => id !== valueId);
+                const exists = prev.some(item => 
+                    item.MAKE_NO === valueId || 
+                    item.MAKE_NO?.includes(valueId)
+                );
+                
+                if (exists) {
+                    return prev.filter(item => 
+                        item.MAKE_NO !== valueId && 
+                        !item.MAKE_NO?.includes(valueId)
+                    );
                 } else {
-                    newArray = [...prev, valueId];
+                    return [...prev, {
+                        PRT_NO: value.PRT_NO,
+                        MAKE_NO: valueId,
+                        outBoxNo: 1,
+                        outPpNo: value.BOX_PACK || 0
+                    }];
                 }
-                return newArray;
             });
         } else if (name === "radio") {
             dispatch(
@@ -66,10 +77,32 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
         }
     };
 
+    const checkedMakeNos = selectedArray.map(item => item.MAKE_NO);
+
     return (
         <>
-            {step <= 2 && <NoCheckBoxTable headers={headers} data={data} type="radio" name="outboundExternal" variants="green" idKey="SALE_NO" checked={orderCode} onChange={handleSelectedOption} />}
-            {step > 2 && <Table headers={detailHeaders} data={detailTableData} type="checkbox" name="outboundExternal2" variants="green" idKey="SALE_NO" checked={selectedArray} onChange={handleSelectedOption} />}
+            {step <= 2 && 
+                <NoCheckBoxTable 
+                    headers={headers} 
+                    data={data} 
+                    type="radio" 
+                    name="outboundExternal" 
+                    variants="green" 
+                    idKey="SALE_NO" 
+                    checked={orderCode} 
+                    onChange={handleSelectedOption} 
+                />}
+            {step > 2 && 
+                <Table 
+                    headers={detailHeaders} 
+                    data={detailTableData} 
+                    type="checkbox" 
+                    name="outboundExternal2" 
+                    variants="green" 
+                    idKey="MAKE_NO" 
+                    checked={checkedMakeNos} 
+                    onChange={handleSelectedOption} 
+                />}            
         </>
     )
 }
