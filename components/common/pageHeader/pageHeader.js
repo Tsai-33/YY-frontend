@@ -21,7 +21,7 @@ export default function PageHeader({ title, backTo = "/", close }) {
   return (
     <div className="relative w-full flex items-center justify-between">
       {/* 左邊 */}
-      <div className="text-[length:var(--font-size-6xl)] font-bold text-[var(--green-deep)]">
+      <div className="text-(length:--font-size-6xl) font-bold text-(--green-deep)">
         {router.pathname === "/stockQuery"
           ? currentJob || ""
           : `${currentJob || ""}${currentStation || ""}`}
@@ -29,7 +29,7 @@ export default function PageHeader({ title, backTo = "/", close }) {
 
       {/* 中間 */}
       <div className="absolute left-1/2 -translate-x-1/2">
-        <div className="flex justify-center font-bold text-black sm:text-[length:var(--font-size-4xl)]">
+        <div className="flex justify-center font-bold text-black sm:text-(length:--font-size-4xl)">
           {title}
         </div>
       </div>
