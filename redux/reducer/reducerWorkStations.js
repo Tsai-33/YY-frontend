@@ -40,7 +40,7 @@ export const initWorkstation = (ip) => (dispatch) => {
       setWorkstation({
         area: "A",
         ip,
-        stations: config.A.stations,
+        stations: config.A.stations[ip],
         jobs: config.A.jobs,
         currentStation: null,
         currentJob: null,

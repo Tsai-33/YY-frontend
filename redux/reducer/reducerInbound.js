@@ -12,9 +12,14 @@ const createStation = (station) => ({
   selected: [], // 目前選擇
 });
 
+const initialState = {
+  orderList: [],
+  lackStation: [],
+};
+
 const inboundSlice = createSlice({
   name: "inbound",
-  initialState: { orderList: [], lackStation: [] },
+  initialState: initialState,
   reducers: {
     initStation(state, action) {
       const station = action.payload;
@@ -69,11 +74,17 @@ const inboundSlice = createSlice({
 
     // 控制面板
     managerInbound: (state, action) => {
-      const { station, name, value, index } = action.payload;
+      const { station, name, value, checked, index } = action.payload;
       if (!state[station]) return;
 
       if (name === "step") {
         state[station][name] = Number(value);
+      } else if (name === "lackStation") {
+        if (checked) {
+          state.lackStation.push(station);
+        } else {
+          state.lackStation = state.lackStation.filter((v) => v !== station);
+        }
       } else {
         state[station][name] = value;
       }
@@ -81,10 +92,17 @@ const inboundSlice = createSlice({
     // 重置
     resetInbound: (state, action) => {
       const { type, station, W_ID } = action.payload;
+
       if (type === "one") {
         state[station].screen = "loading";
       } else if (type === "all") {
-        return initialState;
+        const nextState = { ...initialState };
+
+        station.forEach((s) => {
+          nextState[s] = createStation(s);
+        });
+
+        return nextState;
       } else if (type === "wave") {
         // 1️⃣ 先清除 lackStation 中跟這個 wave 有關的 stationId
         if (Array.isArray(state.lackStation)) {

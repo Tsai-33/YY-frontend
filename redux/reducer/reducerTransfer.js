@@ -1,7 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const stationList = ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"];
-
 const createStation = () => ({
   screen: "idle",
   shelf: {}, // default ITEMS 這裡取
@@ -9,18 +7,25 @@ const createStation = () => ({
   selected: [], // 目前選擇
 });
 
-const initialState = stationList.reduce(
-  (acc, id) => {
-    acc[id] = createStation();
-    return acc;
-  },
-  { step: 1, orderCode: "", waveNo: null, order: {}, lackStation: [] }
-);
+const initialState = {
+  step: 1,
+  orderCode: "",
+  waveNo: null,
+  order: {},
+  lackStation: [],
+};
 
 const transferSlice = createSlice({
   name: "transfer",
-  initialState,
+  initialState: initialState,
   reducers: {
+    initStation(state, action) {
+      const station = action.payload;
+
+      if (!state[station]) {
+        state[station] = createStation(station);
+      }
+    },
     setTransfer: (state, action) => {
       const { step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation } = action.payload;
       if (!state[station]) return;
@@ -36,7 +41,9 @@ const transferSlice = createSlice({
       if (lackStation !== undefined) state.lackStation = [...new Set([...state.lackStation, lackStation])];
     },
     setAllLoading: (state, action) => {
-      stationList.map((v) => {
+       const { stations } = action.payload;
+       console.log(stations,'stations')
+      stations.map((v) => {
         state[v].screen = "loading";
       });
     },
@@ -68,7 +75,7 @@ const transferSlice = createSlice({
       if (!state[station]) return;
 
       if (name === "step") {
-        state[station][name] = Number(value);
+        state[name] = Number(value);
       } else if (name === "lackStation") {
         if (checked) {
           state.lackStation.push(station);
@@ -85,12 +92,16 @@ const transferSlice = createSlice({
       if (type === "one") {
         state[station].screen = "loading";
       } else if (type === "all") {
-        return initialState;
+        const nextState = { ...initialState };
+        station.forEach((s) => {
+          nextState[s] = createStation(s);
+        });
+        return nextState;
       }
     },
   },
 });
 
-export const { setAllLoading, setTransfer, updateShelfItem, managerTransfer, resetTransfer } = transferSlice.actions;
+export const { initStation, setAllLoading, setTransfer, updateShelfItem, managerTransfer, resetTransfer } = transferSlice.actions;
 
 export default transferSlice.reducer;

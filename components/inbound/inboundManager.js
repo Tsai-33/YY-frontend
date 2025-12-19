@@ -1,14 +1,13 @@
 import { useDispatch, useSelector } from "react-redux";
-import { managerInbound, resetInbound, updateLackStation, updateOrderList } from "@/redux/reducer/reducerInbound";
+import { managerInbound, resetInbound,  updateOrderList } from "@/redux/reducer/reducerInbound";
 
 import Alert from "../common/alert/alert";
 import { useEffect, useState } from "react";
-import { getInbound, getInboundByCMDID } from "@/pages/api";
+import { getTable } from "./inboundFunction";
 
 export default function InboundManager({ isOpen, onClose }) {
   const dispatch = useDispatch();
-
-  const stations = ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"];
+  const { stations, currentStation } = useSelector((s) => s.workstation);
 
   // UI local state
   const [station, setStation] = useState("A01");
@@ -23,52 +22,38 @@ export default function InboundManager({ isOpen, onClose }) {
 
   // 更改站台資料
   const handleChange = (e, index) => {
+    
     dispatch(
       managerInbound({
         station,
         name: e.target.name,
         value: e.target.value,
+        checked: e.target.checked,
         index,
       })
     );
   };
 
   // 清除當前 station 的資料
-  const handleClear = (type) => {
+  const handleClear = (type, station) => {
     Alert({
       title: "是否確定清除？",
       showCancel: true,
       onConfirm: () => {
-        dispatch(resetInbound({ type, station }));
+        dispatch(resetInbound({ type: type, station: station }));
       },
     });
   };
 
-  const [s, setS] = useState(null);
-  const handleStation = (type) => {
-    dispatch(updateLackStation({ type: type, lackStation: s }));
-  };
-
-  const [allOrderList, setAllOrderList] = useState([]);
   const [o, setO] = useState(null);
   const handleOrder = (type) => {
     dispatch(updateOrderList({ type: type, order: o }));
   };
+
+  const [allOrderList, setAllOrderList] = useState([]);
   useEffect(() => {
-    getInboundData();
+    getTable(setAllOrderList);
   }, []);
-  const getInboundData = async () => {
-    try {
-      const res = await getInboundByCMDID();
-      if (res.data.success) {
-        setAllOrderList(res.data.data);
-      }
-    } catch (err) {
-      Alert({ title: "網路不穩定，請稍後在試！" });
-      console.warn(`getInboundData :`, err);
-    } finally {
-    }
-  };
 
   return (
     <div id="modal" className={`${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} fixed inset-0 flex items-center justify-center bg-black/50 z-50`}>
@@ -78,10 +63,10 @@ export default function InboundManager({ isOpen, onClose }) {
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">控制面板</h2>
 
-            <button onClick={() => handleClear("one")} className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-500 text-white">
+            <button onClick={() => handleClear("one", currentStation)} className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-500 text-white">
               清空入庫
             </button>
-            <button onClick={() => handleClear("all")} className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-500 text-white">
+            <button onClick={() => handleClear("all", stations)} className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-500 text-white">
               清空所有入庫
             </button>
 
@@ -109,21 +94,14 @@ export default function InboundManager({ isOpen, onClose }) {
 
         <div className="flex justify-between">
           {/* 站點顏色 */}
-          <div className="flex flex-col gap-4 py-4 w-1/2">
+          {/* <div className="flex flex-col gap-4 py-4 w-1/2">
             <div className="text-lg font-bold flex items-center">
               <div>忙線站點：</div>
               <div className="flex">
-                <select name="station" value={s || ''} className="px-4 py-1 border border-gray-300 rounded-md shadow-sm" onChange={(e) => setS(e.target.value)}>
-                  <option value="A01">A01</option>
-                  <option value="A02">A02</option>
-                  <option value="A03">A03</option>
-                  <option value="A04">A04</option>
-                  <option value="A05">A05</option>
-                  <option value="A06">A06</option>
-                  <option value="A07">A07</option>
-                  <option value="A08">A08</option>
-                  <option value="A09">A09</option>
-                  <option value="A10">A10</option>
+                <select name="station" value={s || "A01"} className="px-4 py-1 border border-gray-300 rounded-md shadow-sm" onChange={(e) => setS(e.target.value)}>
+                  {stations.map((v) => (
+                    <option value={v}>{v}</option>
+                  ))}
                 </select>
                 <button onClick={() => handleStation("add")} className="bg-blue-500 text-white px-4 py-1 rounded">
                   新增
@@ -136,7 +114,6 @@ export default function InboundManager({ isOpen, onClose }) {
               </div>
             </div>
 
-            {/* 已有站點列表 */}
             <div className="flex gap-2 flex-wrap">
               {lackStation
                 ? lackStation.map((v, idx) => (
@@ -149,14 +126,14 @@ export default function InboundManager({ isOpen, onClose }) {
                   ))
                 : ""}
             </div>
-          </div>
+          </div> */}
 
           {/* 排除訂單 */}
-          <div className="flex flex-col gap-4 py-4 w-1/2">
+          <div className="flex flex-col gap-4 py-4">
             <div className="text-lg font-bold flex items-center">
               <div>排除訂單：</div>
               <div className="flex">
-                <select name="station" value={o || ''} className="px-4 py-1 border border-gray-300 rounded-md shadow-sm" onChange={(e) => setO(e.target.value)}>
+                <select name="station" value={o || ""} className="px-4 py-1 border border-gray-300 rounded-md shadow-sm" onChange={(e) => setO(e.target.value)}>
                   {allOrderList.map((v, i) => (
                     <option key={i} value={v.INSTOCK_NO}>
                       {v.INSTOCK_NO}
@@ -221,6 +198,11 @@ export default function InboundManager({ isOpen, onClose }) {
           <div className="flex items-center">
             <span>WID：</span>
             <input type="text" name="waveNo" value={waveNo || ""} onChange={handleChange} className="px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+          </div>
+
+          <div className="flex items-center">
+            <span>是否鎖住：</span>
+            <input type="checkbox" name="lackStation" checked={lackStation?.includes(station)} onChange={handleChange} className="px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
           </div>
         </div>
         <hr className="w-full border-t border-gray-300 my-2" />

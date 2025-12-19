@@ -1,9 +1,10 @@
-import { addShelf, addTransferWCS, getTransfer, getTransferByWID, getTransferDetail, sendToWMS } from "@/pages/api";
+import { addShelf, addTransferWCS, getOrder, getOrderDetailByWID, getTransfer, getTransferByWID, getTransferDetail, sendToWMS } from "@/pages/api";
 import { resetTransfer } from "@/redux/reducer/reducerTransfer";
 import { generateRandomNumber } from "@/utils/random";
 
-// 抓取ERP最新調撥單
-export const getEPRdata = async (inputBarCode, setTableData, setTableTotalData2) => {
+// 抓取ERP
+export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTotalData2) => {
+  setLoading(true);
   try {
     const random = generateRandomNumber();
     const data = { action: "ask_order", NO: inputBarCode, dataid: random };
@@ -12,7 +13,9 @@ export const getEPRdata = async (inputBarCode, setTableData, setTableTotalData2)
       getTable(setTableData, setTableTotalData2);
     }
   } catch (error) {
-    console.warn(`transfer handleBarCode :`, error);
+    console.warn(`handleBarCode :`, error);
+  } finally {
+    setLoading(false);
   }
 };
 
@@ -29,14 +32,14 @@ export const getTable = async (setTableData, setTableTotalData2) => {
       setTableTotalData2(orderDetail.data.data);
     }
   } catch (err) {
-    console.warn(`transfer getTable:`, err);
+    console.warn(`getTable:`, err);
   }
 };
 
-// 抓取WMS系統所有調撥單的詳細資料
+// 訂單明細
 export const getList = async (waveNo, setTableData2) => {
   try {
-    const res = await getTransferByWID(waveNo);
+    const res = await getOrderDetailByWID(waveNo);
     if (res.data.success) {
       const detail = res.data.data; // 陣列
       const newDetail = detail.map((v) => ({ ...v, type: "new", checked: false }));
@@ -47,8 +50,8 @@ export const getList = async (waveNo, setTableData2) => {
   }
 };
 
-// 確認要處理此張調撥單
-export const checkConfirmTransfer = async (setLoading, order) => {
+// 確認訂單
+export const confrimList_tr = async (setLoading, order) => {
   try {
     setLoading(true);
     // 傳給WMS
@@ -64,8 +67,8 @@ export const checkConfirmTransfer = async (setLoading, order) => {
   }
 };
 
-// 新增貨架
-export const addTransferShelf = async (setLoading, setAddModal, shelf, order) => {
+// 新增
+export const addShelf_tr = async (setLoading, setAddModal, shelf, order) => {
   setLoading(true);
   try {
     return await addTransferWCS({ area: shelf?.area, W_ID: order?.W_ID });
@@ -77,8 +80,8 @@ export const addTransferShelf = async (setLoading, setAddModal, shelf, order) =>
   }
 };
 
-// 退回貨架
-export const returnTransferShelf = async (setLoading, currentStation, shelf, order) => {
+// 退回
+export const returnShelf_tr = async (setLoading, currentStation, shelf, order) => {
   try {
     const random9 = generateRandomNumber();
     const data = { Command: "RETURN", SHELVE_ID: shelf?.SHELVE_ID, BAR_CODE: "", FACE: 2, STATION: currentStation, PURPOSE: 3, STATUS: 0, CART_ID: "", DATA_ID: random9, WAVENO: String(order.W_ID), GGROUP: String(order.W_ID) };
@@ -90,8 +93,8 @@ export const returnTransferShelf = async (setLoading, currentStation, shelf, ord
   }
 };
 
-// 全退回貨架
-export const cancelTransferShelf = async (setLoading, currentStation) => {
+// 全退回
+export const cancelShelf_tr = async (setLoading, currentStation) => {
   setLoading(true);
   try {
     const random9 = generateRandomNumber();
@@ -104,8 +107,19 @@ export const cancelTransferShelf = async (setLoading, currentStation) => {
   }
 };
 
+// 未完成 返回
+export const restoreList_in= async (setLoading, waveNo) => {
+    try {
+      return await restoreOrders({ W_ID: waveNo });
+    } catch (err) {
+      console.warn(`handleReturnShelf :`, err);
+    } finally {
+      setLoading(false);
+    }
+}
+
 // 完成調撥單
-export const finishTransfer = async (setLoading, currentStation, order) => {
+export const finishList_tr = async (setLoading, currentStation, order) => {
   setLoading(true);
   try {
     const res = await finishTransferOrder({ W_ID: order.W_ID });

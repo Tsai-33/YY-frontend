@@ -1,19 +1,17 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import ActionBtn from "@/components/common/btns/actionBtn";
-import PageHeader from "@/components/common/pageHeader/pageHeader";
 import InputFrame from "@/components/common/input/inputFrame";
-import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
-import { initStation, resetInbound, setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
+import { resetInbound, setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
 import SchematicDiagram from "../../components/diagram/schematicDiagram";
-import LoadingShelf from "@/components/common/loading/loading-shelf";
 import InboundTable from "@/components/inbound/inboundTable";
-import Loading from "@/components/common/loading/loading";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
+import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in } from "./inboundFunction";
 
-export default function InboundContext() {
+export default function InboundContext({ barCodeRef, setLoading }) {
+  const dispatch = useDispatch();
   const [tableData, setTableData] = useState([]); // 入庫單資訊
   const [tableData2, setTableData2] = useState([]); // 入庫單上的明細
 
@@ -22,13 +20,13 @@ export default function InboundContext() {
   const [returnModal, setReturnModal] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
 
+  // 站點
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { orderList, lackStation } = useSelector((s) => s.inbound);
+  const { orderList } = useSelector((s) => s.inbound);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo } = useSelector((s) => s.inbound[currentStationSafe] || {});
 
   // 掃描 QR code (ERP抓取新資料)
-  const barCodeRef = useRef(null);
   const handleBarCode = async (e) => {
     if (screen === "loading") return;
     if (e.key !== "Enter") return;
@@ -48,10 +46,7 @@ export default function InboundContext() {
 
       barCodeRef.current.value = "";
     } else {
-      const res = await getERP(setLoading, inputBarCode);
-      if (res.data.success) {
-        getTable();
-      }
+      await getERP(setLoading, inputBarCode,setTableData, orderList);
     }
   };
 
@@ -143,8 +138,10 @@ export default function InboundContext() {
       return;
     }
     if (tableData2.length > 0) {
-      const { wcs, nodepos } = checkCar(waveNo);
-      if (wcs.data.data.length > 0 || nodepos.data.data.length < 2) {
+      const { wcs, nodepos } = await checkCar(waveNo);
+      console.log(wcs,'wcs')
+      console.log(nodepos,'nodepos')
+      if (wcs.data.data.length <= 0 && nodepos.data.data.length < 2) {
         // 沒有這個GGROUP的車了 只剩下一台車在站點了
         Alert({
           title: "入倉單未完成",
@@ -153,6 +150,7 @@ export default function InboundContext() {
           onConfirm: async () => {
             // 目前不想做完此張入庫單的恢復
             const res = await restoreList_in(setLoading, waveNo);
+            console.log(res.data);
             if (res.data.success) {
               await handleCancel();
             }
@@ -184,17 +182,11 @@ export default function InboundContext() {
     }
   };
 
-  // ============ 更新訂單順序時重抓資料 ==========
-  useEffect(() => {
-    if (orderList.length <= 0) return;
-    getTable(setTableData, orderList);
-  }, [orderList]);
-  // =============== 初入畫面 ===============
+  // -------------------------------*
   useEffect(() => {
     getTable(setTableData, orderList);
     barCodeRef?.current?.focus();
-  }, []);
-  // =============== 抓detail畫面 ===============
+  }, [orderList]);
   useEffect(() => {
     if (!waveNo) return;
     getList(waveNo, setTableData2);
@@ -209,8 +201,10 @@ export default function InboundContext() {
           {step > 2 && (
             <div className="flex  font-bold text-black space-x-4 p-2">
               <div className="flex flex-1 items-center">
-                建議入倉總數：{shelf?.EstPPs}
-                {shelf?.UNIT} ({shelf?.EstBoxes}箱)
+                {shelf?.EstBoxes > 0 &&
+                  `建議入倉總數：${shelf?.EstPPs}
+                ${shelf?.UNIT} (${shelf?.EstBoxes}箱)
+                `}
               </div>
               <ActionBtn text="入倉單完成" variant="orange" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handleFinish} />
             </div>
@@ -347,7 +341,7 @@ export default function InboundContext() {
                 <div className="w-full flex justify-between">
                   <ActionBtn icon="" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
                   <ActionBtn icon="" text="確定上架" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
-                  <ActionBtn icon="" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} disabled={tableData2?.length <= 0} />
+                  <ActionBtn icon="" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
                 </div>
               )}
             </div>

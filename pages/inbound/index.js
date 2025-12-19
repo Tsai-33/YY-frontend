@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
-import { initStation, } from "@/redux/reducer/reducerInbound";
+import { initStation } from "@/redux/reducer/reducerInbound";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import Loading from "@/components/common/loading/loading";
 import InboundTitle from "@/components/inbound/inboundTitle";
@@ -18,12 +18,14 @@ export default function Inbound() {
     dispatch(setCurrentStation(station));
   };
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { orderList, lackStation } = useSelector((s) => s.inbound);
-  const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo } = useSelector((s) => s.inbound[currentStationSafe] || {});
+  const { lackStation } = useSelector((s) => s.inbound);
+  const { step, screen } = useSelector((s) => s.inbound[currentStationSafe] || {});
+  
+  const barCodeRef = useRef(null);
+
 
   // =========== 生成站點
   useEffect(() => {
-    // 一次性初始化所有站台
     stations.forEach((s) => {
       dispatch(initStation(s));
     });
@@ -52,7 +54,7 @@ export default function Inbound() {
   return (
     <>
       <InboundTitle />
-      {/* <InboundContext /> */}
+      <InboundContext barCodeRef={barCodeRef} setLoading={setLoading} />
       {/* 底部按鈕區域 */}
       <div className="w-full flex justify-between z-15">
         {stations.map((station, i) => (

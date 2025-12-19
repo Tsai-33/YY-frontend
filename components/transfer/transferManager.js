@@ -1,14 +1,12 @@
 import { useDispatch, useSelector } from "react-redux";
 import { managerTransfer, resetTransfer } from "@/redux/reducer/reducerTransfer";
-
 import Alert from "../common/alert/alert";
 import { useEffect, useState } from "react";
-import { gettransfer, getTransferByCMDID } from "@/pages/api";
+import { getTable } from "./transferFunction";
 
 export default function TransferManager({ isOpen, onClose }) {
   const dispatch = useDispatch();
-
-  const stations = ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"];
+  const { stations } = useSelector((s) => s.workstation);
 
   // UI local state
   const [station, setStation] = useState("A01");
@@ -40,26 +38,15 @@ export default function TransferManager({ isOpen, onClose }) {
       title: "是否確定清除？",
       showCancel: true,
       onConfirm: () => {
-        dispatch(resetTransfer({ type, station }));
+        dispatch(resetTransfer({ type: type, station: stations }));
       },
     });
   };
 
+  const [allOrderList, setAllOrderList] = useState([]);
   useEffect(() => {
-    gettransferData();
+    getTable(setAllOrderList);
   }, []);
-  const gettransferData = async () => {
-    try {
-      const res = await getTransferByCMDID();
-      if (res.data.success) {
-        console.log(res.data.data, "transfer manager");
-      }
-    } catch (err) {
-      Alert({ title: "網路不穩定，請稍後在試！" });
-      console.warn(`gettransferData :`, err);
-    } finally {
-    }
-  };
 
   return (
     <div id="modal" className={`${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} fixed inset-0 flex items-center justify-center bg-black/50 z-50`}>
@@ -68,7 +55,7 @@ export default function TransferManager({ isOpen, onClose }) {
         <div className="sticky top-0 bg-white z-10 border-b p-2">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">控制面板</h2>
-            <button onClick={() => handleClear("all")} className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-500 text-white">
+            <button onClick={() => handleClear("all", stations)} className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-500 text-white">
               清空所有調撥
             </button>
 

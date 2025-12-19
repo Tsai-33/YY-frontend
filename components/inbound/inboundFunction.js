@@ -1,13 +1,16 @@
-import { addInboundWCS, addShelf, restoreOrders, checkNODEPOS, checkWCS, finishInboundOrder, getInbound, getInboundByWID, sendToWMS, updateInboundWMS } from "@/pages/api";
+import { addInboundWCS, addShelf, restoreOrders, checkNODEPOS, checkWCS, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderByWID, getOrderDetailByWID } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 
 // 取得ERP資料
-export const getERP = async (setLoading, inputBarCode) => {
+export const getERP = async (setLoading, inputBarCode,setTableData, orderList) => {
   setLoading(true);
   try {
     const random = generateRandomNumber();
     const data = { action: "ask_order", NO: inputBarCode, dataid: random };
-    return await sendToWMS(data);
+    const res = await sendToWMS(data);
+    if (res.data.success) {
+      getTable(setTableData, orderList);
+    }
   } catch (error) {
     console.warn(`ask_order handleBarCode :`, error);
   } finally {
@@ -16,12 +19,15 @@ export const getERP = async (setLoading, inputBarCode) => {
 };
 
 // 取得全訂單
-export const getTable = async (setTableData, orderList) => {
+export const getTable = async (setTableData, orderList = null) => {
   try {
-    const res = await getInbound();
+    const res = await getOrder("I");
     if (res.data.success) {
-      // 排除掉重複訂單
-      const newData = res.data.data.filter((v) => !orderList.includes(v.INSTOCK_NO));
+      let newData = res.data.data;
+      if (orderList) {
+        // 排除掉重複訂單
+        newData = res.data.data.filter((v) => !orderList.includes(v.INSTOCK_NO));
+      }
       setTableData(newData);
     }
   } catch (err) {
@@ -32,7 +38,7 @@ export const getTable = async (setTableData, orderList) => {
 // 取得單一訂單
 export const getList = async (waveNo, setTableData2) => {
   try {
-    const res = await getInboundByWID(waveNo);
+    const res = await getOrderDetailByWID(String(waveNo));
     if (res.data.success) {
       const detail = res.data.data; // 陣列
       const newDetail = detail.map((v) => ({ ...v, type: "new", checked: false }));

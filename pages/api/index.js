@@ -11,22 +11,16 @@ export const getTransferByWID = (wid) => api.get(`/transfer/wid/${wid}`);
 export const addTransferWCS = (payload) => api.post("/transfer/add/wcs", payload);
 export const updateTransferWMS = (payload) => api.post("/transfer/update/wms", payload);
 export const finishTransferOrder = (payload) => api.post("/transfer/finish/order", payload);
-export const restoreTransfer =  (payload) => api.post("/transfer/restore/orders", payload);
-
-
+export const restoreTransfer = (payload) => api.post("/transfer/restore/orders", payload);
 
 /* 取得入庫單 */
-export const getInbound = () => api.get("/inbound");
-export const getInboundByCMDID = () => api.get("/inbound/cmdid");
-export const getInboundByWID = (wid) => api.get(`/inbound/${wid}`);
 export const addInboundWCS = (payload) => api.post("/inbound/add/wcs", payload);
 export const updateInboundWMS = (payload) => api.post("/inbound/update/wms", payload);
 export const finishInboundOrder = (payload) => api.post("/inbound/finish/order", payload);
-export const restoreOrders =  (payload) => api.post("/inbound/restore/orders", payload);
+export const restoreOrders = (payload) => api.post("/inbound/restore/orders", payload);
 
 /* 取得出庫單(銷貨) */
-export const getOutboundExternal = () =>
-  api.get("/outboundExternal/getOutBoundExternal");
+export const getOutboundExternal = () => api.get("/outboundExternal/getOutBoundExternal");
 export const getOutBoundExternalOrderDetail = (sale_no) =>
   api.get(`/outboundExternal/getOutBoundExternalOrderDetail`, {
     params: { sale_no },
@@ -39,8 +33,7 @@ export const getOutBoundExternalOrderDetailByWID = (w_id) =>
   api.get(`/outboundExternal/getOutBoundExternalOrderDetailByWID`, {
     params: { w_id },
   });
-export const shiftOutByBarcode = (data) =>
-  api.post("/api/outboundExternal/shiftout", data);
+export const shiftOutByBarcode = (data) => api.post("/api/outboundExternal/shiftout", data);
 
 /* 取得出庫單(領用) */
 
@@ -48,39 +41,31 @@ export const shiftOutByBarcode = (data) =>
 export const searchStock = (payload) => api.post("/stock/stockQuery", payload);
 
 /* 理貨 */
-export const getShelfTransfer = () =>
-  api.get("/shelfTransfer/getShelfTransfer");
-export const getWMSBySaleNo = (sale_no) =>
-  api.get("/shelfTransfer/getWMSBySaleNo", { params: { sale_no } });
-export const insertShelfTask = (data) =>
-  api.post("/shelfTransfer/insertShelfTask", data);
-export const updateTransferItems = (data) =>
-  api.post("/shelfTransfer/updateTransferItems", data);
-export const updateShelveCheck = (data) =>
-  api.post(`/shelfTransfer/updateShelveCheck`, data);
+export const getShelfTransfer = () => api.get("/shelfTransfer/getShelfTransfer");
+export const getWMSBySaleNo = (sale_no) => api.get("/shelfTransfer/getWMSBySaleNo", { params: { sale_no } });
+export const insertShelfTask = (data) => api.post("/shelfTransfer/insertShelfTask", data);
+export const updateTransferItems = (data) => api.post("/shelfTransfer/updateTransferItems", data);
+export const updateShelveCheck = (data) => api.post(`/shelfTransfer/updateShelveCheck`, data);
 export const getStockAreas = () => api.get("/shelfTransfer/getStockAreas");
-export const getWMSByAreaAndPrtNo = (area, prtNo) =>
-  api.get(`/shelfTransfer/getWMSByAreaAndPrtNo?area=${area}&prtNo=${prtNo}`);
-export const transferItems = (data) =>
-  api.post("/shelfTransfer/transferItems", data);
+export const getWMSByAreaAndPrtNo = (area, prtNo) => api.get(`/shelfTransfer/getWMSByAreaAndPrtNo?area=${area}&prtNo=${prtNo}`);
+export const transferItems = (data) => api.post("/shelfTransfer/transferItems", data);
 
 /* 盤點任務下發 */
-export const getInventoryItems = (payload) =>
-  api.post("/inventory/getInventoryItems", payload);
-export const createInventoryTask = (payload) =>
-  api.post("/inventory/createInventoryTask", payload);
-export const updateInventoryResult = (payload) =>
-  api.post("/inventory/updateInventoryResult", payload);
+export const getInventoryItems = (payload) => api.post("/inventory/getInventoryItems", payload);
+export const createInventoryTask = (payload) => api.post("/inventory/createInventoryTask", payload);
+export const updateInventoryResult = (payload) => api.post("/inventory/updateInventoryResult", payload);
 
 /* 傳給labview */
-export const sendToWMS = (payload) =>
-  api.post("/send-to-wms", payload, { timeout: 45000 });
+export const sendToWMS = (payload) => api.post("/send-to-wms", payload, { timeout: 45000 });
 
 /* 叫車 */
 export const checkWCS = (payload) => api.post("/wcs/check", payload);
 export const checkWCSWaveno = (payload) => api.post("/wcs/check/waveno", payload);
 
-
+/* 共用API */
+export const getOrder = (payload) => api.get("/order/cmdid", { params: { cmdid: payload } });
+export const getOrderByWID = (payload) => api.get("/order/wid", { params:{ wid: payload } });
+export const getOrderDetailByWID = (payload) => api.get("/order/detail", { params:{ wid: payload } });
 export const checkNODEPOS = (payload) => api.post("/wcs/check/nodepos", payload);
 export const addWCS = (payload) => api.post("/wcs/add", payload);
 export const addWCSGroup = (payload) => api.post("/wcs/add/group", payload);
