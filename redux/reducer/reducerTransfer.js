@@ -1,7 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const stationList = ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"];
-
 const createStation = () => ({
   screen: "idle",
   shelf: {}, // default ITEMS 這裡取
@@ -9,18 +7,25 @@ const createStation = () => ({
   selected: [], // 目前選擇
 });
 
-const initialState = stationList.reduce(
-  (acc, id) => {
-    acc[id] = createStation();
-    return acc;
-  },
-  { step: 1, orderCode: "", waveNo: null, order: {}, lackStation: [] }
-);
+const initialState = {
+  step: 1,
+  orderCode: "",
+  waveNo: null,
+  order: {},
+  lackStation: [],
+};
 
 const transferSlice = createSlice({
   name: "transfer",
-  initialState,
+  initialState: initialState,
   reducers: {
+    initStation(state, action) {
+      const station = action.payload;
+
+      if (!state[station]) {
+        state[station] = createStation(station);
+      }
+    },
     setTransfer: (state, action) => {
       const { step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation } = action.payload;
       if (!state[station]) return;
@@ -36,13 +41,33 @@ const transferSlice = createSlice({
       if (lackStation !== undefined) state.lackStation = [...new Set([...state.lackStation, lackStation])];
     },
     setAllLoading: (state, action) => {
-      stationList.map((v) => {
+       const { stations } = action.payload;
+       console.log(stations,'stations')
+      stations.map((v) => {
         state[v].screen = "loading";
       });
     },
     updateShelfItem: (state, action) => {
       const { station, items } = action.payload;
-      state[station].shelfItem = items;
+      if (!state[station]) return;
+
+      // 來源扣除
+      state[station].shelfItem = state[station].shelfItem.map((v) => {
+        const matched = items.find((i) => i.PRT_NO === v.PRT_NO);
+        if (matched) {
+          return { ...v, PP_NO: v.PP_NO - matched.PP_NO, BOX_NO: v.BOX_NO - matched.BOX_NO };
+        }
+        return v;
+      });
+
+      // 目的加入
+      state["A01"].shelfItem = state["A01"].shelfItem.map((v) => {
+        const matched = items.find((i) => i.PRT_NO === v.PRT_NO);
+        if (matched) {
+          return { ...v, PP_NO: v.PP_NO + matched.PP_NO, BOX_NO: v.BOX_NO + matched.BOX_NO };
+        }
+        return v;
+      });
     },
     // 控制面板
     managerTransfer: (state, action) => {
@@ -50,7 +75,7 @@ const transferSlice = createSlice({
       if (!state[station]) return;
 
       if (name === "step") {
-        state[station][name] = Number(value);
+        state[name] = Number(value);
       } else if (name === "lackStation") {
         if (checked) {
           state.lackStation.push(station);
@@ -67,32 +92,16 @@ const transferSlice = createSlice({
       if (type === "one") {
         state[station].screen = "loading";
       } else if (type === "all") {
-        return initialState;
-      } else if (type === "wave") {
-        // 1️⃣ 先清除 lackStation 中跟這個 wave 有關的 stationId
-        if (Array.isArray(state.lackStation)) {
-          state.lackStation = state.lackStation.filter((stationId) => {
-            const s = state[stationId];
-            return !(s && s.waveNo === W_ID);
-          });
-        }
-
-        // 2️⃣ 先清除 orderList 中跟這個 wave 有關的訂單
-        state.orderList = state.orderList.filter((orderId) => orderId !== state[station].orderCode);
-
-        // 3️⃣ 再重置 waveNo === W_ID 的 station
-        // 沒寫成功，只清除了一個
-        Object.keys(state).forEach((key) => {
-          const s = state[key];
-          if (s && typeof s === "object" && "waveNo" in s && s.waveNo === W_ID) {
-            state[key] = createStation();
-          }
+        const nextState = { ...initialState };
+        station.forEach((s) => {
+          nextState[s] = createStation(s);
         });
+        return nextState;
       }
     },
   },
 });
 
-export const { setAllLoading, setTransfer, updateShelfItem, managerTransfer, resetTransfer } = transferSlice.actions;
+export const { initStation, setAllLoading, setTransfer, updateShelfItem, managerTransfer, resetTransfer } = transferSlice.actions;
 
 export default transferSlice.reducer;

@@ -3,8 +3,10 @@ import { useSelector, useDispatch } from "react-redux";
 import TableAll from "../common/table/tableAll";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setInbound } from "@/redux/reducer/reducerInbound";
-import { getInboundByWID } from "@/pages/api";
-import Table from "../common/table/table";
+import { getOrderDetailByWID } from "@/pages/api";
+import { getList } from "./inboundFunction";
+
+
 export default function InboundTable({ data, data2, setData2 }) {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
@@ -48,27 +50,10 @@ export default function InboundTable({ data, data2, setData2 }) {
   ];
   useEffect(() => {
     if (!waveNo) return;
-    getList();
+    getList(waveNo, setData2);
   }, [shelfItem]);
-  const getList = async () => {
-    try {
-      const res = await getInboundByWID(waveNo);
-      if (res.data.success) {
-        const detail = res.data.data; // 陣列
-        const newDetail = detail.map((v) => ({
-          ...v,
-          type: "new",
-          checked: false,
-        }));
-        setData2(newDetail);
-      }
-    } catch (err) {
-      console.warn("getList :", err);
-    }
-  };
 
   // ======== select ==========
-  //  全選 / 全不選
   const selectAllRef = useRef(null);
   const handleSelectAll = (allData, idKey) => {
     const isChecked = selectAllRef.current.checked;
@@ -80,6 +65,7 @@ export default function InboundTable({ data, data2, setData2 }) {
     }
   };
 
+  // 控制全選按鈕
   useEffect(() => {
     if (!selectAllRef.current) return;
 

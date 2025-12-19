@@ -11,6 +11,26 @@ export default function ActionBtn({ icon, text, variant, onClick, disabled, clas
     `;
 
   const variants = {
+      blue: `
+      bg-[var(--blue-fresh)] 
+      border border-[var(--blue)] 
+      text-white 
+      hover:bg-[var(--blue-muted)] 
+      hover:border-white 
+      hover:text-black 
+      focus:bg-[var(--gray)] 
+      focus:border-white 
+      focus:text-white 
+      focus:hover:bg-[var(--gray)] 
+      focus:hover:border-white 
+      focus:hover:text-white 
+      disabled:opacity-80 
+      disabled:cursor-not-allowed 
+      disabled:pointer-events-none 
+      disabled:border-white 
+      disabled:bg-[#4A9BC833]
+      disabled:text-[#7B7B7B]
+      `,
     darkBlue: `
       bg-[var(--blue-dark)] 
       border border-[var(--blue)] 
@@ -147,6 +167,7 @@ export default function ActionBtn({ icon, text, variant, onClick, disabled, clas
     disabled:border-white 
     disabled:text-[#73737380]
       `,
+
   };
   return (
     <>

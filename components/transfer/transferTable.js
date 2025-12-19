@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setTransfer } from "@/redux/reducer/reducerTransfer";
-import TableAll from "../common/table/tableAll";
 import { getTransferByWID } from "@/pages/api";
 import PurposeTable from "./tables/purposeTable";
 import SourceTable from "./tables/sourceTable";
+import { getList } from "./transferFunction";
 
 export default function TransferTable({ data, data2, setData2 }) {
   const dispatch = useDispatch();
@@ -38,32 +38,24 @@ export default function TransferTable({ data, data2, setData2 }) {
   // =============== 畫面二 ====================
   // checkbox table
   const tableHeader2 = [
-    { label: "", key: "checkbox", width: `48px` },
+    { label: "", key: "checkbox", width: `10%` },
     { label: "產品品號", key: "PRT_NO", width: `60%` },
-    { label: "調出數量", key: "BOX_PACK", width: `30%` },
+    { label: "調入數量", key: "PP_NO", width: `30%` },
   ];
+
+      const tableHeader3 = [
+    { label: "", key: "checkbox", width: `10%` },
+    { label: "產品品號", key: "PRT_NO", width: `60%` },
+    { label: "調出數量", key: "PP_NO", width: `20%` },
+    { label: "動作", key: "", width: `10%` },
+  ];
+  
   useEffect(() => {
     if (!waveNo) return;
-    getList();
+    getList(waveNo, setData2);
   }, [shelfItem]);
-  const getList = async () => {
-    try {
-      const res = await getTransferByWID(waveNo);
-      if (res.data.success) {
-        const detail = res.data.data; // 陣列
-        const newDetail = detail.map((v) => ({
-          ...v,
-          type: "new",
-          checked: false,
-        }));
-        setData2(newDetail);
-      }
-    } catch (err) {
-      console.warn("getList :", err);
-    }
-  };
 
-  // ======== select ==========
+
   //  全選 / 全不選
   const selectAllRef = useRef(null);
   const handleSelectAll = (allData, idKey) => {
@@ -76,8 +68,10 @@ export default function TransferTable({ data, data2, setData2 }) {
     }
   };
 
+  // 控制全選按鈕
   useEffect(() => {
     if (!selectAllRef.current) return;
+
 
     // 本頁可選取的資料（排除 shortage）
     const validData = data2.filter((item) => !item.shortage);
@@ -91,8 +85,8 @@ export default function TransferTable({ data, data2, setData2 }) {
   return (
     <>
       {step <= 2 && <NoCheckBoxTable headers={tableHeader} data={data} type="radio" name="transfer" variants="green" idKey="INSTOCK_NO" checked={orderCode} onChange={handleSelectedOption} />}
-      {currentStation === 'A01' && step > 2 && <PurposeTable height={`65vh`} headers={tableHeader2} data={data2} name="transfer2" idKey="INSTOCK_NO" />}
-      {currentStation !== 'A01' && step > 2 && <SourceTable height={`65vh`} headers={tableHeader2} data={data2} type="checkbox" name="transfer2" idKey="OUTSTOCK_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} />}
+      {currentStation === "A01" && step > 2 && <PurposeTable height={`65vh`} headers={tableHeader2} data={data2} name="transfer1" idKey="INSTOCK_NO" />}
+      {currentStation !== "A01" && step > 2 && <SourceTable height={`65vh`} headers={tableHeader3} data={data2} type="checkbox" name="transfer2" idKey="OUTSTOCK_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} />}
     </>
   );
 }
