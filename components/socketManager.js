@@ -115,6 +115,10 @@ export default function SocketManager() {
           }
         }
         if (eventData?.action === "push_button") {
+          dispatch(setOutboundExternal({ 
+            station: eventData.STATION, 
+            pushButton: eventData
+          }));
         }
         if (eventData?.action === "show_msg") {
         }

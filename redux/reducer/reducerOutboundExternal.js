@@ -10,7 +10,8 @@ const createStation = () => ({
   order: {}, // 銷貨單的內容
   shelf: {},// 貨架到站後的資料
   shelfItem: [], // 貨架上的資料
-  selected: [] // 目前選擇
+  selected: [], // 目前選擇
+  pushButton: null // 實體按鈕
 });
 
 const initialState = stationList.reduce(
@@ -27,7 +28,7 @@ const outboundExternalSlice = createSlice({
   initialState,
   reducers: {
     setOutboundExternal: (state, action) => {
-      const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation } = action.payload;
+      const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation, pushButton } = action.payload;
       // 沒有指定站點的話不執行
       if (!state[station]) return;
 
@@ -40,6 +41,7 @@ const outboundExternalSlice = createSlice({
       if (shelf !== undefined) state[station].shelf = shelf;
       if (shelfItem !== undefined) state[station].shelfItem = shelfItem;
       if (selected !== undefined) state[station].selected = selected;
+      if (pushButton !== undefined) state[station].pushButton = pushButton;
       if (orderList !== undefined) state.orderList = [...new Set([...state.orderList, orderList])];
       if (lackStation !== undefined) state.lackStation = [...new Set([...state.lackStation, lackStation])];
     },
@@ -82,6 +84,14 @@ const outboundExternalSlice = createSlice({
         state.orderList = [];
       }
     },
+    
+    // 清除pushbutton
+    clearPushButton: (state, action) => {
+      const { station } = action.payload;
+      if (state[station]) {
+        state[station].pushButton = null;
+      }
+    },
 
     managerOutboundExternal: (state, action) => {
       const { station, name, value, index } = action.payload;
@@ -102,6 +112,7 @@ export const {
   setOutboundExternal, 
   updateLackStation, 
   updateOrderList, 
+  clearPushButton,
   managerOutboundExternal, 
   resetOutboundExternal 
 } = outboundExternalSlice.actions;

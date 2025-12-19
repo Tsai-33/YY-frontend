@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import OutboundExternalTable from "@/components/outboundExternal/outboundExternalTable";
 import { setCurrentStation, updateLackStation } from "@/redux/reducer/reducerWorkStations";
-import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
+import { setOutboundExternal, clearPushButton } from "@/redux/reducer/reducerOutboundExternal";
 import { 
   getOutboundExternal, 
   getOutBoundExternalOrderDetailBySaleNo, 
@@ -46,7 +46,7 @@ export default function OutboundExternal() {
   const currentStationSafe = currentStation || stations?.[0] || "";
   // 避免同一張單被很多站使用
   const { orderList, lackStation } = useSelector((s) => s.outboundExternal);
-  const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
+  const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, pushButton } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
 
   // =====根據銷貨單取得細節=====
   useEffect(() => {
@@ -264,7 +264,18 @@ export default function OutboundExternal() {
     }
   }
 
-  // 退回貨架
+  // ====== 退回貨架 ======
+  // 接收實體按鈕訊號
+  useEffect(() => {
+    if (!pushButton || step !== 3) return;
+    const handlePushButton = async () => {
+      await handleReturnShelf();
+      // 清掉避免再觸發
+      dispatch(clearPushButton({ station: currentStationSafe }));
+    }
+    handlePushButton();
+  }, [pushButton]);
+
   const handleReturnShelf = async () => {
     if (!currentStation) {
       Alert({ html: "抓不到站點位置"});
@@ -314,7 +325,7 @@ export default function OutboundExternal() {
         return;
       }
 
-      // 4. 退回貨架
+      // 3. 退回貨架
       const dataId = generateRandomNumber();
       const data = {
         action: "wcstask",
@@ -328,7 +339,7 @@ export default function OutboundExternal() {
 
       const res = await sendToWMS(data);
       if (res.data.success) {            
-        // 5. 清空該站資料
+        // 4. 清空該站資料
         dispatch(setOutboundExternal({
           station: currentStation,
           step: 1,
@@ -341,10 +352,10 @@ export default function OutboundExternal() {
           selected: []
         }));
 
-        // 6. 清空選擇的陣列
+        // 5. 清空選擇的陣列
         setSelectedArray([]);
 
-        // 7. 從 lackStation 移除該站點
+        // 6. 從 lackStation 移除該站點
         dispatch(updateLackStation({ lackStation: currentStation, type: "sub" }));
 
         Alert({ text: "出庫完成", icon: "success" });
@@ -378,6 +389,24 @@ export default function OutboundExternal() {
       {step === 1 && <PageHeader title={`請點擊清單銷貨單號、銷貨單條碼`} backTo="/workspace" />}
       {orderCode && step === 2 && <PageHeader title={`檢視完出庫資訊確認沒問題，請點擊確定按鈕`} />}
       {step === 3 && <PageHeader title={`整板拉走後或揀選完請點擊實體站點按鈕或介面退回貨架按鈕`} />}
+      {/*{step === 3 && (
+        <button
+          onClick={() => {
+            // 模擬 socket 收到 push_button
+            dispatch(setOutboundExternal({
+              station: currentStationSafe,
+              pushButton: {
+                action: "push_button",
+                STATION: currentStationSafe,
+                PURPOSE: 0
+              }
+            }));
+          }}
+          className="bg-red-500 text-white p-2 rounded"
+        >
+          測試實體按鈕
+        </button>
+      )}*/}
       {/* 主要內容區域 */}
       <div className="flex flex-1 gap-4 px-2 py-8 items-stretch">
         {/* 左側 */}
