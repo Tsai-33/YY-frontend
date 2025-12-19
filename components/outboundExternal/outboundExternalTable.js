@@ -77,6 +77,24 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
         }
     };
 
+    // ============= 預設勾選整箱BOX_NO > 0 零散不勾 =============
+    useEffect(() => {
+        if (step !== 3 || detailTableData.length === 0) return;
+        const fullBoxItems = detailTableData
+            .filter(item => {
+                const boxNo = Number(item.BOX_NO) || 0;
+                return boxNo > 0 && boxNo % 1 === 0;
+            })
+            .map(item => ({
+                PRT_NO: item.PRT_NO,
+                MAKE_NO: item.MAKE_NO,
+                outBoxNo: item.BOX_NO,
+                outPpNo: item.BOX_PACK || 0
+            }));
+
+        setSelectedArray(fullBoxItems);
+    }, [step, detailTableData]);
+
     const checkedMakeNos = selectedArray.map(item => item.MAKE_NO);
 
     return (
