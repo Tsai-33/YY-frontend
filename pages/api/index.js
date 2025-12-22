@@ -56,6 +56,10 @@ export const getWMSByAreaAndPrtNo = (area, prtNo) =>
   api.get(`/shelfTransfer/getWMSByAreaAndPrtNo?area=${area}&prtNo=${prtNo}`);
 export const transferItems = (data) => 
   api.post("/shelfTransfer/transferItems", data);
+export const updateAbnormal = (data) => 
+  api.post("/shelfTransfer/updateAbnormal", data);
+export const getAbnormalStatus = (shelveIds) =>
+  api.get("/shelfTransfer/getAbnormalStatus", { params: { shelveIds } });
 
 /* 盤點任務下發 */
 export const getInventoryItems = (payload) =>

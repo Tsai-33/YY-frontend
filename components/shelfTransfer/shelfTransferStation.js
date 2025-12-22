@@ -1,6 +1,6 @@
 import ActionBtn from "@/components/common/btns/actionBtn";
 import { useDispatch, useSelector } from "react-redux";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
     updateShelveData, 
     updateSelectedItems, 
@@ -9,10 +9,10 @@ import {
     setShelfTransfer,
     resetStation 
 } from "@/redux/reducer/reducerShelfTransfer";
-import { updateTransferItems, sendToWMS, updateShelveCheck, transferItems } from "@/pages/api";
+import { updateTransferItems, sendToWMS, updateShelveCheck, transferItems, updateAbnormal, getAbnormalStatus } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
-import InputFrame from "../common/input/inputFrame";
+import {AlertTriangle} from "lucide-react";
 
 export default function ShelfTransferStation() {
     const dispatch = useDispatch();
@@ -194,6 +194,65 @@ export default function ShelfTransferStation() {
         }
     };
 
+    // ===== 標記異常狀態 =====
+    const [abnormalShelves, setAbnormalShelves] = useState([]);
+    useEffect(() => {
+        // 拿到有資料的貨架
+        const fetchAbnormalStatus = async () => {
+            const shelveIdsWithData = Object.keys(shelveData || {}).filter(
+                id => shelveData[id]?.length > 0
+            );
+
+            if (shelveIdsWithData.length === 0) {
+                setAbnormalShelves([]);
+                return;
+            }
+
+            try {
+                const res = await getAbnormalStatus(shelveIdsWithData);
+                if (res.data.success) {
+                    const abnormalIds = res.data.data
+                        .filter(item => item.ABNORMAL === 1)
+                        .map(item => item.SHELVE_ID);
+
+                    setAbnormalShelves(abnormalIds);
+                }
+            } catch (error) {
+                console.warn("fetchAbnormalStatus:", error);
+            }
+        };
+        fetchAbnormalStatus();
+    }, [shelveData]);
+
+    const handleMarkAbnormal = async (shelveId) => {
+        await Alert({
+            title: "標記異常",
+            text: `確定要將貨架 ${shelveId} 標記為異常嗎？`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "確定",
+            cancelButtonText: "取消",
+            onConfirm: async () => {
+                try {
+                    const res = await updateAbnormal({ shelveId });
+                    if (res.data.success) {
+                        setAbnormalShelves(prev => [...prev, shelveId]);
+                        Alert({ 
+                            title: "已標記異常", 
+                            html: `貨架 ${shelveId} 已標記為異常`,
+                            timer: 1500 
+                        });
+                    } else {
+                        Alert({ title: "標記失敗", html: res.data.message || "標記失敗" });
+                    }
+                } catch (error) {
+                    console.warn("markAbnormal:", error);
+                }
+            }
+        });
+    };
+
+
     return (
         <>
             <div className="flex flex-col h-screen p-4 bg-gray-100">
@@ -296,14 +355,45 @@ export default function ShelfTransferStation() {
                                     `}
                                 >
                                     {/* 貨架編號 */}
-                                    <div className={`text-xl font-bold text-center mb-2 pb-2 border-b-2 border-gray-300 ${
+                                    <div className={`flex justify-between text-xl font-bold text-center mb-2 pb-2 border-b-2 border-gray-300 ${
                                         isLastOne ? 'text-gray-400' : ''
                                     } ${
                                         isActive ? 'text-green-600' : ''
                                     } ${
                                         targetShelve === shelveId ? 'text-blue-600' : ''
                                     }`}>
-                                        {shelveId}
+                                        <div className="w-10"></div>
+                                        <span className={`text-3xl font-bold transition-colors ${
+                                            abnormalShelves.includes(shelveId)
+                                                        ? "text-red-600"
+                                                        : "text-black"
+                                        }`}>{shelveId}</span>
+                                        {!isEmptySlot && hasData && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleMarkAbnormal(shelveId);
+                                                }}
+                                                disabled={abnormalShelves.includes(shelveId)}
+                                                className={`w-10 p-1 rounded transition-colors ${
+                                                    abnormalShelves.includes(shelveId)
+                                                        ? "cursor-not-allowed"
+                                                        : "hover:bg-gray-200"
+                                                }`}
+                                                title={abnormalShelves.includes(shelveId) ? "已標記異常" : "標記異常"}
+                                            >
+                                                <AlertTriangle 
+                                                    className={`w-8 h-8 mx-auto transition-colors ${
+                                                        abnormalShelves.includes(shelveId)
+                                                            ? "text-red-500"
+                                                            : "text-gray-400"
+                                                    }`}
+                                                />
+                                            </button>
+                                        )}
+                                        {!hasData && (
+                                            <div className="w-10"></div>
+                                        )}
                                     </div>
                                     {isEmptySlot ? (
                                         <div className="flex-1 flex items-center justify-center text-gray-300"></div>
