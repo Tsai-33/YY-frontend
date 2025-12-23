@@ -31,11 +31,14 @@ const LOGO_PATH = "/common/YY-Logo.svg";
 export default function Layout({ children }) {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { isAuthenticated, userName, userRole } = useSelector((state) => state.user);
+  const { isAuthenticated, userName, userRole } = useSelector(
+    (state) => state.user
+  );
 
   const path = router.pathname;
 
-  const mainClass = path === "/" ? "flex-1" : "flex-1 flex flex-col gap-2 my-5 mx-4 relative";
+  const mainClass =
+    path === "/" ? "flex-1" : "flex-1 flex flex-col gap-2 my-5 mx-4 relative";
 
   // 處理登出
   const handleLogout = async () => {
@@ -76,11 +79,15 @@ export default function Layout({ children }) {
       <header className="shrink-0 h-19 w-full max-w-full px-4 bg-white flex items-center justify-between z-20">
         {/* Logo */}
         <Link href="/">
-          <img src={LOGO_PATH} alt="YOHO Logo" className="h-12 w-auto object-contain" />
+          <img
+            src={LOGO_PATH}
+            alt="YOHO Logo"
+            className="h-12 w-auto object-contain"
+          />
         </Link>
 
         {/* 登入/登出按鈕 */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-10 text-(length:--font-size-2xl)">
           {isAuthenticated ? (
             <>
               {userName &&
@@ -89,10 +96,10 @@ export default function Layout({ children }) {
                   if (role !== "user") {
                     return (
                       <Link href="/usermanage">
-                        <span className="text-gray-700 font-medium cursor-pointer hover:underline">
-                          <i className="icon-user"></i>
+                        <div className="flex items-center gap-2 text-gray-700 font-medium cursor-pointer hover:underline">
+                          <span className="icon-user"></span>
                           {userName}
-                        </span>
+                        </div>
                       </Link>
                     );
                   } else {
@@ -104,12 +111,16 @@ export default function Layout({ children }) {
                     );
                   }
                 })()}
-              <button onClick={handleLogout} className="text-gray-700 hover:text-red-600 font-medium transition-colors cursor-pointer">
+              <button
+                onClick={handleLogout}
+                className="text-gray-700 hover:text-red-600 font-medium transition-colors cursor-pointer">
                 登出 Logout
               </button>
             </>
           ) : (
-            <button onClick={handleLogin} className="text-gray-700 hover:text-[var(--green-vivid)] font-medium transition-colors cursor-pointer">
+            <button
+              onClick={handleLogin}
+              className="text-gray-700 hover:text-(--green-vivid) font-medium transition-colors cursor-pointer">
               登入 Login
             </button>
           )}
@@ -121,8 +132,12 @@ export default function Layout({ children }) {
       </main>
 
       {/* 依照路由渲染不同面板 */}
-      {path.startsWith("/inbound") && <InboundManager isOpen={open} onClose={() => setOpen(false)} />}
-      {path.startsWith("/transfer") && <TransferManager isOpen={open} onClose={() => setOpen(false)} />}
+      {path.startsWith("/inbound") && (
+        <InboundManager isOpen={open} onClose={() => setOpen(false)} />
+      )}
+      {path.startsWith("/transfer") && (
+        <TransferManager isOpen={open} onClose={() => setOpen(false)} />
+      )}
     </div>
   );
 }

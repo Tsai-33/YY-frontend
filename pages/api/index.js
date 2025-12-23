@@ -39,6 +39,8 @@ export const shiftOutByBarcode = (data) => api.post("/api/outboundExternal/shift
 
 /* 庫存查詢 */
 export const searchStock = (payload) => api.post("/stock/stockQuery", payload);
+export const searchStockDetail = (payload) =>
+  api.post("/stock/stockQueryDetail", payload);
 
 /* 理貨 */
 export const getShelfTransfer = () => api.get("/shelfTransfer/getShelfTransfer");

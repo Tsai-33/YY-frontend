@@ -5,14 +5,14 @@ import {
   setPage,
   setBatchNo,
 } from "@/redux/reducer/reducerInventory";
-import ActionBtn from "@/components/common/btns/actionBtn";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
 import TextInput from "@/components/common/input/textInput";
 import SelectInput from "@/components/common/input/selectInput";
-import OnlyReadTable from "@/components/common/table/onlyReadTable";
-import { getInventoryItems, createInventoryTask } from "../../pages/api";
 import DateInput from "../common/input/dateInput";
 import Modal from "../common/modal/modal";
+import ReadTable from "./readTable";
+import { getInventoryItems, createInventoryTask } from "../../pages/api";
+import CheckInput from "../common/input/checkInput";
 
 export default function InventoryTable() {
   const dispatch = useDispatch();
@@ -42,6 +42,7 @@ export default function InventoryTable() {
     CUS_NO: "",
     CHECK_TIME_START: "",
     CHECK_TIME_END: "",
+    HAS_EXCEPTION: false,
   });
 
   const [stockData, setStockData] = useState([]);
@@ -123,6 +124,7 @@ export default function InventoryTable() {
                 cusNo: payload.CUS_NO,
                 saleNo: payload.SALE_NO,
                 prtNo: payload.PRT_NO,
+                hasException: payload.HAS_EXCEPTION,
               },
             },
           })
@@ -178,8 +180,8 @@ export default function InventoryTable() {
 
       {/* 主要內容區域 */}
       <div className="flex-1 flex flex-col justify-between">
-        <div className="flex justify-between">
-          <div className="flex gap-4">
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-4 gap-10">
             <SelectInput
               label="入庫庫別:"
               value={filters.STOCK_AREA}
@@ -202,54 +204,67 @@ export default function InventoryTable() {
               label="訂單/工單單號:"
               value={filters.SALE_NO}
               onChange={(e) => handleChange("SALE_NO", e.target.value)}
-              className="w-50"
               disabled={stockData.length > 0}
             />
             <TextInput
               label="產品品號:"
               value={filters.PRT_NO}
               onChange={(e) => handleChange("PRT_NO", e.target.value)}
-              className="w-45"
               disabled={stockData.length > 0}
             />
             <TextInput
               label="客戶代號:"
               value={filters.CUS_NO}
               onChange={(e) => handleChange("CUS_NO", e.target.value)}
-              className="w-40"
               disabled={stockData.length > 0}
             />
+          </div>
+          <div className="grid grid-cols-3 gap-10 items-center">
             <DateInput
               label="時間區間："
               onClick={() => setTimeModalOpen(true)}
               timeRangeText={timeRangeText}
-              className="w-70"
               disabled={stockData.length > 0}
             />
+            <CheckInput
+              label={"標註異常資料"}
+              onChange={(e) => handleChange("HAS_EXCEPTION", e.target.checked)}
+              checked={filters.HAS_EXCEPTION}
+              disabled={stockData.length > 0}
+            />
+            <div className="flex gap-5 justify-end">
+              <button
+                className="px-4 py-2 bg-gray-400 text-white rounded-md text-lg font-bold"
+                onClick={() => {
+                  setFilters({
+                    STOCK_AREA: "",
+                    SALE_NO: "",
+                    PRT_NO: "",
+                    CUS_NO: "",
+                  });
+                  setTempTime({ start: "", end: "" });
+                  setStockData([]);
+                  dispatch(
+                    setInventory({
+                      station: "*",
+                      data: { prtNo: "", stockArea: "", cusNo: "", saleNo: "" },
+                    })
+                  );
+                }}>
+                清除
+              </button>
+              <button
+                className={`px-4 py-2 ${
+                  stockData.length === 0 ? "bg-blue-600" : "bg-orange-600"
+                }  text-white rounded-md text-lg font-bold`}
+                onClick={stockData.length === 0 ? handleSearch : handleComfirm}>
+                {stockData.length === 0 ? "查詢" : "確定"}
+              </button>
+            </div>
           </div>
-          <button
-            className="px-4 py-2 bg-gray-400 text-white rounded-md text-lg font-bold"
-            onClick={() => {
-              setFilters({
-                STOCK_AREA: "",
-                SALE_NO: "",
-                PRT_NO: "",
-                CUS_NO: "",
-              });
-              setTempTime({ start: "", end: "" });
-              setStockData([]);
-              dispatch(
-                setInventory({
-                  station: "*",
-                  data: { prtNo: "" },
-                })
-              );
-            }}>
-            清除
-          </button>
         </div>
         <div>
-          <OnlyReadTable
+          <ReadTable
             headers={tableHeader}
             data={stockData || []}
             type="radio"
@@ -258,14 +273,6 @@ export default function InventoryTable() {
             idKey="INDEX"
           />
         </div>
-      </div>
-      {/* 底部按鈕區域 */}
-      <div className="w-full flex justify-center">
-        <ActionBtn
-          text={stockData.length === 0 ? "檢視" : "確定"}
-          variant={stockData.length === 0 ? "darkBlue" : "orange"}
-          onClick={stockData.length === 0 ? handleSearch : handleComfirm}
-        />
       </div>
 
       <Modal

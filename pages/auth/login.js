@@ -175,9 +175,9 @@ export default function Login() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors">
                     {showPassword ? (
-                      <span className="text-lg">👁️</span>
+                      <span className="icon-openEye"></span>
                     ) : (
-                      <span className="text-lg">👁️‍🗨️</span>
+                      <span className="icon-closeEye"></span>
                     )}
                   </button>
                 </div>
