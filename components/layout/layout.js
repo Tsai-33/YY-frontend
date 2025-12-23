@@ -9,6 +9,7 @@ import ProtectedRoute from "../common/ProtectedRoute";
 import InboundManager from "../inbound/inboundManager";
 import OutboundExternalManager from "../outboundExternal/outboundExternalManager";
 import TransferManager from "../transfer/transferManager";
+import InventoryManage from "../inventory/inventoryManage";
 
 // 控制面板
 
@@ -137,6 +138,9 @@ export default function Layout({ children }) {
       )}
       {path.startsWith("/transfer") && (
         <TransferManager isOpen={open} onClose={() => setOpen(false)} />
+      )}
+      {path.startsWith("/inventory") && (
+        <InventoryManage isOpen={open} onClose={() => setOpen(false)} />
       )}
     </div>
   );

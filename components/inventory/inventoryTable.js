@@ -241,6 +241,7 @@ export default function InventoryTable() {
                     SALE_NO: "",
                     PRT_NO: "",
                     CUS_NO: "",
+                    HAS_EXCEPTION: 0,
                   });
                   setTempTime({ start: "", end: "" });
                   setStockData([]);

@@ -14,7 +14,8 @@ import ActionBtn from "@/components/common/btns/actionBtn";
 import PageHeader from "../common/pageHeader/pageHeader";
 import CheckTable from "../common/table/checkTable";
 import SchematicDiagram from "../diagram/schematicDiagram";
-import { updateInventoryResult } from "@/pages/api";
+import { sendToWMS, updateInventoryResult } from "@/pages/api";
+import { generateRandomNumber } from "@/utils/random";
 
 export default function InventoryShelf() {
   const dispatch = useDispatch();
@@ -265,6 +266,44 @@ export default function InventoryShelf() {
     }
   };
 
+  // 下線
+  const submitToOffline = async () => {
+    dispatch(
+      setInventory({
+        station: "*",
+        data: { screen: "loading" },
+      })
+    );
+    try {
+      const random9 = generateRandomNumber();
+      const data = {
+        action: "cancel",
+        dataid: random9,
+        STATION: currentStation,
+      };
+      const res = await sendToWMS(data);
+      if (res.data.success) {
+        dispatch(setPage("inventory-table"));
+        dispatch(setBatchNo(null));
+        dispatch(
+          setInventory({
+            station: "*",
+            data: { screen: "idle" },
+          })
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      dispatch(
+        setInventory({
+          station: "*",
+          data: { screen: "idle" },
+        })
+      );
+    }
+  };
+
   return (
     <>
       {/* 頂部區域 */}
@@ -319,12 +358,17 @@ export default function InventoryShelf() {
             <div className="w-full flex justify-center relative">
               <ActionBtn
                 text="確定"
+                icon="icon-check"
                 variant="orange"
                 disabled={!canSubmitToERP}
                 onClick={submitToBackend}
               />
               <div className="absolute right-0">
-                <ActionBtn text="下線" variant="orange" />
+                <ActionBtn
+                  text="下線"
+                  variant="orange"
+                  onClick={submitToOffline}
+                />
               </div>
             </div>
           </div>
