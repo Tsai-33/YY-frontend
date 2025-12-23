@@ -8,6 +8,7 @@ import { logout as logoutAPI } from "@/pages/api/authService";
 import ProtectedRoute from "../common/ProtectedRoute";
 import InboundManager from "../inbound/inboundManager";
 import OutboundExternalManager from "../outboundExternal/outboundExternalManager";
+import ShelfTransferManager from "../shelfTransfer/shelfTransferManager";
 
 
 // 控制面板
@@ -133,6 +134,12 @@ export default function Layout({ children }) {
       {/* 依照路由渲染不同面板 */}
       {path.startsWith("/inbound") && (
         <InboundManager isOpen={open} onClose={() => setOpen(false)} />
+      )}
+      {path.startsWith("/outboundExternal") && (
+        <OutboundExternalManager isOpen={open} onClose={() => setOpen(false)} />
+      )}
+      {path.startsWith("/shelfTransfer") && (
+        <ShelfTransferManager isOpen={open} onClose={() => setOpen(false)} />
       )}
     </div>
   );

@@ -147,6 +147,27 @@ export default function ActionBtn({ icon, text, variant, onClick, disabled, clas
     disabled:border-white 
     disabled:text-[#73737380]
       `,
+
+    gray: `
+      bg-[#6B7280] 
+      border border-[#9CA3AF] 
+      text-white 
+      hover:bg-[#4B5563] 
+      hover:border-white 
+      hover:text-white 
+      focus:bg-[#9CA3AF] 
+      focus:border-white 
+      focus:text-[#374151] 
+      focus:hover:bg-[#9CA3AF] 
+      focus:hover:border-white 
+      focus:hover:text-[#374151]
+      disabled:opacity-80 
+      disabled:cursor-not-allowed 
+      disabled:pointer-events-none 
+      disabled:border-white 
+      disabled:bg-[#D1D5DB]
+      disabled:text-[#9CA3AF]
+    `,
   };
   return (
     <>

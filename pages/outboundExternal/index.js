@@ -210,7 +210,7 @@ export default function OutboundExternal() {
   // ===== 確認出庫單 =====
   const handleOrderConfrim = async () => {
     if (!waveNo) {
-          Alert({ title: "您未選擇入倉單" });
+          Alert({ title: "您未選擇出庫單" });
           return;
         }
     setLoading(true);

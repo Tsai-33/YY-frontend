@@ -258,12 +258,12 @@ export default function ShelfTransferStation() {
             <div className="flex flex-col h-screen p-4 bg-gray-100">
                 <div className="bg-white rounded-lg shadow-md p-4 mb-4">
                     <div className="flex items-center justify-between mb-2">
-                        <div className="text-2xl font-bold">理貨工作站B01-B05</div>
+                        <div className="text-4xl font-bold">理貨工作站B01-B05</div>
                         <div className="text-2xl flex justify-center flex-1 text-black font-bold">
                             請在一個貨架編號下方選擇理貨的貨物,再選擇要移動到的目的貨架編號點擊確定按鈕
                         </div>
                     </div>
-                    <div className="text-lg text-gray-600 mb-3">
+                    <div className="text-xl text-black font-bold mb-3">
                         {mode === "order" ? "訂單單號：" + orderCode : "入庫倉別：" + orderCode}
                     </div>
                     {/* 下拉選貨架、確定按鈕 */}
@@ -273,9 +273,9 @@ export default function ShelfTransferStation() {
                             <button
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                 disabled={!activeShelveId}
-                                className={`px-4 py-2 rounded-lg text-base font-medium flex items-center gap-2 transition-colors ${
+                                className={`px-4 py-2 rounded-lg text-3xl font-medium flex items-center gap-2 transition-colors ${
                                     activeShelveId
-                                        ? "bg-gray-400 text-white hover:bg-gray-500"
+                                        ? "bg-gray-500 text-white hover:bg-gray-500"
                                         : "bg-gray-200 text-gray-400 cursor-not-allowed"
                                 }`}
                             >
@@ -309,7 +309,7 @@ export default function ShelfTransferStation() {
                         <ActionBtn
                             icon={"icon-check"} 
                             text={"確定"}
-                            variant={"violet"}
+                            variant={"gray"}
                             onClick={handleConfirm}
                             disabled={!confirmCheck()}
                         />
