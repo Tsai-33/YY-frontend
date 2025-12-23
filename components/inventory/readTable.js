@@ -1,11 +1,8 @@
 import React from "react";
 
-export default function NoCheckBoxTable({
+export default function ReadTable({
   headers = [],
   data = [],
-  type,
-  name,
-  onChange,
   checked,
   idKey,
   height,
@@ -15,7 +12,7 @@ export default function NoCheckBoxTable({
 
   return (
     <div
-      className="w-full bg-[var(--white)] border border-white rounded-md text-center overflow-y-auto custom-scrollbar"
+      className="w-full bg-(--white) border border-white rounded-md text-center overflow-y-auto custom-scrollbar"
       style={{
         height: containerHeight,
         maxHeight: innerHeight,
@@ -23,13 +20,13 @@ export default function NoCheckBoxTable({
         "--scrollbar-thumb-hover-color": `var(--green-vivid)`,
       }}>
       {/* 表頭 */}
-      <table className="table-auto w-full font-bold">
+      <table className="table-auto w-full text-black text-(length:--font-size-2xl) font-bold">
         <thead className="sticky top-0 bg-white z-5">
-          <tr className={`font-bold text-black bg-[var(--gray-light)]`}>
+          <tr className={`bg-(--gray-light)`}>
             {headers.map((header, idx) => (
               <th
                 key={idx}
-                className="px-4 py-2 whitespace-pre-line bg-[var(--gray-light)]"
+                className="px-4 py-2 whitespace-pre-line bg-(--gray-light)"
                 style={{
                   width: `${header.width}`,
                   boxShadow: "inset 0 0 0 1px #ffffff",
@@ -45,13 +42,9 @@ export default function NoCheckBoxTable({
           {data.map((row, ridx) => (
             <tr
               key={ridx}
-              className={`hover:bg-[var(--green-pale)] cursor-pointer ${
-                checked === row[idKey]
-                  ? "bg-[var(--green-vivid-50)] text-white"
-                  : ""
-              }`}
-              onClick={() => onChange("radio", row, idKey)} // ✅ 整行點擊選
-            >
+              className={`hover:bg-(--green-pale) cursor-pointer ${
+                checked === row[idKey] ? "bg-(--green-vivid-50) text-white" : ""
+              }`}>
               <td className="absolute hidden">
                 <input
                   type="radio"
@@ -64,7 +57,7 @@ export default function NoCheckBoxTable({
                 <td
                   key={i}
                   style={{ width: header.width }}
-                  className="border-[var(--green-vivid)] px-4 py-2 border-b truncate">
+                  className="border-(--green-vivid) px-4 py-2 border-b truncate">
                   {header.render ? header.render(row) : row[header.key]}
                 </td>
               ))}
