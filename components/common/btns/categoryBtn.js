@@ -1,7 +1,7 @@
 import React from "react";
 import clsx from "clsx";
 
-export default function CategoryBtn({ icon, text, variant, svgPath }) {
+export default function CategoryBtn({ icon, text, variant, svgPath, onClick }) {
   const base = `
     w-57.5 h-57.5
     rounded-full 
@@ -32,7 +32,9 @@ export default function CategoryBtn({ icon, text, variant, svgPath }) {
   return (
     <>
       <div className="flex flex-col items-center gap-5">
-        <button className={clsx(base, variants[variant]?.btn)}>
+        <button
+          className={clsx(base, variants[variant]?.btn)}
+          onClick={onClick}>
           {svgPath ? (
             <img
               src={svgPath}
