@@ -96,7 +96,7 @@ function UserManage() {
       const response = await getAllUsers();
       if (response.success) {
         setUsers(response.data.users);
-      }else{
+      } else {
         Alert({
           title: "錯誤",
           text: response,
@@ -187,14 +187,14 @@ function UserManage() {
 
   // 權限名稱映射 (中文 -> 英文)
   const PERMISSION_CN_TO_EN = {
-    "入倉": "inbound",
-    "調撥": "transfer",
-    "銷貨": "outboundExternal",
-    "理貨": "shelfTransfer",
-    "庫存查詢": "stockQuery",
-    "盤點": "inventory",
-    "領出": "outboundInternal",
-    "領用": "outboundInternal",
+    入倉: "inbound",
+    調撥: "transfer",
+    銷貨: "outboundExternal",
+    理貨: "shelfTransfer",
+    庫存查詢: "stockQuery",
+    盤點: "inventory",
+    領出: "outboundInternal",
+    領用: "outboundInternal",
   };
 
   // 打开编辑模态框并加载用户数据
@@ -209,15 +209,16 @@ function UserManage() {
       inventory: false,
       outboundInternal: false,
     };
-    
+
     try {
       if (user.Permissions) {
-        const parsedPermissions = typeof user.Permissions === 'string' 
-          ? JSON.parse(user.Permissions) 
-          : user.Permissions;
-        
+        const parsedPermissions =
+          typeof user.Permissions === "string"
+            ? JSON.parse(user.Permissions)
+            : user.Permissions;
+
         // 轉換中文權限名稱為英文
-        Object.keys(parsedPermissions).forEach(cnKey => {
+        Object.keys(parsedPermissions).forEach((cnKey) => {
           const enKey = PERMISSION_CN_TO_EN[cnKey] || cnKey;
           if (permissions.hasOwnProperty(enKey)) {
             permissions[enKey] = parsedPermissions[cnKey];
@@ -232,12 +233,13 @@ function UserManage() {
     }
 
     // 如果 role 是 admin 或 manager，自動設置所有權限為 true
-    const finalPermissions = (user.Role === "admin" || user.Role === "manager")
-      ? Object.keys(permissions).reduce((acc, key) => {
-          acc[key] = true;
-          return acc;
-        }, {})
-      : permissions;
+    const finalPermissions =
+      user.Role === "admin" || user.Role === "manager"
+        ? Object.keys(permissions).reduce((acc, key) => {
+            acc[key] = true;
+            return acc;
+          }, {})
+        : permissions;
 
     setEditingUser({
       userId: user.UserId,
@@ -346,7 +348,7 @@ function UserManage() {
       });
 
       if (response.success && response.data) {
-        if(response.data.length > 0){
+        if (response.data.length > 0) {
           exportUserLogsToExcel(
             response.data,
             downloadUserId,
@@ -358,8 +360,7 @@ function UserManage() {
             text: "下載用戶日志成功",
             confirmButtonColor: "#008b48",
           });
-        }
-        else{
+        } else {
           Alert({
             title: "無資料",
             text: "無資料可下載",
@@ -392,11 +393,7 @@ function UserManage() {
   // 创建新用户
   const handleCreateUser = async () => {
     // 验证输入
-    if (
-      !newUser.username ||
-      !newUser.email ||
-      !newUser.accountNumber
-    ) {
+    if (!newUser.username || !newUser.email || !newUser.accountNumber) {
       Alert({
         title: "錯誤",
         text: "請填寫所有必填字段",
@@ -448,8 +445,7 @@ function UserManage() {
 
         // 刷新用户列表
         fetchUsers();
-      }
-      else {
+      } else {
         Alert({
           title: "創建失敗",
           text: response.message,
@@ -467,7 +463,6 @@ function UserManage() {
       setLoading(false);
     }
   };
-
 
   // 批量删除用户
   const handleBatchDelete = async () => {
@@ -499,8 +494,7 @@ function UserManage() {
             });
             setSelectedUsers([]);
             fetchUsers();
-          }
-          else {
+          } else {
             Alert({
               title: "刪除失敗",
               text: response.message,
@@ -544,7 +538,7 @@ function UserManage() {
 
       <div className="flex flex-col h-full gap-4">
         {/* 页面标题 */}
-        <PageHeader title="權限管理" backTo="/workspace" />
+        <PageHeader title="" backTo="/workspace" />
 
         {/* 操作按钮 */}
         <div className="flex gap-4 px-4">
@@ -567,7 +561,7 @@ function UserManage() {
         <div className="flex-1 px-4 overflow-auto">
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <table className="w-full">
-              <thead className="bg-[var(--green-vivid)] text-white">
+              <thead className="bg-(--green-vivid) text-white">
                 <tr>
                   <th className="p-4 text-left">
                     <input
@@ -578,9 +572,7 @@ function UserManage() {
                       }
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedUsers(
-                            filteredUsers.map((u) => u.UserId)
-                          );
+                          setSelectedUsers(filteredUsers.map((u) => u.UserId));
                         } else {
                           setSelectedUsers([]);
                         }
@@ -616,8 +608,8 @@ function UserManage() {
                         {user.Role === "admin"
                           ? "系統管理人員"
                           : user.Role === "manager"
-                            ? "管理人員"
-                            : "使用者"}
+                          ? "管理人員"
+                          : "使用者"}
                       </span>
                     </td>
                     <td className="p-4">{user.Email}</td>
@@ -625,8 +617,10 @@ function UserManage() {
                     <td className="p-4 text-center">
                       <button
                         onClick={() => handleEditUser(user)}
-                        className="hover:text-[var(--orange-vivid)] transition-colors">
-                        <span className="text-2xl"><i className="icon-edit"></i></span>
+                        className="hover:text-(--orange-vivid) transition-colors">
+                        <span className="text-2xl">
+                          <i className="icon-edit"></i>
+                        </span>
                       </button>
                     </td>
                     <td className="p-4 text-center">
@@ -635,8 +629,10 @@ function UserManage() {
                           setDownloadUserId(user.UserId);
                           setShowDownloadModal(true);
                         }}
-                        className="hover:text-[var(--red-vivid)] transition-colors">
-                        <span className="text-2xl"><i className="icon-download"></i></span>
+                        className="hover:text-(--red-vivid) transition-colors">
+                        <span className="text-2xl">
+                          <i className="icon-download"></i>
+                        </span>
                       </button>
                     </td>
                   </tr>
@@ -665,7 +661,7 @@ function UserManage() {
           {/* 左侧 - 基本信息 */}
           <div className="space-y-4">
             <div>
-              <label className="block text-[var(--green-deep)] font-bold mb-2">
+              <label className="block text-(--green-deep) font-bold mb-2">
                 用戶名稱：
               </label>
               <InputFrame
@@ -679,7 +675,7 @@ function UserManage() {
             </div>
 
             <div>
-              <label className="block text-[var(--green-deep)] font-bold mb-2">
+              <label className="block text-(--green-deep) font-bold mb-2">
                 信箱：
               </label>
               <InputFrame
@@ -693,7 +689,7 @@ function UserManage() {
             </div>
 
             <div>
-              <label className="block text-[var(--green-deep)] font-bold mb-2">
+              <label className="block text-(--green-deep) font-bold mb-2">
                 帳號：
               </label>
               <InputFrame
@@ -710,32 +706,33 @@ function UserManage() {
           {/* 右侧 - 角色和权限设置 */}
           <div className="space-y-4">
             <div>
-              <label className="block text-[var(--green-deep)] font-bold mb-2">
+              <label className="block text-(--green-deep) font-bold mb-2">
                 角色：
               </label>
               <select
                 name="role"
                 value={newUser.role}
                 onChange={handleNewUserChange}
-                className="w-full p-3 border-3 border-[var(--green-vivid)] rounded-md text-lg">
+                className="w-full p-3 border-3 border-(--green-vivid) rounded-md text-lg">
                 <option value="user">使用者</option>
                 <option value="manager">管理人員</option>
                 <option value="admin">系統管理人員</option>
               </select>
             </div>
             <div className="mt-4">
-              <label className="block text-[var(--green-deep)] font-bold mb-2 text-lg">
+              <label className="block text-(--green-deep) font-bold mb-2 text-lg">
                 權限：
               </label>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {Object.keys(newUser.permissions).map((permission) => {
-                  const isDisabled = newUser.role === "admin" || newUser.role === "manager";
+                  const isDisabled =
+                    newUser.role === "admin" || newUser.role === "manager";
                   return (
                     <label
                       key={permission}
                       className={`flex items-center gap-3 p-2 rounded transition-colors ${
-                        isDisabled 
-                          ? "cursor-not-allowed opacity-60 bg-gray-100" 
+                        isDisabled
+                          ? "cursor-not-allowed opacity-60 bg-gray-100"
                           : "cursor-pointer hover:bg-gray-50"
                       }`}>
                       <input
@@ -745,7 +742,9 @@ function UserManage() {
                         disabled={isDisabled}
                         className="w-5 h-5"
                       />
-                      <span className="text-lg">{PERMISSION_MAP[permission] || permission}</span>
+                      <span className="text-lg">
+                        {PERMISSION_MAP[permission] || permission}
+                      </span>
                     </label>
                   );
                 })}
@@ -767,7 +766,7 @@ function UserManage() {
           {/* 左侧 - 基本信息 */}
           <div className="space-y-4">
             <div>
-              <label className="block text-[var(--green-deep)] font-bold mb-2">
+              <label className="block text-(--green-deep) font-bold mb-2">
                 用戶名稱：
               </label>
               <InputFrame
@@ -781,7 +780,7 @@ function UserManage() {
             </div>
 
             <div>
-              <label className="block text-[var(--green-deep)] font-bold mb-2">
+              <label className="block text-(--green-deep) font-bold mb-2">
                 信箱：
               </label>
               <InputFrame
@@ -795,7 +794,7 @@ function UserManage() {
             </div>
 
             <div>
-              <label className="block text-[var(--green-deep)] font-bold mb-2">
+              <label className="block text-(--green-deep) font-bold mb-2">
                 帳號：
               </label>
               <InputFrame
@@ -812,32 +811,34 @@ function UserManage() {
           {/* 右侧 - 角色和权限设置 */}
           <div className="space-y-4">
             <div>
-              <label className="block text-[var(--green-deep)] font-bold mb-2">
+              <label className="block text-(--green-deep) font-bold mb-2">
                 角色：
               </label>
               <select
                 name="role"
                 value={editingUser.role}
                 onChange={handleEditUserChange}
-                className="w-full p-3 border-3 border-[var(--green-vivid)] rounded-md text-lg">
+                className="w-full p-3 border-3 border-(--green-vivid) rounded-md text-lg">
                 <option value="user">使用者</option>
                 <option value="manager">管理人員</option>
                 <option value="admin">系統管理人員</option>
               </select>
             </div>
             <div className="mt-4">
-              <label className="block text-[var(--green-deep)] font-bold mb-2 text-lg">
+              <label className="block text-(--green-deep) font-bold mb-2 text-lg">
                 權限：
               </label>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {Object.keys(editingUser.permissions).map((permission) => {
-                  const isDisabled = editingUser.role === "admin" || editingUser.role === "manager";
+                  const isDisabled =
+                    editingUser.role === "admin" ||
+                    editingUser.role === "manager";
                   return (
                     <label
                       key={permission}
                       className={`flex items-center gap-3 p-2 rounded transition-colors ${
-                        isDisabled 
-                          ? "cursor-not-allowed opacity-60 bg-gray-100" 
+                        isDisabled
+                          ? "cursor-not-allowed opacity-60 bg-gray-100"
                           : "cursor-pointer hover:bg-gray-50"
                       }`}>
                       <input
@@ -847,7 +848,9 @@ function UserManage() {
                         disabled={isDisabled}
                         className="w-5 h-5"
                       />
-                      <span className="text-lg">{PERMISSION_MAP[permission] || permission}</span>
+                      <span className="text-lg">
+                        {PERMISSION_MAP[permission] || permission}
+                      </span>
                     </label>
                   );
                 })}
@@ -873,10 +876,10 @@ function UserManage() {
           <p className="text-center text-gray-700 mb-6">
             請輸入下載紀錄時間區間
           </p>
-          
+
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <label className="block text-[var(--green-deep)] font-bold mb-2">
+              <label className="block text-(--green-deep) font-bold mb-2">
                 起始年/月/日時間：
               </label>
               <InputFrame
@@ -893,11 +896,11 @@ function UserManage() {
                 className="w-full"
               />
             </div>
-            
+
             <span className="text-2xl text-gray-400 mt-8">~</span>
-            
+
             <div className="flex-1">
-              <label className="block text-[var(--green-deep)] font-bold mb-2">
+              <label className="block text-(--green-deep) font-bold mb-2">
                 結束年/月/日時間：
               </label>
               <InputFrame
@@ -921,6 +924,4 @@ function UserManage() {
   );
 }
 
-
 export default UserManage;
-

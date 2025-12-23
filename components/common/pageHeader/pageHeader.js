@@ -18,13 +18,31 @@ export default function PageHeader({ title, backTo = "/", close }) {
     router.push(backTo);
   };
 
+  const titleRuleMap = {
+    "/usermanage": { type: "fixed", text: "權限管理" },
+    "/stockQuery": { type: "jobOnly" },
+
+    // 其他頁面預設 job + station
+  };
+
+  const getTitleText = () => {
+    const rule = titleRuleMap[router.pathname];
+
+    if (!rule) {
+      return `${currentJob || ""}${currentStation || ""}`;
+    }
+
+    if (rule.type === "fixed") return rule.text;
+    if (rule.type === "jobOnly") return currentJob || "";
+
+    return "";
+  };
+
   return (
     <div className="relative w-full flex items-center justify-between">
       {/* 左邊 */}
       <div className="text-(length:--font-size-6xl) font-bold text-(--green-deep)">
-        {router.pathname === "/stockQuery"
-          ? currentJob || ""
-          : `${currentJob || ""}${currentStation || ""}`}
+        {getTitleText()}
       </div>
 
       {/* 中間 */}
