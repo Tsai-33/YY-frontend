@@ -107,6 +107,7 @@ export default function SocketManager() {
                 screen: "working",
                 shelf: eventData,
                 shelfItem: eventData?.ITEMS,
+                job: eventData?.Job,
                 step: 3,
               })
             );

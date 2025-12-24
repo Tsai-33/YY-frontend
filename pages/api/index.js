@@ -4,10 +4,6 @@ import { api } from "./service";
 export const getIP = () => api.get("/system/getIP");
 
 /* 取得調撥單 */
-export const getTransfer = () => api.get("/transfer");
-export const getTransferDetail = () => api.get("/transfer/detail");
-export const getTransferByCMDID = () => api.get(`/transfer/cmdid`);
-export const getTransferByWID = (wid) => api.get(`/transfer/wid/${wid}`);
 export const addTransferWCS = (payload) => api.post("/transfer/add/wcs", payload);
 export const updateTransferWMS = (payload) => api.post("/transfer/update/wms", payload);
 export const finishTransferOrder = (payload) => api.post("/transfer/finish/order", payload);
@@ -58,16 +54,13 @@ export const updateInventoryResult = (payload) => api.post("/inventory/updateInv
 /* 傳給labview */
 export const sendToWMS = (payload) => api.post("/send-to-wms", payload, { timeout: 45000 });
 
-/* 叫車 */
+/* 檢查 */
 export const checkWCS = (payload) => api.post("/wcs/check", payload);
-export const checkWCSWaveno = (payload) => api.post("/wcs/check/waveno", payload);
 
 /* 共用API */
-export const getOrder = (payload) => api.get("/order/cmdid", { params: { cmdid: payload } });
+export const getOrder = (payload) => api.get("/order/cmdid", { params: { cmd: payload } });
 export const getOrderByWID = (payload) => api.get("/order/wid", { params:{ wid: payload } });
-export const getOrderDetailByWID = (payload) => api.get("/order/detail", { params:{ wid: payload } });
-export const checkNODEPOS = (payload) => api.post("/wcs/check/nodepos", payload);
-export const addWCS = (payload) => api.post("/wcs/add", payload);
-export const addWCSGroup = (payload) => api.post("/wcs/add/group", payload);
+export const getOrderDetail = (payload) => api.get("/order/detail", { params:{ cmd: payload } });
+export const getOrderDetailByWID = (payload) => api.get("/order/detail/wid", { params:{ wid: payload } });
+
 export const addShelf = (payload) => api.post("/wcs/add", payload);
-export const cancelShelf = (payload) => api.post("/wcs/cancel", payload);

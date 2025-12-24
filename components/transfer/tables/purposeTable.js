@@ -50,7 +50,7 @@ export default function PurposeTable({ headers = [], data = [], height }) {
                     return (
                       <td key={i}>
                         <label className="relative cursor-pointer flex items-center justify-center">
-                          <span className="font-bold text-sm">{row.STATUS === 2 ? "V" : "　"}</span>
+                          <span className="font-bold text-sm">{row.STATUS == 2 ? "V" : "　"}</span>
                         </label>
                       </td>
                     );

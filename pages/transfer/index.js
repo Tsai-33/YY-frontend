@@ -18,7 +18,7 @@ export default function Transfer() {
     dispatch(setCurrentStation(station));
   };
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { step, lackStation } = useSelector((s) => s.transfer);
+  const { step} = useSelector((s) => s.transfer);
   const { screen } = useSelector((s) => s.transfer[currentStationSafe] || {});
 
   const barCodeRef = useRef(null);
@@ -48,8 +48,9 @@ export default function Transfer() {
     const passSN = `${prefix}-${year}${month}${day}${seq}`;
 
     barCodeRef.current.value = passSN;
-    barCodeRef.current.focus();
   };
+
+
   return (
     <>
       <TransferTitle />

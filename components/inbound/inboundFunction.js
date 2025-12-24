@@ -1,15 +1,18 @@
-import { addInboundWCS, addShelf, restoreOrders, checkNODEPOS, checkWCS, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderByWID, getOrderDetailByWID } from "@/pages/api";
+import { addInboundWCS, addShelf, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderByWID, getOrderDetailByWID, checkInboundWCS, checkWCS } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
+import Alert from "../common/alert/alert";
 
 // 取得ERP資料
-export const getERP = async (setLoading, inputBarCode,setTableData, orderList) => {
+export const getERP = async (setLoading, inputBarCode, setTableData, orderList) => {
   setLoading(true);
   try {
     const random = generateRandomNumber();
     const data = { action: "ask_order", NO: inputBarCode, dataid: random };
     const res = await sendToWMS(data);
-    if (res.data.success) {
+    if (res?.success) {
       getTable(setTableData, orderList);
+    } else if (!res?.success) {
+      Alert({ title: `${res?.error?.message}` });
     }
   } catch (error) {
     console.warn(`ask_order handleBarCode :`, error);
@@ -22,13 +25,15 @@ export const getERP = async (setLoading, inputBarCode,setTableData, orderList) =
 export const getTable = async (setTableData, orderList = null) => {
   try {
     const res = await getOrder("I");
-    if (res.data.success) {
+    if (res?.success) {
       let newData = res.data.data;
       if (orderList) {
         // 排除掉重複訂單
         newData = res.data.data.filter((v) => !orderList.includes(v.INSTOCK_NO));
       }
       setTableData(newData);
+    } else if (!res?.success) {
+      Alert({ title: `目前網路不穩定，請重新再試。` });
     }
   } catch (err) {
     console.warn(`getTable:`, err);
@@ -39,10 +44,12 @@ export const getTable = async (setTableData, orderList = null) => {
 export const getList = async (waveNo, setTableData2) => {
   try {
     const res = await getOrderDetailByWID(String(waveNo));
-    if (res.data.success) {
+    if (res?.success) {
       const detail = res.data.data; // 陣列
-      const newDetail = detail.map((v) => ({ ...v, type: "new", checked: false }));
+      const newDetail = detail.filter((v) => v.STATUS == 1);
       setTableData2(newDetail);
+    } else if (!res?.success) {
+      Alert({ title: `目前網路不穩定，請重新再試。` });
     }
   } catch (err) {
     console.warn("getList :", err);
@@ -83,10 +90,7 @@ export const onToShelf_in = async (setLoading, selected, shelf, order, dispatch,
 export const addShelf_in = async (setLoading, setAddModal, shelf, order) => {
   try {
     setLoading(true);
-    const res = await addInboundWCS({ area: shelf?.area, W_ID: order?.W_ID });
-    if (res.data.success) {
-      console.log(res.data, "wcstask收到資料");
-    }
+    return await addInboundWCS({ area: shelf?.area, W_ID: order?.W_ID });
   } catch (err) {
     console.warn("handleAddShelf :", err);
   } finally {
@@ -136,10 +140,10 @@ export const restoreList_in = async (setLoading, waveNo) => {
 };
 
 // 完成
-export const finishList_in = async (setLoading, order) => {
+export const finishList_in = async (setLoading, order, shelf) => {
   setLoading(true);
   try {
-    return await finishInboundOrder({ W_ID: order.W_ID });
+    return await finishInboundOrder({ W_ID: order.W_ID, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, area: shelf.area });
   } catch (err) {
     console.warn(`handleFinish:`, err);
   } finally {
@@ -150,8 +154,7 @@ export const finishList_in = async (setLoading, order) => {
 // 檢查是否有任務
 export const checkCar = async (waveNo) => {
   try {
-    const [wcs, nodepos] = await Promise.all([checkWCS({ W_ID: waveNo }), checkNODEPOS({ W_ID: waveNo })]);
-    return { wcs, nodepos };
+    return await checkWCS({ W_ID: waveNo });
   } catch (err) {
     console.warn(`handleReturnShelf:`, err);
   }

@@ -5,6 +5,7 @@ const createStation = () => ({
   shelf: {}, // default ITEMS 這裡取
   shelfItem: [], // 目前貨架上的物品
   selected: [], // 目前選擇
+  job: [], // 要顯示的單據
 });
 
 const initialState = {
@@ -12,7 +13,6 @@ const initialState = {
   orderCode: "",
   waveNo: null,
   order: {},
-  lackStation: [],
 };
 
 const transferSlice = createSlice({
@@ -27,7 +27,7 @@ const transferSlice = createSlice({
       }
     },
     setTransfer: (state, action) => {
-      const { step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation } = action.payload;
+      const { step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, job } = action.payload;
       if (!state[station]) return;
 
       if (step !== undefined) state.step = step;
@@ -38,18 +38,22 @@ const transferSlice = createSlice({
       if (shelf !== undefined) state[station].shelf = shelf;
       if (shelfItem !== undefined) state[station].shelfItem = shelfItem;
       if (selected !== undefined) state[station].selected = selected;
-      if (lackStation !== undefined) state.lackStation = [...new Set([...state.lackStation, lackStation])];
+      if (job !== undefined) {
+        const newJob = job.map((v) => ({ OUTSTOCK_NO: state.orderCode, BOX_NO: v.Est_Boxes, PP_NO: v.Est_PPs, PRT_NO: v.Est_PRT_NO, AREA: v.MEMO }));
+        state[station].job = newJob;
+      }
     },
     setAllLoading: (state, action) => {
-       const { stations } = action.payload;
-       console.log(stations,'stations')
+      const { stations } = action.payload;
       stations.map((v) => {
         state[v].screen = "loading";
       });
     },
     updateShelfItem: (state, action) => {
-      const { station, items } = action.payload;
+      const { station, items, ppStation } = action.payload;
       if (!state[station]) return;
+
+      console.log(station, items, ppStation, "123");
 
       // 來源扣除
       state[station].shelfItem = state[station].shelfItem.map((v) => {
@@ -61,27 +65,26 @@ const transferSlice = createSlice({
       });
 
       // 目的加入
-      state["A01"].shelfItem = state["A01"].shelfItem.map((v) => {
+      state[ppStation].shelfItem = state[ppStation].shelfItem.map((v) => {
         const matched = items.find((i) => i.PRT_NO === v.PRT_NO);
         if (matched) {
           return { ...v, PP_NO: v.PP_NO + matched.PP_NO, BOX_NO: v.BOX_NO + matched.BOX_NO };
         }
         return v;
       });
+
+      // JOB移除
+      const removeSet = new Set(items.map((i) => i.PRT_NO));
+      state[station].job = state[station].job.filter((v) => !removeSet.has(v.PRT_NO));
+
     },
     // 控制面板
     managerTransfer: (state, action) => {
-      const { station, name, value, checked, index } = action.payload;
+      const { station, name, value } = action.payload;
       if (!state[station]) return;
 
       if (name === "step") {
         state[name] = Number(value);
-      } else if (name === "lackStation") {
-        if (checked) {
-          state.lackStation.push(station);
-        } else {
-          state.lackStation = state.lackStation.filter((v) => v !== station);
-        }
       } else {
         state[station][name] = value;
       }

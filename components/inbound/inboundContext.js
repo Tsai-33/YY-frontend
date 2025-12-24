@@ -46,7 +46,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
       barCodeRef.current.value = "";
     } else {
-      await getERP(setLoading, inputBarCode,setTableData, orderList);
+      await getERP(setLoading, inputBarCode, setTableData, orderList);
     }
   };
 
@@ -60,7 +60,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     dispatch(setInbound({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
 
     const res = await confrimList_in(setLoading, order);
-    if (res.data.success) {
+    if (res?.data?.success) {
       // 應該會告訴我有哪些station被占用，這裡可能是map方式全部設定
       let lack_station = res.data.data.message2;
       if (!Array.isArray(lack_station)) {
@@ -78,23 +78,24 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         });
       }
       setTableData((prev) => prev.filter((v) => v.INSTOCK_NO !== orderCode && v.STATUS == 0)); // 把已選定單排除
+    } else if (!res?.data?.success) {
+      Alert({ title: `${res?.data?.message}` });
     }
   };
   // 確定上架
   const handleConfrimShelf = async () => {
     if (!currentStation) {
-      Alert({ html: "抓不到站點位置" });
+      Alert({ title: "抓不到站點位置" });
       return;
     }
     if (selected.length <= 0) {
-      Alert({ html: "沒有選擇項目" });
+      Alert({ title: "沒有選擇項目" });
       return;
     }
 
     const res = await onToShelf_in(setLoading, selected, shelf, order, dispatch, setInbound, currentStation, setConfirmModal);
-    if (res.data.success) {
+    if (res?.success) {
       let newShelf = shelfItem.map((s) => ({ ...s })); // ⬅ 防止 freeze
-
       selected.forEach((v) => {
         const index = newShelf.findIndex((s) => s.PRT_NO === v.PRT_NO);
 
@@ -112,10 +113,9 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       });
 
       dispatch(updateShelfItem({ station: currentStation, items: newShelf }));
-
-      setTableData2((prev) => {
-        return prev.filter((row) => !selected.some((v) => v.INSTOCK_NO === row.INSTOCK_NO));
-      });
+      setTableData2((prev) => prev.filter((row) => !selected.some((v) => v.INSTOCK_NO === row.INSTOCK_NO)));
+    } else if (!res?.success) {
+      Alert({ title: res?.error?.message });
     }
   };
   // 新增貨架
@@ -124,7 +124,10 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       Alert({ title: "入庫單完成", html: `此入庫單已經完成，請選擇「 入庫單完成 」。` });
       return;
     }
-    await addShelf_in(setLoading, setAddModal, shelf, order);
+    const res = await addShelf_in(setLoading, setAddModal, shelf, order);
+    if (!res?.success) {
+      Alert({ title: res?.error?.message });
+    }
   };
   // 退回貨架
   const handleReturnShelf = async () => {
@@ -138,20 +141,17 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       return;
     }
     if (tableData2.length > 0) {
-      const { wcs, nodepos } = await checkCar(waveNo);
-      console.log(wcs,'wcs')
-      console.log(nodepos,'nodepos')
-      if (wcs.data.data.length <= 0 && nodepos.data.data.length < 2) {
-        // 沒有這個GGROUP的車了 只剩下一台車在站點了
+      const res = await checkCar(waveNo);
+      if (res?.data?.success && !res?.data?.data) {
         Alert({
           title: "入倉單未完成",
-          html: `此入倉單未完成且只剩下一台車在工作站<br>如果退回將返回選單列表`,
+          html: `此入倉單未完成且只剩下一台車在工作站<br>如果退回將返回選單列表<br>( ※退回後將清空您對此單據所有執行過的動作 )`,
           showCancel: true,
           onConfirm: async () => {
             // 目前不想做完此張入庫單的恢復
             const res = await restoreList_in(setLoading, waveNo);
-            console.log(res.data);
-            if (res.data.success) {
+            console.log(res);
+            if (res?.data?.success) {
               await handleCancel();
             }
           },
@@ -159,33 +159,39 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         return;
       }
     }
+
     await handleReturn();
   };
 
   const handleCancel = async () => {
     const res = await cancelShelf_in(setLoading, currentStation);
-    if (res.data.success) {
+    if (res?.data?.success) {
       dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: waveNo }));
+    } else if (!res?.data?.success) {
+      Alert({ title: `${res?.data?.message}` });
     }
   };
   const handleReturn = async () => {
     const res = await returnShelf_in(setLoading, shelf, currentStation, order);
-    if (res.data.success) {
+    if (res?.success) {
       dispatch(resetInbound({ type: "one", station: currentStation, W_ID: waveNo }));
+    } else if (!res?.success) {
+      Alert({ title: `${res?.error?.message}` });
     }
   };
   const handleFinish = async () => {
-    const res = await finishList_in(setLoading, order);
-    if (res.data.success) {
+    const res = await finishList_in(setLoading, order, shelf);
+    if (res?.success) {
       dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res.data.data }));
       Alert({ title: "此單已完成" });
+    } else if (!res?.success) {
+      Alert({ title: res?.error?.message });
     }
   };
 
   // -------------------------------*
   useEffect(() => {
     getTable(setTableData, orderList);
-    barCodeRef?.current?.focus();
   }, [orderList]);
   useEffect(() => {
     if (!waveNo) return;
