@@ -22,6 +22,9 @@ const PAGE_TITLES = {
   "/stockQuery": "庫存查詢",
   "/transfer": "調撥",
   "/inventory": "盤點",
+  "/workspace_admin": "工作站管理",
+  "/warehousePlan": "庫區倉別規劃",
+  "/usermanage": "用戶管理",
   default: "",
 };
 
@@ -94,7 +97,7 @@ export default function Layout({ children }) {
                 const role = userRole;
                 if (role !== "user") {
                   return (
-                    <Link href="/usermanage">
+                    <Link href="/workspace_admin">
                       <span className="text-gray-700 font-medium cursor-pointer hover:underline">
                       <i className="icon-user"></i>{userName}
                       </span>

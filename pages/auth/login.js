@@ -27,6 +27,52 @@ export default function Login() {
     }
   }, [isAuthenticated, router]);
 
+  // ✅ Kiểm tra lý do logout (session hết hạn, auto logout, v.v.)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // Kiểm tra query params
+      const reason = router.query.reason;
+      const logoutReason = sessionStorage.getItem("logoutReason");
+
+      if (reason || logoutReason) {
+        sessionStorage.removeItem("logoutReason");
+
+        let title = "登入已過期";
+        let text = "請重新登入";
+
+        switch (reason || logoutReason) {
+          case "session_expired":
+            title = "Session 已過期";
+            text = "系統已自動登出。請重新登入";
+            break;
+          case "token_expired":
+            title = "Token 已過期";
+            text = "登入憑證已過期，請重新登入";
+            break;
+          case "unauthorized":
+            title = "未授權";
+            text = "您沒有權限訪問該資源，請重新登入";
+            break;
+          default:
+            title = "需要重新登入";
+            text = "請重新登入以繼續使用";
+        }
+
+        // Hiển thị alert
+        Alert({
+          title,
+          text,
+          icon: "info",
+          confirmButtonColor: "#3085d6",
+          confirmButtonText: "確定",
+        });
+
+        // Clear query params để không lặp lại alert khi refresh
+        router.replace("/auth/login", undefined, { shallow: true });
+      }
+    }
+  }, [router.query]);
+
   // 处理输入变化
   const handleChange = (e) => {
     const { name, value } = e.target;
