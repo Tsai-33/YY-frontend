@@ -1,4 +1,4 @@
-import { addInboundWCS, addShelf, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderByWID, getOrderDetailByWID, checkInboundWCS, checkWCS } from "@/pages/api";
+import { addInboundWCS, addShelf, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderByWID, getOrderDetailByWID, checkInboundWCS, checkWCS, checkTask, updateTask } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 
@@ -151,11 +151,35 @@ export const finishList_in = async (setLoading, order, shelf) => {
   }
 };
 
-// 檢查是否有任務
+// 檢查WCS是否有任務
 export const checkCar = async (waveNo) => {
   try {
     return await checkWCS({ W_ID: waveNo });
   } catch (err) {
     console.warn(`handleReturnShelf:`, err);
+  }
+};
+// 檢查是否他站有任務
+export const checkTask_in = async () => {
+  try {
+    return await checkTask({ taskid: 1, type: "inbound" });
+  } catch (err) {
+    console.warn(`handleConfrimList:`, err);
+  }
+};
+
+export const addTask_in = async () => {
+  try {
+    return await updateTask({ taskid: 1, location: "inbound" });
+  } catch (err) {
+    console.warn(`handleConfrimList:`, err);
+  }
+};
+
+export const deleteTask_in = async () => {
+  try {
+    return await updateTask({ taskid: 1 });
+  } catch (err) {
+    console.warn(`handleConfrimList:`, err);
   }
 };

@@ -8,7 +8,7 @@ import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
 import TransferTable from "@/components/transfer/transferTable";
 import { resetTransfer, setAllLoading, setTransfer, updateShelfItem } from "@/redux/reducer/reducerTransfer";
-import { addShelf_tr, cancelShelf_tr, checkWCS_tr, confrimList_tr, finishList_tr, getEPR, getList, getTable, restoreList_tr, returnShelf_tr, updateWMS_tr } from "@/components/transfer/transferFunction";
+import { addShelf_tr, addTask_tr, cancelShelf_tr, checkTask_tr, checkWCS_tr, confrimList_tr, deleteTask_tr, finishList_tr, getEPR, getList, getTable, restoreList_tr, returnShelf_tr, updateWMS_tr } from "@/components/transfer/transferFunction";
 
 export default function TransferContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
@@ -59,8 +59,17 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       Alert({ title: "您未選擇調撥單" });
       return;
     }
-    const resiveData = await confrimList_tr(setLoading, order);
 
+    // 確認是否有其他任務
+    const isOpen = await checkTask_tr();
+    console.log(isOpen?.data?.data,'123')
+    if (!isOpen?.success) return;
+    if (!isOpen?.data?.data) {
+      Alert({ title: "目前有其他任務正在執行" });
+      return;
+    }
+    
+    const resiveData = await confrimList_tr(setLoading, order);
     if (resiveData?.result === "NG") {
       Alert({ title: `${resiveData?.message}` });
     } else if (resiveData?.message2.length > 0) {
@@ -68,6 +77,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
         dispatch(setTransfer({ station: station, orderCode: orderCode, waveNo: order.W_ID, order: order, lackStation: station }));
       });
       dispatch(setAllLoading({ stations: stations }));
+      await addTask_tr();
     } else {
       Alert({ title: `伺服器有問題，請稍後再試。` });
     }
@@ -84,7 +94,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     }
 
     const res = await updateWMS_tr(setLoading, selected, shelf, order, transfer[stations[0]], setConfirmModal);
-    
+
     if (res?.success) {
       dispatch(updateShelfItem({ station: currentStation, items: selected, ppStation: stations[0] }));
       getList(waveNo, setTableData2);
@@ -120,7 +130,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
 
     if (currentStation === stations[0] && tableData2.length > 0) {
       // 有別台車的跳回
-      const check = await checkWCS_tr(waveNo)
+      const check = await checkWCS_tr(waveNo);
       if (check?.data?.data?.length <= 0) {
         // 未完成退回
         Alert({
@@ -152,7 +162,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     }
   };
   const handleReturn = async () => {
-    const res= await returnShelf_tr(setLoading, currentStation, shelf, order);
+    const res = await returnShelf_tr(setLoading, currentStation, shelf, order);
     if (res.data.success) {
       dispatch(resetTransfer({ type: "one", station: currentStation, W_ID: waveNo }));
     }
@@ -162,6 +172,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     if (res.data.success) {
       dispatch(resetTransfer({ type: "all", station: stations }));
       Alert({ title: res.data.message });
+      await deleteTask_tr();
     }
   };
 

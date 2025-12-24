@@ -8,7 +8,8 @@ import InboundTable from "@/components/inbound/inboundTable";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
-import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in } from "./inboundFunction";
+import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in } from "./inboundFunction";
+import { checkNodePos } from "@/pages/api";
 
 export default function InboundContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
@@ -23,7 +24,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // 站點
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { orderList } = useSelector((s) => s.inbound);
+  const { lackStation, orderList } = useSelector((s) => s.inbound);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo } = useSelector((s) => s.inbound[currentStationSafe] || {});
 
   // 掃描 QR code (ERP抓取新資料)
@@ -56,6 +57,15 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       Alert({ title: "您未選擇入倉單" });
       return;
     }
+
+    // 確認是否有其他任務
+    const isOpen = await checkTask_in();
+    if (!isOpen?.success) return;
+    if (!isOpen?.data?.data) {
+      Alert({ title: "目前有其他任務正在執行" });
+      return;
+    }
+
     // 先清空原本的此站的選擇
     dispatch(setInbound({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
 
@@ -78,6 +88,9 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         });
       }
       setTableData((prev) => prev.filter((v) => v.INSTOCK_NO !== orderCode && v.STATUS == 0)); // 把已選定單排除
+
+      // 寫入
+      await addTask_in();
     } else if (!res?.data?.success) {
       Alert({ title: `${res?.data?.message}` });
     }
@@ -167,6 +180,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     const res = await cancelShelf_in(setLoading, currentStation);
     if (res?.data?.success) {
       dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: waveNo }));
+      deleteTask_in();
     } else if (!res?.data?.success) {
       Alert({ title: `${res?.data?.message}` });
     }
@@ -184,6 +198,12 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     if (res?.success) {
       dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res.data.data }));
       Alert({ title: "此單已完成" });
+
+      // 先檢查nodepos有沒有ggroup
+      const check = await checkNodePos();
+      if (check.data.length <= 0) {
+        deleteTask_in();
+      }
     } else if (!res?.success) {
       Alert({ title: res?.error?.message });
     }

@@ -1,6 +1,5 @@
-import { addShelf, addTransferWCS, checkWCSWaveno, finishTransferOrder, getOrder, getOrderDetail, getOrderDetailByWID,  restoreOrders,  sendToWMS, updateTransferWMS } from "@/pages/api";
+import { addShelf, addTransferWCS, checkTask, checkWCSWaveno, deleteTask, finishTransferOrder, getOrder, getOrderDetail, getOrderDetailByWID, restoreOrders, sendToWMS, updateTask, updateTransferWMS } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
-
 
 // 抓取ERP
 export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTotalData2) => {
@@ -152,5 +151,30 @@ export const checkWCS_tr = async (waveNo) => {
     return await checkWCSWaveno({ W_ID: waveNo });
   } catch (err) {
     console.warn(`handleReturnShelf :`, err);
+  }
+};
+
+// 檢查是否他站有任務
+export const checkTask_tr = async () => {
+  try {
+    return await checkTask({ taskid: 1, type: "transfer" });
+  } catch (err) {
+    console.warn(`handleConfrimList:`, err);
+  }
+};
+
+export const addTask_tr = async () => {
+  try {
+    return await updateTask({ taskid: 1, location: "transfer" });
+  } catch (err) {
+    console.warn(`handleConfrimList:`, err);
+  }
+};
+
+export const deleteTask_tr = async () => {
+  try {
+    return await deleteTask({ taskid: 1 });
+  } catch (err) {
+    console.warn(`handleConfrimList:`, err);
   }
 };
