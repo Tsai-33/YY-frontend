@@ -100,13 +100,17 @@ export default function ShelfTransferStation() {
                 res = await transferItems({
                     items: itemsToMove,
                     sourceShelveId: activeShelveId,
-                    targetShelveId: targetShelve
+                    targetShelveId: targetShelve,
+                    operator: "理貨人員A",
                 });
             } else {
                 // 訂單理貨
                 res = await updateTransferItems({
                     items: itemsToMove,
-                    targetShelveId: targetShelve
+                    sourceShelveId: activeShelveId,
+                    targetShelveId: targetShelve,
+                    operator: "理貨人員A",
+                    saleNo: orderCode
                 });
             }
 
@@ -138,7 +142,8 @@ export default function ShelfTransferStation() {
         try {
             const res = await updateShelveCheck({
                 shelveId,
-                bitValue
+                bitValue,
+                operator: "理貨人員A"
             });
 
             if (res.data.success) {
@@ -224,22 +229,23 @@ export default function ShelfTransferStation() {
         fetchAbnormalStatus();
     }, [shelveData]);
 
-    const handleMarkAbnormal = async (shelveId) => {
+    const handleMarkAbnormal = async (data) => {
         await Alert({
             title: "標記異常",
-            text: `確定要將貨架 ${shelveId} 標記為異常嗎？`,
+            text: `確定要將貨架 ${data.shelveId} 標記為異常嗎？`,
             icon: "warning",
             showCancelButton: true,
             confirmButtonText: "確定",
             cancelButtonText: "取消",
             onConfirm: async () => {
                 try {
-                    const res = await updateAbnormal({ shelveId });
+                    const res = await updateAbnormal(data);
+
                     if (res.data.success) {
-                        setAbnormalShelves(prev => [...prev, shelveId]);
+                        setAbnormalShelves(prev => [...prev, data.shelveId]);
                         Alert({ 
                             title: "已標記異常", 
-                            html: `貨架 ${shelveId} 已標記為異常`,
+                            html: `貨架 ${data.shelveId} 已標記為異常`,
                             timer: 1500 
                         });
                     } else {
@@ -372,9 +378,12 @@ export default function ShelfTransferStation() {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleMarkAbnormal(shelveId);
+                                                    handleMarkAbnormal({
+                                                        shelveId,
+                                                        operator: "理貨人員A"
+                                                    });
                                                 }}
-                                                disabled={abnormalShelves.includes(shelveId)}
+                                                disabled={abnormalShelves.includes({shelveId})}
                                                 className={`w-10 p-1 rounded transition-colors ${
                                                     abnormalShelves.includes(shelveId)
                                                         ? "cursor-not-allowed"
