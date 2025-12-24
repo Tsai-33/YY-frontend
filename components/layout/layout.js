@@ -9,6 +9,8 @@ import ProtectedRoute from "../common/ProtectedRoute";
 import InboundManager from "../inbound/inboundManager";
 import OutboundExternalManager from "../outboundExternal/outboundExternalManager";
 import TransferManager from "../transfer/transferManager";
+import ShelfTransferManager from "../shelfTransfer/shelfTransferManager";
+
 
 // 控制面板
 
@@ -137,6 +139,12 @@ export default function Layout({ children }) {
       )}
       {path.startsWith("/transfer") && (
         <TransferManager isOpen={open} onClose={() => setOpen(false)} />
+      )}
+      {path.startsWith("/outboundExternal") && (
+        <OutboundExternalManager isOpen={open} onClose={() => setOpen(false)} />
+      )}
+      {path.startsWith("/shelfTransfer") && (
+        <ShelfTransferManager isOpen={open} onClose={() => setOpen(false)} />
       )}
     </div>
   );

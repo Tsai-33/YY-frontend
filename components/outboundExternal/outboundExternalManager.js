@@ -10,7 +10,8 @@ export default function OutboundExternalManager({ isOpen, onClose }) {
   const currentStationSafe = currentStation || stations?.[0] || "B01";
 
   // 取全部出庫資料
-  const { orderList, lackStation } = useSelector((state) => state.outboundExternal);
+  const outboundExternalState = useSelector((state) => state.outboundExternal);
+  const { orderList, lackStation } = outboundExternalState;
   const { step, screen, orderCode, waveNo, order, shelf, shelfItem, selected } = useSelector((state) => state.outboundExternal[currentStationSafe] || {});
 
   // 修改狀態
@@ -178,7 +179,7 @@ export default function OutboundExternalManager({ isOpen, onClose }) {
             <h3 className="font-bold mb-2">所有站點狀態</h3>
             <div className="grid grid-cols-5 gap-2">
               {stations?.map((station) => {
-                const stationData = useSelector((state) => state.outboundExternal[station] || {});
+                const stationData = outboundExternalState[station] || {};
                 return (
                   <div 
                     key={station} 
