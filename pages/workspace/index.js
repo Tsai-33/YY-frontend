@@ -18,7 +18,7 @@ export default function WorkspaceIndex() {
   };
   return (
     <>
-      <div className="flex-1 flex justify-center items-center gap-50">
+      <div className="flex-1 flex justify-around items-center ">
         {jobs.map((job) => (
           <CategoryBtn
             key={job.key}

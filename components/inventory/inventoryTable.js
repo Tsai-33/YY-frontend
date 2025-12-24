@@ -5,14 +5,15 @@ import {
   setPage,
   setBatchNo,
 } from "@/redux/reducer/reducerInventory";
+import { getInventoryItems, createInventoryTask } from "../../pages/api";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
 import TextInput from "@/components/common/input/textInput";
 import SelectInput from "@/components/common/input/selectInput";
 import DateInput from "../common/input/dateInput";
+import CheckInput from "../common/input/checkInput";
 import Modal from "../common/modal/modal";
 import ReadTable from "./readTable";
-import { getInventoryItems, createInventoryTask } from "../../pages/api";
-import CheckInput from "../common/input/checkInput";
+import Swal from "sweetalert2";
 
 export default function InventoryTable() {
   const dispatch = useDispatch();
@@ -100,20 +101,29 @@ export default function InventoryTable() {
     return `排除 ${formatDate(CHECK_TIME_END)} 之前的資料`;
   }, [filters]);
 
+  // ============================
+  // ⭐ 輸入篩選條件，進行搜尋
+  // ============================
   const handleSearch = async () => {
     if (!filters.STOCK_AREA) {
-      alert("請先選擇入庫庫別！");
+      Swal.fire("請先選擇入庫庫別！");
       return;
     }
 
     const payload = {
-      ...filters,
+      STOCK_AREA: filters.STOCK_AREA,
+      SALE_NO: filters.SALE_NO,
+      PRT_NO: filters.PRT_NO,
+      CUS_NO: filters.CUS_NO,
+      CHECK_TIME_START: filters.CHECK_TIME_START,
+      CHECK_TIME_END: filters.CHECK_TIME_END,
+      ...(filters.HAS_EXCEPTION && { HAS_EXCEPTION: true }),
     };
+
     try {
       const res = await getInventoryItems(payload);
       if (res.data.success) {
         const data = res.data.data;
-        console.log("payload:", payload);
 
         dispatch(
           setInventory({
@@ -137,6 +147,9 @@ export default function InventoryTable() {
     }
   };
 
+  // ============================
+  // ⭐ 檢視篩選條件，確定盤點
+  // ============================
   const handleComfirm = async () => {
     if (!stockData || stockData.length === 0) return;
 
@@ -148,11 +161,9 @@ export default function InventoryTable() {
       stations: stations,
     };
 
-    console.log("payload:", payload);
     try {
       const res = await createInventoryTask(payload);
       if (res.data.success) {
-        // console.log("成功送出資料:", payload);
         dispatch(setPage("inventory-shelf"));
         dispatch(setBatchNo(res.data.data.batchNo));
         dispatch(
@@ -234,7 +245,7 @@ export default function InventoryTable() {
             />
             <div className="flex gap-5 justify-end">
               <button
-                className="px-4 py-2 bg-gray-400 text-white rounded-md text-lg font-bold"
+                className="px-4 py-2 bg-gray-400 text-white rounded-md text-lg font-bold cursor-pointer"
                 onClick={() => {
                   setFilters({
                     STOCK_AREA: "",
@@ -257,7 +268,7 @@ export default function InventoryTable() {
               <button
                 className={`px-4 py-2 ${
                   stockData.length === 0 ? "bg-blue-600" : "bg-orange-600"
-                }  text-white rounded-md text-lg font-bold`}
+                }  text-white rounded-md text-lg font-bold cursor-pointer`}
                 onClick={stockData.length === 0 ? handleSearch : handleComfirm}>
                 {stockData.length === 0 ? "查詢" : "確定"}
               </button>
