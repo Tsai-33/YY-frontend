@@ -1,10 +1,10 @@
 import { useSelector, useDispatch } from "react-redux";
-import Link from "next/link";
 import { setCurrentJob } from "@/redux/reducer/reducerWorkStations";
 import CategoryBtn from "@/components/common/btns/categoryBtn";
-import PageTitle from "@/components/common/pageHeader/pageTitle";
+import { useRouter } from "next/router";
 
 export default function WorkspaceIndex() {
+  const router = useRouter();
   const dispatch = useDispatch();
   const { jobs, currentStation } = useSelector((state) => state.workstation);
 
@@ -13,18 +13,20 @@ export default function WorkspaceIndex() {
   }
 
   const handleSelectJob = (job) => {
-    dispatch(setCurrentJob(job));
+    dispatch(setCurrentJob(job.text));
+    router.push(job.path);
   };
   return (
     <>
-      <div className="flex-1 flex justify-center items-center gap-50">
+      <div className="flex-1 flex justify-around items-center ">
         {jobs.map((job) => (
-          <Link
+          <CategoryBtn
             key={job.key}
-            href={job.path}
-            onClick={() => handleSelectJob(job.text)}>
-            <CategoryBtn icon={job.icon} text={job.text} variant="darkGreen" />
-          </Link>
+            icon={job.icon}
+            text={job.text}
+            variant="darkGreen"
+            onClick={() => handleSelectJob(job)}
+          />
         ))}
       </div>
     </>

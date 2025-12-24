@@ -11,6 +11,7 @@ import OutboundExternalManager from "../outboundExternal/outboundExternalManager
 import TransferManager from "../transfer/transferManager";
 import ShelfTransferManager from "../shelfTransfer/shelfTransferManager";
 
+import InventoryManage from "../inventory/inventoryManage";
 
 // 控制面板
 
@@ -145,6 +146,8 @@ export default function Layout({ children }) {
       )}
       {path.startsWith("/shelfTransfer") && (
         <ShelfTransferManager isOpen={open} onClose={() => setOpen(false)} />
+      {path.startsWith("/inventory") && (
+        <InventoryManage isOpen={open} onClose={() => setOpen(false)} />
       )}
     </div>
   );

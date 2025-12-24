@@ -42,7 +42,7 @@ export default function ReadTable({
           {data.map((row, ridx) => (
             <tr
               key={ridx}
-              className={`hover:bg-(--green-pale) cursor-pointer ${
+              className={`hover:bg-(--green-pale) ${
                 checked === row[idKey] ? "bg-(--green-vivid-50) text-white" : ""
               }`}>
               <td className="absolute hidden">

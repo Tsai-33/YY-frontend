@@ -41,6 +41,7 @@ const inventorySlice = createSlice({
             (key) =>
               key !== "page" &&
               key !== "batchNo" &&
+              key !== "_persist" &&
               typeof state[key] === "object" &&
               state[key] !== null
           ) // 只更新站點
