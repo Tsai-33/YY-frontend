@@ -1,6 +1,6 @@
-import { addShelf, addTransferWCS, getOrder, getOrderDetailByWID, getTransfer, getTransferByWID, getTransferDetail, sendToWMS } from "@/pages/api";
-import { resetTransfer } from "@/redux/reducer/reducerTransfer";
+import { addShelf, addTransferWCS, checkWCSWaveno, finishTransferOrder, getOrder, getOrderDetail, getOrderDetailByWID,  restoreOrders,  sendToWMS, updateTransferWMS } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
+
 
 // 抓取ERP
 export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTotalData2) => {
@@ -10,7 +10,7 @@ export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTot
     const data = { action: "ask_order", NO: inputBarCode, dataid: random };
     const res = await sendToWMS(data);
     if (res.data.success) {
-      getTable(setTableData, setTableTotalData2);
+      await getTable(setTableData, setTableTotalData2);
     }
   } catch (error) {
     console.warn(`handleBarCode :`, error);
@@ -22,13 +22,13 @@ export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTot
 // 抓取WMS系統所有調撥單
 export const getTable = async (setTableData, setTableTotalData2) => {
   try {
-    const [order, orderDetail] = await Promise.all([getTransfer(), getTransferDetail()]);
+    const [order, orderDetail] = await Promise.all([getOrder("F"), getOrderDetail()]);
 
     if (order.data.success) {
       setTableData(order.data.data);
     }
 
-    if (orderDetail.data.success) {
+    if (setTableTotalData2 && orderDetail.data.success) {
       setTableTotalData2(orderDetail.data.data);
     }
   } catch (err) {
@@ -42,7 +42,7 @@ export const getList = async (waveNo, setTableData2) => {
     const res = await getOrderDetailByWID(waveNo);
     if (res.data.success) {
       const detail = res.data.data; // 陣列
-      const newDetail = detail.map((v) => ({ ...v, type: "new", checked: false }));
+      const newDetail = detail.filter((v) => v.OUTSTOCK_NO).map((v) => ({ ...v }));
       setTableData2(newDetail);
     }
   } catch (err) {
@@ -108,28 +108,49 @@ export const cancelShelf_tr = async (setLoading, currentStation) => {
 };
 
 // 未完成 返回
-export const restoreList_in= async (setLoading, waveNo) => {
-    try {
-      return await restoreOrders({ W_ID: waveNo });
-    } catch (err) {
-      console.warn(`handleReturnShelf :`, err);
-    } finally {
-      setLoading(false);
-    }
-}
-
-// 完成調撥單
-export const finishList_tr = async (setLoading, currentStation, order) => {
-  setLoading(true);
+export const restoreList_tr = async (setLoading, waveNo) => {
   try {
-    const res = await finishTransferOrder({ W_ID: order.W_ID });
-    if (res.data.success) {
-      dispatch(resetTransfer({ type: "all", station: currentStation }));
-      Alert({ title: "此單已完成" });
-    }
+    return await restoreOrders({ W_ID: waveNo });
   } catch (err) {
-    console.warn(`handlefinishInboundOrder :`, err);
+    console.warn(`handleReturnShelf :`, err);
   } finally {
     setLoading(false);
+  }
+};
+
+// 完成調撥單
+export const finishList_tr = async (setLoading, order) => {
+  setLoading(true);
+  try {
+    return await finishTransferOrder({ W_ID: order.W_ID });
+  } catch (err) {
+    console.warn(`handleFinish :`, err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+// 更改數量
+export const updateWMS_tr = async (setLoading, selected, shelf, order, addShelf, setConfirmModal) => {
+  setLoading(true);
+  try {
+    // 傳給WMS
+    const data = { itemArray: selected, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO, addShelf: addShelf.shelf.SHELVE_ID, addShelfArea: shelf.area, SALE_NO: order.SALE_NO, W_ID: order.W_ID };
+    return await updateTransferWMS(data);
+  } catch (err) {
+    console.warn("handleConfirmShelf :", err);
+    console.log(err, "err");
+  } finally {
+    setLoading(false);
+    setConfirmModal(false);
+  }
+};
+
+// 檢查位置
+export const checkWCS_tr = async (waveNo) => {
+  try {
+    return await checkWCSWaveno({ W_ID: waveNo });
+  } catch (err) {
+    console.warn(`handleReturnShelf :`, err);
   }
 };

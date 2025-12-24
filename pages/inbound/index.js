@@ -49,7 +49,6 @@ export default function Inbound() {
     const passSN = `${prefix}-${year}${month}${day}${seq}`;
 
     barCodeRef.current.value = passSN;
-    barCodeRef.current.focus();
   };
   return (
     <>

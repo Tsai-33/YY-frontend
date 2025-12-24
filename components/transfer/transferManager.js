@@ -70,9 +70,7 @@ export default function TransferManager({ isOpen, onClose }) {
             <button
               key={s}
               onClick={() => setStation(s)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition 
-                ${station === s ? "bg-green-500 text-white" : lackStation.includes(s) ? "bg-red-500 text-white" : "bg-gray-300 text-gray-800"}
-                `}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-300 text-gray-800`}
             >
               {s}
             </button>

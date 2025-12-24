@@ -2,14 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import InputFrame from "@/components/common/input/inputFrame";
-import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
 import SchematicDiagram from "../../components/diagram/schematicDiagram";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
 import TransferTable from "@/components/transfer/transferTable";
 import { resetTransfer, setAllLoading, setTransfer, updateShelfItem } from "@/redux/reducer/reducerTransfer";
-import { addShelf_tr, cancelShelf_tr, confrimList_tr, getEPR, getList, getTable, returnShelf_tr } from "@/components/transfer/transferFunction";
+import { addShelf_tr, cancelShelf_tr, checkWCS_tr, confrimList_tr, finishList_tr, getEPR, getList, getTable, restoreList_tr, returnShelf_tr, updateWMS_tr } from "@/components/transfer/transferFunction";
 
 export default function TransferContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
@@ -20,13 +19,15 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   // MODAL 開關
   const [addModal, setAddModal] = useState(false);
   const [returnModal, setReturnModal] = useState(false);
+  const [finishModal, setFinishModal] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
 
   // 站點
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { step, orderCode, order, lackStation, waveNo } = useSelector((s) => s.transfer);
-  const { screen, shelf, shelfItem, selected } = useSelector((s) => s.transfer[currentStationSafe] || {});
+  const transfer = useSelector((s) => s.transfer);
+  const { step, orderCode, order, waveNo } = useSelector((s) => s.transfer);
+  const { screen, shelf, shelfItem, selected, job } = useSelector((s) => s.transfer[currentStationSafe] || {});
 
   // 掃描 QR code (ERP抓取新資料)
   const handleBarCode = async (e) => {
@@ -48,7 +49,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
 
       barCodeRef.current.value = "";
     } else {
-      await getEPR(setLoading,inputBarCode, setTableData, setTableTotalData2);
+      await getEPR(setLoading, inputBarCode, setTableData, setTableTotalData2);
     }
   };
 
@@ -74,38 +75,26 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   // 確定下架
   const handleConfirmShelf = async () => {
     if (!currentStation) {
-      Alert({ html: "抓不到站點位置" });
+      Alert({ title: "抓不到站點位置" });
       return;
     }
     if (selected.length <= 0) {
-      Alert({ html: "沒有選擇項目" });
+      Alert({ title: "沒有選擇項目" });
       return;
     }
 
-    try {
-      // 傳給WMS
-      const data = { itemArray: selected, area: shelf.area, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO, addShelf: stationList?.["A01"].shelf.SHELVE_ID };
-      const res = await updateTransferWMS(data);
-
-      // 更新目前來源 currentStation 的 PP_NO
-      //  currentStation 的 selected排除掉已經選的
-      // 更新目的 'A01' 的 PP_NO
-      // 'A01' 的 selected 把已經完成的 改為checked = true
-
-      if (res?.data?.success) {
-        dispatch(updateShelfItem({ station: currentStation, items: selected }));
-      } else if (!res?.success) {
-        Alert({ html: `${res?.error.message}` });
-      }
-    } catch (err) {
-      console.warn("handleConfirmShelf :", err);
-      console.log(err, "errr");
-    } finally {
-      setLoading(false);
-      dispatch(setTransfer({ station: currentStation, selected: [] }));
-      setConfirmModal(false);
+    const res = await updateWMS_tr(setLoading, selected, shelf, order, transfer[stations[0]], setConfirmModal);
+    
+    if (res?.success) {
+      dispatch(updateShelfItem({ station: currentStation, items: selected, ppStation: stations[0] }));
+      getList(waveNo, setTableData2);
+    } else if (!res?.success) {
+      Alert({ title: `${res?.error.message}` });
     }
+
+    dispatch(setTransfer({ station: currentStation, selected: [] }));
   };
+
   // 新增貨架
   const handleAddShelf = async () => {
     if (tableData2.length <= 0) {
@@ -119,21 +108,27 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     setReturnModal(false);
 
     if (!currentStation) {
-      Alert({ html: "抓不到站點位置" });
+      Alert({ title: "抓不到站點位置" });
+      return;
+    }
+
+    const isAllCompleted = tableData2.every((item) => item.STATUS === 2);
+    if (isAllCompleted) {
+      Alert({ title: "請選擇「完成調撥」" });
       return;
     }
 
     if (currentStation === stations[0] && tableData2.length > 0) {
       // 有別台車的跳回
-      const check = await checkWCSWaveno({ W_ID: waveNo });
+      const check = await checkWCS_tr(waveNo)
       if (check?.data?.data?.length <= 0) {
         // 未完成退回
         Alert({
           title: "退回貨架",
-          html: "尚未完成調撥任務<br>你確定要結束此調撥單嗎?<br>(確認後將所有車次全部退回)",
+          html: `此調撥單未完成且只剩下一台車在工作站<br>如果退回將返回選單列表<br>( ※退回後將清空您對此單據所有執行過的動作 )`,
           showCancel: true,
           onConfirm: async () => {
-            const res = await restoreTransfer({ W_ID: waveNo }); // 新增自走車紀錄
+            const res = await restoreList_tr(setLoading, waveNo); // 新增自走車紀錄
             if (res.data.success) {
               await handleCancel(); // 刪除群組
             }
@@ -151,29 +146,28 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   };
 
   const handleCancel = async () => {
-    const result = await cancelShelf_tr(setLoading, currentStation);
-    if (result.data.success) {
-      dispatch(resetTransfer({ type: "all", station: currentStation }));
+    const res = await cancelShelf_tr(setLoading, currentStation);
+    if (res.data.success) {
+      dispatch(resetTransfer({ type: "all", station: stations }));
     }
   };
   const handleReturn = async () => {
-    const result = await returnShelf_tr(setLoading, currentStation, shelf, order);
-    if (result.data.success) {
+    const res= await returnShelf_tr(setLoading, currentStation, shelf, order);
+    if (res.data.success) {
       dispatch(resetTransfer({ type: "one", station: currentStation, W_ID: waveNo }));
     }
   };
   const handleFinish = async () => {
-    const res = await handlefinishTransfer({ W_ID: order.W_ID });
+    const res = await finishList_tr(setLoading, order);
     if (res.data.success) {
-      dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res.data.data }));
-      Alert({ title: "此單已完成" });
+      dispatch(resetTransfer({ type: "all", station: stations }));
+      Alert({ title: res.data.message });
     }
   };
 
   // -------------------------------*
   useEffect(() => {
     getTable(setTableData, setTableTotalData2);
-    barCodeRef?.current?.focus();
   }, [waveNo]);
   useEffect(() => {
     if (!waveNo) return;
@@ -186,7 +180,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       <div className="flex flex-1 gap-4 px-2 py-8 items-stretch">
         {/* 左側 */}
         <div className="w-3/7">
-          <TransferTable data={tableData} data2={tableData2} setData2={setTableData2} />
+          <TransferTable data={tableData} data2={tableData2} />
         </div>
         {/* 右側 */}
         <div className="w-4/7 font-bold text-black p-4 flex flex-col">
@@ -216,9 +210,10 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                       <div className="flex justify-end">
                         <div>目的庫別:{order?.STOCK_AREA}</div>
                       </div>
-                      {tableDataTotal2
-                        .filter((v) => v?.OUTSTOCK_NO == orderCode)
-                        .map((v, i) => (
+                      {tableDataTotal2.map((v, i) => {
+                        const OUTSTOCK_NO = v.OUTSTOCK_NO.split("-").slice(0, 2).join("-");
+                        if (OUTSTOCK_NO !== orderCode) return;
+                        return (
                           <div key={i} className="mt-2">
                             <div className="flex justify-between">
                               <div>產品品號:{v?.PRT_NO}</div>
@@ -232,13 +227,14 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                               </div>
                             </div>
                           </div>
-                        ))}
+                        );
+                      })}
                     </div>
                   </SchematicDiagramList>
                 ) : (
                   <SchematicDiagram>
                     <div className="flex flex-col">
-                      {currentStation === "A01" ? (
+                      {currentStation === stations[0] ? (
                         <div className="flex justify-between pb-2">
                           <div
                             className="text-[var(--blue-vivid)]"
@@ -303,7 +299,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
 
                           const textClass = isNew ? "text-red-500" : "";
 
-                          if (currentStation === "A01") {
+                          if (currentStation === stations[0]) {
                             return (
                               <div key={item.PRT_NO + index} className={`mb-2 ${textClass}`}>
                                 <div className="flex justify-between">
@@ -358,19 +354,19 @@ export default function TransferContext({ barCodeRef, setLoading }) {
               {step <= 2 && <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfirmList} disabled={!waveNo} />}
               {step > 2 && (
                 <div className="w-full flex justify-between">
-                  {currentStation === "A01" ? (
+                  {currentStation === stations[0] ? (
                     <>
                       <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
                       <ActionBtn icon="icon-locationSwap" text="完成調撥" variant="orange" onClick={() => setFinishModal(true)} />
+                      <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
                     </>
                   ) : (
                     <>
                       <ActionBtn className="w-25 pointer-events-none" disabled={true} />
                       <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
+                      <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} disabled={job?.length > 0} />
                     </>
                   )}
-
-                  <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
                 </div>
               )}
             </div>
@@ -415,6 +411,10 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       {/* Modal - 退回貨架 */}
       <Modal showModal={returnModal} title="退回貨架" onClose={() => setReturnModal(false)} onConfirm={handleReturnShelf} width={`30vw`} height={`35vh`}>
         確定是否返回貨架
+      </Modal>
+      {/* Modal - 完成調撥 */}
+      <Modal showModal={finishModal} title="完成調撥" onClose={() => setFinishModal(false)} onConfirm={handleFinish} width={`30vw`} height={`35vh`}>
+        確定完成調撥單
       </Modal>
     </>
   );

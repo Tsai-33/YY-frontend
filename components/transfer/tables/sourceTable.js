@@ -47,7 +47,7 @@ export default function SourceTable({ headers = [], data = [], type, name, onCha
                   >
                     <div className="w-5 h-5 border bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
                     <label className="relative w-10 h-10 mx-auto cursor-pointer">
-                      <input type={type} name={name ? name : "all"} className="peer absolute w-0 h-0" onChange={() => onChangeAll(data, idKey)} ref={selectAllRef} />
+                      <input type="checkbox" name={name ? name : "all"} className="peer absolute w-0 h-0" onChange={(e) => onChangeAll(e, data)} />
                       <div className={` w-6 h-6 border-3 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-sm`}></div>
                       <span className={` absolute top-1/2 left-1/2 w-[10px] h-[14px] border-b-3 border-r-3 rotate-45 transform -translate-x-1/2 -translate-y-2 opacity-0 peer-checked:opacity-100`}></span>
                     </label>
@@ -72,7 +72,6 @@ export default function SourceTable({ headers = [], data = [], type, name, onCha
         </thead>
         <tbody className="overflow-y-scroll scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200">
           {data.map((row, idx) => {
-            if (!row.OUTSTOCK_NO) return;
             return (
               <tr key={idx} className={`px-4 py-2 text-center border-b border-[var(--green-vivid)] text-center`}>
                 {headers.map((header, i) => {
@@ -98,8 +97,8 @@ export default function SourceTable({ headers = [], data = [], type, name, onCha
                     );
                   } else if (i === headers.length - 1) {
                     return (
-                      <td key={i} style={{width: `${header.width}`}} >
-                        <span className="text-2xl icon-info"></span> 
+                      <td key={i} style={{ width: `${header.width}` }}>
+                        <span className="text-2xl icon-info"></span>
                         {/* 暫時這樣 */}
                       </td>
                     );
