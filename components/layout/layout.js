@@ -146,6 +146,7 @@ export default function Layout({ children }) {
       )}
       {path.startsWith("/shelfTransfer") && (
         <ShelfTransferManager isOpen={open} onClose={() => setOpen(false)} />
+      )}
       {path.startsWith("/inventory") && (
         <InventoryManage isOpen={open} onClose={() => setOpen(false)} />
       )}
