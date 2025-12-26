@@ -62,13 +62,12 @@ export default function TransferContext({ barCodeRef, setLoading }) {
 
     // 確認是否有其他任務
     const isOpen = await checkTask_tr();
-    console.log(isOpen?.data?.data,'123')
     if (!isOpen?.success) return;
     if (!isOpen?.data?.data) {
       Alert({ title: "目前有其他任務正在執行" });
       return;
     }
-    
+
     const resiveData = await confrimList_tr(setLoading, order);
     if (resiveData?.result === "NG") {
       Alert({ title: `${resiveData?.message}` });
@@ -92,7 +91,6 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       Alert({ title: "沒有選擇項目" });
       return;
     }
-
     const res = await updateWMS_tr(setLoading, selected, shelf, order, transfer[stations[0]], setConfirmModal);
 
     if (res?.success) {
@@ -128,28 +126,27 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       return;
     }
 
-    if (currentStation === stations[0] && tableData2.length > 0) {
-      // 有別台車的跳回
-      const check = await checkWCS_tr(waveNo);
-      if (check?.data?.data?.length <= 0) {
-        // 未完成退回
-        Alert({
-          title: "退回貨架",
-          html: `此調撥單未完成且只剩下一台車在工作站<br>如果退回將返回選單列表<br>( ※退回後將清空您對此單據所有執行過的動作 )`,
-          showCancel: true,
-          onConfirm: async () => {
-            const res = await restoreList_tr(setLoading, waveNo); // 新增自走車紀錄
-            if (res.data.success) {
-              await handleCancel(); // 刪除群組
-            }
-          },
-        });
+    // 如果是目的站，有移動過產品後不可使用
+    if (currentStation === stations[0]) {
+      const check = await checkWCS_tr(waveNo, stations[0]);
+      if (!check?.success) {
+        Alert({ title: `${check?.error?.message}` });
+          return;
+      } else if (check?.data?.data?.length <= 0) {
+        if (tableData2.every((v) => v.STATUS === 1)) {
+          Alert({
+            title: "調撥單未完成",
+            html: `此調撥單未完成且您正在退回目的貨架<br>如果退回將返回選單列表`,
+            showCancel: true,
+            onConfirm: async () => {
+              await handleCancel();
+            },
+          });
+        } else if (tableData2.some((v) => v.STATUS === 2)) {
+          Alert({ title: "有下架其他貨架產品，請完成此單。" });
+        }
         return;
       }
-    }
-    if (currentStation === stations[0] && tableData2.length <= 0) {
-      await handleCancel();
-      return;
     }
 
     await handleReturn();
@@ -168,11 +165,15 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     }
   };
   const handleFinish = async () => {
-    const res = await finishList_tr(setLoading, order);
-    if (res.data.success) {
-      dispatch(resetTransfer({ type: "all", station: stations }));
-      Alert({ title: res.data.message });
-      await deleteTask_tr();
+    if (tableData2.every((v) => v.STATUS === 2)) {
+      const res = await finishList_tr(setLoading, order, setFinishModal);
+      if (res?.data?.success) {
+        dispatch(resetTransfer({ type: "all", station: stations }));
+        Alert({ title: res.data.message });
+        await deleteTask_tr();
+      } else if (!res?.success) {
+        Alert({ title: `${res?.error?.message}` });
+      }
     }
   };
 
@@ -367,8 +368,8 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                 <div className="w-full flex justify-between">
                   {currentStation === stations[0] ? (
                     <>
-                      <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
-                      <ActionBtn icon="icon-locationSwap" text="完成調撥" variant="orange" onClick={() => setFinishModal(true)} />
+                      <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2.every((v) => v.STATUS === 2)} />
+                      <ActionBtn icon="icon-locationSwap" text="完成調撥" variant="orange" onClick={() => setFinishModal(true)} disabled={tableData2.every((v) => v.STATUS !== 2)} />
                       <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
                     </>
                   ) : (

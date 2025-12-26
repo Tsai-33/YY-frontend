@@ -107,6 +107,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     }
 
     const res = await onToShelf_in(setLoading, selected, shelf, order, dispatch, setInbound, currentStation, setConfirmModal);
+
     if (res?.success) {
       let newShelf = shelfItem.map((s) => ({ ...s })); // ⬅ 防止 freeze
       selected.forEach((v) => {
@@ -201,8 +202,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
       // 先檢查nodepos有沒有ggroup
       const check = await checkNodePos();
-      if (check.data.length <= 0) {
-        deleteTask_in();
+      if (check?.data?.data?.length <= 0) {
+        await deleteTask_in();
       }
     } else if (!res?.success) {
       Alert({ title: res?.error?.message });

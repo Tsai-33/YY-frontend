@@ -1,4 +1,4 @@
-import { addInboundWCS, addShelf, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderByWID, getOrderDetailByWID, checkInboundWCS, checkWCS, checkTask, updateTask } from "@/pages/api";
+import { addInboundWCS, addShelf, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderByWID, getOrderDetailByWID, checkInboundWCS, checkWCS, checkTask, updateTask, deleteTask } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 
@@ -178,7 +178,7 @@ export const addTask_in = async () => {
 
 export const deleteTask_in = async () => {
   try {
-    return await updateTask({ taskid: 1 });
+    return await deleteTask({ taskid: 1 });
   } catch (err) {
     console.warn(`handleConfrimList:`, err);
   }

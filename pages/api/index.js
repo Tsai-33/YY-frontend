@@ -62,6 +62,7 @@ export const getOrderDetail = (payload) => api.get("/order/detail", { params: { 
 export const getOrderDetailByWID = (payload) => api.get("/order/detail/wid", { params: { wid: payload } });
 
 export const checkWCS = (payload) => api.post("/wcs/check", payload);
+export const checkWCSMove = (payload) => api.post("/wcs/check/move", payload);
 export const addShelf = (payload) => api.post("/wcs/add", payload);
 export const checkNodePos = (payload) => api.post("/wcs/check/nodepos", payload);
 export const checkTask = (payload) => api.post("/task/check", payload);
