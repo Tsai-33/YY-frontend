@@ -8,7 +8,7 @@ import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
 import TransferTable from "@/components/transfer/transferTable";
 import { resetTransfer, setAllLoading, setTransfer, updateShelfItem } from "@/redux/reducer/reducerTransfer";
-import { addShelf_tr, cancelShelf_tr, checkWCS_tr, confrimList_tr, finishList_tr, getEPR, getList, getTable, restoreList_tr, returnShelf_tr, updateWMS_tr } from "@/components/transfer/transferFunction";
+import { addShelf_tr, addTask_tr, cancelShelf_tr, checkTask_tr, checkWCS_tr, confrimList_tr, deleteTask_tr, finishList_tr, getEPR, getList, getTable, restoreList_tr, returnShelf_tr, updateWMS_tr } from "@/components/transfer/transferFunction";
 
 export default function TransferContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
@@ -59,8 +59,16 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       Alert({ title: "您未選擇調撥單" });
       return;
     }
-    const resiveData = await confrimList_tr(setLoading, order);
 
+    // 確認是否有其他任務
+    const isOpen = await checkTask_tr();
+    if (!isOpen?.success) return;
+    if (!isOpen?.data?.data) {
+      Alert({ title: "目前有其他任務正在執行" });
+      return;
+    }
+
+    const resiveData = await confrimList_tr(setLoading, order);
     if (resiveData?.result === "NG") {
       Alert({ title: `${resiveData?.message}` });
     } else if (resiveData?.message2.length > 0) {
@@ -68,6 +76,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
         dispatch(setTransfer({ station: station, orderCode: orderCode, waveNo: order.W_ID, order: order, lackStation: station }));
       });
       dispatch(setAllLoading({ stations: stations }));
+      await addTask_tr();
     } else {
       Alert({ title: `伺服器有問題，請稍後再試。` });
     }
@@ -82,9 +91,8 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       Alert({ title: "沒有選擇項目" });
       return;
     }
-
     const res = await updateWMS_tr(setLoading, selected, shelf, order, transfer[stations[0]], setConfirmModal);
-    
+
     if (res?.success) {
       dispatch(updateShelfItem({ station: currentStation, items: selected, ppStation: stations[0] }));
       getList(waveNo, setTableData2);
@@ -118,28 +126,27 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       return;
     }
 
-    if (currentStation === stations[0] && tableData2.length > 0) {
-      // 有別台車的跳回
-      const check = await checkWCS_tr(waveNo)
-      if (check?.data?.data?.length <= 0) {
-        // 未完成退回
-        Alert({
-          title: "退回貨架",
-          html: `此調撥單未完成且只剩下一台車在工作站<br>如果退回將返回選單列表<br>( ※退回後將清空您對此單據所有執行過的動作 )`,
-          showCancel: true,
-          onConfirm: async () => {
-            const res = await restoreList_tr(setLoading, waveNo); // 新增自走車紀錄
-            if (res.data.success) {
-              await handleCancel(); // 刪除群組
-            }
-          },
-        });
+    // 如果是目的站，有移動過產品後不可使用
+    if (currentStation === stations[0]) {
+      const check = await checkWCS_tr(waveNo, stations[0]);
+      if (!check?.success) {
+        Alert({ title: `${check?.error?.message}` });
+          return;
+      } else if (check?.data?.data?.length <= 0) {
+        if (tableData2.every((v) => v.STATUS === 1)) {
+          Alert({
+            title: "調撥單未完成",
+            html: `此調撥單未完成且您正在退回目的貨架<br>如果退回將返回選單列表`,
+            showCancel: true,
+            onConfirm: async () => {
+              await handleCancel();
+            },
+          });
+        } else if (tableData2.some((v) => v.STATUS === 2)) {
+          Alert({ title: "有下架其他貨架產品，請完成此單。" });
+        }
         return;
       }
-    }
-    if (currentStation === stations[0] && tableData2.length <= 0) {
-      await handleCancel();
-      return;
     }
 
     await handleReturn();
@@ -152,16 +159,21 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     }
   };
   const handleReturn = async () => {
-    const res= await returnShelf_tr(setLoading, currentStation, shelf, order);
+    const res = await returnShelf_tr(setLoading, currentStation, shelf, order);
     if (res.data.success) {
       dispatch(resetTransfer({ type: "one", station: currentStation, W_ID: waveNo }));
     }
   };
   const handleFinish = async () => {
-    const res = await finishList_tr(setLoading, order);
-    if (res.data.success) {
-      dispatch(resetTransfer({ type: "all", station: stations }));
-      Alert({ title: res.data.message });
+    if (tableData2.every((v) => v.STATUS === 2)) {
+      const res = await finishList_tr(setLoading, order, setFinishModal);
+      if (res?.data?.success) {
+        dispatch(resetTransfer({ type: "all", station: stations }));
+        Alert({ title: res.data.message });
+        await deleteTask_tr();
+      } else if (!res?.success) {
+        Alert({ title: `${res?.error?.message}` });
+      }
     }
   };
 
@@ -356,8 +368,8 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                 <div className="w-full flex justify-between">
                   {currentStation === stations[0] ? (
                     <>
-                      <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
-                      <ActionBtn icon="icon-locationSwap" text="完成調撥" variant="orange" onClick={() => setFinishModal(true)} />
+                      <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2.every((v) => v.STATUS === 2)} />
+                      <ActionBtn icon="icon-locationSwap" text="完成調撥" variant="orange" onClick={() => setFinishModal(true)} disabled={tableData2.every((v) => v.STATUS !== 2)} />
                       <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
                     </>
                   ) : (

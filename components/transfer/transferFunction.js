@@ -1,6 +1,5 @@
-import { addShelf, addTransferWCS, checkWCSWaveno, finishTransferOrder, getOrder, getOrderDetail, getOrderDetailByWID,  restoreOrders,  sendToWMS, updateTransferWMS } from "@/pages/api";
+import { addShelf, addTransferWCS, checkTask, checkWCSMove, checkWCS, checkWCSWaveno, deleteTask, finishTransferOrder, getOrder, getOrderDetail, getOrderDetailByWID, restoreOrders, sendToWMS, updateTask, updateTransferWMS } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
-
 
 // 抓取ERP
 export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTotalData2) => {
@@ -119,14 +118,15 @@ export const restoreList_tr = async (setLoading, waveNo) => {
 };
 
 // 完成調撥單
-export const finishList_tr = async (setLoading, order) => {
+export const finishList_tr = async (setLoading, order, setFinishModal) => {
   setLoading(true);
   try {
-    return await finishTransferOrder({ W_ID: order.W_ID });
+    return await finishTransferOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME });
   } catch (err) {
     console.warn(`handleFinish :`, err);
   } finally {
     setLoading(false);
+    setFinishModal(false);
   }
 };
 
@@ -147,10 +147,35 @@ export const updateWMS_tr = async (setLoading, selected, shelf, order, addShelf,
 };
 
 // 檢查位置
-export const checkWCS_tr = async (waveNo) => {
+export const checkWCS_tr = async (waveNo, stations) => {
   try {
-    return await checkWCSWaveno({ W_ID: waveNo });
+    return await checkWCSMove({ W_ID: waveNo, station: stations });
   } catch (err) {
     console.warn(`handleReturnShelf :`, err);
+  }
+};
+
+// 檢查是否他站有任務
+export const checkTask_tr = async () => {
+  try {
+    return await checkTask({ taskid: 1, type: "transfer" });
+  } catch (err) {
+    console.warn(`handleConfrimList:`, err);
+  }
+};
+
+export const addTask_tr = async () => {
+  try {
+    return await updateTask({ taskid: 1, location: "transfer" });
+  } catch (err) {
+    console.warn(`handleConfrimList:`, err);
+  }
+};
+
+export const deleteTask_tr = async () => {
+  try {
+    return await deleteTask({ taskid: 1 });
+  } catch (err) {
+    console.warn(`handleConfrimList:`, err);
   }
 };
