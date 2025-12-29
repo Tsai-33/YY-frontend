@@ -5,12 +5,11 @@ import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
 import { getOutBoundExternalOrderDetailByWID } from "@/pages/api";
 
-export default function OutboundExternalTable({ data, selectedArray, setSelectedArray }) {
+export default function OutboundExternalTable({ data, selectedArray, setSelectedArray, detailTableData, setDetailTableData }) {
     const dispatch = useDispatch();
     const { stations, currentStation } = useSelector((s) => s.workstation);
     const currentStationSafe = currentStation || stations?.[0] || "";
     const { orderCode, step, waveNo, shelfItem, selected } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
-    const [detailTableData, setDetailTableData] = useState([]);
 
     // =============== 畫面一 ====================
     const headers = [
@@ -36,8 +35,8 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
                     return [...prev, {
                         PRT_NO: value.PRT_NO,
                         MAKE_NO: valueId,
-                        outBoxNo: 1,
-                        outPpNo: value.BOX_PACK || 0
+                        outBoxNo: value.BOX_NO,
+                        outPpNo: value.BOX_PACK
                     }];
                 }
             });
@@ -62,9 +61,9 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
 
     // ============= 根據波次拿訂單的細節 =============
     useEffect(() => {
-        if (!waveNo) return;
+        if (!waveNo || step < 3) return;
         getList();
-    }, [shelfItem]);
+    }, [waveNo, step]);
     const getList = async () => {
         try {
             const res = await getOutBoundExternalOrderDetailByWID(waveNo);
@@ -89,7 +88,7 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
                 PRT_NO: item.PRT_NO,
                 MAKE_NO: item.MAKE_NO,
                 outBoxNo: item.BOX_NO,
-                outPpNo: item.BOX_PACK || 0
+                outPpNo: item.BOX_PACK 
             }));
 
         setSelectedArray(fullBoxItems);

@@ -10,7 +10,7 @@ import {
   shiftOutOnReturn, 
   updateStatusForOutboundCallCar,
   decryptBarcode
-} from "../api";
+} from "@/pages/api";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import Loading from "@/components/common/loading/loading";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
@@ -21,6 +21,8 @@ import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "@/components/common/alert/alert";
 import { initWorkstation } from "@/redux/reducer/reducerWorkStations";
+import { getOutBoundExternalOrderDetailByWID } from "@/pages/api";
+
 
 export default function OutboundExternal() {
   const dispatch = useDispatch();
@@ -131,6 +133,24 @@ export default function OutboundExternal() {
     }
   }
 
+  // ===== 根據波次取得明細 =====
+  const [detailTableData, setDetailTableData] = useState([]);
+  useEffect(() => {
+        if (!waveNo || step < 3) return;
+        fetchDetailData();
+    }, [waveNo, step]);
+
+  const fetchDetailData = async () => {
+    try {
+      const res = await getOutBoundExternalOrderDetailByWID(waveNo);
+      if (res.data.success) {
+        setDetailTableData(res.data.data || []);
+      }
+    } catch (error) {
+      console.warn("fetchDetailData:", error);
+    }
+  };  
+
   // ===== 掃外箱條碼 =====
   const boxBarcodeRef = useRef(null);
   const [scanning, setScanning] = useState(false);
@@ -162,28 +182,38 @@ export default function OutboundExternal() {
       console.log("原始條碼：", barcode);
       console.log("解密後：", decryptedBarcode);
 
-      // 找對應的產品
-      const matchedItem = shelfItem?.find(item =>
-        item.MAKE_NO?.includes(decryptedBarcode)
+      // 從orderDetail取數量
+      const detailItem = orderDetail?.find(item => 
+          item.MAKE_NO === decryptedBarcode || 
+          item.MAKE_NO?.includes(decryptedBarcode)
       );
+      // 找對應的產品
+      const matchedItem = detailTableData?.find(item => 
+        item.MAKE_NO === decryptedBarcode
+      );
+
+      // const matchedItem = shelfItem?.find(item =>
+      //   item.MAKE_NO?.includes(decryptedBarcode)
+      // );
 
       if (matchedItem) {
         setSelectedArray(prev => {
 
           const alreadyScanned = prev.some(p => 
-                  p.MAKE_NO === decryptedBarcode || 
-                  p.MAKE_NO?.includes(decryptedBarcode)
-              );
+            p.MAKE_NO === decryptedBarcode || 
+            p.MAKE_NO?.includes(decryptedBarcode)
+          );
               
-              if (alreadyScanned) {
-                  Alert({ title: `已掃描過: ${decryptedBarcode}`, icon: "warning", timer: 1000 });
-                  return prev;
-              }
+          if (alreadyScanned) {
+            Alert({ title: `已掃描過: ${decryptedBarcode}`, icon: "warning", timer: 1000 });
+            return prev;
+          }
+          
           return [...prev, {
             PRT_NO: matchedItem.PRT_NO,
             MAKE_NO: decryptedBarcode,
-            outBoxNo: 1,
-            outPpNo: matchedItem.BOX_PACK
+            outBoxNo: matchedItem.BOX_NO,
+            outPpNo: matchedItem.BOX_PACK  
           }];
         });
         Alert({ title: `已掃描: ${decryptedBarcode}`, icon: "success", timer: 1000 });
@@ -215,8 +245,6 @@ export default function OutboundExternal() {
         }
     setLoading(true);
     try {
-      // 清空該站的資料
-      dispatch(setOutboundExternal({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
       const dataId = generateRandomNumber();
       const data = {
         action: "ask_wave",
@@ -224,10 +252,15 @@ export default function OutboundExternal() {
         wave_no: String(order.W_ID),
         station_no: "B"
       }
-
+      console.log("data: ", data)
       const res = await sendToWMS(data);
+      console.log("res: ", res)
 
-        if (res.data.success) {
+      // 清空該站的資料
+      if (res.data.success) {
+        dispatch(setOutboundExternal({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
+      }
+      if (res.data.success) {
         await updateStatusForOutboundCallCar({ W_ID: order.W_ID });
         // 存被占用的站點
         let lack_station = res.data.data.message2;
@@ -300,7 +333,7 @@ export default function OutboundExternal() {
           PRT_NO: item.PRT_NO,
           MAKE_NO: item.MAKE_NO,
           outBoxNo: item.BOX_NO,
-          outPpNo: item.PP_NO
+          outPpNo: item.BOX_PACK
         })) || [];
       }
 
@@ -411,7 +444,13 @@ export default function OutboundExternal() {
       <div className="flex flex-1 gap-4 px-2 py-8 items-stretch">
         {/* 左側 */}
         <div className="w-3/7">
-          <OutboundExternalTable data={tableData} selectedArray={selectedArray} setSelectedArray={setSelectedArray} />
+          <OutboundExternalTable 
+            data={tableData} 
+            selectedArray={selectedArray} 
+            setSelectedArray={setSelectedArray}
+            detailTableData={detailTableData}
+            setDetailTableData={setDetailTableData} 
+          />
         </div>
         {/* 右側 */}
         <div className="w-4/7 font-bold text-black p-4 flex flex-col">
