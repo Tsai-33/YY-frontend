@@ -157,9 +157,9 @@ export const checkWCS_tr = async (waveNo, stations) => {
 };
 
 // 檢查是否他站有任務
-export const checkTask_tr = async () => {
+export const checkTask_tr = async (stations) => {
   try {
-    return await selectTask({ type: "transfer" });
+    return await selectTask({ stations: stations[0]});
   } catch (err) {
     console.warn(`handleConfrimList:`, err);
   }
