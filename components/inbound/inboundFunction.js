@@ -1,6 +1,7 @@
 import { addInboundWCS, addShelf, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderByWID, getOrderDetailByWID, checkInboundWCS, checkWCS, checkTask, updateTask, deleteTask } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
+import { selectTask } from "../taskFunction";
 
 // 取得ERP資料
 export const getERP = async (setLoading, inputBarCode, setTableData, orderList) => {
@@ -162,7 +163,7 @@ export const checkCar = async (waveNo) => {
 // 檢查是否他站有任務
 export const checkTask_in = async () => {
   try {
-    return await checkTask({ taskid: 1, type: "inbound" });
+    return await selectTask({  type: "inbound" });
   } catch (err) {
     console.warn(`handleConfrimList:`, err);
   }

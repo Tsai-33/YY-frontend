@@ -60,9 +60,10 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     }
 
     // 確認是否有其他任務
-    const isOpen = await checkTask_in();
-    if (!isOpen?.success) return;
-    if (!isOpen?.data?.data) {
+    const task = await checkTask_in();
+    if (!task?.success) return;
+    const hasInbound = task?.data?.data?.some((item) => item.location === 'inbound');
+    if (!hasInbound) {
       Alert({ title: "目前有其他任務正在執行" });
       return;
     }

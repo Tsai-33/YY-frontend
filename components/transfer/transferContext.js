@@ -61,9 +61,10 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     }
 
     // 確認是否有其他任務
-    const isOpen = await checkTask_tr();
-    if (!isOpen?.success) return;
-    if (!isOpen?.data?.data) {
+    const task = await checkTask_tr();
+    if (!task?.success) return;
+    const hasInbound = task?.data?.data?.some((item) => item.location === "tansfer");
+    if (!hasInbound) {
       Alert({ title: "目前有其他任務正在執行" });
       return;
     }
@@ -131,7 +132,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       const check = await checkWCS_tr(waveNo, stations[0]);
       if (!check?.success) {
         Alert({ title: `${check?.error?.message}` });
-          return;
+        return;
       } else if (check?.data?.data?.length <= 0) {
         if (tableData2.every((v) => v.STATUS === 1)) {
           Alert({

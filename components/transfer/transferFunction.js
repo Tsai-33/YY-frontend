@@ -1,5 +1,6 @@
 import { addShelf, addTransferWCS, checkTask, checkWCSMove, checkWCS, checkWCSWaveno, deleteTask, finishTransferOrder, getOrder, getOrderDetail, getOrderDetailByWID, restoreOrders, sendToWMS, updateTask, updateTransferWMS } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
+import { selectTask } from "../taskFunction";
 
 // 抓取ERP
 export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTotalData2) => {
@@ -158,7 +159,7 @@ export const checkWCS_tr = async (waveNo, stations) => {
 // 檢查是否他站有任務
 export const checkTask_tr = async () => {
   try {
-    return await checkTask({ taskid: 1, type: "transfer" });
+    return await selectTask({ type: "transfer" });
   } catch (err) {
     console.warn(`handleConfrimList:`, err);
   }
