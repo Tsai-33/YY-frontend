@@ -61,10 +61,10 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     }
 
     // 確認是否有其他任務
-    const task = await checkTask_tr();
+    const task = await checkTask_tr(stations);
     if (!task?.success) return;
-    const hasInbound = task?.data?.data?.some((item) => item.location === "tansfer");
-    if (!hasInbound) {
+    const hasTask = task?.data?.data?.some((item) => item.location === "tansfer");
+    if (!hasTask) {
       Alert({ title: "目前有其他任務正在執行" });
       return;
     }

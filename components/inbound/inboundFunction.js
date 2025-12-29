@@ -144,7 +144,7 @@ export const restoreList_in = async (setLoading, waveNo) => {
 export const finishList_in = async (setLoading, order) => {
   setLoading(true);
   try {
-    return await finishInboundOrder({ W_ID: order.W_ID,  BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME });
+    return await finishInboundOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME });
   } catch (err) {
     console.warn(`handleFinish:`, err);
   } finally {
@@ -161,9 +161,9 @@ export const checkCar = async (waveNo) => {
   }
 };
 // 檢查是否他站有任務
-export const checkTask_in = async () => {
+export const checkTask_in = async (stations) => {
   try {
-    return await selectTask({  type: "inbound" });
+    return await selectTask({ stations: stations[0] });
   } catch (err) {
     console.warn(`handleConfrimList:`, err);
   }
