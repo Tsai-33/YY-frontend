@@ -1,7 +1,6 @@
-import clsx from "clsx";
 import React from "react";
 
-export default function SourceTable({ headers = [], data = [], type, name, onChange, checked, idKey, height, selectAllRef, onChangeAll }) {
+export default function SourceTable({ headers = [], data = [], type, name, onChange, checked, idKey, height, setAbnormal, onChangeAll }) {
   const isRowChecked = (row) => {
     const rowId = String(row[idKey]);
 
@@ -98,8 +97,9 @@ export default function SourceTable({ headers = [], data = [], type, name, onCha
                   } else if (i === headers.length - 1) {
                     return (
                       <td key={i} style={{ width: `${header.width}` }}>
-                        <span className="text-2xl icon-info"></span>
-                        {/* 暫時這樣 */}
+                        <button onClick={()=>setAbnormal(data)}>
+                          <span className="text-2xl icon-abnormalList"></span>
+                        </button>
                       </td>
                     );
                   } else {

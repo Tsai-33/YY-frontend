@@ -5,7 +5,7 @@ import { setTransfer } from "@/redux/reducer/reducerTransfer";
 import PurposeTable from "./tables/purposeTable";
 import SourceTable from "./tables/sourceTable";
 
-export default function TransferTable({ data, data2 }) {
+export default function TransferTable({ data, data2, setAbnormal }) {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
@@ -76,7 +76,9 @@ export default function TransferTable({ data, data2 }) {
     <>
       {step <= 2 && <NoCheckBoxTable headers={tableHeader} data={data} type="radio" name="transfer" variants="green" idKey="INSTOCK_NO" checked={orderCode} onChange={handleSelectedOption} />}
       {currentStation === stations[0] && step > 2 && <PurposeTable height={`65vh`} headers={tableHeader2} data={data2} name="transfer1" idKey="INSTOCK_NO" />}
-      {currentStation !== stations[0] && step > 2 && <SourceTable height={`65vh`} headers={tableHeader3} data={job} type="checkbox" name="transfer2" idKey="PRT_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} />}
+      {currentStation !== stations[0] && step > 2 && (
+        <SourceTable height={`65vh`} headers={tableHeader3} data={job} type="checkbox" name="transfer2" idKey="PRT_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} setAbnormal={setAbnormal} />
+      )}
     </>
   );
 }

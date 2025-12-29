@@ -6,6 +6,7 @@ export const getIP = () => api.get("/system/getIP");
 /* 取得調撥單 */
 export const addTransferWCS = (payload) => api.post("/transfer/add/wcs", payload);
 export const updateTransferWMS = (payload) => api.post("/transfer/update/wms", payload);
+export const updateTransferWMSAbnormal = (payload) => api.post("/transfer/update/wms/abnormal", payload);
 export const finishTransferOrder = (payload) => api.post("/transfer/finish/order", payload);
 export const restoreTransfer = (payload) => api.post("/transfer/restore/orders", payload);
 

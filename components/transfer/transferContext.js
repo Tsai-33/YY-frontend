@@ -8,7 +8,7 @@ import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
 import TransferTable from "@/components/transfer/transferTable";
 import { resetTransfer, setAllLoading, setTransfer, updateShelfItem } from "@/redux/reducer/reducerTransfer";
-import { addShelf_tr, addTask_tr, cancelShelf_tr, checkTask_tr, checkWCS_tr, confrimList_tr, deleteTask_tr, finishList_tr, getEPR, getList, getTable, restoreList_tr, returnShelf_tr, updateWMS_tr } from "@/components/transfer/transferFunction";
+import { addAbnormal_tr, addShelf_tr, addTask_tr, cancelShelf_tr, checkTask_tr, checkWCS_tr, confrimList_tr, deleteTask_tr, finishList_tr, getEPR, getList, getTable, restoreList_tr, returnShelf_tr, updateWMS_tr } from "@/components/transfer/transferFunction";
 
 export default function TransferContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
@@ -21,6 +21,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   const [returnModal, setReturnModal] = useState(false);
   const [finishModal, setFinishModal] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
+  const [wmsModal, setWmsModal] = useState(false);
 
   // 站點
   const { stations, currentStation } = useSelector((s) => s.workstation);
@@ -63,7 +64,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     // 確認是否有其他任務
     const task = await checkTask_tr(stations);
     if (!task?.success) return;
-    const hasTask = task?.data?.data?.some((item) => item.location === "tansfer");
+    const hasTask = task?.data?.data?.some((item) => item.location === "transfer" || item.location === "");
     if (!hasTask) {
       Alert({ title: "目前有其他任務正在執行" });
       return;
@@ -141,6 +142,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
             showCancel: true,
             onConfirm: async () => {
               await handleCancel();
+              await deleteTask_tr(stations);
             },
           });
         } else if (tableData2.some((v) => v.STATUS === 2)) {
@@ -177,6 +179,23 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       }
     }
   };
+  // 異常按鈕
+  const [abData, setAbData] = useState();
+  const setAbnormal = async (data) => {
+    const [newData] = data
+    setAbData(newData);
+    setWmsModal(true);
+  };
+
+  const handleAbnormal = async () => {
+    const res = await addAbnormal_tr(abData,shelf);
+    setWmsModal(false)
+    if(res?.success){
+      Alert({title:`${res?.data?.message}`})
+    }else{
+      Alert({title:`${res?.error?.message}`})
+    }
+  };
 
   // -------------------------------*
   useEffect(() => {
@@ -193,7 +212,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       <div className="flex flex-1 gap-4 px-2 py-8 items-stretch">
         {/* 左側 */}
         <div className="w-3/7">
-          <TransferTable data={tableData} data2={tableData2} />
+          <TransferTable data={tableData} data2={tableData2} setAbnormal={setAbnormal} />
         </div>
         {/* 右側 */}
         <div className="w-4/7 font-bold text-black p-4 flex flex-col">
@@ -230,6 +249,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                           <div key={i} className="mt-2">
                             <div className="flex justify-between">
                               <div>產品品號:{v?.PRT_NO}</div>
+                              {/* 來源庫別是看SHEVLE_ID */}
                               <div className="text-[var(--red)]">來源庫別:{v?.MEMO}</div>
                             </div>
                             <div>品名: {v?.PRT_NAME}</div>
@@ -428,6 +448,14 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       {/* Modal - 完成調撥 */}
       <Modal showModal={finishModal} title="完成調撥" onClose={() => setFinishModal(false)} onConfirm={handleFinish} width={`30vw`} height={`35vh`}>
         確定完成調撥單
+      </Modal>
+      {/* Modal - 數量異常 */}
+      <Modal showModal={wmsModal} title="數量異常" onClose={() => setWmsModal(false)} onConfirm={handleAbnormal} width={`30vw`} height={`auto`}>
+        <>
+          <div>「{abData?.PRT_NO}」系統數量與實際數量不相符</div>
+          <div>請退回此調撥單至盤點系統更改系統數量</div>
+          <div>( ※ 確認後將會註記「數量異常」 )</div>
+        </>
       </Modal>
     </>
   );

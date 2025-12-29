@@ -1,4 +1,4 @@
-import { addShelf, addTransferWCS, checkTask, checkWCSMove, checkWCS, checkWCSWaveno, deleteTask, finishTransferOrder, getOrder, getOrderDetail, getOrderDetailByWID, restoreOrders, sendToWMS, updateTask, updateTransferWMS } from "@/pages/api";
+import { addShelf, addTransferWCS, checkTask, checkWCSMove, checkWCS, checkWCSWaveno, deleteTask, finishTransferOrder, getOrder, getOrderDetail, getOrderDetailByWID, restoreOrders, sendToWMS, updateTask, updateTransferWMS, updateTransferWMSAbnormal } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import { selectTask } from "../taskFunction";
 
@@ -159,7 +159,7 @@ export const checkWCS_tr = async (waveNo, stations) => {
 // 檢查是否他站有任務
 export const checkTask_tr = async (stations) => {
   try {
-    return await selectTask({ stations: stations[0]});
+    return await selectTask({ stations: stations[0] });
   } catch (err) {
     console.warn(`handleConfrimList:`, err);
   }
@@ -174,9 +174,20 @@ export const addTask_tr = async (stations) => {
 };
 
 export const deleteTask_tr = async (stations) => {
+  console.log(stations,'123')
   try {
-    return await deleteTask({ stations: stations[0]});
+    return await deleteTask({ stations: stations[0] });
   } catch (err) {
     console.warn(`handleConfrimList:`, err);
+  }
+};
+
+// 數量異常
+export const addAbnormal_tr = async (abData, shelf) => {
+  try {
+    const data = { PRT_NO: abData.PRT_NO, SHELVE_ID: shelf.SHELVE_ID };
+    return await updateTransferWMSAbnormal(data);
+  } catch (err) {
+    console.warn(`handleAbnormal:`, err);
   }
 };
