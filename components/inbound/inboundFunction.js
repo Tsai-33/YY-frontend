@@ -140,10 +140,10 @@ export const restoreList_in = async (setLoading, waveNo) => {
 };
 
 // 完成
-export const finishList_in = async (setLoading, order, shelf) => {
+export const finishList_in = async (setLoading, order,  shelfItem) => {
   setLoading(true);
   try {
-    return await finishInboundOrder({ W_ID: order.W_ID, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, area: shelf.area });
+    return await finishInboundOrder({ W_ID: order.W_ID,  BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME,  shelfItems: shelfItem });
   } catch (err) {
     console.warn(`handleFinish:`, err);
   } finally {

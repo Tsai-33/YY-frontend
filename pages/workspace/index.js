@@ -13,6 +13,7 @@ export default function WorkspaceIndex() {
   }
 
   const handleSelectJob = (job) => {
+
     dispatch(setCurrentJob(job.text));
     router.push(job.path);
   };

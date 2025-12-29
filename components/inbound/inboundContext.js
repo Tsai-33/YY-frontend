@@ -26,6 +26,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const currentStationSafe = currentStation || stations?.[0] || "";
   const { lackStation, orderList } = useSelector((s) => s.inbound);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo } = useSelector((s) => s.inbound[currentStationSafe] || {});
+  const inbounds = useSelector((s) => s.inbound);
 
   // 掃描 QR code (ERP抓取新資料)
   const handleBarCode = async (e) => {
@@ -114,18 +115,29 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         const index = newShelf.findIndex((s) => s.PRT_NO === v.PRT_NO);
 
         if (index !== -1) {
-          // 建立新物件覆蓋，不 mutate 舊物件
+          // --- 處理字串疊加的輔助函式 ---
+          const mergeUnique = (oldStr, newStr) => {
+            if (!oldStr) return newStr || "";
+            if (!newStr) return oldStr || "";
+            // 將舊字串與新字串拆開，放入 Set 自動去重，再重新組合
+            const combined = [...new Set([...oldStr.split(","), ...newStr.split(",")])];
+            return combined.filter(Boolean).join(","); // filter(Boolean) 移除空字串
+          };
+
           newShelf[index] = {
             ...newShelf[index],
+            // 數字維持累加
             PP_NO: (Number(newShelf[index].PP_NO) || 0) + (Number(v.PP_NO) || 0),
             BOX_NO: (Number(newShelf[index].BOX_NO) || 0) + (Number(v.BOX_NO) || 0),
+            // 字串進行不重複疊加
+            INSTOCK_NO: mergeUnique(newShelf[index].INSTOCK_NO, v.INSTOCK_NO),
+            MAKE_NO: mergeUnique(newShelf[index].MAKE_NO, v.MAKE_NO),
+            SHELVE_ID: shelf.SHELVE_ID,
           };
         } else {
-          // 新增也要建立副本
           newShelf.push({ ...v });
         }
       });
-
       dispatch(updateShelfItem({ station: currentStation, items: newShelf }));
       setTableData2((prev) => prev.filter((row) => !selected.some((v) => v.INSTOCK_NO === row.INSTOCK_NO)));
     } else if (!res?.success) {
@@ -195,7 +207,18 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     }
   };
   const handleFinish = async () => {
-    const res = await finishList_in(setLoading, order, shelf);
+    // 取得w_id同一個的一起完成
+    const finalShelfItems = Object.values(inbounds)
+      .filter((item) => typeof item === "object" && String(item.waveNo) === String(waveNo))
+      .flatMap((item) => {
+        if (item && typeof item === "object" && !Array.isArray(item)) {
+          if (item.shelfItem) {
+            return Array.isArray(item.shelfItem) ? item.shelfItem : [item.shelfItem];
+          }
+          return [];
+        }
+      });
+    const res = await finishList_in(setLoading, order, finalShelfItems);
     if (res?.success) {
       dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res.data.data }));
       Alert({ title: "此單已完成" });
