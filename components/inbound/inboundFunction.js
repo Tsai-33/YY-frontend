@@ -169,17 +169,17 @@ export const checkTask_in = async (stations) => {
   }
 };
 
-export const addTask_in = async () => {
+export const addTask_in = async (stations) => {
   try {
-    return await updateTask({ taskid: 1, location: "inbound" });
+    return await updateTask({ stations: stations[0] , location: "inbound" });
   } catch (err) {
     console.warn(`handleConfrimList:`, err);
   }
 };
 
-export const deleteTask_in = async () => {
+export const deleteTask_in = async (stations) => {
   try {
-    return await deleteTask({ taskid: 1 });
+    return await deleteTask({ stations: stations[0]  });
   } catch (err) {
     console.warn(`handleConfrimList:`, err);
   }

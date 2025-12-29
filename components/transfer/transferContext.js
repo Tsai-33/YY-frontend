@@ -77,7 +77,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
         dispatch(setTransfer({ station: station, orderCode: orderCode, waveNo: order.W_ID, order: order, lackStation: station }));
       });
       dispatch(setAllLoading({ stations: stations }));
-      await addTask_tr();
+      await addTask_tr(stations);
     } else {
       Alert({ title: `伺服器有問題，請稍後再試。` });
     }
@@ -171,7 +171,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       if (res?.data?.success) {
         dispatch(resetTransfer({ type: "all", station: stations }));
         Alert({ title: res.data.message });
-        await deleteTask_tr();
+        await deleteTask_tr(stations);
       } else if (!res?.success) {
         Alert({ title: `${res?.error?.message}` });
       }

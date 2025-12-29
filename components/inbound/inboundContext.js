@@ -92,7 +92,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       setTableData((prev) => prev.filter((v) => v.INSTOCK_NO !== orderCode && v.STATUS == 0)); // 把已選定單排除
 
       // 寫入
-      await addTask_in();
+      await addTask_in(stations);
     } else if (!res?.data?.success) {
       Alert({ title: `${res?.data?.message}` });
     }
@@ -194,7 +194,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     const res = await cancelShelf_in(setLoading, currentStation);
     if (res?.data?.success) {
       dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: waveNo }));
-      deleteTask_in();
+      deleteTask_in(stations);
     } else if (!res?.data?.success) {
       Alert({ title: `${res?.data?.message}` });
     }
@@ -216,7 +216,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       // 先檢查nodepos有沒有ggroup
       const check = await checkNodePos();
       if (check?.data?.data?.length <= 0) {
-        await deleteTask_in();
+        await deleteTask_in(stations);
       }
     } else if (!res?.success) {
       Alert({ title: res?.error?.message });
