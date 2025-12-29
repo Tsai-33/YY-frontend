@@ -207,18 +207,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     }
   };
   const handleFinish = async () => {
-    // 取得w_id同一個的一起完成
-    const finalShelfItems = Object.values(inbounds)
-      .filter((item) => typeof item === "object" && String(item.waveNo) === String(waveNo))
-      .flatMap((item) => {
-        if (item && typeof item === "object" && !Array.isArray(item)) {
-          if (item.shelfItem) {
-            return Array.isArray(item.shelfItem) ? item.shelfItem : [item.shelfItem];
-          }
-          return [];
-        }
-      });
-    const res = await finishList_in(setLoading, order, finalShelfItems);
+    const res = await finishList_in(setLoading, order);
     if (res?.success) {
       dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res.data.data }));
       Alert({ title: "此單已完成" });
