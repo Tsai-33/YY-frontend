@@ -11,10 +11,11 @@ import {
   clearRowState,
 } from "@/redux/reducer/reducerInventory";
 import ActionBtn from "@/components/common/btns/actionBtn";
-import PageHeader from "../common/pageHeader/pageHeader";
-import CheckTable from "../common/table/checkTable";
+import PageHeader from "@/components/common/pageHeader/pageHeader";
+import CheckTable from "@/components/common/table/checkTable";
+import Alert from "@/components/common/alert/alert";
 import SchematicDiagram from "../diagram/schematicDiagram";
-import { sendToWMS, updateInventoryResult } from "@/pages/api";
+import { deleteTask, sendToWMS, updateInventoryResult } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 
 export default function InventoryShelf() {
@@ -222,7 +223,7 @@ export default function InventoryShelf() {
       rowState: rowState,
       UserId: userId,
     };
-    console.log("payload:", payload);
+    // console.log("payload:", payload);
     const res = await updateInventoryResult(payload);
     if (res.data.success) {
       console.log("res.data.data:", res.data.data);
@@ -283,14 +284,33 @@ export default function InventoryShelf() {
       };
       const res = await sendToWMS(data);
       if (res.data.success) {
-        dispatch(setPage("inventory-table"));
-        dispatch(setBatchNo(null));
-        dispatch(
-          setInventory({
-            station: "*",
-            data: { screen: "idle" },
-          })
-        );
+        const deleteRes = await deleteTask({ stations: stations[0] });
+
+        if (deleteRes.data && deleteRes.data.success) {
+          dispatch(setPage("inventory-table"));
+          dispatch(setBatchNo(null));
+          dispatch(
+            setInventory({
+              station: "*",
+              data: {
+                screen: "idle",
+                filter: {
+                  stockArea: "",
+                  cusNo: "",
+                  saleNo: "",
+                  prtNo: "",
+                },
+                shelf: {
+                  SHELVE_ID: "",
+                },
+                shelfItem: [],
+              },
+            })
+          );
+          dispatch(clearRowState({ station: "*" }));
+        } else {
+          Alert({ title: "WMS取消成功，但本地刪除任務失敗", deleteRes });
+        }
       }
     } catch (error) {
       console.error(error);
