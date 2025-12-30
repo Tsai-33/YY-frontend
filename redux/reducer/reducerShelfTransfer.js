@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const stationList = ["B01", "B02", "B03", "B04", "B05"];
+const stationList = ["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B09", "B10", "B11", "B12", "B13", "B14"];
 
 const createStation = () => ({
     step: 1,                // 1: 選擇訂單, 2: 選擇貨架, 3: 理貨中
@@ -37,11 +37,12 @@ const shelfTransferSlice = createSlice({
             // 處理退回貨架
             if (isReturn && shelf) {
                 const shelveId = shelf.SHELVE_ID;
-                
+
+                // 更新所有包含該貨架的站點(因為叫車時每個站點都有相同的selectedShelves)
                 for (const stationId of stationList) {
                     const stationData = state[stationId];
                     if (!stationData?.selectedShelves?.includes(shelveId)) continue;
-                    
+
                     // 標記貨架退回
                     stationData.shelveStatus[shelveId] = "returned";
 
@@ -56,7 +57,6 @@ const shelfTransferSlice = createSlice({
                     if (allReturned) {
                         state[stationId] = createStation();
                     }
-                    break;
                 }
                 return;
             }

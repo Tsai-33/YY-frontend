@@ -30,11 +30,11 @@ export default function ShelfTransferStation() {
         shelveChecks = {}
     } = useSelector((s) => s.shelfTransfer[currentStationSafe] || {});
 
-    // ===== 固定 5 個Table 選了幾個貨架就有幾個有值 =====
-    const totalSlots = 5;
+    // ===== 根據站點數量動態產生 Table =====
+    const totalSlots = stations.length;
     const shelvePositions = [
-        ...(selectedShelves || []), 
-        ...Array(Math.max(0, totalSlots - selectedShelves.length)).fill("貨架代號")
+        ...(selectedShelves || []),
+        ...Array(Math.max(0, totalSlots - (selectedShelves?.length || 0))).fill("貨架代號")
     ];
 
     // =====找出選到的項目他的貨架ID=====
@@ -164,38 +164,52 @@ export default function ShelfTransferStation() {
     // ===== 退回貨架 =====
     const handleReturnShelve = async (shelveId) => {
         if (!shelveId) {
-            Alert({ html: "抓不到站點位置" });
+            Alert({ html: "抓不到貨架編號" });
+            return;
+        }
+
+        // 檢查 selectedShelves 是否存在
+        if (!selectedShelves || selectedShelves.length === 0) {
+            Alert({ html: "找不到選中的貨架資料" });
             return;
         }
 
         // 找出該貨架對應的站點
-        const shelveIndex = selectedShelves?.indexOf(shelveId);
+        const shelveIndex = selectedShelves.indexOf(shelveId);
+
         if (shelveIndex === -1) {
             Alert({ html: "找不到對應的站點" });
             return;
         }
-        const stationId = `B0${shelveIndex + 1}`;
+
+        const stationId = stations[shelveIndex];
+
+        if (!stationId) {
+            Alert({ html: "站點 ID 無效" });
+            return;
+        }
         // setLoading(true);
         try {
             const dataId = generateRandomNumber();
-            const data = { 
-                action: "wcstask", 
-                dataid: dataId, 
-                command: "RETURN", 
-                SHELVE_ID: shelveId, 
-                FACE: 2, 
-                STATION: stationId, 
-                PURPOSE: 0 
+            const data = {
+                action: "wcstask",
+                dataid: dataId,
+                command: "RETURN",
+                SHELVE_ID: shelveId,
+                FACE: 2,
+                STATION: stationId,
+                PURPOSE: 0
             };
-            console.log('data: ', data)
             const res = await sendToWMS(data);
             if (res.data.success) {
-                console.log(stationId + "退回");
+                console.log(stationId + " 退回成功");
+            } else {
+                console.log("退回失敗:", res.data);
             }
         } catch (err) {
-            console.warn("handleReturnShelf :", err);
+            console.warn("handleReturnShelf:", err);
         } finally {
-            // setLoading(false);
+            // console.log("handleReturnShelve 完成");
         }
     };
 
@@ -264,7 +278,7 @@ export default function ShelfTransferStation() {
             <div className="flex flex-col h-screen p-4 bg-gray-100">
                 <div className="bg-white rounded-lg shadow-md p-4 mb-4">
                     <div className="flex items-center justify-between mb-2">
-                        <div className="text-4xl font-bold">理貨工作站B01-B05</div>
+                        <div className="text-4xl font-bold">理貨工作站{stations[0]}-{stations[stations.length - 1]}</div>
                         <div className="text-2xl flex justify-center flex-1 text-black font-bold">
                             請在一個貨架編號下方選擇理貨的貨物,再選擇要移動到的目的貨架編號點擊確定按鈕
                         </div>
@@ -496,9 +510,9 @@ export default function ShelfTransferStation() {
                             );
                         })}
                     </div>
-                    {/* 站點 */}                                                                                        
+                    {/* 站點 */}
                     <div className="flex gap-2">
-                        {shelvePositions.slice(0, 5).map((shelveId, index) => {
+                        {shelvePositions.slice(0, totalSlots).map((shelveId, index) => {
                             const isEmptySlot = shelveId === "貨架代號";
                             const status = shelveStatus?.[shelveId];
                             const hasData = shelveData?.[shelveId]?.length > 0;

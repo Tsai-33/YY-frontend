@@ -41,7 +41,6 @@ export default function ShelfTransferShelf() {
     const fetchStockAreas = async () => {
         try {
             const res = await getStockAreas();
-            console.log("res: ", res)
             if (res.data.success) {
                 setStockAreas(res.data.data || []);
             }
@@ -111,8 +110,8 @@ export default function ShelfTransferShelf() {
                 if (prev.includes(shelveId)) {
                     return prev.filter((id) => id !== shelveId);
                 } else {
-                    if (prev.length >= 5) {
-                        Alert({ text: "最多只能選擇5個貨架" });
+                    if (prev.length >= stations.length) {
+                        Alert({ text: `最多只能選擇${stations.length}個貨架` });
                         return prev;
                     }
                     return [...prev, shelveId];
@@ -144,20 +143,20 @@ export default function ShelfTransferShelf() {
     }, [selectedRows, tableData]);
 
     // ===== 叫車 =====
-    const canConfirm = selectedRows.length >= 1 && selectedRows.length <= 5;
+    const canConfirm = selectedRows.length >= 1 && selectedRows.length <= stations.length;
 
     const handleConfirm = async () => {
         if (!canConfirm) {
-            Alert({ text: "請選擇1~5個貨架" });
+            Alert({ text: `請選擇1~${stations.length}個貨架` });
         }
-        // TODO 沒單號就沒W_ID
+
         try {
             const tasks = selectedRows.map((shelveId, index) => ({
                 Command: "MOVE",
                 SHELVE_ID: shelveId,
                 BAR_CODE: null,
                 FACE: 2,
-                STATION: `B0${index + 1}`,
+                STATION: stations[index],
                 PURPOSE: 0,
                 STATUS: 0,
                 CART_ID: "",
@@ -174,7 +173,7 @@ export default function ShelfTransferShelf() {
                 });
 
                 selectedRows.forEach((shelveId, index) => {
-                    const stationId = `B0${index + 1}`;
+                    const stationId = stations[index];
                     dispatch(setShelfTransfer({
                         station: stationId,
                         step: 3,
@@ -212,8 +211,8 @@ export default function ShelfTransferShelf() {
                 <div className="flex items-center justify-between mb-4">
                     <div className="text-4xl font-bold">貨架調整</div>
                     <div className="text-2xl font-bold text-center flex-1">
-                        {tableData.length > 0 
-                            ? "請在左側清單內勾選最多5個貨架，點擊確定按鈕系統會派發無人車將貨架搬運至工作站"
+                        {tableData.length > 0
+                            ? `請在左側清單內勾選最多${stations.length}個貨架，點擊確定按鈕系統會派發無人車將貨架搬運至工作站`
                             : "請先選擇庫區後輸入品項號，點擊檢視按鈕查詢要調整的貨架"
                         }
                     </div>
@@ -341,12 +340,12 @@ export default function ShelfTransferShelf() {
                 </div>
                 {/* 站點 */}
                 <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((num) => (
+                    {stations.map((station, index) => (
                         <button
-                            key={num}
+                            key={station}
                             className="flex-1 bg-green-600 text-white py-3 rounded-lg text-lg font-medium"
                         >
-                            站點 {num}
+                            站點 {index + 1}
                         </button>
                     ))}
                 </div>
