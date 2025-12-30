@@ -27,10 +27,10 @@ export const getTable = async (setTableData, orderList = null) => {
   try {
     const res = await getOrder("I");
     if (res?.success) {
-      let newData = res.data.data;
+      let newData = res?.data?.data;
       if (orderList) {
         // 排除掉重複訂單
-        newData = res.data.data.filter((v) => !orderList.includes(v.INSTOCK_NO));
+        newData = res?.data?.data?.filter((v) => !orderList.includes(v.INSTOCK_NO));
       }
       setTableData(newData);
     } else if (!res?.success) {

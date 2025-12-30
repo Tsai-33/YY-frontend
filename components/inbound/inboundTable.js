@@ -3,9 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import TableAll from "../common/table/tableAll";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setInbound } from "@/redux/reducer/reducerInbound";
-import { getOrderDetailByWID } from "@/pages/api";
 import { getList } from "./inboundFunction";
-
 
 export default function InboundTable({ data, data2, setData2 }) {
   const dispatch = useDispatch();
@@ -27,6 +25,14 @@ export default function InboundTable({ data, data2, setData2 }) {
       } else {
         allIds = [...selected, value];
       }
+
+      // 顯示選擇
+      if (allIds?.length <= 0) {
+        dispatch(setInbound({ station: currentStation, step: 3 }));
+      } else {
+        dispatch(setInbound({ station: currentStation, step: 4 }));
+      }
+
       dispatch(setInbound({ station: currentStation, selected: allIds }));
     } else if (name === "radio") {
       dispatch(
@@ -59,9 +65,9 @@ export default function InboundTable({ data, data2, setData2 }) {
     const isChecked = selectAllRef.current.checked;
     const allIds = allData.filter((item) => !item.shortage);
     if (isChecked) {
-      dispatch(setInbound({ station: currentStation, selected: allIds }));
+      dispatch(setInbound({ station: currentStation, selected: allIds, step: 4 }));
     } else {
-      dispatch(setInbound({ station: currentStation, selected: [] }));
+      dispatch(setInbound({ station: currentStation, selected: [], step: 3 }));
     }
   };
 
@@ -74,7 +80,6 @@ export default function InboundTable({ data, data2, setData2 }) {
 
     // 是否真的「全部都在 selected 裡」
     const allSelected = validData.length > 0 && validData.every((v) => selected.some((s) => s.INSTOCK_NO === v.INSTOCK_NO));
-
     selectAllRef.current.checked = allSelected;
   }, [data2, selected]);
 

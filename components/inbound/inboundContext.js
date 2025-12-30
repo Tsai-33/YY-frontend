@@ -74,7 +74,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     const res = await confrimList_in(setLoading, order);
     if (res?.data?.success) {
       // 應該會告訴我有哪些station被占用，這裡可能是map方式全部設定
-      let lack_station = res.data.data.message2;
+      let lack_station = res?.data?.data?.message2;
       if (!Array.isArray(lack_station)) {
         try {
           // 嘗試把字串轉成陣列
@@ -139,6 +139,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
           newShelf.push({ ...v });
         }
       });
+
       dispatch(updateShelfItem({ station: currentStation, items: newShelf }));
       setTableData2((prev) => prev.filter((row) => !selected.some((v) => v.INSTOCK_NO === row.INSTOCK_NO)));
     } else if (!res?.success) {
@@ -210,7 +211,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const handleFinish = async () => {
     const res = await finishList_in(setLoading, order);
     if (res?.success) {
-      dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res.data.data }));
+      dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res?.data?.data }));
       Alert({ title: "此單已完成" });
 
       // 先檢查nodepos有沒有ggroup
@@ -230,6 +231,12 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   useEffect(() => {
     if (!waveNo) return;
     getList(waveNo, setTableData2);
+    console.log('1')
+    if (tableData2.length <= 0) {
+      dispatch(setInbound({ station: currentStation, step: 4 }));
+    } else {
+      dispatch(setInbound({ station: currentStation, step: 3 }));
+    }
   }, [shelfItem]);
 
   return (
@@ -246,7 +253,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
                 ${shelf?.UNIT} (${shelf?.EstBoxes}箱)
                 `}
               </div>
-              <ActionBtn text="入倉單完成" variant="orange" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handleFinish} />
+              <ActionBtn icon="icon-check" text="入倉單完成" variant="orange" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handleFinish} />
             </div>
           )}
           <InboundTable data={tableData} data2={tableData2} setData2={setTableData2} />
@@ -379,9 +386,9 @@ export default function InboundContext({ barCodeRef, setLoading }) {
               {step <= 2 && <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfrimList} disabled={!waveNo} />}
               {step > 2 && (
                 <div className="w-full flex justify-between">
-                  <ActionBtn icon="" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
-                  <ActionBtn icon="" text="確定上架" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
-                  <ActionBtn icon="" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
+                  <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
+                  <ActionBtn icon="icon-inbound" text="確定上架" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
+                  <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
                 </div>
               )}
             </div>

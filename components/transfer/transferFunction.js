@@ -9,7 +9,7 @@ export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTot
     const random = generateRandomNumber();
     const data = { action: "ask_order", NO: inputBarCode, dataid: random };
     const res = await sendToWMS(data);
-    if (res.data.success) {
+    if (res?.data?.success) {
       await getTable(setTableData, setTableTotalData2);
     }
   } catch (error) {
@@ -58,7 +58,7 @@ export const confrimList_tr = async (setLoading, order) => {
     const random9 = generateRandomNumber();
     const data = { action: "ask_wave", dataid: random9, wave_no: String(order.W_ID), station_no: "A" };
     const res = await sendToWMS(data);
-    return res.data.data;
+    return res?.data?.data;
   } catch (err) {
     console.warn("handleConfirm :", err);
     return err;

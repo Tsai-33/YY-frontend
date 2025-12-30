@@ -157,13 +157,13 @@ export default function TransferContext({ barCodeRef, setLoading }) {
 
   const handleCancel = async () => {
     const res = await cancelShelf_tr(setLoading, currentStation);
-    if (res.data.success) {
+    if (res?.data?.success) {
       dispatch(resetTransfer({ type: "all", station: stations }));
     }
   };
   const handleReturn = async () => {
     const res = await returnShelf_tr(setLoading, currentStation, shelf, order);
-    if (res.data.success) {
+    if (res?.data?.success) {
       dispatch(resetTransfer({ type: "one", station: currentStation, W_ID: waveNo }));
     }
   };
@@ -172,7 +172,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       const res = await finishList_tr(setLoading, order, setFinishModal);
       if (res?.data?.success) {
         dispatch(resetTransfer({ type: "all", station: stations }));
-        Alert({ title: res.data.message });
+        Alert({ title: res?.data?.message });
         await deleteTask_tr(stations);
       } else if (!res?.success) {
         Alert({ title: `${res?.error?.message}` });
@@ -182,18 +182,18 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   // 異常按鈕
   const [abData, setAbData] = useState();
   const setAbnormal = async (data) => {
-    const [newData] = data
+    const [newData] = data;
     setAbData(newData);
     setWmsModal(true);
   };
 
   const handleAbnormal = async () => {
-    const res = await addAbnormal_tr(abData,shelf);
-    setWmsModal(false)
-    if(res?.success){
-      Alert({title:`${res?.data?.message}`})
-    }else{
-      Alert({title:`${res?.error?.message}`})
+    const res = await addAbnormal_tr(abData, shelf);
+    setWmsModal(false);
+    if (res?.success) {
+      Alert({ title: `${res?.data?.message}` });
+    } else {
+      Alert({ title: `${res?.error?.message}` });
     }
   };
 
@@ -237,33 +237,36 @@ export default function TransferContext({ barCodeRef, setLoading }) {
             <div className="flex flex-col gap-8 h-100 overflow-y-auto">
               {orderCode ? (
                 step <= 2 ? (
-                  <SchematicDiagramList>
-                    <div className="flex flex-col">
-                      <div className="flex justify-end">
-                        <div>目的庫別:{order?.STOCK_AREA}</div>
-                      </div>
-                      {tableDataTotal2.map((v, i) => {
-                        const OUTSTOCK_NO = v.OUTSTOCK_NO.split("-").slice(0, 2).join("-");
-                        if (OUTSTOCK_NO !== orderCode) return;
-                        return (
-                          <div key={i} className="mt-2">
-                            <div className="flex justify-between">
-                              <div>產品品號:{v?.PRT_NO}</div>
-                              {/* 來源庫別是看SHEVLE_ID */}
-                              <div className="text-[var(--red)]">來源庫別:{v?.MEMO}</div>
-                            </div>
-                            <div>品名: {v?.PRT_NAME}</div>
-                            <div className="w-100 flex justify-between">
-                              <div>箱數: {v?.BOX_NO}箱</div>
-                              <div>
-                                數量: {v?.PP_NO} {v?.UNIT}
+                  tableData.length > 0 && (
+                    <SchematicDiagramList>
+                      <div className="flex flex-col">
+                        <div className="flex justify-end">
+                          <div>目的庫別:{order?.STOCK_AREA}</div>
+                        </div>
+                        {tableDataTotal2.map((v, i) => {
+                          const OUTSTOCK_NO = v.OUTSTOCK_NO.split("-").slice(0, 2).join("-");
+                          if (OUTSTOCK_NO !== orderCode) return;
+                          return (
+                            <div key={i} className="mt-2">
+                              <div className="flex justify-between">
+                                <div>產品品號:{v?.PRT_NO}</div>
+                                {/* 來源庫別是看SHEVLE_ID */}
+                                <div className="text-[var(--red)]">來源庫別:{v?.MEMO}</div>
+                              </div>
+                              <div>品名: {v?.PRT_NAME}</div>
+                              <div className="w-100 flex justify-between">
+                                <div>箱數: {v?.BOX_NO}箱</div>
+                                <div>
+                                  數量: {v?.PP_NO} {v?.UNIT}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </SchematicDiagramList>
+                          );
+                        })}
+                      </div>
+                      )
+                    </SchematicDiagramList>
+                  )
                 ) : (
                   <SchematicDiagram>
                     <div className="flex flex-col">
@@ -390,7 +393,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                   {currentStation === stations[0] ? (
                     <>
                       <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2.every((v) => v.STATUS === 2)} />
-                      <ActionBtn icon="icon-locationSwap" text="完成調撥" variant="orange" onClick={() => setFinishModal(true)} disabled={tableData2.every((v) => v.STATUS !== 2)} />
+                      <ActionBtn icon="icon-transfer" text="完成調撥" variant="orange" onClick={() => setFinishModal(true)} disabled={tableData2.every((v) => v.STATUS !== 2)} />
                       <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
                     </>
                   ) : (
