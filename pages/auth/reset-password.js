@@ -189,9 +189,11 @@ export default function ResetPassword() {
                     type="button"
                     onClick={() => togglePasswordVisibility("new")}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors">
-                    <span className="text-lg">
-                      {showPasswords.new ? "👁️" : "👁️‍🗨️"}
-                    </span>
+                    {showPasswords.new ? (
+                      <span className="icon-openEye"></span>
+                    ) : (
+                      <span className="icon-closeEye"></span>
+                    )}
                   </button>
                 </div>
               </div>
@@ -213,9 +215,11 @@ export default function ResetPassword() {
                     type="button"
                     onClick={() => togglePasswordVisibility("confirm")}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors">
-                    <span className="text-lg">
-                      {showPasswords.confirm ? "👁️" : "👁️‍🗨️"}
-                    </span>
+                    {showPasswords.confirm ? (
+                      <span className="icon-openEye"></span>
+                    ) : (
+                      <span className="icon-closeEye"></span>
+                    )}
                   </button>
                 </div>
               </div>
@@ -236,4 +240,3 @@ export default function ResetPassword() {
     </>
   );
 }
-

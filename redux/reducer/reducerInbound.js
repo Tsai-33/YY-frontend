@@ -1,8 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const stationList = ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"];
-
-const createStation = () => ({
+const createStation = (station) => ({
+  station: station,
   step: 1,
   screen: "idle",
   orderCode: "",
@@ -13,17 +12,22 @@ const createStation = () => ({
   selected: [], // 目前選擇
 });
 
-const initialState = stationList.reduce(
-  (acc, id) => {
-    acc[id] = createStation();
-    return acc;
-  },
-  { orderList: [], lackStation: [] }
-);
+const initialState = {
+  orderList: [],
+  lackStation: [],
+};
+
 const inboundSlice = createSlice({
   name: "inbound",
-  initialState,
+  initialState: initialState,
   reducers: {
+    initStation(state, action) {
+      const station = action.payload;
+
+      if (!state[station]) {
+        state[station] = createStation(station);
+      }
+    },
     setInbound: (state, action) => {
       const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation } = action.payload;
       if (!state[station]) return;
@@ -70,11 +74,17 @@ const inboundSlice = createSlice({
 
     // 控制面板
     managerInbound: (state, action) => {
-      const { station, name, value, index } = action.payload;
+      const { station, name, value, checked, index } = action.payload;
       if (!state[station]) return;
 
       if (name === "step") {
         state[station][name] = Number(value);
+      } else if (name === "lackStation") {
+        if (checked) {
+          state.lackStation.push(station);
+        } else {
+          state.lackStation = state.lackStation.filter((v) => v !== station);
+        }
       } else {
         state[station][name] = value;
       }
@@ -82,11 +92,17 @@ const inboundSlice = createSlice({
     // 重置
     resetInbound: (state, action) => {
       const { type, station, W_ID } = action.payload;
+
       if (type === "one") {
-          state[station].screen = 'loading'
-  
+        state[station].screen = "loading";
       } else if (type === "all") {
-        return initialState;
+        const nextState = { ...initialState };
+
+        station.forEach((s) => {
+          nextState[s] = createStation(s);
+        });
+
+        return nextState;
       } else if (type === "wave") {
         // 1️⃣ 先清除 lackStation 中跟這個 wave 有關的 stationId
         if (Array.isArray(state.lackStation)) {
@@ -97,13 +113,10 @@ const inboundSlice = createSlice({
         }
 
         // 2️⃣ 先清除 orderList 中跟這個 wave 有關的訂單
-        if (Array.isArray(state.orderList)) {
-          state.orderList = state.orderList.filter((orderId) => {
-            return !Object.values(state).some((s) => s.waveNo === W_ID && s.order?.orderCode === orderId);
-          });
-        }
+        state.orderList = state.orderList.filter((orderId) => orderId !== state[station].orderCode);
 
         // 3️⃣ 再重置 waveNo === W_ID 的 station
+        // 沒寫成功，只清除了一個
         Object.keys(state).forEach((key) => {
           const s = state[key];
           if (s && typeof s === "object" && "waveNo" in s && s.waveNo === W_ID) {
@@ -115,5 +128,5 @@ const inboundSlice = createSlice({
   },
 });
 
-export const { setInbound, updateLackStation, updateOrderList, updateShelfItem, managerInbound, resetInbound } = inboundSlice.actions;
+export const { initStation, setInbound, updateLackStation, updateOrderList, updateShelfItem, managerInbound, resetInbound } = inboundSlice.actions;
 export default inboundSlice.reducer;

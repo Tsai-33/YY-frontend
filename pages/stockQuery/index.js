@@ -7,215 +7,43 @@ import { searchStock } from "../api";
 
 export default function StockQuery() {
   const tableHeader = [
-    { label: "入倉單號", key: "INSTOCK_NO", width: 200 },
-    { label: "訂單單號", key: "SALE_NO", width: 200 },
-    { label: "出倉單號", key: "OUTSTOCK_NO", width: 200 },
     { label: "產品品號", key: "PRT_NO", width: 200 },
     { label: "產品品名", key: "PRT_NAME", width: 200 },
-    { label: "產品規格", key: "SPEC_DESC", width: 200 },
     { label: "庫別", key: "STOCK_AREA", width: 100 },
+    {
+      label: "產品數量",
+      key: "PP_NO",
+      width: 200,
+      render: (row) => row.PP_NO,
+      renderDetail: (d) => d.TOTAL_PP_NO || "---",
+    },
+    { label: "單位", key: "UNIT", width: 100 },
+    {
+      label: "箱數",
+      key: "BOX_NO",
+      width: 100,
+      render: (row) => row.BOX_NO,
+      renderDetail: (d) => d.TOTAL_BOX_NO || "---",
+    },
+    { label: "訂單單號", key: "SALE_NO", width: 200 },
+    {
+      label: "入倉單號",
+      key: "INSTOCK_NO",
+      width: 250,
+      hideInMain: true,
+      renderDetail: (d) => d.INSTOCK_NO || "---",
+    },
+    { label: "出倉單號", key: "OUTSTOCK_NO", width: 200 },
+    { label: "產品規格", key: "SPEC_DESC", width: 200 },
     { label: "異動日期", key: "BILL_TIME", width: 200 },
     { label: "訂單預交日", key: "WORK_TIME", width: 250 },
-    { label: "出入倉別", key: "SHIP_TYPE", width: 200 },
-    { label: "產品數量", key: "PP_NO", width: 200 },
-    { label: "單位", key: "UNIT", width: 100 },
-    { label: "箱數", key: "BOX_NO", width: 100 },
     { label: "每箱包數", key: "BOX_PACK", width: 200 },
     { label: "材積", key: "VOLUMN", width: 100 },
     { label: "貨號", key: "PRT_CODE", width: 100 },
     { label: "客戶代號", key: "CUS_NO", width: 200 },
-    { label: "產品簡碼", key: "BRIFT_CODE", width: 200 },
+    { label: "品號簡碼", key: "BRIFT_CODE", width: 200 },
     { label: "備註", key: "SEAL", width: 100 },
-  ];
-
-  const mockData = [
-    // {
-    //   INDEX: 1,
-    //   MAKE_NO: "M510-11411220068-0001",
-    //   OUTSTOCK_NO: "",
-    //   PRT_NO: "Y01TSL090910YT",
-    //   STOCK_AREA: "F01",
-    //   BAR_CODE: "2025-11-20",
-    //   PP_NO: 20,
-    //   BOX_NO: 1,
-    //   VOLUMN: "3.128",
-    //   PRT_CODE: "C-78541",
-    //   PRT_NAME: "本色束帶,100條/包,20包/箱",
-    //   CUS_NO: "0813008",
-    //   REMARK: "急件",
-    //   BRIFT_CODE: "YT090910",
-    //   SPEC_DESC: "8.7*920mm",
-    // },
-    // {
-    //   INDEX: 2,
-    //   MAKE_NO: "M510-11411220068-0001",
-    //   OUTSTOCK_NO: "",
-    //   PRT_NO: "Y01TSL090910YT",
-    //   STOCK_AREA: "F01",
-    //   BAR_CODE: "2025-11-20",
-    //   PP_NO: 20,
-    //   BOX_NO: 1,
-    //   VOLUMN: "3.128",
-    //   PRT_CODE: "C-78541",
-    //   PRT_NAME: "本色束帶,100條/包,20包/箱",
-    //   CUS_NO: "0813008",
-    //   REMARK: "急件",
-    //   BRIFT_CODE: "YT090910",
-    //   SPEC_DESC: "8.7*920mm",
-    // },
-    // {
-    //   INDEX: 3,
-    //   MAKE_NO: "M510-11411220068-0001",
-    //   OUTSTOCK_NO: "",
-    //   PRT_NO: "Y01TSL090910YT",
-    //   STOCK_AREA: "F01",
-    //   BAR_CODE: "2025-11-20",
-    //   PP_NO: 20,
-    //   BOX_NO: 1,
-    //   VOLUMN: "3.128",
-    //   PRT_CODE: "C-78541",
-    //   PRT_NAME: "本色束帶,100條/包,20包/箱",
-    //   CUS_NO: "0813008",
-    //   REMARK: "急件",
-    //   BRIFT_CODE: "YT090910",
-    //   SPEC_DESC: "8.7*920mm",
-    // },
-    // {
-    //   INDEX: 4,
-    //   MAKE_NO: "M510-11411220068-0001",
-    //   OUTSTOCK_NO: "",
-    //   PRT_NO: "Y01TSL090910YT",
-    //   STOCK_AREA: "F01",
-    //   BAR_CODE: "2025-11-20",
-    //   PP_NO: 20,
-    //   BOX_NO: 1,
-    //   VOLUMN: "3.128",
-    //   PRT_CODE: "C-78541",
-    //   PRT_NAME: "本色束帶,100條/包,20包/箱",
-    //   CUS_NO: "0813008",
-    //   REMARK: "急件",
-    //   BRIFT_CODE: "YT090910",
-    //   SPEC_DESC: "8.7*920mm",
-    // },
-    // {
-    //   INDEX: 5,
-    //   MAKE_NO: "M510-11411220068-0001",
-    //   OUTSTOCK_NO: "",
-    //   PRT_NO: "Y01TSL090910YT",
-    //   STOCK_AREA: "F01",
-    //   BAR_CODE: "2025-11-20",
-    //   PP_NO: 20,
-    //   BOX_NO: 1,
-    //   VOLUMN: "3.128",
-    //   PRT_CODE: "C-78541",
-    //   PRT_NAME: "本色束帶,100條/包,20包/箱",
-    //   CUS_NO: "0813008",
-    //   REMARK: "急件",
-    //   BRIFT_CODE: "YT090910",
-    //   SPEC_DESC: "8.7*920mm",
-    // },
-    // {
-    //   INDEX: 6,
-    //   MAKE_NO: "M510-11411220068-0001",
-    //   OUTSTOCK_NO: "",
-    //   PRT_NO: "Y01TSL090910YT",
-    //   STOCK_AREA: "F01",
-    //   BAR_CODE: "2025-11-20",
-    //   PP_NO: 20,
-    //   BOX_NO: 1,
-    //   VOLUMN: "3.128",
-    //   PRT_CODE: "C-78541",
-    //   PRT_NAME: "本色束帶,100條/包,20包/箱",
-    //   CUS_NO: "0813008",
-    //   REMARK: "急件",
-    //   BRIFT_CODE: "YT090910",
-    //   SPEC_DESC: "8.7*920mm",
-    // },
-    // {
-    //   INDEX: 7,
-    //   MAKE_NO: "M510-11411220068-0001",
-    //   OUTSTOCK_NO: "",
-    //   PRT_NO: "Y01TSL090910YT",
-    //   STOCK_AREA: "F01",
-    //   BAR_CODE: "2025-11-20",
-    //   PP_NO: 20,
-    //   BOX_NO: 1,
-    //   VOLUMN: "3.128",
-    //   PRT_CODE: "C-78541",
-    //   PRT_NAME: "本色束帶,100條/包,20包/箱",
-    //   CUS_NO: "0813008",
-    //   REMARK: "急件",
-    //   BRIFT_CODE: "YT090910",
-    //   SPEC_DESC: "8.7*920mm",
-    // },
-    // {
-    //   INDEX: 8,
-    //   MAKE_NO: "M510-11411220068-0001",
-    //   OUTSTOCK_NO: "",
-    //   PRT_NO: "Y01TSL090910YT",
-    //   STOCK_AREA: "F01",
-    //   BAR_CODE: "2025-11-20",
-    //   PP_NO: 20,
-    //   BOX_NO: 1,
-    //   VOLUMN: "3.128",
-    //   PRT_CODE: "C-78541",
-    //   PRT_NAME: "本色束帶,100條/包,20包/箱",
-    //   CUS_NO: "0813008",
-    //   REMARK: "急件",
-    //   BRIFT_CODE: "YT090910",
-    //   SPEC_DESC: "8.7*920mm",
-    // },
-    // {
-    //   INDEX: 9,
-    //   MAKE_NO: "M510-11411220068-0001",
-    //   OUTSTOCK_NO: "",
-    //   PRT_NO: "Y01TSL090910YT",
-    //   STOCK_AREA: "F01",
-    //   BAR_CODE: "2025-11-20",
-    //   PP_NO: 20,
-    //   BOX_NO: 1,
-    //   VOLUMN: "3.128",
-    //   PRT_CODE: "C-78541",
-    //   PRT_NAME: "本色束帶,100條/包,20包/箱",
-    //   CUS_NO: "0813008",
-    //   REMARK: "急件",
-    //   BRIFT_CODE: "YT090910",
-    //   SPEC_DESC: "8.7*920mm",
-    // },
-    // {
-    //   INDEX: 10,
-    //   MAKE_NO: "M510-11411220068-0001",
-    //   OUTSTOCK_NO: "",
-    //   PRT_NO: "Y01TSL090910YT",
-    //   STOCK_AREA: "F01",
-    //   BAR_CODE: "2025-11-20",
-    //   PP_NO: 20,
-    //   BOX_NO: 1,
-    //   VOLUMN: "3.128",
-    //   PRT_CODE: "C-78541",
-    //   PRT_NAME: "本色束帶,100條/包,20包/箱",
-    //   CUS_NO: "0813008",
-    //   REMARK: "急件",
-    //   BRIFT_CODE: "YT090910",
-    //   SPEC_DESC: "8.7*920mm",
-    // },
-    // {
-    //   INDEX: 11,
-    //   MAKE_NO: "M510-11411220068-0001",
-    //   OUTSTOCK_NO: "",
-    //   PRT_NO: "Y01TSL090910YT",
-    //   STOCK_AREA: "F01",
-    //   BAR_CODE: "2025-11-20",
-    //   PP_NO: 20,
-    //   BOX_NO: 1,
-    //   VOLUMN: "3.128",
-    //   PRT_CODE: "C-78541",
-    //   PRT_NAME: "本色束帶,100條/包,20包/箱",
-    //   CUS_NO: "0813008",
-    //   REMARK: "急件",
-    //   BRIFT_CODE: "YT090910",
-    //   SPEC_DESC: "8.7*920mm",
-    // },
+    { label: "貨架號碼", key: "SHELVE_ID", width: 200 },
   ];
 
   const [filters, setFilters] = useState({
@@ -260,7 +88,7 @@ export default function StockQuery() {
       <PageHeader title="" backTo="/workspace" />
       {/* 主要內容區域 */}
       <div className="flex-1 flex flex-col justify-between">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4">
           <div className="grid grid-cols-5 gap-6">
             <TextInput
               label="訂單單號:"
@@ -332,7 +160,7 @@ export default function StockQuery() {
             <div className="flex gap-3">
               <button
                 className="px-4 py-2 bg-gray-400 text-white rounded-md text-lg font-bold"
-                onClick={() =>
+                onClick={() => {
                   setFilters({
                     SALE_NO: "",
                     PRT_NO: "",
@@ -343,8 +171,9 @@ export default function StockQuery() {
                     WORK_TIME: "",
                     SEAL: "",
                     CUS_NO: "",
-                  })
-                }>
+                  });
+                  setStockData([]);
+                }}>
                 清除
               </button>
               <button
@@ -363,6 +192,7 @@ export default function StockQuery() {
             name="stockQuery"
             variants="green"
             idKey="INDEX"
+            height="67vh"
           />
         </div>
       </div>

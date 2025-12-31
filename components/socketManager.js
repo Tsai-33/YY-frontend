@@ -5,6 +5,7 @@ import { setInbound } from "@/redux/reducer/reducerInbound";
 import { setTransfer } from "@/redux/reducer/reducerTransfer";
 import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
 import { setShelfTransfer } from "@/redux/reducer/reducerShelfTransfer";
+import { setInventory } from "@/redux/reducer/reducerInventory";
 
 export default function SocketManager() {
   const dispatch = useDispatch();
@@ -36,6 +37,7 @@ export default function SocketManager() {
 
     try {
       isConnectingRef.current = true;
+      // const newSocket = new WebSocket(`${process.env.NEXT_PUBLIC_SOCKET_URL}?nocache=${Date.now()}`);
       const newSocket = new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL);
 
       newSocket.onopen = () => {
@@ -60,19 +62,62 @@ export default function SocketManager() {
         if (eventData?.action === "taskdone" && command !== "RETURN" && command !== "CANCEL") {
           if (eventData?.PURPOSE === 0) {
             // 出庫
-            dispatch(setOutboundExternal({ station: eventData.STATION, screen: "working", shelf: eventData, shelfItem: eventData?.ITEMS, step: 3 }));
+            dispatch(
+              setOutboundExternal({
+                station: eventData.STATION,
+                screen: "working",
+                shelf: eventData,
+                shelfItem: eventData?.ITEMS,
+                step: 3,
+              })
+            );
             // 理貨
-            dispatch(setShelfTransfer({ station: eventData.STATION, screen: "working", shelf: eventData, shelfItem: eventData?.ITEMS, step: 3 }));
+            dispatch(
+              setShelfTransfer({
+                station: eventData.STATION,
+                screen: "working",
+                shelf: eventData,
+                shelfItem: eventData?.ITEMS,
+                step: 3,
+              })
+            );
           } else if (eventData?.PURPOSE === 1) {
             // 入庫
-            dispatch(setInbound({ station: eventData.STATION, screen: "working", shelf: eventData, shelfItem: eventData?.ITEMS, step: 3 }));
+            dispatch(setInbound({ station: eventData.STATION, shelf: eventData, shelfItem: eventData?.ITEMS, screen: "working", step: 3 }));
+
           } else if (eventData?.PURPOSE === 2) {
-            // 調撥
-            dispatch(setTransfer({ station: eventData.STATION, screen: "working", taskdone: eventData, step: 3 }));
+            // 盤點
+            dispatch(
+              setInventory({
+                station: eventData?.STATION,
+                data: {
+                  screen: "IDLE",
+                  shelf: {
+                    SHELVE_ID: eventData?.SHELVE_ID,
+                  },
+                  shelfItem: eventData?.ITEMS,
+                },
+              })
+            );
           } else if (eventData?.PURPOSE === 3) {
+            // 調撥
+            dispatch(
+              setTransfer({
+                station: eventData.STATION,
+                screen: "working",
+                shelf: eventData,
+                shelfItem: eventData?.ITEMS,
+                job: eventData?.Job,
+                step: 3,
+              })
+            );
           }
         }
         if (eventData?.action === "push_button") {
+          dispatch(setOutboundExternal({ 
+            station: eventData.STATION, 
+            pushButton: eventData
+          }));
         }
         if (eventData?.action === "show_msg") {
         }

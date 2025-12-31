@@ -4,26 +4,22 @@ import withReactContent from "sweetalert2-react-content";
 
 const MySwal = withReactContent(Swal);
 
-/**
- * 基本 SweetAlert2 共用函式
- * 最常用的情況已經設定預設值
- */
 export default function Alert({
-  title,                     // 必傳標題
-  text = "",                  // 文字內容
-  showConfirm = true,         // 預設都有確認按鈕
-  confirmButtonText = "確定", // 預設文字 "確定"
+  title,
+  html = ``,
+  showConfirm = true,
+  confirmButtonText = "確定",
   confirmButtonColor = "#008b48",
   showCancel = false,
   cancelButtonText = "取消",
   cancelButtonColor = "#d33",
-  timer = null,               // 預設不自動消失
+  timer = null,
   onConfirm = null,
   onCancel = null,
 }) {
   const options = {
     title,
-    text,
+    html,
     timer,
     showConfirmButton: showConfirm,
     showCancelButton: showCancel,
@@ -32,10 +28,33 @@ export default function Alert({
     cancelButtonText,
     cancelButtonColor,
     allowOutsideClick: !showConfirm && !showCancel,
+    
+    // --- 關鍵修改 1: 重新啟用 Focus ---
+    focusConfirm: true, // 讓 Enter 鍵能對準確認按鈕
+    
+    // 移除 didOpen 裡面的 blur，讓按鈕可以被選中
+    didOpen: () => {
+       // 如果不需要特定的 didOpen 行為，可以直接拿掉或留空
+    },
   };
 
-  return MySwal.fire(options).then((result) => {
+  const root = document.getElementById("__next");
+  
+  // 🔹 關鍵修改 2: 不要立即 inert
+  // inert 會讓所有鍵盤事件被阻擋，包括 Enter 鍵
+  // 我們改用 SweetAlert2 的事件生命週期
+  
+  return MySwal.fire({
+    ...options,
+    didOpen: () => {
+      // 彈窗打開後，只把背景設為 inert，Swal 的容器本身不在 __next 裡面
+      if (root) root.setAttribute('aria-hidden', 'true');
+    },
+    willClose: () => {
+      if (root) root.removeAttribute('aria-hidden');
+    }
+  }).then((result) => {
     if (result.isConfirmed && onConfirm) onConfirm();
-    if (result.isDismissed && onCancel) onCancel();
+    if (result.isDismissed && (result.dismiss === Swal.DismissReason.cancel) && onCancel) onCancel();
   });
 }

@@ -7,6 +7,8 @@ import InputFrame from "@/components/common/input/inputFrame";
 import Loading from "@/components/common/loading/loading";
 import Alert from "@/components/common/alert/alert";
 import Link from "next/link";
+import ActionBtn from "@/components/common/btns/actionBtn";
+import { initWorkstation } from "@/redux/reducer/reducerWorkStations";
 
 export default function Login() {
   const router = useRouter();
@@ -114,6 +116,8 @@ export default function Login() {
           })
         );
 
+        dispatch(initWorkstation(user.ipAddress));
+
         // 显示成功消息
         Alert({
           title: "登入成功",
@@ -153,6 +157,14 @@ export default function Login() {
     }
   };
 
+  //
+  const handleWriteIn = () => {
+    setFormData({
+      email: "ADMIN001",
+      password: "admin",
+    });
+  };
+
   return (
     <>
       {loading && <Loading />}
@@ -160,10 +172,18 @@ export default function Login() {
       <div className="flex items-center justify-center flex-1 min-h-0">
         <div className="w-full max-w-md">
           {/* 登录表单 */}
-          <div >
+          <div>
             {/* 标题 */}
             <h2 className="text-2xl font-bold text-black mb-8 text-center">
               登入 Log in
+              {/* 暫時使用--- 上線後刪除 */}
+              <ActionBtn
+                text="測試用-帳密"
+                variant="yellow"
+                className="absolute top-0"
+                onClick={handleWriteIn}
+              />
+              {/* 暫時使用--- 上線後刪除 */}
             </h2>
 
             <form onSubmit={handleLogin} className="space-y-5">
@@ -201,9 +221,9 @@ export default function Login() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors">
                     {showPassword ? (
-                      <span className="text-lg">👁️</span>
+                      <span className="icon-openEye"></span>
                     ) : (
-                      <span className="text-lg">👁️‍🗨️</span>
+                      <span className="icon-closeEye"></span>
                     )}
                   </button>
                 </div>
@@ -234,4 +254,3 @@ export default function Login() {
     </>
   );
 }
-

@@ -1,19 +1,22 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import TableAll from "../common/table/tableAll";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
-import { setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
-import { getInboundByWID } from "@/pages/api";
-export default function InboundTable({ data,data2,setData2 }) {
+import { setInbound } from "@/redux/reducer/reducerInbound";
+import { getOrderDetailByWID } from "@/pages/api";
+import { getList } from "./inboundFunction";
+
+
+export default function InboundTable({ data, data2, setData2 }) {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { waveNo, orderCode, step, shelfItem, selected } = useSelector((s) => s.inbound[currentStationSafe] || {});
+  const { orderCode, step, selected, shelfItem, waveNo } = useSelector((s) => s.inbound[currentStationSafe] || {});
   // =============== 畫面一 ====================
   // radio table (左)
   const tableHeader = [
-    { label: "訂單單號/製令單號", key: "INSTOCK_NO", width: `60%` },
-    { label: "入庫日期", key: "BILL_TIME", width: `35%` },
+    { label: "入倉單號", key: "INSTOCK_NO", width: `60%` },
+    { label: "單據日期", key: "BILL_TIME", width: `35%` },
   ];
   const handleSelectedOption = (name, value, idKey) => {
     const valueId = value[idKey];
@@ -26,7 +29,15 @@ export default function InboundTable({ data,data2,setData2 }) {
       }
       dispatch(setInbound({ station: currentStation, selected: allIds }));
     } else if (name === "radio") {
-      dispatch(setInbound({ station: currentStation, order: value, orderCode: value?.INSTOCK_NO, waveNo: value?.W_ID, step: 2 }));
+      dispatch(
+        setInbound({
+          station: currentStation,
+          order: value,
+          orderCode: value?.INSTOCK_NO,
+          waveNo: value?.W_ID,
+          step: 2,
+        })
+      );
     }
   };
 
@@ -34,28 +45,15 @@ export default function InboundTable({ data,data2,setData2 }) {
   // checkbox table
   const tableHeader2 = [
     { label: "", key: "checkbox", width: `48px` },
-    { label: "產品品號", key: "PRT_CODE", width: `60%` },
+    { label: "產品品號", key: "PRT_NO", width: `60%` },
     { label: "每箱包數", key: "BOX_PACK", width: `30%` },
   ];
   useEffect(() => {
     if (!waveNo) return;
-    getList();
+    getList(waveNo, setData2);
   }, [shelfItem]);
-  const getList = async () => {
-    try {
-      const res = await getInboundByWID(waveNo);
-      if (res.data.success) {
-        const detail = res.data.data; // 陣列
-        const newDetail = detail.map((v) => ({ ...v, type: "new", checked: false }));
-        setData2(newDetail);
-      }
-    } catch (err) {
-      console.warn("getList :", err);
-    }
-  };
 
   // ======== select ==========
-  //  全選 / 全不選
   const selectAllRef = useRef(null);
   const handleSelectAll = (allData, idKey) => {
     const isChecked = selectAllRef.current.checked;
@@ -66,6 +64,19 @@ export default function InboundTable({ data,data2,setData2 }) {
       dispatch(setInbound({ station: currentStation, selected: [] }));
     }
   };
+
+  // 控制全選按鈕
+  useEffect(() => {
+    if (!selectAllRef.current) return;
+
+    // 本頁可選取的資料（排除 shortage）
+    const validData = data2.filter((item) => !item.shortage);
+
+    // 是否真的「全部都在 selected 裡」
+    const allSelected = validData.length > 0 && validData.every((v) => selected.some((s) => s.INSTOCK_NO === v.INSTOCK_NO));
+
+    selectAllRef.current.checked = allSelected;
+  }, [data2, selected]);
 
   return (
     <>

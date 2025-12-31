@@ -1,18 +1,19 @@
 @font-face {
-  font-family: 'icomoon';
-  src:  url('fonts/icomoon.eot?kssufl');
-  src:  url('fonts/icomoon.eot?kssufl#iefix') format('embedded-opentype'),
-    url('fonts/icomoon.ttf?kssufl') format('truetype'),
-    url('fonts/icomoon.woff?kssufl') format('woff'),
-    url('fonts/icomoon.svg?kssufl#icomoon') format('svg');
+  font-family: "icomoon";
+  src: url("fonts/icomoon.eot?v2jo9q");
+  src: url("fonts/icomoon.eot?v2jo9q#iefix") format("embedded-opentype"),
+    url("fonts/icomoon.ttf?v2jo9q") format("truetype"),
+    url("fonts/icomoon.woff?v2jo9q") format("woff"),
+    url("fonts/icomoon.svg?v2jo9q#icomoon") format("svg");
   font-weight: normal;
   font-style: normal;
   font-display: block;
 }
 
-[class^="icon-"], [class*=" icon-"] {
+[class^="icon-"],
+[class*=" icon-"] {
   /* use !important to prevent issues with browser extensions that change fonts */
-  font-family: 'icomoon' !important;
+  font-family: "icomoon" !important;
   speak: never;
   font-style: normal;
   font-weight: normal;
@@ -25,138 +26,75 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.icon-putOnShelve:before {
-  content: "\e913";
-}
-.icon-time:before {
+.icon-abnormal:before {
   content: "\e900";
 }
-.icon-returnShelf:before {
+.icon-abnormalList:before {
   content: "\e901";
 }
-.icon-search:before {
+.icon-add:before {
   content: "\e902";
 }
-.icon-setting:before {
+.icon-goback:before {
   content: "\e903";
 }
-.icon-shelfAdjust:before {
+.icon-check:before {
   content: "\e904";
 }
-.icon-ShelfConfiguration:before {
+.icon-closeEye:before {
   content: "\e905";
 }
-.icon-ShelfList:before {
+.icon-delete:before {
   content: "\e906";
 }
-.icon-ShelfTypeList:before {
+.icon-inbound:before {
   content: "\e907";
 }
-.icon-storageAdjust:before {
+.icon-inventory:before {
   content: "\e908";
 }
-.icon-itemStorageAdjust:before {
+.icon-map:before {
   content: "\e909";
 }
-.icon-switchFace:before {
+.icon-openEye:before {
   content: "\e90a";
 }
-.icon-user:before {
+.icon-outbound:before {
   content: "\e90b";
 }
-.icon-wcsTaskCount:before {
+.icon-outboundExternal:before {
   content: "\e90c";
 }
-.icon-offline:before {
+.icon-outboundInternal:before {
   content: "\e90d";
 }
-.icon-online:before {
+.icon-returnShelf:before {
   content: "\e90e";
 }
-.icon-outbound:before {
+.icon-search:before {
   content: "\e90f";
 }
-.icon-partsMaterial:before {
+.icon-setting:before {
   content: "\e910";
 }
-.icon-partsMaterialIn:before {
+.icon-shelfTransfer:before {
   content: "\e911";
 }
-.icon-partsMaterialOut:before {
+.icon-shelfTransferOrder:before {
   content: "\e912";
 }
-.icon-quality:before {
+.icon-shelfTransferShelf:before {
+  content: "\e913";
+}
+.icon-stockArea:before {
   content: "\e914";
 }
-.icon-InventoryCheck:before {
+.icon-stockQuery:before {
   content: "\e915";
 }
-.icon-InventoryDiscrepancyList:before {
+.icon-transfer:before {
   content: "\e916";
 }
-.icon-InventoryTimeNtO:before {
+.icon-user:before {
   content: "\e917";
-}
-.icon-InventoryTimeOtN:before {
-  content: "\e918";
-}
-.icon-locationSwap:before {
-  content: "\e919";
-}
-.icon-modify:before {
-  content: "\e91a";
-}
-.icon-noOnline:before {
-  content: "\e91b";
-}
-.icon-honest:before {
-  content: "\e91c";
-}
-.icon-inbound:before {
-  content: "\e91d";
-}
-.icon-info:before {
-  content: "\e91e";
-}
-.icon-edit:before {
-  content: "\e91f";
-}
-.icon-flaw:before {
-  content: "\e920";
-}
-.icon-FluctuationInventoryCheck:before {
-  content: "\e921";
-}
-.icon-FullAreaInventoryCheck:before {
-  content: "\e922";
-}
-.icon-goback:before {
-  content: "\e923";
-}
-.icon-abnormal:before {
-  content: "\e924";
-}
-.icon-add:before {
-  content: "\e925";
-}
-.icon-check:before {
-  content: "\e926";
-}
-.icon-close:before {
-  content: "\e927";
-}
-.icon-createPartsMaterial:before {
-  content: "\e928";
-}
-.icon-CreateShelfType:before {
-  content: "\e929";
-}
-.icon-creativity:before {
-  content: "\e92a";
-}
-.icon-delete:before {
-  content: "\e92b";
-}
-.icon-download:before {
-  content: "\e92c";
 }

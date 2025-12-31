@@ -1,39 +1,110 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const stationList = ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"];
-
 const createStation = () => ({
-  step: 1,
   screen: "idle",
-  orderCode: "",
-  taskdone: {},
+  shelf: {}, // default ITEMS 這裡取
+  shelfItem: [], // 目前貨架上的物品
+  selected: [], // 目前選擇
+  job: [], // 要顯示的單據
 });
 
-const initialState = stationList.reduce(
-  (acc, id) => {
-    acc[id] = createStation();
-    return acc;
-  },
-  { orderList: [] }
-);
+const initialState = {
+  step: 1,
+  orderCode: "",
+  waveNo: null,
+  order: {},
+};
 
 const transferSlice = createSlice({
   name: "transfer",
-  initialState,
+  initialState: initialState,
   reducers: {
+    initStation(state, action) {
+      const station = action.payload;
+
+      if (!state[station]) {
+        state[station] = createStation(station);
+      }
+    },
     setTransfer: (state, action) => {
-      const { orderList, station, step, screen, orderCode, taskdone } = action.payload;
+      const { step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, job } = action.payload;
       if (!state[station]) return;
 
-      if (step !== undefined) state[station].step = step;
+      if (step !== undefined) state.step = step;
       if (screen !== undefined) state[station].screen = screen;
-      if (orderCode !== undefined) state[station].orderCode = orderCode;
-      if (taskdone !== undefined) state[station].taskdone = taskdone;
-      if (orderList !== undefined) state.orderList = [...new Set([...state.orderList, orderList])];
+      if (order !== undefined) state.order = order;
+      if (orderCode !== undefined) state.orderCode = orderCode;
+      if (waveNo !== undefined) state.waveNo = waveNo;
+      if (shelf !== undefined) state[station].shelf = shelf;
+      if (shelfItem !== undefined) state[station].shelfItem = shelfItem;
+      if (selected !== undefined) state[station].selected = selected;
+      if (job !== undefined) {
+        const newJob = job.map((v) => ({ OUTSTOCK_NO: state.orderCode, BOX_NO: v.Est_Boxes, PP_NO: v.Est_PPs, PRT_NO: v.Est_PRT_NO, AREA: v.MEMO }));
+        state[station].job = newJob;
+      }
+    },
+    setAllLoading: (state, action) => {
+      const { stations } = action.payload;
+      stations.map((v) => {
+        state[v].screen = "loading";
+      });
+    },
+    updateShelfItem: (state, action) => {
+      const { station, items, ppStation } = action.payload;
+      if (!state[station]) return;
+
+      console.log(station, items, ppStation, "123");
+
+      // 來源扣除
+      state[station].shelfItem = state[station].shelfItem.map((v) => {
+        const matched = items.find((i) => i.PRT_NO === v.PRT_NO);
+        if (matched) {
+          return { ...v, PP_NO: v.PP_NO - matched.PP_NO, BOX_NO: v.BOX_NO - matched.BOX_NO };
+        }
+        return v;
+      });
+
+      // 目的加入
+      state[ppStation].shelfItem = state[ppStation].shelfItem.map((v) => {
+        const matched = items.find((i) => i.PRT_NO === v.PRT_NO);
+        if (matched) {
+          return { ...v, PP_NO: v.PP_NO + matched.PP_NO, BOX_NO: v.BOX_NO + matched.BOX_NO };
+        }
+        return v;
+      });
+
+      // JOB移除
+      const removeSet = new Set(items.map((i) => i.PRT_NO));
+      state[station].job = state[station].job.filter((v) => !removeSet.has(v.PRT_NO));
+
+    },
+    // 控制面板
+    managerTransfer: (state, action) => {
+      const { station, name, value } = action.payload;
+      if (!state[station]) return;
+
+      if (name === "step") {
+        state[name] = Number(value);
+      } else {
+        state[station][name] = value;
+      }
+    },
+    // 重置
+    resetTransfer: (state, action) => {
+      const { type, station, W_ID } = action.payload;
+      if (type === "one") {
+        state[station].screen = "loading";
+      } else if (type === "all") {
+        const nextState = { ...initialState };
+        station.forEach((s) => {
+          nextState[s] = createStation(s);
+        });
+        return nextState;
+      }
     },
   },
 });
 
-export const { setTransfer } = transferSlice.actions;
+export const { initStation, setAllLoading, setTransfer, updateShelfItem, managerTransfer, resetTransfer } = transferSlice.actions;
 
 export default transferSlice.reducer;

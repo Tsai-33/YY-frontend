@@ -3,9 +3,9 @@
 :root {
   /* ==== 顏色管理 ==== */
   --gray: #727c88;
-  --gray-light :#D9D9D9;
-  --gray-deep:#878787;
-  
+  --gray-light: #d9d9d9;
+  --gray-deep: #878787;
+
   --purple: #865281;
   --white: #f5f5f5;
   --black: #282828;
@@ -18,50 +18,50 @@
   --green-dark: #046a38;
   /* 深 */
   --green-vivid: #008b48;
-  --green-vivid-30: #008B484D;
-  --green-vivid-50: #008B4880;
+  --green-vivid-30: #008b484d;
+  --green-vivid-50: #008b4880;
   /* 鮮豔 */
   --green-fresh: #2da26a;
   /* 清新 */
   --green-pale: #c3ddd6;
-  --green-pale-80: #c3ddd6CC;
+  --green-pale-80: #c3ddd6cc;
   /* 淺 */
 
   --green-teal: #288c71;
   /* 藍綠色 */
 
-  --blue: #4A9BC8;
+  --blue: #4a9bc8;
   --blue-dark: #2d5780;
-  --blue-muted: #9FB6CF;
+  --blue-muted: #9fb6cf;
   --blue-vivid: #007bff;
   --blue-fresh: #459fff;
   --blue-pale: #68a6ea;
 
-  --yellow-primary: #FFCD42;
-  --yellow-accent: #FFDF86;
-  --yellow-soft: #FFF0C5;
-  --yellow-pale: #FFF8E5;
+  --yellow-primary: #ffcd42;
+  --yellow-accent: #ffdf86;
+  --yellow-soft: #fff0c5;
+  --yellow-pale: #fff8e5;
 
-  --orange-main: #FA8350;
-  --orange-vivid: #FF9800;
-  --orange-light: #FFA67F;
-  --orange-pale: #FFE2D5;
-  --orange-ivory: #FAEBE5;
-  --orange-muted: #BF9E90;
+  --orange-main: #fa8350;
+  --orange-vivid: #ff9800;
+  --orange-light: #ffa67f;
+  --orange-pale: #ffe2d5;
+  --orange-ivory: #faebe5;
+  --orange-muted: #bf9e90;
 
   --red: #b32627;
   --red-vivid: #e15360;
-  --rose-primary: #E86B7D;
-  --rose-accent: #FF7C90;
-  --rose-soft: #FFF1FA;
-  --rose-light: #FFE8EB;
-  --rose-muted: #FAEFF0;
-  --rose-tint: #FAB9C3;
+  --rose-primary: #e86b7d;
+  --rose-accent: #ff7c90;
+  --rose-soft: #fff1fa;
+  --rose-light: #ffe8eb;
+  --rose-muted: #faeff0;
+  --rose-tint: #fab9c3;
 
-  --violet-primary: #7E7ACE;
-  --violet-accent: #7771DB;
-  --violet-soft: #E9E8FC;
-  --violet-light: #E1DFF4;
+  --violet-primary: #7e7ace;
+  --violet-accent: #7771db;
+  --violet-soft: #e9e8fc;
+  --violet-light: #e1dff4;
 
   /* 字重 */
   --fontWeight-regular: 400;
@@ -105,7 +105,6 @@ body {
   font-family: var(--font-roboto), Helvetica, sans-serif;
 }
 
-
 /* 超出文字 */
 .truncate {
   overflow: hidden;
@@ -116,7 +115,8 @@ body {
 /* 自定義滾輪 */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb-color, #9ea3a6) var(--scrollbar-track-color, #ffffff);
+  scrollbar-color: var(--scrollbar-thumb-color, #9ea3a6)
+    var(--scrollbar-track-color, #ffffff);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
@@ -125,7 +125,10 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: var(--scrollbar-thumb-hover-color, var(--scrollbar-thumb-color));
+  background-color: var(
+    --scrollbar-thumb-hover-color,
+    var(--scrollbar-thumb-color)
+  );
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -135,7 +138,7 @@ body {
 /* 勾選框 */
 .checkbox {
   position: relative;
-  padding-left: 30px;
+  padding-left: 35px;
   cursor: pointer;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -153,12 +156,12 @@ body {
 
 .checkbox_checkmark {
   position: absolute;
-  top: 12px;
+  top: 6px;
   left: 0;
   height: 24px;
   width: 24px;
   background-color: #ffffff;
-  border: 3px solid #e86b7d;
+  border: 3px solid #878787;
 }
 
 .checkbox_checkmark:after {
@@ -167,7 +170,7 @@ body {
   display: none;
 }
 
-.checkbox input:checked~.checkbox_checkmark:after {
+.checkbox input:checked ~ .checkbox_checkmark:after {
   display: block;
 }
 
@@ -176,7 +179,7 @@ body {
   top: 1px;
   width: 10px;
   height: 14px;
-  border: solid #e86b7d;
+  border: solid #878787;
   border-width: 0 4px 4px 0;
   -webkit-transform: rotate(45deg);
   -ms-transform: rotate(45deg);
@@ -265,7 +268,6 @@ body {
 }
 
 @keyframes sk-chase-dot {
-
   80%,
   100% {
     transform: rotate(360deg);
@@ -273,7 +275,6 @@ body {
 }
 
 @keyframes sk-chase-dot-before {
-
   0%,
   100% {
     transform: scale(1);
