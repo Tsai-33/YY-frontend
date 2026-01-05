@@ -208,7 +208,7 @@ export default function ShelfTransferStation() {
                 SHELVE_ID: shelveId,
                 FACE: 2,
                 STATION: stationId,
-                PURPOSE: 0
+                PURPOSE: 4
             };
             const res = await sendToWMS(data);
             if (res.data.success) {

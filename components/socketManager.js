@@ -71,16 +71,6 @@ export default function SocketManager() {
                 step: 3,
               })
             );
-            // 理貨
-            dispatch(
-              setShelfTransfer({
-                station: eventData.STATION,
-                screen: "working",
-                shelf: eventData,
-                shelfItem: eventData?.ITEMS,
-                step: 3,
-              })
-            );
           } else if (eventData?.PURPOSE === 1) {
             // 入庫
             dispatch(setInbound({ station: eventData.STATION, shelf: eventData, shelfItem: eventData?.ITEMS, screen: "working", step: 3 }));
@@ -111,6 +101,17 @@ export default function SocketManager() {
                 step: 3,
               })
             );
+          } else if (eventData?.PURPOSE === 4) {
+            // 理貨
+            dispatch(
+              setShelfTransfer({
+                station: eventData.STATION,
+                screen: "working",
+                shelf: eventData,
+                shelfItem: eventData?.ITEMS,
+                step: 3,
+              })
+            );
           }
         }
         if (eventData?.action === "push_button") {
@@ -121,7 +122,7 @@ export default function SocketManager() {
         }
         if (eventData?.action === "show_msg") {
         }
-        if (eventData?.action === "taskdone" && command === "RETURN" && eventData?.PURPOSE === 0) {
+        if (eventData?.action === "taskdone" && command === "RETURN" && eventData?.PURPOSE === 4) {
           dispatch(setShelfTransfer({ shelf: eventData, isReturn: true }));
         }
       };

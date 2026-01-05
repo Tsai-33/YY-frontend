@@ -163,7 +163,7 @@ export default function ShelfTransferTable() {
                 BAR_CODE: null,
                 FACE: 2,
                 STATION: stations[index],
-                PURPOSE: 0,
+                PURPOSE: 4,
                 STATUS: 0,
                 CART_ID: "",
                 DATA_ID: generateRandomNumber(),
