@@ -25,7 +25,7 @@ export const getERP = async (setLoading, inputBarCode, setTableData, orderList) 
 // 取得全訂單
 export const getTable = async (setTableData, orderList = null) => {
   try {
-    const res = await getOrder("I");
+    const res = await getOrder({ cmd: "I", status: 0 });
     if (res?.success) {
       let newData = res?.data?.data;
       if (orderList) {
@@ -171,7 +171,7 @@ export const checkTask_in = async (stations) => {
 
 export const addTask_in = async (stations) => {
   try {
-    return await updateTask({ stations: stations[0] , location: "inbound" });
+    return await updateTask({ stations: stations[0], location: "inbound" });
   } catch (err) {
     console.warn(`handleConfrimList:`, err);
   }
@@ -179,7 +179,7 @@ export const addTask_in = async (stations) => {
 
 export const deleteTask_in = async (stations) => {
   try {
-    return await deleteTask({ stations: stations[0]  });
+    return await deleteTask({ stations: stations[0] });
   } catch (err) {
     console.warn(`handleConfrimList:`, err);
   }

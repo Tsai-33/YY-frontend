@@ -111,7 +111,10 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       Alert({ title: "調撥單完成", html: `此調撥單已經完成，請選擇「 調撥單完成 」。` });
       return;
     }
-    await addShelf_tr(setLoading, setAddModal, shelf, order);
+    const res = await addShelf_tr(setLoading, setAddModal, shelf, order, stations);
+    if (!res?.success) {
+      Alert({ title: `${res?.error.message}` });
+    }
   };
   // 退回貨架
   const handleReturnShelf = async () => {
@@ -149,6 +152,20 @@ export default function TransferContext({ barCodeRef, setLoading }) {
           Alert({ title: "有下架其他貨架產品，請完成此單。" });
         }
         return;
+      } else if (check?.data?.data?.length > 0) {
+        const hasGGroupEndingWithA = check.data.data.some((item) => item.GGROUP && item.GGROUP.endsWith("A"));
+        if (!hasGGroupEndingWithA) {
+          Alert({
+            title: "調撥單未完成",
+            html: `此調撥單未完成且您正在退回目的貨架<br>如果退回將返回選單列表`,
+            showCancel: true,
+            onConfirm: async () => {
+              await handleCancel();
+              await deleteTask_tr(stations);
+            },
+          });
+          return;
+        }
       }
     }
 
@@ -188,9 +205,10 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   };
 
   const handleAbnormal = async () => {
-    const res = await addAbnormal_tr(abData, shelf);
+    const res = await addAbnormal_tr(waveNo, abData, shelf);
     setWmsModal(false);
     if (res?.success) {
+      await handleCancel();
       Alert({ title: `${res?.data?.message}` });
     } else {
       Alert({ title: `${res?.error?.message}` });
@@ -237,7 +255,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
             <div className="flex flex-col gap-8 h-100 overflow-y-auto">
               {orderCode ? (
                 step <= 2 ? (
-                  tableData.length > 0 && (
+                  Object.values(order).length > 0 ? (
                     <SchematicDiagramList>
                       <div className="flex flex-col">
                         <div className="flex justify-end">
@@ -264,8 +282,9 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                           );
                         })}
                       </div>
-                      )
                     </SchematicDiagramList>
+                  ) : (
+                    ""
                   )
                 ) : (
                   <SchematicDiagram>
@@ -334,6 +353,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                           const isNew = item.isNew || (item.selectedBox > 0 && (item.BOX_NO || 0) === 0 && (item.PP_NO || 0) === 0);
 
                           const textClass = isNew ? "text-red-500" : "";
+                          const isLastItem = index  === displayItems.length - 1;
 
                           if (currentStation === stations[0]) {
                             return (
@@ -344,7 +364,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                                 <div className="flex justify-between">
                                   <div>產品品名: {item.PRT_NAME}</div>
                                 </div>
-                                <div className="flex justify-between w-100">
+                                <div className="flex justify-between">
                                   <div>
                                     箱數: {item.BOX_NO} 箱{item.selectedBox > 0 && <span className="text-red-500">{`(-${item.selectedBox})`}</span>}
                                   </div>
@@ -352,6 +372,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                                     數量: {item.PP_NO} {item.UNIT}
                                     {item.selectedPP > 0 && <span className="text-red-500">{`(+${item.selectedPP})`}</span>}
                                   </div>
+                                  {isLastItem && shelf.CARS ? <div>車數 {shelf.CARS}</div> : <div />}
                                 </div>
                               </div>
                             );
@@ -364,7 +385,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                                 <div className="flex justify-between">
                                   <div>產品品名: {item.PRT_NAME}</div>
                                 </div>
-                                <div className="flex justify-between w-100">
+                                <div className="flex justify-between">
                                   <div>
                                     箱數: {item.BOX_NO} 箱{item.selectedBox > 0 && <span className="text-red-500">{`(-${item.selectedBox})`}</span>}
                                   </div>
@@ -372,6 +393,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                                     數量: {item.PP_NO} {item.UNIT}
                                     {item.selectedPP > 0 && <span className="text-red-500">{`(-${item.selectedPP})`}</span>}
                                   </div>
+                                  {isLastItem && shelf.CARS ? <div>車數 {shelf.CARS}</div> : <div />}
                                 </div>
                               </div>
                             );
@@ -398,9 +420,10 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                     </>
                   ) : (
                     <>
-                      <ActionBtn className="w-25 pointer-events-none" disabled={true} />
+                      <button className="w-25 pointer-events-none" disabled={true} />
                       <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
-                      <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} disabled={job?.length > 0} />
+                      <button className="w-25 pointer-events-none" disabled={true} />
+                      {/* <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} disabled={job?.length > 0} /> */}
                     </>
                   )}
                 </div>
@@ -455,9 +478,9 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       {/* Modal - 數量異常 */}
       <Modal showModal={wmsModal} title="數量異常" onClose={() => setWmsModal(false)} onConfirm={handleAbnormal} width={`30vw`} height={`auto`}>
         <>
-          <div>「{abData?.PRT_NO}」系統數量與實際數量不相符</div>
-          <div>請退回此調撥單至盤點系統更改系統數量</div>
-          <div>( ※ 確認後將會註記「數量異常」 )</div>
+          <div>「 {abData?.PRT_NO} 」系統數量與實際數量不相符</div>
+          <div>按下「確認」後退回所有貨架並結束此張調撥單</div>
+          <div>請至盤點更正為正確數量，並重新開立單據</div>
         </>
       </Modal>
     </>

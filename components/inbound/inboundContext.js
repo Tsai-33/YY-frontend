@@ -24,9 +24,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // 站點
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { lackStation, orderList } = useSelector((s) => s.inbound);
+  const { orderList } = useSelector((s) => s.inbound);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo } = useSelector((s) => s.inbound[currentStationSafe] || {});
-  const inbounds = useSelector((s) => s.inbound);
 
   // 掃描 QR code (ERP抓取新資料)
   const handleBarCode = async (e) => {
@@ -72,7 +71,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     dispatch(setInbound({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
 
     const res = await confrimList_in(setLoading, order);
-    if (res?.data?.success) {
+    if (res?.success) {
       // 應該會告訴我有哪些station被占用，這裡可能是map方式全部設定
       let lack_station = res?.data?.data?.message2;
       if (!Array.isArray(lack_station)) {
@@ -93,8 +92,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
       // 寫入
       await addTask_in(stations);
-    } else if (!res?.data?.success) {
-      Alert({ title: `${res?.data?.message}` });
+    } else if (!res?.success) {
+      Alert({ title: `${res?.error?.message}` });
     }
   };
   // 確定上架
@@ -231,12 +230,12 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   useEffect(() => {
     if (!waveNo) return;
     getList(waveNo, setTableData2);
-    console.log('1')
-    if (tableData2.length <= 0) {
-      dispatch(setInbound({ station: currentStation, step: 4 }));
-    } else {
-      dispatch(setInbound({ station: currentStation, step: 3 }));
-    }
+    // console.log('1')
+    // if (tableData2.length <= 0) {
+    //   dispatch(setInbound({ station: currentStation, step: 4 }));
+    // } else {
+    //   dispatch(setInbound({ station: currentStation, step: 3 }));
+    // }
   }, [shelfItem]);
 
   return (
@@ -350,6 +349,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
                           const textClass = isNew ? "text-red-500" : "";
 
+                          const isLastItem = index === displayItems.length - 1;
+
                           return (
                             <div key={item.PRT_NO + index} className={`mb-4 ${textClass}`}>
                               <div className="flex justify-between">
@@ -366,9 +367,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
                                   數量: {item.PP_NO} {item.UNIT}
                                   {item.selectedPP > 0 && <span className="text-red-500">{`(+${item.selectedPP})`}</span>}
                                 </div>
-                                <div>
-                                  車數 (還沒給我) {index + 1}/{displayItems.length}
-                                </div>
+
+                                {isLastItem && shelf.CARS ? <div>車數 {shelf.CARS}</div> : <div />}
                               </div>
                             </div>
                           );
