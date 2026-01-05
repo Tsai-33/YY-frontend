@@ -66,7 +66,7 @@ const shelfTransferSlice = createSlice({
                 for (const stationId of stationList) {
                     const stationData = state[stationId];
                     // 檢查這個貨架是否在selectedShelves裡面確保是理貨的車
-                    if (stationData.selectedShelves?.includes(shelveId)) {        
+                    if (stationData.selectedShelves?.includes(shelveId)) {
                         const itemsWithId = shelfItem.map(item => ({
                             ...item,
                             id: item.MAKE_NO
@@ -89,13 +89,17 @@ const shelfTransferSlice = createSlice({
                             const status = stationData.shelveStatus[id];
                             return status === "ready";
                         });
-                        
+
+                        // 所有貨架到站才切換到working 否則保持 loading
                         if (allReady) {
                             stationData.screen = "working";
                         }
+
+                        // 確保step是 3(理貨中)
+                        stationData.step = 3;
                     }
                 }
-                return; 
+                return;
             }
         
             if (!state[station]) return;

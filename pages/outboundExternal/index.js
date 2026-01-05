@@ -288,7 +288,7 @@ export default function OutboundExternal() {
           });
         }
         // 拿掉已選的訂單
-        setTableData((prev) => prev.filter((v) => v.OUTSTOCK_NO !== orderCode && v.STATUS == 0));
+        setTableData((prev) => prev.filter((v) => v.OUTSTOCK_NO !== orderCode && v.STATUS === 0));
       }
     } catch (error) {
       console.warn("出庫確認 :", error);
@@ -528,7 +528,7 @@ export default function OutboundExternal() {
                     </div>
                   </div>
                   {shelfItem?.map((item, index) => (
-                    <>
+                    <div key={index}>
                       <div className="flex justify-between text-3xl">
                         <div>產品品號:{item?.PRT_NO}</div>
                         <div>棧板規格:{item?.type}</div>
@@ -541,7 +541,7 @@ export default function OutboundExternal() {
                           <div>{index + 1}/{shelfItem?.length}</div>
                         </div>
                       </div>
-                    </>
+                    </div>
                   ))}
                 </SchematicDiagram>
               )}

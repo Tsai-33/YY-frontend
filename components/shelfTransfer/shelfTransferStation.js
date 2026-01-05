@@ -84,7 +84,7 @@ export default function ShelfTransferStation() {
 
     const handleConfirm = async () => {
         if (!confirmCheck()) {
-            Alert("請確認已選擇的貨架");
+            Alert({ text: "請確認已選擇的貨架" });
             return;
         }
         if (!operator) {
@@ -411,7 +411,7 @@ export default function ShelfTransferStation() {
                                                         operator
                                                     });
                                                 }}
-                                                disabled={abnormalShelves.includes({shelveId})}
+                                                disabled={abnormalShelves.includes(shelveId)}
                                                 className={`w-10 p-1 rounded transition-colors ${
                                                     abnormalShelves.includes(shelveId)
                                                         ? "cursor-not-allowed"

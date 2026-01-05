@@ -179,6 +179,7 @@ export default function ShelfTransferTable() {
                     initialShelveStatus[shelveId] = "loading";
                 });
 
+                // 更新所有相關站點的狀態
                 selectedShelve.forEach((shelveId, index) => {
                     const stationId = stations[index];
                     dispatch(setShelfTransfer({
@@ -192,6 +193,21 @@ export default function ShelfTransferTable() {
                         shelveData: {},
                     }));
                 });
+
+                // 確保當前站點也更新
+                const updatedStations = selectedShelve.map((_, index) => stations[index]);
+                if (currentStationSafe && !updatedStations.includes(currentStationSafe)) {
+                    dispatch(setShelfTransfer({
+                        station: currentStationSafe,
+                        step: 3,
+                        screen: "loading",
+                        mode: "order",
+                        orderCode: orderInput,
+                        selectedShelves: selectedShelve,
+                        shelveStatus: initialShelveStatus,
+                        shelveData: {},
+                    }));
+                }
 
                 setTableData((prev) => prev.filter((v) => v.SALE_NO !== orderInput));
             } else {
