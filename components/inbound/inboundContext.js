@@ -24,9 +24,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // 站點
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { lackStation, orderList } = useSelector((s) => s.inbound);
+  const { orderList } = useSelector((s) => s.inbound);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo } = useSelector((s) => s.inbound[currentStationSafe] || {});
-  const inbounds = useSelector((s) => s.inbound);
 
   // 掃描 QR code (ERP抓取新資料)
   const handleBarCode = async (e) => {
@@ -72,9 +71,9 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     dispatch(setInbound({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
 
     const res = await confrimList_in(setLoading, order);
-    if (res?.data?.success) {
+    if (res?.success) {
       // 應該會告訴我有哪些station被占用，這裡可能是map方式全部設定
-      let lack_station = res.data.data.message2;
+      let lack_station = res?.data?.data?.message2;
       if (!Array.isArray(lack_station)) {
         try {
           // 嘗試把字串轉成陣列
@@ -93,8 +92,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
       // 寫入
       await addTask_in(stations);
-    } else if (!res?.data?.success) {
-      Alert({ title: `${res?.data?.message}` });
+    } else if (!res?.success) {
+      Alert({ title: `${res?.error?.message}` });
     }
   };
   // 確定上架
@@ -139,6 +138,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
           newShelf.push({ ...v });
         }
       });
+
       dispatch(updateShelfItem({ station: currentStation, items: newShelf }));
       setTableData2((prev) => prev.filter((row) => !selected.some((v) => v.INSTOCK_NO === row.INSTOCK_NO)));
     } else if (!res?.success) {
@@ -210,7 +210,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const handleFinish = async () => {
     const res = await finishList_in(setLoading, order);
     if (res?.success) {
-      dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res.data.data }));
+      dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res?.data?.data }));
       Alert({ title: "此單已完成" });
 
       // 先檢查nodepos有沒有ggroup
@@ -230,6 +230,12 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   useEffect(() => {
     if (!waveNo) return;
     getList(waveNo, setTableData2);
+    // console.log('1')
+    // if (tableData2.length <= 0) {
+    //   dispatch(setInbound({ station: currentStation, step: 4 }));
+    // } else {
+    //   dispatch(setInbound({ station: currentStation, step: 3 }));
+    // }
   }, [shelfItem]);
 
   return (
@@ -246,7 +252,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
                 ${shelf?.UNIT} (${shelf?.EstBoxes}箱)
                 `}
               </div>
-              <ActionBtn text="入倉單完成" variant="orange" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handleFinish} />
+              <ActionBtn icon="icon-check" text="入倉單完成" variant="orange" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handleFinish} />
             </div>
           )}
           <InboundTable data={tableData} data2={tableData2} setData2={setTableData2} />
@@ -343,6 +349,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
                           const textClass = isNew ? "text-red-500" : "";
 
+                          const isLastItem = index === displayItems.length - 1;
+
                           return (
                             <div key={item.PRT_NO + index} className={`mb-4 ${textClass}`}>
                               <div className="flex justify-between">
@@ -359,9 +367,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
                                   數量: {item.PP_NO} {item.UNIT}
                                   {item.selectedPP > 0 && <span className="text-red-500">{`(+${item.selectedPP})`}</span>}
                                 </div>
-                                <div>
-                                  車數 (還沒給我) {index + 1}/{displayItems.length}
-                                </div>
+
+                                {isLastItem && shelf.CARS ? <div>車數 {shelf.CARS}</div> : <div />}
                               </div>
                             </div>
                           );
@@ -379,9 +386,9 @@ export default function InboundContext({ barCodeRef, setLoading }) {
               {step <= 2 && <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfrimList} disabled={!waveNo} />}
               {step > 2 && (
                 <div className="w-full flex justify-between">
-                  <ActionBtn icon="" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
-                  <ActionBtn icon="" text="確定上架" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
-                  <ActionBtn icon="" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
+                  <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
+                  <ActionBtn icon="icon-inbound" text="確定上架" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
+                  <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
                 </div>
               )}
             </div>

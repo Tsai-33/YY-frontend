@@ -1,4 +1,4 @@
-import { addShelf, addTransferWCS, checkTask, checkWCSMove, checkWCS, checkWCSWaveno, deleteTask, finishTransferOrder, getOrder, getOrderDetail, getOrderDetailByWID, restoreOrders, sendToWMS, updateTask, updateTransferWMS, updateTransferWMSAbnormal } from "@/pages/api";
+import { addShelf, addTransferWCS, checkWCSMove,  deleteTask, finishTransferOrder, getOrder, getOrderDetail, getOrderDetailByWID, restoreOrders, sendToWMS, updateTask, updateTransferWMS, updateTransferWMSAbnormal } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import { selectTask } from "../taskFunction";
 
@@ -9,7 +9,7 @@ export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTot
     const random = generateRandomNumber();
     const data = { action: "ask_order", NO: inputBarCode, dataid: random };
     const res = await sendToWMS(data);
-    if (res.data.success) {
+    if (res?.data?.success) {
       await getTable(setTableData, setTableTotalData2);
     }
   } catch (error) {
@@ -22,7 +22,7 @@ export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTot
 // 抓取WMS系統所有調撥單
 export const getTable = async (setTableData, setTableTotalData2) => {
   try {
-    const [order, orderDetail] = await Promise.all([getOrder("F"), getOrderDetail()]);
+    const [order, orderDetail] = await Promise.all([getOrder({ cmd: "F", status: 0 }), getOrderDetail()]);
 
     if (order.data.success) {
       setTableData(order.data.data);
@@ -58,7 +58,7 @@ export const confrimList_tr = async (setLoading, order) => {
     const random9 = generateRandomNumber();
     const data = { action: "ask_wave", dataid: random9, wave_no: String(order.W_ID), station_no: "A" };
     const res = await sendToWMS(data);
-    return res.data.data;
+    return res?.data?.data;
   } catch (err) {
     console.warn("handleConfirm :", err);
     return err;
@@ -68,10 +68,10 @@ export const confrimList_tr = async (setLoading, order) => {
 };
 
 // 新增
-export const addShelf_tr = async (setLoading, setAddModal, shelf, order) => {
+export const addShelf_tr = async (setLoading, setAddModal, shelf, order, stations) => {
   setLoading(true);
   try {
-    return await addTransferWCS({ area: shelf?.area, W_ID: order?.W_ID });
+    return await addTransferWCS({ area: shelf?.area, W_ID: order?.W_ID, station: stations[0] });
   } catch (err) {
     console.warn("handleAddShelf :", err);
   } finally {
@@ -174,7 +174,6 @@ export const addTask_tr = async (stations) => {
 };
 
 export const deleteTask_tr = async (stations) => {
-  console.log(stations,'123')
   try {
     return await deleteTask({ stations: stations[0] });
   } catch (err) {
@@ -183,9 +182,9 @@ export const deleteTask_tr = async (stations) => {
 };
 
 // 數量異常
-export const addAbnormal_tr = async (abData, shelf) => {
+export const addAbnormal_tr = async (waveNo, abData, shelf) => {
   try {
-    const data = { PRT_NO: abData.PRT_NO, SHELVE_ID: shelf.SHELVE_ID };
+    const data = { W_ID: waveNo, PRT_NO: abData.PRT_NO, SHELVE_ID: shelf.SHELVE_ID };
     return await updateTransferWMSAbnormal(data);
   } catch (err) {
     console.warn(`handleAbnormal:`, err);
