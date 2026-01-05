@@ -204,7 +204,8 @@ export default function StockQuery() {
                 className={`px-4 py-2 bg-green-600 text-white rounded-md text-lg font-bold ${
                   stockData.length > 0 ? "cursor-pointer" : "cursor-not-allowed"
                 }`}
-                onClick={handleDownload}>
+                onClick={handleDownload}
+                disabled={stockData.length === 0}>
                 下載
               </button>
               <button
