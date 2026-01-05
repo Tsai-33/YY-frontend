@@ -17,6 +17,8 @@ import {AlertTriangle} from "lucide-react";
 export default function ShelfTransferStation() {
     const dispatch = useDispatch();
     const { stations, currentStation } = useSelector((s) => s.workstation);
+    const { userId } = useSelector((s) => s.user);
+    const operator = String(userId || "");
     const currentStationSafe = currentStation || stations?.[0] || "";
 
     const {
@@ -85,6 +87,10 @@ export default function ShelfTransferStation() {
             Alert("請確認已選擇的貨架");
             return;
         }
+        if (!operator) {
+            Alert({ title: "無法取得操作人員資訊，請重新登入" });
+            return;
+        }
         try {
             const selectedItemsIds = selectedItems[activeShelveId] || [];
             const sourceData = shelveData[activeShelveId] || [];
@@ -92,7 +98,7 @@ export default function ShelfTransferStation() {
             const itemsToMove = sourceData.filter(item =>
                 selectedItemsIds.includes(item.id)
             );
-            
+
             let res;
 
             if (mode === "shelf") {
@@ -101,7 +107,7 @@ export default function ShelfTransferStation() {
                     items: itemsToMove,
                     sourceShelveId: activeShelveId,
                     targetShelveId: targetShelve,
-                    operator: "理貨人員A",
+                    operator,
                 });
             } else {
                 // 訂單理貨
@@ -109,7 +115,7 @@ export default function ShelfTransferStation() {
                     items: itemsToMove,
                     sourceShelveId: activeShelveId,
                     targetShelveId: targetShelve,
-                    operator: "理貨人員A",
+                    operator,
                     saleNo: orderCode
                 });
             }
@@ -139,11 +145,15 @@ export default function ShelfTransferStation() {
     const hasCheck = (value, bit) => (value & bit) !== 0;
 
     const handleShelveCheck = async (shelveId, bitValue) => {
+        if (!operator) {
+            Alert({ title: "無法取得操作人員資訊，請重新登入" });
+            return;
+        }
         try {
             const res = await updateShelveCheck({
                 shelveId,
                 bitValue,
-                operator: "理貨人員A"
+                operator
             });
 
             if (res.data.success) {
@@ -244,6 +254,10 @@ export default function ShelfTransferStation() {
     }, [shelveData]);
 
     const handleMarkAbnormal = async (data) => {
+        if (!data.operator) {
+            Alert({ title: "無法取得操作人員資訊，請重新登入" });
+            return;
+        }
         await Alert({
             title: "標記異常",
             text: `確定要將貨架 ${data.shelveId} 標記為異常嗎？`,
@@ -394,7 +408,7 @@ export default function ShelfTransferStation() {
                                                     e.stopPropagation();
                                                     handleMarkAbnormal({
                                                         shelveId,
-                                                        operator: "理貨人員A"
+                                                        operator
                                                     });
                                                 }}
                                                 disabled={abnormalShelves.includes({shelveId})}
