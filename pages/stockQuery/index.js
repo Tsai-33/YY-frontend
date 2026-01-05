@@ -199,7 +199,7 @@ export default function StockQuery() {
               disabled={stockData.length > 0}
             />
 
-            <div className="flex gap-3">
+            <div className="flex justify-end gap-3">
               <button
                 className={`px-4 py-2 bg-green-600 text-white rounded-md text-lg font-bold ${
                   stockData.length > 0 ? "cursor-pointer" : "cursor-not-allowed"
