@@ -34,6 +34,25 @@ const inventorySlice = createSlice({
     setInventory: (state, action) => {
       const { station, data } = action.payload;
 
+      const initRowStateIfNeeded = (stationState, shelfItem) => {
+        if (!Array.isArray(shelfItem)) return;
+
+        // 已存在 rowState 就不覆蓋（避免使用者已操作）
+        if (
+          Array.isArray(stationState.rowState) &&
+          stationState.rowState.length
+        ) {
+          return;
+        }
+
+        stationState.rowState = shelfItem.map((item) => ({
+          ...item,
+          actualQty: item.PP_NO,
+          confirmed: false,
+          error: false,
+        }));
+      };
+
       // 更新所有站
       if (station === "*") {
         Object.keys(state)
@@ -47,6 +66,7 @@ const inventorySlice = createSlice({
           ) // 只更新站點
           .forEach((stationKey) => {
             Object.assign(state[stationKey], data);
+            initRowStateIfNeeded(state[stationKey], data.shelfItem);
           });
         return;
       }
@@ -54,7 +74,49 @@ const inventorySlice = createSlice({
       // 更新單一站
       if (!state[station]) return;
       Object.assign(state[station], data);
+      initRowStateIfNeeded(state[station], data.shelfItem);
     },
+
+    // setInventory: (state, action) => {
+    //   const { station, data } = action.payload;
+
+    //   // 1. 先處理資料轉換 (加上 rowState)
+    //   const processedData = {
+    //     ...data,
+    //     rowState: data.shelfItem
+    //       ? data.shelfItem.map((item) => ({
+    //           ...item,
+    //           actualQty: item.PP_NO,
+    //           confirmed: false,
+    //           error: false,
+    //         }))
+    //       : [],
+    //   };
+
+    //   // 更新所有站
+    //   if (station === "*") {
+    //     Object.keys(state).forEach((key) => {
+    //       if (
+    //         !["page", "batchNo", "_persist"].includes(key) &&
+    //         typeof state[key] === "object"
+    //       ) {
+    //         // 直接遍歷屬性賦值，確保每一個 key 都被寫入
+    //         Object.keys(processedData).forEach((prop) => {
+    //           state[key][prop] = processedData[prop];
+    //         });
+    //       }
+    //     });
+    //     return;
+    //   }
+
+    //   // 更新單一站
+    //   if (!state[station]) return;
+
+    //   // 改用這種方式賦值，不要用 Object.assign
+    //   Object.keys(processedData).forEach((prop) => {
+    //     state[station][prop] = processedData[prop];
+    //   });
+    // },
 
     setAllStations(state, action) {
       const { data } = action.payload;

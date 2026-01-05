@@ -59,7 +59,11 @@ export default function SocketManager() {
         console.log("socket接收到的資料 :", eventData);
 
         const command = eventData?.command?.toUpperCase(); // 忽略大小寫
-        if (eventData?.action === "taskdone" && command !== "RETURN" && command !== "CANCEL") {
+        if (
+          eventData?.action === "taskdone" &&
+          command !== "RETURN" &&
+          command !== "CANCEL"
+        ) {
           if (eventData?.PURPOSE === 0) {
             // 出庫
             dispatch(
@@ -83,8 +87,15 @@ export default function SocketManager() {
             );
           } else if (eventData?.PURPOSE === 1) {
             // 入庫
-            dispatch(setInbound({ station: eventData.STATION, shelf: eventData, shelfItem: eventData?.ITEMS, screen: "working", step: 3 }));
-
+            dispatch(
+              setInbound({
+                station: eventData.STATION,
+                shelf: eventData,
+                shelfItem: eventData?.ITEMS,
+                screen: "working",
+                step: 3,
+              })
+            );
           } else if (eventData?.PURPOSE === 2) {
             // 盤點
             dispatch(
@@ -114,14 +125,20 @@ export default function SocketManager() {
           }
         }
         if (eventData?.action === "push_button") {
-          dispatch(setOutboundExternal({ 
-            station: eventData.STATION, 
-            pushButton: eventData
-          }));
+          dispatch(
+            setOutboundExternal({
+              station: eventData.STATION,
+              pushButton: eventData,
+            })
+          );
         }
         if (eventData?.action === "show_msg") {
         }
-        if (eventData?.action === "taskdone" && command === "RETURN" && eventData?.PURPOSE === 0) {
+        if (
+          eventData?.action === "taskdone" &&
+          command === "RETURN" &&
+          eventData?.PURPOSE === 0
+        ) {
           dispatch(setShelfTransfer({ shelf: eventData, isReturn: true }));
         }
       };

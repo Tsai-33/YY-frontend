@@ -3,7 +3,7 @@ import PageHeader from "@/components/common/pageHeader/pageHeader";
 import TextInput from "@/components/common/input/textInput";
 import SelectInput from "@/components/common/input/selectInput";
 import OnlyReadTable from "@/components/common/table/onlyReadTable";
-import { searchStock } from "../api";
+import { searchStock, stockDownload } from "../api";
 
 export default function StockQuery() {
   const tableHeader = [
@@ -82,6 +82,39 @@ export default function StockQuery() {
     }
   };
 
+  const handleDownload = async () => {
+    const payload = {
+      ...filters,
+      BILL_TIME: filters.BILL_TIME
+        ? Number(filters.BILL_TIME.replace(/-/g, ""))
+        : null,
+      WORK_TIME: filters.WORK_TIME
+        ? Number(filters.WORK_TIME.replace(/-/g, ""))
+        : null,
+    };
+
+    try {
+      const res = await stockDownload(payload);
+      if (res.success) {
+        const blob = res.data;
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "庫存報表.xlsx"; // 檔案名稱
+        document.body.appendChild(a);
+        a.click();
+
+        // 清除記憶體
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error("下載失敗", error);
+      alert("下載失敗，請稍後再試");
+    }
+  };
+
   return (
     <>
       {/* 頂部區域 */}
@@ -95,11 +128,13 @@ export default function StockQuery() {
               className=""
               value={filters.SALE_NO}
               onChange={(e) => handleChange("SALE_NO", e.target.value)}
+              disabled={stockData.length > 0}
             />
             <TextInput
               label="產品品號:"
               value={filters.PRT_NO}
               onChange={(e) => handleChange("PRT_NO", e.target.value)}
+              disabled={stockData.length > 0}
             />
             <SelectInput
               label="入庫庫別:"
@@ -117,12 +152,14 @@ export default function StockQuery() {
                 { label: "M02(原料倉)", value: "M02" },
               ]}
               onChange={(value) => handleChange("STOCK_AREA", value)}
+              disabled={stockData.length > 0}
             />
             <TextInput
               label="產品/進貨日期:"
               type="date"
               value={filters.BILL_TIME}
               onChange={(e) => handleChange("BILL_TIME", e.target.value)}
+              disabled={stockData.length > 0}
             />
             <SelectInput
               label="備註:"
@@ -132,6 +169,7 @@ export default function StockQuery() {
                 { label: "護角OK", value: 2 },
               ]}
               onChange={(value) => handleChange("SEAL", value)}
+              disabled={stockData.length > 0}
             />
           </div>
           <div className="grid grid-cols-5 gap-6 items-end">
@@ -139,27 +177,38 @@ export default function StockQuery() {
               label="產品品名:"
               value={filters.PRT_NAME}
               onChange={(e) => handleChange("PRT_NAME", e.target.value)}
+              disabled={stockData.length > 0}
             />
             <TextInput
               label="貨號:"
               value={filters.PRT_CODE}
               onChange={(e) => handleChange("PRT_CODE", e.target.value)}
+              disabled={stockData.length > 0}
             />
             <TextInput
               label="客戶代號:"
               value={filters.CUS_NO}
               onChange={(e) => handleChange("CUS_NO", e.target.value)}
+              disabled={stockData.length > 0}
             />
             <TextInput
               label="訂單預交日:"
               type="date"
               value={filters.WORK_TIME}
               onChange={(e) => handleChange("WORK_TIME", e.target.value)}
+              disabled={stockData.length > 0}
             />
 
             <div className="flex gap-3">
               <button
-                className="px-4 py-2 bg-gray-400 text-white rounded-md text-lg font-bold"
+                className={`px-4 py-2 bg-green-600 text-white rounded-md text-lg font-bold ${
+                  stockData.length > 0 ? "cursor-pointer" : "cursor-not-allowed"
+                }`}
+                onClick={handleDownload}>
+                下載
+              </button>
+              <button
+                className="px-4 py-2 bg-gray-400 text-white rounded-md text-lg font-bold cursor-pointer"
                 onClick={() => {
                   setFilters({
                     SALE_NO: "",
@@ -177,8 +226,11 @@ export default function StockQuery() {
                 清除
               </button>
               <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-md text-lg font-bold"
-                onClick={handleSearch}>
+                className={`px-4 py-2 bg-blue-600 text-white rounded-md text-lg font-bold ${
+                  stockData.length > 0 ? "cursor-not-allowed" : "cursor-pointer"
+                }`}
+                onClick={handleSearch}
+                disabled={stockData.length > 0}>
                 查詢
               </button>
             </div>

@@ -37,30 +37,6 @@ export default function InventoryShelf() {
     dispatch(setCurrentStation(station));
   };
 
-  useEffect(() => {
-    if (!Array.isArray(shelfItem) || shelfItem.length === 0) return;
-
-    if (Array.isArray(rowState) && rowState.length > 0) {
-      // 有舊資料 → 用舊資料（localStorage）
-      dispatch(
-        setInitialRowState({
-          station: currentStation,
-          shelfItem: rowState,
-          fromStorage: true,
-        })
-      );
-    } else {
-      // 沒有舊資料 → 用 API 傳來的新 shelfItem 初始化
-      dispatch(
-        setInitialRowState({
-          station: currentStation,
-          shelfItem,
-          fromStorage: false,
-        })
-      );
-    }
-  }, [dispatch, shelfItem, currentStation]);
-
   const filterLabel = useMemo(() => {
     if (currentPRTNO) return `產品品號：${currentPRTNO}`;
     if (currentSALENO) return `訂單單號：${currentSALENO}`;
@@ -69,7 +45,9 @@ export default function InventoryShelf() {
     return "未選擇篩選條件";
   }, [currentPRTNO, currentSALENO, currentCUSNO, currentSTOCKAREA]);
 
-  // 篩選後呈現資料
+  // ============================
+  // ⭐ 篩選指定產品品號
+  // ============================
   const displayItems = useMemo(() => {
     return currentPRTNO
       ? rowState.filter((r) => r.PRT_NO === currentPRTNO)
@@ -131,13 +109,17 @@ export default function InventoryShelf() {
     );
   };
 
+  // ============================
   // checked items for CheckTable (checkbox 顯示來源)：
   // 我們把已確認或被標記異常的列視為「已盤完」，因此自動打勾
+  // ============================
   const checkedItems = rowState
     .filter((r) => r.confirmed || r.error)
     .map((r) => r.PRT_NO);
 
+  // ============================
   // 判斷是否可以送出 ERP：所有顯示列都必須 confirmed = true 代表已盤
+  // ============================
   const canSubmitToERP =
     displayItems.length > 0 && displayItems.every((r) => r.confirmed === true);
 
@@ -214,6 +196,9 @@ export default function InventoryShelf() {
     },
   ];
 
+  // ============================
+  // ⭐ 右側 shelf 資料顯示+操作
+  // ============================
   const submitToBackend = async () => {
     const payload = {
       stations: stations,
@@ -223,10 +208,8 @@ export default function InventoryShelf() {
       rowState: rowState,
       UserId: userId,
     };
-    // console.log("payload:", payload);
     const res = await updateInventoryResult(payload);
     if (res.data.success) {
-      console.log("res.data.data:", res.data.data);
       if (res.data.data.remainCount === 0) {
         dispatch(setPage("inventory-table"));
         dispatch(setBatchNo(null));
@@ -267,7 +250,9 @@ export default function InventoryShelf() {
     }
   };
 
-  // 下線
+  // ============================
+  // ⭐ 下線功能
+  // ============================
   const submitToOffline = async () => {
     dispatch(
       setInventory({
@@ -355,9 +340,9 @@ export default function InventoryShelf() {
               <SchematicDiagram>
                 <div className="flex justify-between text-(length:--font-size-4xl)">
                   <div>
-                    <div className="mb-2">貨架編號:{SHELVE_ID}</div>
+                    <div className="mb-4">貨架編號:{SHELVE_ID}</div>
                     {shelfItem.map((item, index) => (
-                      <div className="mb-2">
+                      <div className="mb-4">
                         <div>產品品號:{item?.PRT_NO}</div>
                         <div>產品品名:{item?.PRT_NAME}</div>
                         <div className="flex justify-between">
@@ -368,7 +353,7 @@ export default function InventoryShelf() {
                     ))}
                   </div>
                   <div>
-                    <div className="mb-2">出庫庫別 : {currentSTOCKAREA}</div>
+                    <div className="mb-4">出庫庫別 : {currentSTOCKAREA}</div>
                     <div>棧板規格 : 美規</div>
                     <div>{/* {index + 1}/{shelfItem.length} */}</div>
                   </div>

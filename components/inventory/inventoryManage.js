@@ -43,8 +43,12 @@ export default function InventoryManage({ isOpen, onClose }) {
   // 更新單一站的 screen
   const handleStationScreenChange = (station, newScreen) => {
     try {
-      const currentData = JSON.parse(inventory[station] || "{}");
-      currentData.screen = newScreen;
+      const rawData = inventory[station];
+
+      let currentData =
+        typeof rawData === "string" ? JSON.parse(rawData) : rawData || {};
+
+      currentData = { ...currentData, screen: newScreen };
 
       dispatch({
         type: "inventory/setInventory",
@@ -71,8 +75,12 @@ export default function InventoryManage({ isOpen, onClose }) {
 
     stations.forEach((station) => {
       try {
-        const currentData = JSON.parse(inventory[station] || "{}");
-        currentData.screen = "idle";
+        const rawData = inventory[station];
+
+        let currentData =
+          typeof rawData === "string" ? JSON.parse(rawData) : rawData || {};
+
+        currentData = { ...currentData, screen: newScreen };
 
         dispatch({
           type: "inventory/setInventory",
