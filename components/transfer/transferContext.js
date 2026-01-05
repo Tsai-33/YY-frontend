@@ -209,6 +209,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     setWmsModal(false);
     if (res?.success) {
       await handleCancel();
+      await deleteTask_tr(stations);
       Alert({ title: `${res?.data?.message}` });
     } else {
       Alert({ title: `${res?.error?.message}` });
