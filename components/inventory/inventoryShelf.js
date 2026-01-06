@@ -380,11 +380,12 @@ export default function InventoryShelf() {
         </div>
       </div>
       {/* 底部按鈕區域 */}
-      <div className="w-full flex justify-between z-20">
+      <div className="w-full flex justify-between gap-4 z-20">
         {stations.map((station) => (
           <ActionBtn
             text={station}
             variant="green"
+            className="flex-1"
             disabled={currentStation === station ? true : false}
             onClick={() => handleSwitchStation(station)}
           />

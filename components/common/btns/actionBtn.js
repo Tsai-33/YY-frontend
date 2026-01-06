@@ -1,17 +1,25 @@
 import React from "react";
 import clsx from "clsx";
 
-export default function ActionBtn({ icon, text, variant, onClick, disabled, className, textSize }) {
+export default function ActionBtn({
+  icon,
+  text,
+  variant,
+  onClick,
+  disabled,
+  className,
+  textSize,
+}) {
   const base = `
     px-6 
     rounded-2xl 
-    flex items-center gap-2 
+    flex justify-center items-center gap-2 
     font-bold cursor-pointer 
     transition-colors duration-500 ease-in-out
     `;
 
   const variants = {
-      blue: `
+    blue: `
       bg-[var(--blue-fresh)] 
       border border-[var(--blue)] 
       text-white 
@@ -191,9 +199,18 @@ export default function ActionBtn({ icon, text, variant, onClick, disabled, clas
   };
   return (
     <>
-      <button className={` ${clsx(base, variants[variant])}  ${className}`} onClick={onClick} disabled={disabled}>
-        {icon && <span className={`${icon} text-[length:var(--font-size-3xl)]`}></span>}
-        <div className={`md:text-[length:var(--font-size-2xl)] lg:text-[length:var(--font-size-4xl)]`}   style={{ fontSize: textSize }}>{text}</div>
+      <button
+        className={` ${clsx(base, variants[variant])}  ${className}`}
+        onClick={onClick}
+        disabled={disabled}>
+        {icon && (
+          <span className={`${icon} text-(length:--font-size-3xl)`}></span>
+        )}
+        <div
+          className={`md:text-(length:--font-size-2xl) lg:text-(length:--font-size-4xl)`}
+          style={{ fontSize: textSize }}>
+          {text}
+        </div>
       </button>
     </>
   );
