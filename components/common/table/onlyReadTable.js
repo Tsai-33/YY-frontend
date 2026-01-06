@@ -1,5 +1,6 @@
 import { searchStockDetail } from "@/pages/api";
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function OnlyReadTable({
   headers = [],
@@ -120,66 +121,81 @@ export default function OnlyReadTable({
                 </tr>
 
                 {/* ===== 展開詳細列 ===== */}
-                {isOpen && (
-                  <>
-                    {/* 載入中 */}
-                    {loadingRow === rowId && (
-                      <tr className="bg-(--gray-light)">
-                        {headers.map((header, i) => (
-                          <td
-                            key={i}
-                            style={{ width: header.width }}
-                            className="px-4 py-2 text-(length:--font-size-xl) font-medium text-black text-center">
-                            {i === 0 ? "讀取中…" : ""}
-                          </td>
-                        ))}
-                      </tr>
-                    )}
+                <AnimatePresence>
+                  {isOpen && (
+                    <tr className="bg-(--gray-light)">
+                      {/* 1. 使用 colSpan 確保這一列佔滿全部寬度，避免跑位 */}
+                      <td colSpan={headers.length} className="p-0 border-none">
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                          className="overflow-hidden">
+                          {/* 2. 內部嵌套一個 table 以維持與 Header 一致的對齊感 */}
+                          <table className="w-full table-fixed ">
+                            <tbody>
+                              {/* 載入中 */}
+                              {loadingRow === rowId && (
+                                <tr>
+                                  {headers.map((header, i) => (
+                                    <td
+                                      key={i}
+                                      style={{ width: header.width }}
+                                      className="px-4 py-2 text-(length:--font-size-xl) font-medium text-black text-center">
+                                      {i === 0 ? "讀取中…" : ""}
+                                    </td>
+                                  ))}
+                                </tr>
+                              )}
 
-                    {/* 已載入完成 - 顯示多列 */}
-                    {loadingRow !== rowId &&
-                      details &&
-                      Array.isArray(details) &&
-                      details.length > 0 &&
-                      details.map((detail, detailIdx) => {
-                        const isLast = detailIdx === details.length - 1;
-                        return (
-                          <tr
-                            key={`${rowId}-detail-${detailIdx}`}
-                            className="bg-(--gray-light)">
-                            {headers.map((header, i) => (
-                              <td
-                                key={i}
-                                style={{ width: header.width }}
-                                className={`px-4 py-2 text-(length:--font-size-xl) font-medium text-black 
-                  ${isLast ? "border-b border-(--green-vivid)" : ""}`}>
-                                {header.renderDetail
-                                  ? header.renderDetail(detail)
-                                  : ""}
-                              </td>
-                            ))}
-                          </tr>
-                        );
-                      })}
+                              {/* 已載入完成 - 顯示多列 */}
+                              {loadingRow !== rowId &&
+                                details?.length > 0 &&
+                                details.map((detail, detailIdx) => {
+                                  const isLast =
+                                    detailIdx === details.length - 1;
+                                  return (
+                                    <tr key={`${rowId}-detail-${detailIdx}`}>
+                                      {headers.map((header, i) => (
+                                        <td
+                                          key={i}
+                                          style={{ width: header.width }}
+                                          className={`px-4 py-2 text-(length:--font-size-xl) font-medium text-black truncate ${
+                                            isLast
+                                              ? "border-b border-(--green-vivid)"
+                                              : ""
+                                          }`}>
+                                          {header.renderDetail
+                                            ? header.renderDetail(detail)
+                                            : ""}
+                                        </td>
+                                      ))}
+                                    </tr>
+                                  );
+                                })}
 
-                    {/* 無資料 */}
-                    {loadingRow !== rowId &&
-                      (!details ||
-                        !Array.isArray(details) ||
-                        details.length === 0) && (
-                        <tr className="bg-(--gray-light)">
-                          {headers.map((header, i) => (
-                            <td
-                              key={i}
-                              style={{ width: header.width }}
-                              className="px-4 py-2 text-(length:--font-size-xl) font-medium text-black text-center">
-                              {i === 0 ? "無詳細資料" : ""}
-                            </td>
-                          ))}
-                        </tr>
-                      )}
-                  </>
-                )}
+                              {/* 無資料 */}
+                              {loadingRow !== rowId &&
+                                (!details || details.length === 0) && (
+                                  <tr>
+                                    {headers.map((header, i) => (
+                                      <td
+                                        key={i}
+                                        style={{ width: header.width }}
+                                        className="px-4 py-2 text-(length:--font-size-xl) font-medium text-black text-center">
+                                        {i === 0 ? "無詳細資料" : ""}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                )}
+                            </tbody>
+                          </table>
+                        </motion.div>
+                      </td>
+                    </tr>
+                  )}
+                </AnimatePresence>
               </React.Fragment>
             );
           })}
