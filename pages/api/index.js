@@ -101,6 +101,21 @@ export const getOrderDetailByWID = (payload) =>
 export const checkWCS = (payload) => api.post("/wcs/check", payload);
 export const checkWCSMove = (payload) => api.post("/wcs/check/move", payload);
 export const addShelf = (payload) => api.post("/wcs/add", payload);
+
+export const cancelShelf = (payload) => api.post("/wcs/cancel", payload);
+
+/* 庫區倉別規劃 */
+export const getWarehouses = () => api.get("/warehousePlan/warehouses");
+export const getShelvesByWarehouse = (warehouseId) =>
+  api.get(`/warehousePlan/shelves/${warehouseId}`);
+export const getAllShelvesMap = () => api.get("/warehousePlan/shelves-map");
+export const updateWarehouse = (payload) =>
+  api.post("/warehousePlan/warehouse/update", payload);
+export const updateWarehouses = (payload) =>
+  api.post("/warehousePlan/warehouses/update", payload);
+export const uploadShelvesMap = (payload) =>
+  api.post("/warehousePlan/upload-shelves-map", payload, { timeout: 60000 });
+
 export const checkNodePos = (payload) =>
   api.post("/wcs/check/nodepos", payload);
 export const checkTask = (payload) => api.post("/task/check", payload);

@@ -58,10 +58,27 @@ api.interceptors.response.use(
   },
 
   async (error) => {
+    const status = error.response?.status;
+    const code = error.response?.data?.code;
+    const message = error.response?.data?.message || error.message || "Unknown error";
+
+    if (code === "SESSION_LOGGED_OUT" || code === "NO_SESSION") {
+      handleSessionLoggedOut();
+      return new Promise(() => {}); 
+    }
+
+    if (status === 403) {
+      handleTokenExpired();
+      return new Promise(() => {}); 
+    }
+
+    if (status === 401) {
+      handleUnauthorized();
+      return new Promise(() => {}); 
+    }
+
     handleApiError(error);
 
-    const status = error.response?.status;
-    const message =error.response?.data?.message ||error.message || "Unknown error";
     return Promise.resolve({
       success: false,
       data: null,
@@ -71,25 +88,36 @@ api.interceptors.response.use(
         raw: error,
       }
     });
-  
+
   }
 );
 
-function handleApiError(error) {
-  const status = error.response?.status;  
+function handleSessionLoggedOut() {
+  if (typeof window === "undefined") return;
+  clearAuth();
+  sessionStorage.setItem("logoutReason", "session_expired");
+  window.location.replace("/auth/login?reason=session_expired");
+}
 
+function handleTokenExpired() { // 403
+  if (typeof window === "undefined") return;
+  clearAuth();
+  sessionStorage.setItem("logoutReason", "token_expired");
+  window.location.replace("/auth/login?reason=token_expired");
+}
+
+function handleUnauthorized() { // 401
+  if (typeof window === "undefined") return;
+  clearAuth();
+  sessionStorage.setItem("logoutReason", "unauthorized");
+  window.location.replace("/auth/login?reason=unauthorized");
+}
+
+function handleApiError(error) { // 400, 404, 422, 429, 500
+  const status = error.response?.status;
   switch (status) {
     case 400:
       console.warn("Bad request:", error.response.data);
-      break;
-
-    case 401:
-      clearAuth();
-      break;
-
-    case 403:
-      clearAuth();
-      window.location.href = "/auth/login";
       break;
 
     case 404:
@@ -116,7 +144,6 @@ function handleApiError(error) {
   }
 }
 
-// Clear token
 function clearAuth() {
   if (typeof window !== "undefined") {
     localStorage.removeItem("accessToken");

@@ -25,6 +25,9 @@ const PAGE_TITLES = {
   "/stockQuery": "庫存查詢",
   "/transfer": "調撥",
   "/inventory": "盤點",
+  "/workspace_admin": "工作站管理",
+  "/warehousePlan": "庫區倉別規劃",
+  "/usermanage": "用戶管理",
   default: "",
 };
 
@@ -93,27 +96,24 @@ export default function Layout({ children }) {
         <div className="flex items-center gap-10 text-(length:--font-size-2xl)">
           {isAuthenticated ? (
             <>
-              {userName &&
-                (() => {
-                  const role = userRole;
-                  if (role !== "user") {
-                    return (
-                      <Link href="/usermanage">
-                        <div className="flex items-center gap-2 text-gray-700 font-medium cursor-pointer hover:underline">
-                          <span className="icon-user"></span>
-                          {userName}
-                        </div>
-                      </Link>
-                    );
-                  } else {
-                    return (
-                      <span className="text-gray-700 font-medium">
-                        <i className="icon-user "></i>
-                        {userName}
+              {userName && (() => {
+                const role = userRole;
+                if (role !== "user") {
+                  return (
+                    <Link href="/workspace_admin">
+                      <span className="text-gray-700 font-medium cursor-pointer hover:underline">
+                      <i className="icon-user"></i>{userName}
                       </span>
-                    );
-                  }
-                })()}
+                    </Link>
+                  );
+                }else{
+                  return (
+                    <span className="text-gray-700 font-medium">
+                      <i className="icon-user "></i>{userName}
+                    </span>
+                  );  
+                }
+              })()}
               <button
                 onClick={handleLogout}
                 className="text-gray-700 hover:text-red-600 font-medium transition-colors cursor-pointer">
