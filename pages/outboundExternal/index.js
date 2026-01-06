@@ -20,8 +20,10 @@ import SchematicDiagram from "@/components/diagram/schematicDiagram";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "@/components/common/alert/alert";
+import Modal from "@/components/common/modal/modal";
 import { initWorkstation } from "@/redux/reducer/reducerWorkStations";
 import { getOutBoundExternalOrderDetailByWID } from "@/pages/api";
+import { checkTask_out, addTask_out, deleteTask_out } from "@/components/outboundExternal/outboundExternalFunction";
 
 
 export default function OutboundExternal() {
@@ -31,6 +33,8 @@ export default function OutboundExternal() {
   const [tableData, setTableData] = useState([]);
   const [selectedArray, setSelectedArray] = useState([]);
   const [orderDetail, setOrderDetail] = useState([]);
+  const [confirmModal, setConfirmModal] = useState(false);
+  const [returnModal, setReturnModal] = useState(false);
 
   // TODO 暫時不透過workspace進來
   useEffect(() => {
@@ -82,11 +86,22 @@ export default function OutboundExternal() {
     const inputBarCode = e.target.value.trim();
     if (!inputBarCode) return;
 
+    // 如果已經點擊選擇會檢查掃的條碼是否匹配
+    if (orderCode && orderCode === inputBarCode) {
+      dispatch(setOutboundExternal({ station: currentStationSafe, step: 2 }));
+      orderBarCodeRef.current.value = "";
+      return;
+    }
+
     // 檢查清單中是否配對到
     const result = tableData.some((item) => item.SALE_NO === inputBarCode);
     const [value] = tableData.filter((item) => item.SALE_NO === inputBarCode);
     if (result) {
-      dispatch(setOutboundExternal({ station: currentStationSafe, order: value, orderCode: inputBarCode, step: 2 }));
+      dispatch(setOutboundExternal({ station: currentStationSafe, order: value, orderCode: inputBarCode, waveNo: value.W_ID, step: 2 }));
+      orderBarCodeRef.current.value = "";
+    } else if (orderCode && orderCode !== inputBarCode) {
+      // 已選擇但條碼不匹配
+      Alert({ text: "條碼與選擇的銷貨單不符" });
       orderBarCodeRef.current.value = "";
     } else {
       setAskingOrder(true);
@@ -239,10 +254,15 @@ export default function OutboundExternal() {
 
   // ===== 確認出庫單 =====
   const handleOrderConfrim = async () => {
-    if (!waveNo) {
-          Alert({ title: "您未選擇出庫單" });
-          return;
-        }
+    // 確認是否有其他任務
+    const task = await checkTask_out(stations);
+    if (!task?.success) return;
+    const hasTask = task?.data?.data?.some((item) => item.location === "outboundExternal" || item.location === "");
+    if (!hasTask) {
+      Alert({ title: "目前有其他任務正在執行" });
+      return;
+    }
+
     setLoading(true);
     try {
       const dataId = generateRandomNumber();
@@ -276,9 +296,9 @@ export default function OutboundExternal() {
         // 把每個被占用的站點設成loading狀態
         if (lack_station.length > 0) {
           lack_station.map((station) => {
-            dispatch(setOutboundExternal({ 
-              station: station, 
-              screen: "loading", 
+            dispatch(setOutboundExternal({
+              station: station,
+              screen: "loading",
               orderCode: orderCode,
               waveNo: order.W_ID,
               order: order,
@@ -289,6 +309,9 @@ export default function OutboundExternal() {
         }
         // 拿掉已選的訂單
         setTableData((prev) => prev.filter((v) => v.OUTSTOCK_NO !== orderCode && v.STATUS === 0));
+
+        // 寫入任務紀錄
+        await addTask_out(stations);
       }
     } catch (error) {
       console.warn("出庫確認 :", error);
@@ -396,7 +419,9 @@ export default function OutboundExternal() {
         // 7. 從 orderList 移除該訂單
         dispatch(updateOrderList({ order: orderCode, type: "sub" }));
 
-        // 8. 重新獲取 table 資料
+        // 8. 刪除任務紀錄
+        await deleteTask_out(stations);
+
         await getOutboundExternalTable();
 
         Alert({ title: "出庫完成" });
@@ -556,9 +581,9 @@ export default function OutboundExternal() {
             </div>
             {/* 按鈕區 */}
             <div className="flex flex-1 flex-col justify-end items-center">
-              {step <= 2 && <ActionBtn text="確定" variant="orange" onClick={handleOrderConfrim} />}
+              {step <= 2 && <ActionBtn text="確定" variant="orange" onClick={() => setConfirmModal(true)} disabled={!waveNo} />}
               {step > 2 && (
-                <ActionBtn icon="" text="退回貨架" variant="orange" onClick={handleReturnShelf} />
+                <ActionBtn icon="" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
               )}
             </div>
           </div>
@@ -582,6 +607,42 @@ export default function OutboundExternal() {
       {/* loading */}
       {screen === "loading" && <LoadingShelf />}
       {loading && <Loading />}
+
+      {/* Modal - 確認出庫 */}
+      <Modal
+        showModal={confirmModal}
+        title="確認出庫"
+        onClose={() => setConfirmModal(false)}
+        onConfirm={() => {
+          setConfirmModal(false);
+          handleOrderConfrim();
+        }}
+        width="30vw"
+        height="auto"
+      >
+        <div className="text-xl text-center">
+          <p>確定要出庫此訂單嗎？</p>
+          <p className="font-bold mt-2">{orderCode}</p>
+        </div>
+      </Modal>
+
+      {/* Modal - 退回貨架 */}
+      <Modal
+        showModal={returnModal}
+        title="退回貨架"
+        onClose={() => setReturnModal(false)}
+        onConfirm={() => {
+          setReturnModal(false);
+          handleReturnShelf();
+        }}
+        width="30vw"
+        height="auto"
+      >
+        <div className="text-xl text-center">
+          <p>確定要退回貨架嗎？</p>
+          <p className="font-bold mt-2">貨架編號：{shelf?.SHELVE_ID}</p>
+        </div>
+      </Modal>
     </>
   );
 }

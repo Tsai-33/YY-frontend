@@ -41,14 +41,14 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
                 }
             });
         } else if (name === "radio") {
+            // 點擊只選擇 掃條碼才進 step 2
             dispatch(
-                setOutboundExternal({ 
-                    station: currentStationSafe, 
-                    order: value, 
-                    orderCode: value?.OUTSTOCK_NO, 
-                    waveNo: value?.W_ID, 
-                    step: 2 
-                }));        
+                setOutboundExternal({
+                    station: currentStationSafe,
+                    order: value,
+                    orderCode: value?.SALE_NO,
+                    waveNo: value?.W_ID
+                }));
         }
     };
 
