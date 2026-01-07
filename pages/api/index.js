@@ -33,6 +33,19 @@ export const shiftOutOnReturn = (data) => api.post("/outboundExternal/shiftOutOn
 export const updateStatusForOutboundCallCar = (data) => api.post("/outboundExternal/updateStatusForOutboundCallCar", data);
 
 /* 取得出庫單(領用) */
+export const getOutboundInternal = () => api.get("/outboundInternal/getOutBoundInternal");
+export const getOutBoundInternalOrderDetail = (sale_no) =>
+  api.get(`/outboundInternal/getOutBoundInternalOrderDetail`, {
+    params: { sale_no },
+  });
+export const getOutBoundInternalOrderDetailBySaleNo = (sale_no) => 
+    api.get(`/outboundInternal/getOutBoundInternalOrderDetailBySaleNo`, { 
+        params: { sale_no } 
+    });
+export const getOutBoundInternalOrderDetailByWID = (w_id) => 
+    api.get(`/outboundInternal/getOutBoundInternalOrderDetailByWID`, { 
+        params: { w_id } 
+    });
 
 /* 庫存查詢 */
 export const searchStock = (payload) => api.post("/stock/stockQuery", payload);

@@ -512,6 +512,7 @@ export default function ShelfTransferStation() {
                                             )}
                                             {/* 退回貨架 */}
                                             <ActionBtn 
+                                                className={"flex justify-center"}
                                                 icon="icon-returnShelf"
                                                 text={"退回貨架"}
                                                 variant={"orange"}
