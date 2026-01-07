@@ -266,11 +266,12 @@ export default function OutboundExternal() {
     setLoading(true);
     try {
       const dataId = generateRandomNumber();
+      const stationNo = currentStation?.charAt(0);
       const data = {
         action: "ask_wave",
         dataid: dataId,
         wave_no: String(order.W_ID),
-        station_no: "B"
+        station_no: stationNo
       }
       console.log("data: ", data)
       const res = await sendToWMS(data);

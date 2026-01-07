@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const stationList = ["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B09", "B10", "B11", "B12", "B13", "B14"];
+const stationList = ["B01", "B02", "B03", "B04", "B05", "C01", "C02", "C03", "C04", "C05", "D01", "D02", "D03", "D04"];
 
 const createStation = () => ({
     step: 1,                // 1: 選擇訂單, 2: 選擇貨架, 3: 理貨中
