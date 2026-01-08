@@ -17,12 +17,10 @@ const warehouseColors = {
   F09: "#9333EA", // Purple
   D01: "#2563EB", // Blue
   D02: "#F97316", // Orange
-  D05: "#7ABF9E", // Green 
-  D09: "#1e293b", // Dark blue 
+  D05: "#7ABF9E", // Green
+  D09: "#1e293b", // Dark blue
   M01: "#ec4899", // Pink
   M02: "#000000", // Black
-
-
 };
 
 // STOCK_AREA = null 時的顏色 (未指定)
@@ -34,7 +32,7 @@ export default function WarehouseMap({ shelvesData = [] }) {
   const containerRef = useRef(null);
   const [hoveredShelf, setHoveredShelf] = useState(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
-  const [popupDirection, setPopupDirection] = useState('bottom');
+  const [popupDirection, setPopupDirection] = useState("bottom");
 
   useEffect(() => {
     const container = containerRef.current;
@@ -54,7 +52,10 @@ export default function WarehouseMap({ shelvesData = [] }) {
           };
           // 僅在尺寸改變時更新
           setStageSize((prevSize) => {
-            if (prevSize.width !== newSize.width || prevSize.height !== newSize.height) {
+            if (
+              prevSize.width !== newSize.width ||
+              prevSize.height !== newSize.height
+            ) {
               return newSize;
             }
             return prevSize;
@@ -77,12 +78,12 @@ export default function WarehouseMap({ shelvesData = [] }) {
     const handleWindowResize = () => {
       updateSize();
     };
-    window.addEventListener('resize', handleWindowResize);
+    window.addEventListener("resize", handleWindowResize);
 
     // 清理
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener('resize', handleWindowResize);
+      window.removeEventListener("resize", handleWindowResize);
     };
   }, []);
 
@@ -147,23 +148,32 @@ export default function WarehouseMap({ shelvesData = [] }) {
 
     // 計算偏移以居中
     const offsetX = margin - minX * scale;
-    const offsetY = margin - minY * scale;
+    // const offsetY = margin - minY * scale;
+
+    const displayedDataHeight = (maxY - minY) * scale;
+    const verticalMargin = (stageSize.height - displayedDataHeight) / 2;
+    const offsetY = verticalMargin + maxY * scale;
 
     return { minX, minY, maxX, maxY, scale, offsetX, offsetY };
   };
 
   const bounds = calculateBounds();
 
-  const calculatePopupPosition = (pointerX, pointerY, stageWidth, stageHeight) => {
+  const calculatePopupPosition = (
+    pointerX,
+    pointerY,
+    stageWidth,
+    stageHeight
+  ) => {
     const popupWidth = 250; // popup 的最大寬度
     const popupHeight = 150; // 估算 popup 高度
     const offset = 15; // 與游標的距離
     const padding = 10; // 安全內距
-  
+
     let x = pointerX + offset;
     let y = pointerY + offset;
-    let direction = 'bottom';
-  
+    let direction = "bottom";
+
     // 檢查 X: 如果超過右側，調整到左側
     if (x + popupWidth + padding > stageWidth) {
       x = pointerX - popupWidth - offset;
@@ -172,11 +182,11 @@ export default function WarehouseMap({ shelvesData = [] }) {
         x = stageWidth - popupWidth - padding;
       }
     }
-  
+
     // 檢查 Y: 如果超過下方，顯示在上方
     if (y + popupHeight + padding > stageHeight) {
       y = pointerY - popupHeight - offset;
-      direction = 'top';
+      direction = "top";
       // 如果仍然超過上方，置於中間
       if (y < padding) {
         y = padding;
@@ -187,7 +197,7 @@ export default function WarehouseMap({ shelvesData = [] }) {
         y = padding;
       }
     }
-  
+
     return { x, y, direction };
   };
   // 從後端數據渲染貨架
@@ -221,8 +231,9 @@ export default function WarehouseMap({ shelvesData = [] }) {
 
         // 應用縮放和偏移
         const dockX = parsedDockX * bounds.scale + bounds.offsetX;
-        const dockY = parsedDockY * bounds.scale + bounds.offsetY;
-        
+        // const dockY = parsedDockY * bounds.scale + bounds.offsetY;
+        const dockY = bounds.offsetY - parsedDockY * bounds.scale;
+
         // 縮放後再次檢查
         if (isNaN(dockX) || isNaN(dockY)) {
           console.warn(
@@ -232,10 +243,11 @@ export default function WarehouseMap({ shelvesData = [] }) {
         }
 
         // 選擇顏色: 如果 STOCK_AREA = null 則使用灰色，否則根據 warehouseId 使用顏色
-        const color = shelf.warehouseId === 'UNKNOWN'
-        ? NULL_STOCK_AREA_COLOR
-        : warehouseColors[shelf.warehouseId] || statusColor.empty;
-        const size = Math.max(Math.round(60 * bounds.scale), 10); 
+        const color =
+          shelf.warehouseId === "UNKNOWN"
+            ? NULL_STOCK_AREA_COLOR
+            : warehouseColors[shelf.warehouseId] || statusColor.empty;
+        const size = Math.max(Math.round(60 * bounds.scale), 10);
 
         return (
           <Group key={shelf.shelfCode || `shelf-${index}`}>
@@ -252,7 +264,7 @@ export default function WarehouseMap({ shelvesData = [] }) {
                 const stage = e.target.getStage();
                 const pointerPos = stage.getPointerPosition();
                 setHoveredShelf(shelf);
-                
+
                 // 計算安全的 popup 位置
                 const adjusted = calculatePopupPosition(
                   pointerPos.x,
@@ -262,21 +274,21 @@ export default function WarehouseMap({ shelvesData = [] }) {
                 );
                 setPopupPosition({ x: adjusted.x, y: adjusted.y });
                 setPopupDirection(adjusted.direction);
-                
+
                 // 將游標改為 pointer
                 const container = stage.container();
-                container.style.cursor = 'pointer';
+                container.style.cursor = "pointer";
               }}
               onMouseLeave={(e) => {
                 setHoveredShelf(null);
                 // 將游標改回 default
                 const container = e.target.getStage().container();
-                container.style.cursor = 'default';
+                container.style.cursor = "default";
               }}
               onMouseMove={(e) => {
                 const stage = e.target.getStage();
                 const pointerPos = stage.getPointerPosition();
-                
+
                 // 重新計算安全的 popup 位置
                 const adjusted = calculatePopupPosition(
                   pointerPos.x,
@@ -309,8 +321,7 @@ export default function WarehouseMap({ shelvesData = [] }) {
       <div className="absolute top-3 left-3 z-10">
         <button
           onClick={() => setShowMapCodes(!showMapCodes)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium shadow transition-colors"
-        >
+          className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium shadow transition-colors">
           {showMapCodes ? "隱藏" : "顯示"}地圖貨架編碼
         </button>
       </div>
@@ -319,8 +330,7 @@ export default function WarehouseMap({ shelvesData = [] }) {
       <div
         ref={containerRef}
         className="flex-1 min-h-0 overflow-hidden w-full h-full"
-        style={{ minWidth: 0, minHeight: 0 }}
-      >
+        style={{ minWidth: 0, minHeight: 0 }}>
         {stageSize.width > 0 && stageSize.height > 0 && (
           <Stage width={stageSize.width} height={stageSize.height}>
             <Layer>{renderShelves()}</Layer>
@@ -328,28 +338,40 @@ export default function WarehouseMap({ shelvesData = [] }) {
         )}
       </div>
       {hoveredShelf && (
-      <div
-        className="absolute bg-white border-2 border-blue-500 rounded-lg shadow-xl p-3 z-50 pointer-events-none"
-        style={{
-          left: `${popupPosition.x + 15}px`,
-          top: `${popupPosition.y + 15}px`,
-          maxWidth: '250px',
-          transform: 'translate(0, 0)'
-        }}
-      >
-        <div className="text-sm font-bold text-gray-800 border-b pb-2 mb-2">
-          {hoveredShelf.shelfCode || 'N/A'}
-        </div>
-        <div className="text-xs text-gray-600 space-y-1">
-          <div><strong>貨架號:</strong> {hoveredShelf.shelfNumber || '無'}</div>
-          <div><strong>地圖編碼:</strong> {hoveredShelf.mapCode || '無'}</div>
-          <div><strong>倉庫:</strong> {hoveredShelf.warehouseId === 'UNKNOWN' ? '未指定' : hoveredShelf.warehouseId || '無'}</div>
-          <div className="text-gray-500 mt-2 pt-2 border-t">
-            座標: ({parseFloat(hoveredShelf.dockX)?.toFixed(0) || '無'}, {parseFloat(hoveredShelf.dockY)?.toFixed(0) || '無'})
+        <div
+          className="absolute bg-white border-2 border-blue-500 rounded-lg shadow-xl p-3 z-50 pointer-events-none"
+          style={{
+            left: `${popupPosition.x + 15}px`,
+            top: `${popupPosition.y + 15}px`,
+            maxWidth: "250px",
+            transform: "translate(0, 0)",
+          }}>
+          <div className="text-sm font-bold text-gray-800 border-b pb-2 mb-2">
+            {hoveredShelf.shelfCode || "N/A"}
+          </div>
+          <div className="text-xs text-gray-600 space-y-1">
+            <div>
+              <strong>停靠點:</strong> {hoveredShelf.nodeCode || "無"}
+            </div>
+            <div>
+              <strong>貨架號:</strong> {hoveredShelf.shelfNumber || "無"}
+            </div>
+            <div>
+              <strong>地圖編碼:</strong> {hoveredShelf.mapCode || "無"}
+            </div>
+            <div>
+              <strong>倉庫:</strong>{" "}
+              {hoveredShelf.warehouseId === "UNKNOWN"
+                ? "未指定"
+                : hoveredShelf.warehouseId || "無"}
+            </div>
+            <div className="text-gray-500 mt-2 pt-2 border-t">
+              座標: ({parseFloat(hoveredShelf.dockX)?.toFixed(0) || "無"},{" "}
+              {parseFloat(hoveredShelf.dockY)?.toFixed(0) || "無"})
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
     </div>
   );
 }

@@ -24,7 +24,10 @@ export default function UploadMapPage() {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "application/vnd.ms-excel",
     ];
-    if (!validTypes.includes(selectedFile.type) && !selectedFile.name.match(/\.(xlsx|xls)$/i)) {
+    if (
+      !validTypes.includes(selectedFile.type) &&
+      !selectedFile.name.match(/\.(xlsx|xls)$/i)
+    ) {
       Swal.fire({
         icon: "error",
         title: "檔案格式錯誤",
@@ -67,14 +70,15 @@ export default function UploadMapPage() {
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
           // 跳過標題行，轉換為物件格式
-          // 欄位對應: A=0, E=4, F=5, H=7, I=8
+          // 欄位對應: A=0, E=4, F=5, G=6, H=7, I=8
           const rows = jsonData.slice(1).map((row, index) => ({
             rowNum: index + 2,
-            shelfCode: row[0] || "",      // A欄: 货架编码
-            shelfNumber: row[4] || "",    // E欄: 货架数字码
-            mapCode: row[5] || "",        // F欄: 地图编码
-            dockX: row[7] || 0,           // H欄: 停靠坐标x
-            dockY: row[8] || 0,           // I欄: 停靠坐标y
+            shelfCode: row[0] || "", // A欄: 貨架編碼
+            shelfNumber: row[4] || "", // E欄: 貨架數字碼
+            mapCode: row[5] || "", // F欄: 地圖編碼
+            nodeCode: row[6] || "", // G欄: 貨架停靠點
+            dockX: row[7] || 0, // H欄: 停靠座標x
+            dockY: row[8] || 0, // I欄: 停靠座標y
           }));
 
           resolve(rows.filter((row) => row.shelfCode)); // 過濾空行
@@ -186,8 +190,7 @@ export default function UploadMapPage() {
                 <div className="w-full bg-gray-200 rounded-full h-4">
                   <div
                     className="bg-blue-500 h-4 rounded-full transition-all duration-300"
-                    style={{ width: `${uploadProgress}%` }}
-                  ></div>
+                    style={{ width: `${uploadProgress}%` }}></div>
                 </div>
               </div>
               <p className="text-lg font-medium text-gray-700">
@@ -219,13 +222,16 @@ export default function UploadMapPage() {
         {/* 說明 */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <h3 className="font-medium text-blue-800 mb-2">Excel 格式說明：</h3>
-          <p className="text-sm text-blue-700 mb-2">請確保 Excel 檔案包含以下欄位：</p>
+          <p className="text-sm text-blue-700 mb-2">
+            請確保 Excel 檔案包含以下欄位：
+          </p>
           <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
-            <li>A欄: 货架编码 (例如: A01, B02)</li>
-            <li>E欄: 货架数字码 (例如: 1, 2, 3)</li>
-            <li>F欄: 地图编码 (地圖標識)</li>
-            <li>H欄: 停靠坐标X (數字)</li>
-            <li>I欄: 停靠坐标Y (數字)</li>
+            <li>A欄: 貨架編碼 (例如: A01, B02)</li>
+            <li>E欄: 貨架數字碼 (例如: 1, 2, 3)</li>
+            <li>F欄: 地圖編碼 (地圖標識)</li>
+            <li>G欄: 貨架停靠點 (例如: 0001, 0002, 0003)</li>
+            <li>H欄: 停靠座標X (數字)</li>
+            <li>I欄: 停靠座標Y (數字)</li>
           </ul>
         </div>
 
@@ -241,8 +247,7 @@ export default function UploadMapPage() {
           />
           <label
             htmlFor="excel-upload"
-            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg cursor-pointer transition-colors font-medium"
-          >
+            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg cursor-pointer transition-colors font-medium">
             選擇檔案
           </label>
 
@@ -253,8 +258,7 @@ export default function UploadMapPage() {
               </span>
               <button
                 onClick={handleClear}
-                className="text-red-500 hover:text-red-700 text-sm"
-              >
+                className="text-red-500 hover:text-red-700 text-sm">
                 清除
               </button>
             </div>
@@ -272,22 +276,52 @@ export default function UploadMapPage() {
                 <thead>
                   <tr className="bg-gray-100">
                     <th className="border border-gray-300 px-3 py-2">行號</th>
-                    <th className="border border-gray-300 px-3 py-2">货架编码</th>
-                    <th className="border border-gray-300 px-3 py-2">货架数字码</th>
-                    <th className="border border-gray-300 px-3 py-2">地图编码</th>
-                    <th className="border border-gray-300 px-3 py-2">停靠坐标X</th>
-                    <th className="border border-gray-300 px-3 py-2">停靠坐标Y</th>
+                    <th className="border border-gray-300 px-3 py-2">
+                      貨架編碼
+                    </th>
+                    <th className="border border-gray-300 px-3 py-2">
+                      貨架數字碼
+                    </th>
+                    <th className="border border-gray-300 px-3 py-2">
+                      地圖編碼
+                    </th>
+                    <th className="border border-gray-300 px-3 py-2">
+                      貨架停靠點
+                    </th>
+                    <th className="border border-gray-300 px-3 py-2">
+                      停靠座標X
+                    </th>
+                    <th className="border border-gray-300 px-3 py-2">
+                      停靠座標Y
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {previewData.map((row, index) => (
-                    <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                      <td className="border border-gray-300 px-3 py-2 text-center">{row.rowNum}</td>
-                      <td className="border border-gray-300 px-3 py-2">{row.shelfCode}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-center">{row.shelfNumber}</td>
-                      <td className="border border-gray-300 px-3 py-2">{row.mapCode}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-center">{row.dockX}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-center">{row.dockY}</td>
+                    <tr
+                      key={index}
+                      className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                      <td className="border border-gray-300 px-3 py-2 text-center">
+                        {row.rowNum}
+                      </td>
+                      <td className="border border-gray-300 px-3 py-2 text-center">
+                        {row.shelfCode}
+                      </td>
+                      <td className="border border-gray-300 px-3 py-2 text-center">
+                        {row.shelfNumber}
+                      </td>
+                      <td className="border border-gray-300 px-3 py-2 text-center">
+                        {row.mapCode}
+                      </td>
+                      <td className="border border-gray-300 px-3 py-2 text-center">
+                        {row.nodeCode}
+                      </td>
+                      <td className="border border-gray-300 px-3 py-2 text-center">
+                        {row.dockX}
+                      </td>
+                      <td className="border border-gray-300 px-3 py-2 text-center">
+                        {row.dockY}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

@@ -11,16 +11,86 @@ export default function WarehousePlanIndex() {
 
   // 初始化倉別資料
   const [warehouseData, setWarehouseData] = useState([
-    { id: "F01", name: "F01", description: "外銷成品倉", totalShelves: "0", locationStart: "0", locationEnd: "0" },
-    { id: "F02", name: "F02", description: "外銷訂單倉", totalShelves: "0", locationStart: "0", locationEnd: "0" },
-    { id: "F03", name: "F03", description: "貿易倉", totalShelves: "0", locationStart: "0", locationEnd: "0" },
-    { id: "F09", name: "F09", description: "待驗收倉", totalShelves: "0", locationStart: "0", locationEnd: "0" },
-    { id: "D01", name: "D01", description: "成品倉", totalShelves: "0", locationStart: "0", locationEnd: "0" },
-    { id: "D02", name: "D02", description: "成品2倉", totalShelves: "0", locationStart: "0", locationEnd: "0" },
-    { id: "D05", name: "D05", description: "成品3倉", totalShelves: "0", locationStart: "0", locationEnd: "0" },
-    { id: "D09", name: "D09", description: "不良品倉", totalShelves: "0", locationStart: "0", locationEnd: "0" },
-    { id: "M01", name: "M01", description: "物料倉", totalShelves: "0", locationStart: "0", locationEnd: "0" },
-    { id: "M02", name: "M02", description: "原料倉", totalShelves: "0", locationStart: "0", locationEnd: "0" },
+    {
+      id: "F01",
+      name: "F01",
+      description: "外銷成品倉",
+      totalShelves: "0",
+      locationStart: "0",
+      locationEnd: "0",
+    },
+    {
+      id: "F02",
+      name: "F02",
+      description: "外銷訂單倉",
+      totalShelves: "0",
+      locationStart: "0",
+      locationEnd: "0",
+    },
+    {
+      id: "F03",
+      name: "F03",
+      description: "貿易倉",
+      totalShelves: "0",
+      locationStart: "0",
+      locationEnd: "0",
+    },
+    {
+      id: "F09",
+      name: "F09",
+      description: "待驗收倉",
+      totalShelves: "0",
+      locationStart: "0",
+      locationEnd: "0",
+    },
+    {
+      id: "D01",
+      name: "D01",
+      description: "成品倉",
+      totalShelves: "0",
+      locationStart: "0",
+      locationEnd: "0",
+    },
+    {
+      id: "D02",
+      name: "D02",
+      description: "成品2倉",
+      totalShelves: "0",
+      locationStart: "0",
+      locationEnd: "0",
+    },
+    {
+      id: "D05",
+      name: "D05",
+      description: "成品3倉",
+      totalShelves: "0",
+      locationStart: "0",
+      locationEnd: "0",
+    },
+    {
+      id: "D09",
+      name: "D09",
+      description: "不良品倉",
+      totalShelves: "0",
+      locationStart: "0",
+      locationEnd: "0",
+    },
+    {
+      id: "M01",
+      name: "M01",
+      description: "物料倉",
+      totalShelves: "0",
+      locationStart: "0",
+      locationEnd: "0",
+    },
+    {
+      id: "M02",
+      name: "M02",
+      description: "原料倉",
+      totalShelves: "0",
+      locationStart: "0",
+      locationEnd: "0",
+    },
   ]);
 
   // 地圖貨架資料
@@ -45,7 +115,6 @@ export default function WarehousePlanIndex() {
       // 取得所有貨架地圖資料
       const shelvesRes = await getAllShelvesMap();
       if (shelvesRes.data.success && shelvesRes.data.data) {
-
         setShelvesMapData(shelvesRes.data.data);
       }
     } catch (error) {
@@ -121,7 +190,7 @@ export default function WarehousePlanIndex() {
         {/* 右側 - 倉庫地圖 */}
         <div className="col-span-8 flex flex-col min-h-0 min-w-0">
           {/* 上傳按鈕 */}
-          <div className="mb-2 flex justify-end flex-shrink-0">
+          <div className="mb-2 flex justify-end shrink-0">
             <ActionBtn
               icon="icon-upload"
               text="上傳地圖資料"
