@@ -33,19 +33,21 @@ export const shiftOutOnReturn = (data) => api.post("/outboundExternal/shiftOutOn
 export const updateStatusForOutboundCallCar = (data) => api.post("/outboundExternal/updateStatusForOutboundCallCar", data);
 
 /* 取得出庫單(領用) */
-export const getOutboundInternal = () => api.get("/outboundInternal/getOutBoundInternal");
-export const getOutBoundInternalOrderDetail = (sale_no) =>
-  api.get(`/outboundInternal/getOutBoundInternalOrderDetail`, {
+export const getOutboundInternal = () => api.get("/outboundInternal/getOutboundInternal");
+export const getOutboundInternalOrderDetail = (sale_no) =>
+  api.get(`/outboundInternal/getOutboundInternalOrderDetail`, {
     params: { sale_no },
   });
-export const getOutBoundInternalOrderDetailBySaleNo = (sale_no) => 
-    api.get(`/outboundInternal/getOutBoundInternalOrderDetailBySaleNo`, { 
-        params: { sale_no } 
+export const getOutboundInternalOrderDetailBySaleNo = (sale_no) =>
+    api.get(`/outboundInternal/getOutboundInternalOrderDetailBySaleNo`, {
+        params: { sale_no }
     });
-export const getOutBoundInternalOrderDetailByWID = (w_id) => 
-    api.get(`/outboundInternal/getOutBoundInternalOrderDetailByWID`, { 
-        params: { w_id } 
+export const getOutboundInternalOrderDetailByWID = (w_id) =>
+    api.get(`/outboundInternal/getOutboundInternalOrderDetailByWID`, {
+        params: { w_id }
     });
+export const shiftOutOnReturnInternal = (data) => api.post("/outboundInternal/shiftOutOnReturn", data);
+export const updateStatusForOutboundCallCarInternal = (data) => api.post("/outboundInternal/updateStatusForOutboundCallCar", data);
 
 /* 庫存查詢 */
 export const searchStock = (payload) => api.post("/stock/stockQuery", payload);

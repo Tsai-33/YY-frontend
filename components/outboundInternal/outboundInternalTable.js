@@ -2,8 +2,8 @@ import Table from "@/components/common/table/table";
 import { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
-import { setoutboundInternal } from "@/redux/reducer/reduceroutboundInternal";
-import { getoutboundInternalOrderDetailByWID } from "@/pages/api";
+import { setOutboundInternal } from "@/redux/reducer/reducerOutboundInternal";
+import { getOutboundInternalOrderDetailByWID } from "@/pages/api";
 
 export default function OutboundInternalTable({ data, selectedArray, setSelectedArray, detailTableData, setDetailTableData }) {
     const dispatch = useDispatch();
@@ -43,7 +43,7 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
         } else if (name === "radio") {
             // 點擊只選擇 掃條碼才進 step 2
             dispatch(
-                setoutboundInternal({
+                setOutboundInternal({
                     station: currentStationSafe,
                     order: value,
                     orderCode: value?.SALE_NO,
@@ -66,7 +66,7 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
     }, [waveNo, step]);
     const getList = async () => {
         try {
-            const res = await getoutboundInternalOrderDetailByWID(waveNo);
+            const res = await getOutboundInternalOrderDetailByWID(waveNo);
             if (res.data.success) {
                 const detail = res.data.data;
                 setDetailTableData(detail);

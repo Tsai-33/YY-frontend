@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import { setInbound } from "@/redux/reducer/reducerInbound";
 import { setTransfer } from "@/redux/reducer/reducerTransfer";
 import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
+import { setOutboundInternal } from "@/redux/reducer/reducerOutboundInternal";
 import { setShelfTransfer } from "@/redux/reducer/reducerShelfTransfer";
 import { setInventory } from "@/redux/reducer/reducerInventory";
 
@@ -71,6 +72,15 @@ export default function SocketManager() {
                 step: 3,
               })
             );
+            dispatch(
+              setOutboundInternal({
+                station: eventData.STATION,
+                screen: "working",
+                shelf: eventData,
+                shelfItem: eventData?.ITEMS,
+                step: 3,
+              })
+            );
           } else if (eventData?.PURPOSE === 1) {
             // 入庫
             dispatch(setInbound({ station: eventData.STATION, shelf: eventData, shelfItem: eventData?.ITEMS, screen: "working", step: 3 }));
@@ -115,8 +125,12 @@ export default function SocketManager() {
           }
         }
         if (eventData?.action === "push_button") {
-          dispatch(setOutboundExternal({ 
-            station: eventData.STATION, 
+          dispatch(setOutboundExternal({
+            station: eventData.STATION,
+            pushButton: eventData
+          }));
+          dispatch(setOutboundInternal({
+            station: eventData.STATION,
             pushButton: eventData
           }));
         }

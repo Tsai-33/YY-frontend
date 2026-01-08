@@ -1,14 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import OutboundInternalTable from "@/components/outboundInternal/outboundInternalTable";
-import { setCurrentStation, updateLackStation } from "@/redux/reducer/reducerWorkStations";
-import { setoutboundInternal, clearPushButton, updateLackStation as updateOutboundLackStation, updateOrderList } from "@/redux/reducer/reduceroutboundInternal";
-import { 
-  getOutboundInternal, 
-  getOutboundInternalOrderDetailBySaleNo, 
-  sendToWMS, 
-  shiftOutOnReturn, 
-  updateStatusForOutboundCallCar,
+import { setCurrentStation, setCurrentJob, updateLackStation } from "@/redux/reducer/reducerWorkStations";
+import { setOutboundInternal, clearPushButton, updateLackStation as updateOutboundLackStation, updateOrderList } from "@/redux/reducer/reducerOutboundInternal";
+import { resetOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
+import {
+  getOutboundInternal,
+  getOutboundInternalOrderDetailBySaleNo,
+  sendToWMS,
+  shiftOutOnReturnInternal,
+  updateStatusForOutboundCallCarInternal,
   decryptBarcode
 } from "@/pages/api";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
@@ -22,7 +23,7 @@ import { generateRandomNumber } from "@/utils/random";
 import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
 import { initWorkstation } from "@/redux/reducer/reducerWorkStations";
-import { getoutboundInternalOrderDetailByWID } from "@/pages/api";
+import { getOutboundInternalOrderDetailByWID } from "@/pages/api";
 import { checkTask_out, addTask_out, deleteTask_out } from "@/components/outboundInternal/outboundInternalFunction";
 
 
@@ -41,6 +42,8 @@ export default function OutboundInternal() {
     if (!currentStation) {
       dispatch(initWorkstation("172.16.11.75"));
     }
+    // 強制更新為領用
+    dispatch(setCurrentJob("領用"));
   }, [currentStation, dispatch]);
   
   // 目前選擇的工作站
@@ -65,7 +68,7 @@ export default function OutboundInternal() {
 
   const fetchOrderDetail = async (saleNo) => {
     try {
-      const res = await getoutboundInternalOrderDetailBySaleNo(saleNo);
+      const res = await getOutboundInternalOrderDetailBySaleNo(saleNo);
       if (res.data.success) {
         setOrderDetail(res.data.data || []);
       }
@@ -88,7 +91,7 @@ export default function OutboundInternal() {
 
     // 如果已經點擊選擇會檢查掃的條碼是否匹配
     if (orderCode && orderCode === inputBarCode) {
-      dispatch(setoutboundInternal({ station: currentStationSafe, step: 2 }));
+      dispatch(setOutboundInternal({ station: currentStationSafe, step: 2 }));
       orderBarCodeRef.current.value = "";
       return;
     }
@@ -97,7 +100,7 @@ export default function OutboundInternal() {
     const result = tableData.some((item) => item.SALE_NO === inputBarCode);
     const [value] = tableData.filter((item) => item.SALE_NO === inputBarCode);
     if (result) {
-      dispatch(setoutboundInternal({ station: currentStationSafe, order: value, orderCode: inputBarCode, waveNo: value.W_ID, step: 2 }));
+      dispatch(setOutboundInternal({ station: currentStationSafe, order: value, orderCode: inputBarCode, waveNo: value.W_ID, step: 2 }));
       orderBarCodeRef.current.value = "";
     } else if (orderCode && orderCode !== inputBarCode) {
       // 已選擇但條碼不匹配
@@ -116,7 +119,7 @@ export default function OutboundInternal() {
 
         if (res.data.success && res.data.data?.result?.toUpperCase() === "OK") {
           // 重取訂單
-          const tableRes = await getoutboundInternal();
+          const tableRes = await getOutboundInternal();
           if (tableRes.data.success) {
             const newData = tableRes.data.data.filter((v) => !orderList.includes(v.OUTSTOCK_NO));
             setTableData(newData);
@@ -124,7 +127,7 @@ export default function OutboundInternal() {
             // 再配對一次
             const newMatchedOrder = newData.find((item) => item.SALE_NO === inputBarCode);
             if (newMatchedOrder) {
-              dispatch(setoutboundInternal({
+              dispatch(setOutboundInternal({
                 station: currentStationSafe,
                 order: newMatchedOrder,
                 orderCode: inputBarCode,
@@ -157,7 +160,7 @@ export default function OutboundInternal() {
 
   const fetchDetailData = async () => {
     try {
-      const res = await getoutboundInternalOrderDetailByWID(waveNo);
+      const res = await getOutboundInternalOrderDetailByWID(waveNo);
       if (res.data.success) {
         setDetailTableData(res.data.data || []);
       }
@@ -271,7 +274,7 @@ export default function OutboundInternal() {
         action: "ask_wave",
         dataid: dataId,
         wave_no: String(order.W_ID),
-        station_no: stationNo
+        station_no: stationNo,
       }
       console.log("data: ", data)
       const res = await sendToWMS(data);
@@ -279,10 +282,10 @@ export default function OutboundInternal() {
 
       // 清空該站的資料
       if (res.data.success) {
-        dispatch(setoutboundInternal({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
+        dispatch(setOutboundInternal({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
       }
       if (res.data.success) {
-        await updateStatusForOutboundCallCar({ W_ID: order.W_ID });
+        await updateStatusForOutboundCallCarInternal({ W_ID: order.W_ID });
         // 存被占用的站點
         let lack_station = res.data.data.message2;
         if (!Array.isArray(lack_station)) {
@@ -297,7 +300,7 @@ export default function OutboundInternal() {
         // 把每個被占用的站點設成loading狀態
         if (lack_station.length > 0) {
           lack_station.map((station) => {
-            dispatch(setoutboundInternal({
+            dispatch(setOutboundInternal({
               station: station,
               screen: "loading",
               orderCode: orderCode,
@@ -368,7 +371,7 @@ export default function OutboundInternal() {
       }
 
       // 2. 扣庫存
-      const shiftRes = await shiftOutOnReturn({
+      const shiftRes = await shiftOutOnReturnInternal({
         items: itemsToShift,
         waveNo: order.W_ID,
         saleNo: orderCode,
@@ -396,9 +399,9 @@ export default function OutboundInternal() {
 
       const res = await sendToWMS(data);
       if (res.data.success) {
-        // 4. 清空所有站點的資料（出庫會佔滿所有站點）
+        // 4. 清空所有站點的資料(出庫會佔滿所有站點)
         stations.forEach((stationId) => {
-          dispatch(setoutboundInternal({
+          dispatch(setOutboundInternal({
             station: stationId,
             step: 1,
             screen: "idle",
@@ -417,11 +420,13 @@ export default function OutboundInternal() {
         // 6. 清空 lackStation
         dispatch(updateOutboundLackStation({ type: "clear" }));
 
-        // 7. 從 orderList 移除該訂單
+        // 7. 從orderList刪除該訂單
         dispatch(updateOrderList({ order: orderCode, type: "sub" }));
 
         // 8. 刪除任務紀錄
         await deleteTask_out(stations);
+
+        dispatch(resetOutboundExternal());
 
         await getOutboundInternalTable();
 
@@ -440,7 +445,7 @@ export default function OutboundInternal() {
   }, []);
   const getOutboundInternalTable = async () => {
     try {
-      const res = await getoutboundInternal();
+      const res = await getOutboundInternal();
       if (res.data.success) {
         const newData = res.data.data.filter((v) => !orderList.includes(v.OUTSTOCK_NO));
         setTableData(newData);
@@ -460,7 +465,7 @@ export default function OutboundInternal() {
         <button
           onClick={() => {
             // 模擬 socket 收到 push_button
-            dispatch(setoutboundInternal({
+            dispatch(setOutboundInternal({
               station: currentStationSafe,
               pushButton: {
                 action: "push_button",

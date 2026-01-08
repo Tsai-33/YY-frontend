@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import OutboundExternalTable from "@/components/outboundExternal/outboundExternalTable";
-import { setCurrentStation, updateLackStation } from "@/redux/reducer/reducerWorkStations";
+import { setCurrentStation, setCurrentJob, updateLackStation } from "@/redux/reducer/reducerWorkStations";
 import { setOutboundExternal, clearPushButton, updateLackStation as updateOutboundLackStation, updateOrderList } from "@/redux/reducer/reducerOutboundExternal";
+import { resetoutboundInternal } from "@/redux/reducer/reducerOutboundInternal";
 import { 
   getOutboundExternal, 
   getOutBoundExternalOrderDetailBySaleNo, 
@@ -41,6 +42,7 @@ export default function OutboundExternal() {
     if (!currentStation) {
       dispatch(initWorkstation("172.16.11.75"));
     }
+    dispatch(setCurrentJob("銷貨"));
   }, [currentStation, dispatch]);
   
   // 目前選擇的工作站
@@ -396,7 +398,7 @@ export default function OutboundExternal() {
 
       const res = await sendToWMS(data);
       if (res.data.success) {
-        // 4. 清空所有站點的資料（出庫會佔滿所有站點）
+        // 4. 清空所有站點的資料(出庫會佔滿所有站點)
         stations.forEach((stationId) => {
           dispatch(setOutboundExternal({
             station: stationId,
@@ -417,11 +419,13 @@ export default function OutboundExternal() {
         // 6. 清空 lackStation
         dispatch(updateOutboundLackStation({ type: "clear" }));
 
-        // 7. 從 orderList 移除該訂單
+        // 7. 從orderList刪除該訂單
         dispatch(updateOrderList({ order: orderCode, type: "sub" }));
 
         // 8. 刪除任務紀錄
         await deleteTask_out(stations);
+
+        dispatch(resetoutboundInternal());
 
         await getOutboundExternalTable();
 

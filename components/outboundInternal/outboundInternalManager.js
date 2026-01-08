@@ -1,9 +1,9 @@
 import { useDispatch, useSelector } from "react-redux";
-import { manageroutboundInternal, resetoutboundInternal } from "@/redux/reducer/reduceroutboundInternal";
+import { manageroutboundInternal, resetoutboundInternal } from "@/redux/reducer/reducerOutboundInternal";
 import ActionBtn from "../common/btns/actionBtn";
 import Alert from "../common/alert/alert";
 
-export default function outboundInternalManager({ isOpen, onClose }) {
+export default function OutboundInternalManager({ isOpen, onClose }) {
   const dispatch = useDispatch();
 
   const { stations, currentStation } = useSelector((s) => s.workstation);

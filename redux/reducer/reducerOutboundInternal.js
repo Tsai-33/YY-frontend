@@ -27,7 +27,7 @@ const outboundInternalSlice = createSlice({
   name: "outboundInternal",
   initialState,
   reducers: {
-    setoutboundInternal: (state, action) => {
+    setOutboundInternal: (state, action) => {
       const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation, pushButton } = action.payload;
       // 沒有指定站點的話不執行
       if (!state[station]) return;
@@ -109,7 +109,7 @@ const outboundInternalSlice = createSlice({
 });
 
 export const { 
-  setoutboundInternal, 
+  setOutboundInternal, 
   updateLackStation, 
   updateOrderList, 
   clearPushButton,
