@@ -1,24 +1,24 @@
 import { useDispatch, useSelector } from "react-redux";
-import { managerOutboundExternal, resetOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
+import { manageroutboundInternal, resetoutboundInternal } from "@/redux/reducer/reducerOutboundInternal";
 import ActionBtn from "../common/btns/actionBtn";
 import Alert from "../common/alert/alert";
 
-export default function OutboundExternalManager({ isOpen, onClose }) {
+export default function OutboundInternalManager({ isOpen, onClose }) {
   const dispatch = useDispatch();
 
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "B01";
 
   // 取全部出庫資料
-  const outboundExternalState = useSelector((state) => state.outboundExternal);
-  const { orderList, lackStation } = outboundExternalState;
-  const { step, screen, orderCode, waveNo, order, shelf, shelfItem, selected } = useSelector((state) => state.outboundExternal[currentStationSafe] || {});
+  const outboundInternalState = useSelector((state) => state.outboundInternal);
+  const { orderList, lackStation } = outboundInternalState;
+  const { step, screen, orderCode, waveNo, order, shelf, shelfItem, selected } = useSelector((state) => state.outboundInternal[currentStationSafe] || {});
 
   // 修改狀態
   const handleChange = (e) => {
     const name = e.target.name;
     const value = e.target.value;
-    dispatch(managerOutboundExternal({ station: currentStationSafe, name: name, value: value }));
+    dispatch(manageroutboundInternal({ station: currentStationSafe, name: name, value: value }));
   };
 
   // 清空當前站點
@@ -27,14 +27,14 @@ export default function OutboundExternalManager({ isOpen, onClose }) {
       title: `是否確定清除 ${currentStationSafe}？`,
       showCancel: true,
       onConfirm: () => {
-        dispatch(managerOutboundExternal({ station: currentStationSafe, name: "step", value: 1 }));
-        dispatch(managerOutboundExternal({ station: currentStationSafe, name: "screen", value: "idle" }));
-        dispatch(managerOutboundExternal({ station: currentStationSafe, name: "orderCode", value: "" }));
-        dispatch(managerOutboundExternal({ station: currentStationSafe, name: "waveNo", value: null }));
-        dispatch(managerOutboundExternal({ station: currentStationSafe, name: "order", value: {} }));
-        dispatch(managerOutboundExternal({ station: currentStationSafe, name: "shelf", value: {} }));
-        dispatch(managerOutboundExternal({ station: currentStationSafe, name: "shelfItem", value: [] }));
-        dispatch(managerOutboundExternal({ station: currentStationSafe, name: "selected", value: [] }));
+        dispatch(manageroutboundInternal({ station: currentStationSafe, name: "step", value: 1 }));
+        dispatch(manageroutboundInternal({ station: currentStationSafe, name: "screen", value: "idle" }));
+        dispatch(manageroutboundInternal({ station: currentStationSafe, name: "orderCode", value: "" }));
+        dispatch(manageroutboundInternal({ station: currentStationSafe, name: "waveNo", value: null }));
+        dispatch(manageroutboundInternal({ station: currentStationSafe, name: "order", value: {} }));
+        dispatch(manageroutboundInternal({ station: currentStationSafe, name: "shelf", value: {} }));
+        dispatch(manageroutboundInternal({ station: currentStationSafe, name: "shelfItem", value: [] }));
+        dispatch(manageroutboundInternal({ station: currentStationSafe, name: "selected", value: [] }));
       },
     });
   };
@@ -45,7 +45,7 @@ export default function OutboundExternalManager({ isOpen, onClose }) {
       title: "是否確定清除？",
       showCancel: true,
       onConfirm: () => {
-        dispatch(resetOutboundExternal())
+        dispatch(resetoutboundInternal())
       },
     });
   };
@@ -82,7 +82,7 @@ export default function OutboundExternalManager({ isOpen, onClose }) {
             <h3 className="font-bold mb-2">當前站點狀態</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>站點: {currentStationSafe}</div>
-              <div>銷貨單: {orderCode || "無"}</div>
+              <div>領用單: {orderCode || "無"}</div>
               <div>波次: {waveNo || "無"}</div>
               <div>貨架: {shelf?.SHELVE_ID || "無"}</div>
             </div>
@@ -98,7 +98,7 @@ export default function OutboundExternalManager({ isOpen, onClose }) {
                 className="px-3 py-2 border rounded" 
                 onChange={handleChange}
               >
-                <option value={1}>1 - 選擇銷貨單</option>
+                <option value={1}>1 - 選擇領用單</option>
                 <option value={2}>2 - 確認資訊</option>
                 <option value={3}>3 - 揀貨中</option>
               </select>
@@ -179,7 +179,7 @@ export default function OutboundExternalManager({ isOpen, onClose }) {
             <h3 className="font-bold mb-2">所有站點狀態</h3>
             <div className={`grid gap-2 ${stations?.length === 4 ? 'grid-cols-4' : stations?.length === 5 ? 'grid-cols-5' : 'grid-cols-5'}`}>
               {stations?.map((station) => {
-                const stationData = outboundExternalState[station] || {};
+                const stationData = outboundInternalState[station] || {};
                 return (
                   <div 
                     key={station} 

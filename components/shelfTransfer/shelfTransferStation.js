@@ -1,13 +1,13 @@
 import ActionBtn from "@/components/common/btns/actionBtn";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { 
-    updateShelveData, 
-    updateSelectedItems, 
+import {
+    updateShelveData,
+    updateSelectedItems,
     setTargetShelve,
     setShelveCheck,
     setShelfTransfer,
-    resetStation 
+    resetStation
 } from "@/redux/reducer/reducerShelfTransfer";
 import { updateTransferItems, sendToWMS, updateShelveCheck, transferItems, updateAbnormal, getAbnormalStatus } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
@@ -17,6 +17,8 @@ import {AlertTriangle} from "lucide-react";
 export default function ShelfTransferStation() {
     const dispatch = useDispatch();
     const { stations, currentStation } = useSelector((s) => s.workstation);
+    const { userId } = useSelector((s) => s.user);
+    const operator = String(userId || "");
     const currentStationSafe = currentStation || stations?.[0] || "";
 
     const {
@@ -30,11 +32,11 @@ export default function ShelfTransferStation() {
         shelveChecks = {}
     } = useSelector((s) => s.shelfTransfer[currentStationSafe] || {});
 
-    // ===== 固定 5 個Table 選了幾個貨架就有幾個有值 =====
-    const totalSlots = 5;
+    // ===== 根據站點數量動態產生 Table =====
+    const totalSlots = stations.length;
     const shelvePositions = [
-        ...(selectedShelves || []), 
-        ...Array(Math.max(0, totalSlots - selectedShelves.length)).fill("貨架代號")
+        ...(selectedShelves || []),
+        ...Array(Math.max(0, totalSlots - (selectedShelves?.length || 0))).fill("貨架代號")
     ];
 
     // =====找出選到的項目他的貨架ID=====
@@ -82,7 +84,11 @@ export default function ShelfTransferStation() {
 
     const handleConfirm = async () => {
         if (!confirmCheck()) {
-            Alert("請確認已選擇的貨架");
+            Alert({ text: "請確認已選擇的貨架" });
+            return;
+        }
+        if (!operator) {
+            Alert({ title: "無法取得操作人員資訊，請重新登入" });
             return;
         }
         try {
@@ -92,7 +98,7 @@ export default function ShelfTransferStation() {
             const itemsToMove = sourceData.filter(item =>
                 selectedItemsIds.includes(item.id)
             );
-            
+
             let res;
 
             if (mode === "shelf") {
@@ -101,7 +107,7 @@ export default function ShelfTransferStation() {
                     items: itemsToMove,
                     sourceShelveId: activeShelveId,
                     targetShelveId: targetShelve,
-                    operator: "理貨人員A",
+                    operator,
                 });
             } else {
                 // 訂單理貨
@@ -109,7 +115,7 @@ export default function ShelfTransferStation() {
                     items: itemsToMove,
                     sourceShelveId: activeShelveId,
                     targetShelveId: targetShelve,
-                    operator: "理貨人員A",
+                    operator,
                     saleNo: orderCode
                 });
             }
@@ -139,11 +145,15 @@ export default function ShelfTransferStation() {
     const hasCheck = (value, bit) => (value & bit) !== 0;
 
     const handleShelveCheck = async (shelveId, bitValue) => {
+        if (!operator) {
+            Alert({ title: "無法取得操作人員資訊，請重新登入" });
+            return;
+        }
         try {
             const res = await updateShelveCheck({
                 shelveId,
                 bitValue,
-                operator: "理貨人員A"
+                operator
             });
 
             if (res.data.success) {
@@ -164,38 +174,52 @@ export default function ShelfTransferStation() {
     // ===== 退回貨架 =====
     const handleReturnShelve = async (shelveId) => {
         if (!shelveId) {
-            Alert({ html: "抓不到站點位置" });
+            Alert({ html: "抓不到貨架編號" });
+            return;
+        }
+
+        // 檢查 selectedShelves 是否存在
+        if (!selectedShelves || selectedShelves.length === 0) {
+            Alert({ html: "找不到選中的貨架資料" });
             return;
         }
 
         // 找出該貨架對應的站點
-        const shelveIndex = selectedShelves?.indexOf(shelveId);
+        const shelveIndex = selectedShelves.indexOf(shelveId);
+
         if (shelveIndex === -1) {
             Alert({ html: "找不到對應的站點" });
             return;
         }
-        const stationId = `B0${shelveIndex + 1}`;
+
+        const stationId = stations[shelveIndex];
+
+        if (!stationId) {
+            Alert({ html: "站點 ID 無效" });
+            return;
+        }
         // setLoading(true);
         try {
             const dataId = generateRandomNumber();
-            const data = { 
-                action: "wcstask", 
-                dataid: dataId, 
-                command: "RETURN", 
-                SHELVE_ID: shelveId, 
-                FACE: 2, 
-                STATION: stationId, 
-                PURPOSE: 0 
+            const data = {
+                action: "wcstask",
+                dataid: dataId,
+                command: "RETURN",
+                SHELVE_ID: shelveId,
+                FACE: 2,
+                STATION: stationId,
+                PURPOSE: 4
             };
-            console.log('data: ', data)
             const res = await sendToWMS(data);
             if (res.data.success) {
-                console.log(stationId + "退回");
+                console.log(stationId + " 退回成功");
+            } else {
+                console.log("退回失敗:", res.data);
             }
         } catch (err) {
-            console.warn("handleReturnShelf :", err);
+            console.warn("handleReturnShelf:", err);
         } finally {
-            // setLoading(false);
+            // console.log("handleReturnShelve 完成");
         }
     };
 
@@ -230,6 +254,10 @@ export default function ShelfTransferStation() {
     }, [shelveData]);
 
     const handleMarkAbnormal = async (data) => {
+        if (!data.operator) {
+            Alert({ title: "無法取得操作人員資訊，請重新登入" });
+            return;
+        }
         await Alert({
             title: "標記異常",
             text: `確定要將貨架 ${data.shelveId} 標記為異常嗎？`,
@@ -264,7 +292,7 @@ export default function ShelfTransferStation() {
             <div className="flex flex-col h-screen p-4 bg-gray-100">
                 <div className="bg-white rounded-lg shadow-md p-4 mb-4">
                     <div className="flex items-center justify-between mb-2">
-                        <div className="text-4xl font-bold">理貨工作站B01-B05</div>
+                        <div className="text-4xl font-bold">理貨工作站{stations[0]}-{stations[stations.length - 1]}</div>
                         <div className="text-2xl flex justify-center flex-1 text-black font-bold">
                             請在一個貨架編號下方選擇理貨的貨物,再選擇要移動到的目的貨架編號點擊確定按鈕
                         </div>
@@ -380,10 +408,10 @@ export default function ShelfTransferStation() {
                                                     e.stopPropagation();
                                                     handleMarkAbnormal({
                                                         shelveId,
-                                                        operator: "理貨人員A"
+                                                        operator
                                                     });
                                                 }}
-                                                disabled={abnormalShelves.includes({shelveId})}
+                                                disabled={abnormalShelves.includes(shelveId)}
                                                 className={`w-10 p-1 rounded transition-colors ${
                                                     abnormalShelves.includes(shelveId)
                                                         ? "cursor-not-allowed"
@@ -484,6 +512,7 @@ export default function ShelfTransferStation() {
                                             )}
                                             {/* 退回貨架 */}
                                             <ActionBtn 
+                                                className={"flex justify-center"}
                                                 icon="icon-returnShelf"
                                                 text={"退回貨架"}
                                                 variant={"orange"}
@@ -496,28 +525,29 @@ export default function ShelfTransferStation() {
                             );
                         })}
                     </div>
-                    {/* 站點 */}                                                                                        
+                    {/* 站點 */}
                     <div className="flex gap-2">
-                        {shelvePositions.slice(0, 5).map((shelveId, index) => {
+                        {shelvePositions.slice(0, totalSlots).map((shelveId, index) => {
                             const isEmptySlot = shelveId === "貨架代號";
                             const status = shelveStatus?.[shelveId];
                             const hasData = shelveData?.[shelveId]?.length > 0;
+                            const variant = isEmptySlot
+                                ? "green"
+                                : hasData
+                                ? "blue"
+                                : status === "loading"
+                                ? "yellow"
+                                : "green";
 
                             return (
-                                <button
-                                    key={index}
-                                    className={`flex-1 text-white py-3 rounded-lg text-lg font-bold transition-colors ${
-                                        isEmptySlot
-                                            ? "bg-green-600"                          // 空白欄位固定綠色
-                                            : hasData
-                                            ? "bg-blue-400 hover:bg-blue-500"       // 有資料藍色
-                                            : status === "loading"
-                                            ? "bg-yellow-500"                         // loading
-                                            : "bg-green-600 hover:bg-green-700"     // 其他
-                                    }`}
-                                >
-                                    站點 { index + 1 }
-                                </button>
+                                <div key={index} className="flex-1">
+                                    <ActionBtn
+                                        text={`站點${index + 1}`}
+                                        variant={variant}
+                                        disabled={false}
+                                        className="w-full flex justify-center"
+                                    />
+                                </div>
                             );
                         })}
                     </div>

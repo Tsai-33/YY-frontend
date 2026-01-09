@@ -10,6 +10,7 @@ import InboundManager from "../inbound/inboundManager";
 import OutboundExternalManager from "../outboundExternal/outboundExternalManager";
 import TransferManager from "../transfer/transferManager";
 import ShelfTransferManager from "../shelfTransfer/shelfTransferManager";
+import OutboundInternalManager from "../outboundInternal/outboundInternalManager";
 
 import InventoryManage from "../inventory/inventoryManage";
 
@@ -149,6 +150,9 @@ export default function Layout({ children }) {
       )}
       {path.startsWith("/inventory") && (
         <InventoryManage isOpen={open} onClose={() => setOpen(false)} />
+      )}
+      {path.startsWith("/outboundInternal") && (
+        <OutboundInternalManager isOpen={open} onClose={() => setOpen(false)} />
       )}
     </div>
   );

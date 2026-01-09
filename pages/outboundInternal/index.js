@@ -1,33 +1,654 @@
-import React, { useState } from "react";
-import OutboundTable from "@/components/outboundInternal/outboundTable";
-import { CountAbnormalModal } from "@/components/common/modal/modal-list";
-import Alert from "@/components/common/alert/alert";
-import PageTitle from "@/components/common/pageHeader/pageTitle";
-import { useSelector } from "react-redux";
+import React, { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import OutboundInternalTable from "@/components/outboundInternal/outboundInternalTable";
+import { setCurrentStation, setCurrentJob, updateLackStation } from "@/redux/reducer/reducerWorkStations";
+import { setOutboundInternal, clearPushButton, updateLackStation as updateOutboundLackStation, updateOrderList } from "@/redux/reducer/reducerOutboundInternal";
+import { resetOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
+import {
+  getOutboundInternal,
+  getOutboundInternalOrderDetailBySaleNo,
+  sendToWMS,
+  shiftOutOnReturnInternal,
+  updateStatusForOutboundCallCarInternal,
+  decryptBarcode
+} from "@/pages/api";
+import LoadingShelf from "@/components/common/loading/loading-shelf";
+import Loading from "@/components/common/loading/loading";
+import PageHeader from "@/components/common/pageHeader/pageHeader";
+import InputFrame from "@/components/common/input/inputFrame";
 import ActionBtn from "@/components/common/btns/actionBtn";
+import SchematicDiagram from "@/components/diagram/schematicDiagram";
+import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
+import { generateRandomNumber } from "@/utils/random";
+import Alert from "@/components/common/alert/alert";
+import Modal from "@/components/common/modal/modal";
+import { initWorkstation } from "@/redux/reducer/reducerWorkStations";
+import { getOutboundInternalOrderDetailByWID } from "@/pages/api";
+import { checkTask_out, addTask_out, deleteTask_out } from "@/components/outboundInternal/outboundInternalFunction";
+
 
 export default function OutboundInternal() {
-  const currentStep = useSelector((state) => state.page.currentStep);
+  const dispatch = useDispatch();
+  const { stations, currentStation } = useSelector((s) => s.workstation);
+  const [loading, setLoading] = useState(false);
+  const [tableData, setTableData] = useState([]);
+  const [selectedArray, setSelectedArray] = useState([]);
+  const [orderDetail, setOrderDetail] = useState([]);
+  const [confirmModal, setConfirmModal] = useState(false);
+  const [returnModal, setReturnModal] = useState(false);
+
+  // TODO 暫時不透過workspace進來
+  useEffect(() => {
+    if (!currentStation) {
+      dispatch(initWorkstation("172.16.11.75"));
+    }
+    // 強制更新為領用
+    dispatch(setCurrentJob("領用"));
+  }, [currentStation, dispatch]);
+  
+  // 目前選擇的工作站
+  const handleSwitchStation = (station) => {
+    dispatch(setCurrentStation(station));
+  };
+
+  // 防止currentStation還沒好就使用會壞掉
+  const currentStationSafe = currentStation || stations?.[0] || "";
+  // 避免同一張單被很多站使用
+  const { orderList, lackStation } = useSelector((s) => s.outboundInternal);
+  const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, pushButton } = useSelector((s) => s.outboundInternal[currentStationSafe] || {});
+
+  // =====根據領用單取得細節=====
+  useEffect(() => {
+    if (orderCode) {
+      fetchOrderDetail(orderCode);
+    } else {
+      setOrderDetail([]);
+    }
+  }, [orderCode]);
+
+  const fetchOrderDetail = async (saleNo) => {
+    try {
+      const res = await getOutboundInternalOrderDetailBySaleNo(saleNo);
+      if (res.data.success) {
+        setOrderDetail(res.data.data || []);
+      }
+    } catch (error) {
+      console.warn("fetchOrderDetail: ", error);
+      setOrderDetail([]);
+    }
+  }
+
+  // =====掃領用單條碼=====
+  const orderBarCodeRef = useRef(null);
+  const [askingOrder, setAskingOrder] = useState(false);
+
+  const handleOrderBarCode = async (e) => {
+    if (screen === "loading") return;
+    if (e.key !== "Enter") return;
+
+    const inputBarCode = e.target.value.trim();
+    if (!inputBarCode) return;
+
+    // 如果已經點擊選擇會檢查掃的條碼是否匹配
+    if (orderCode && orderCode === inputBarCode) {
+      dispatch(setOutboundInternal({ station: currentStationSafe, step: 2 }));
+      orderBarCodeRef.current.value = "";
+      return;
+    }
+
+    // 檢查清單中是否配對到
+    const result = tableData.some((item) => item.SALE_NO === inputBarCode);
+    const [value] = tableData.filter((item) => item.SALE_NO === inputBarCode);
+    if (result) {
+      dispatch(setOutboundInternal({ station: currentStationSafe, order: value, orderCode: inputBarCode, waveNo: value.W_ID, step: 2 }));
+      orderBarCodeRef.current.value = "";
+    } else if (orderCode && orderCode !== inputBarCode) {
+      // 已選擇但條碼不匹配
+      Alert({ text: "條碼與選擇的領用單不符" });
+      orderBarCodeRef.current.value = "";
+    } else {
+      setAskingOrder(true);
+      try {
+        const dataId = generateRandomNumber();
+        const data = {
+          action: "ask_order",
+          no: inputBarCode,
+          dataid: dataId
+        }
+        const res = await sendToWMS(data);
+
+        if (res.data.success && res.data.data?.result?.toUpperCase() === "OK") {
+          // 重取訂單
+          const tableRes = await getOutboundInternal();
+          if (tableRes.data.success) {
+            const newData = tableRes.data.data.filter((v) => !orderList.includes(v.OUTSTOCK_NO));
+            setTableData(newData);
+          
+            // 再配對一次
+            const newMatchedOrder = newData.find((item) => item.SALE_NO === inputBarCode);
+            if (newMatchedOrder) {
+              dispatch(setOutboundInternal({
+                station: currentStationSafe,
+                order: newMatchedOrder,
+                orderCode: inputBarCode,
+                step: 2
+              }));
+            } else {
+              Alert({ text: "單號已更新但清單中找不到該筆資料，請稍後再試" });
+            }
+          }
+        } else if (result === "NG") {
+          Alert({ text: res.data.data?.message || "無此單號" });
+        } else {
+          Alert({ text: "查詢單號失敗" });
+        }
+      } catch (error) {
+        console.warn("ask_order 錯誤:", error);
+      } finally {
+        setAskingOrder(false);
+        orderBarCodeRef.current.value = "";
+      }
+    }
+  }
+
+  // ===== 根據波次取得明細 =====
+  const [detailTableData, setDetailTableData] = useState([]);
+  useEffect(() => {
+        if (!waveNo || step < 3) return;
+        fetchDetailData();
+    }, [waveNo, step]);
+
+  const fetchDetailData = async () => {
+    try {
+      const res = await getOutboundInternalOrderDetailByWID(waveNo);
+      if (res.data.success) {
+        setDetailTableData(res.data.data || []);
+      }
+    } catch (error) {
+      console.warn("fetchDetailData:", error);
+    }
+  };  
+
+  // ===== 掃外箱條碼 =====
+  const boxBarcodeRef = useRef(null);
+  const [scanning, setScanning] = useState(false);
+  const handleBoxBarcode = async (e) => {
+    if (e.key !== "Enter") return;
+    
+    const barcode = e.target.value.trim();
+    if (!barcode) return;
+    if (scanning) return;
+
+    setScanning(true); // 防重複掃描
+
+    try {
+      let decryptedBarcode = barcode;
+      // 如果條碼已經是MAKE_NO(M開頭 + 數字)就不解密
+      const isMakeNoFormat = /^M\d{3}-\d+(-\d+)?$/.test(barcode);
+      
+      if (!isMakeNoFormat) {
+        try {
+          const decryptRes = await decryptBarcode({ text: barcode });
+          if (decryptRes.data.data) {
+            decryptedBarcode = decryptRes.data.data;
+          }
+        } catch (decryptError) {
+          console.warn("解密失敗，使用原始條碼:", decryptError);
+        }
+      }
+      // 測試 wuc3LX4mNgiArT+JvMQBIFz8SMkpNlmd
+      console.log("原始條碼：", barcode);
+      console.log("解密後：", decryptedBarcode);
+
+      // 從orderDetail取數量
+      const detailItem = orderDetail?.find(item => 
+          item.MAKE_NO === decryptedBarcode || 
+          item.MAKE_NO?.includes(decryptedBarcode)
+      );
+      // 找對應的產品
+      const matchedItem = detailTableData?.find(item => 
+        item.MAKE_NO === decryptedBarcode
+      );
+
+      // const matchedItem = shelfItem?.find(item =>
+      //   item.MAKE_NO?.includes(decryptedBarcode)
+      // );
+
+      if (matchedItem) {
+        setSelectedArray(prev => {
+
+          const alreadyScanned = prev.some(p => 
+            p.MAKE_NO === decryptedBarcode || 
+            p.MAKE_NO?.includes(decryptedBarcode)
+          );
+              
+          if (alreadyScanned) {
+            Alert({ title: `已掃描過: ${decryptedBarcode}`, icon: "warning", timer: 1000 });
+            return prev;
+          }
+          
+          return [...prev, {
+            PRT_NO: matchedItem.PRT_NO,
+            MAKE_NO: decryptedBarcode,
+            outBoxNo: matchedItem.BOX_NO,
+            outPpNo: matchedItem.BOX_PACK  
+          }];
+        });
+        Alert({ title: `已掃描: ${decryptedBarcode}`, icon: "success", timer: 1000 });
+      } else {
+        Alert({ title: "條碼不符合，找不到對應箱號" });
+      }
+    } catch (error) {
+      console.error("解密失敗:", error);
+      Alert({ title: "條碼解密失敗", icon: "error" });
+    } finally {
+      setScanning(false);
+      boxBarcodeRef.current.value = "";
+      boxBarcodeRef.current.focus();
+    }
+  };
+
+  // step 3 時自動focus外箱條碼
+  useEffect(() => {
+    if (step === 3 && boxBarcodeRef.current) {
+      boxBarcodeRef.current.focus();
+    }
+  }, [step]);
+
+  // ===== 確認出庫單 =====
+  const handleOrderConfrim = async () => {
+    // 確認是否有其他任務
+    const task = await checkTask_out(stations);
+    if (!task?.success) return;
+    const hasTask = task?.data?.data?.some((item) => item.location === "outboundInternal" || item.location === "");
+    if (!hasTask) {
+      Alert({ title: "目前有其他任務正在執行" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const dataId = generateRandomNumber();
+      const stationNo = currentStation?.charAt(0);
+      const data = {
+        action: "ask_wave",
+        dataid: dataId,
+        wave_no: String(order.W_ID),
+        station_no: stationNo,
+      }
+      console.log("data: ", data)
+      const res = await sendToWMS(data);
+      console.log("res: ", res)
+
+      // 清空該站的資料
+      if (res.data.success) {
+        dispatch(setOutboundInternal({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
+      }
+      if (res.data.success) {
+        await updateStatusForOutboundCallCarInternal({ W_ID: order.W_ID });
+        // 存被占用的站點
+        let lack_station = res.data.data.message2;
+        if (!Array.isArray(lack_station)) {
+          try {
+            // 把單引號換成雙引號後解析
+            lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
+          } catch (error) {
+            console.error("lack_station 格式錯誤:", lack_station, error);
+            lack_station = [];
+          }
+        }
+        // 把每個被占用的站點設成loading狀態
+        if (lack_station.length > 0) {
+          lack_station.map((station) => {
+            dispatch(setOutboundInternal({
+              station: station,
+              screen: "loading",
+              orderCode: orderCode,
+              waveNo: order.W_ID,
+              order: order,
+              orderList: orderCode,
+              lackStation:station
+            }));
+          });
+        }
+        // 拿掉已選的訂單
+        setTableData((prev) => prev.filter((v) => v.OUTSTOCK_NO !== orderCode && v.STATUS === 0));
+
+        // 寫入任務紀錄
+        await addTask_out(stations);
+      }
+    } catch (error) {
+      console.warn("出庫確認 :", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ====== 退回貨架 ======
+  // 接收實體按鈕訊號
+  useEffect(() => {
+    if (!pushButton || step !== 3) return;
+    const handlePushButton = async () => {
+      await handleReturnShelf();
+      // 清掉避免再觸發
+      dispatch(clearPushButton({ station: currentStationSafe }));
+    }
+    handlePushButton();
+  }, [pushButton]);
+
+  const handleReturnShelf = async () => {
+    if (!currentStation) {
+      Alert({ html: "抓不到站點位置"});
+      return;
+    }
+    if (!shelf?.SHELVE_ID) {
+        Alert({ text: "找不到貨架資訊" });
+        return;
+    }
+
+    setLoading(true);
+    try {
+      // 1.判斷是整板還是零散
+      let itemsToShift = [];
+
+      if (selectedArray.length > 0) {
+        // 零散掃條碼
+        itemsToShift = selectedArray;
+      } else {
+        // 整板出貨
+        itemsToShift = shelfItem?.map(item => ({
+          PRT_NO: item.PRT_NO,
+          MAKE_NO: item.MAKE_NO,
+          outBoxNo: item.BOX_NO,
+          outPpNo: item.BOX_PACK
+        })) || [];
+      }
+
+      if (itemsToShift.length === 0) {
+        Alert({ text: "沒有出庫的產品" });
+        setLoading(false);
+        return;
+      }
+
+      // 2. 扣庫存
+      const shiftRes = await shiftOutOnReturnInternal({
+        items: itemsToShift,
+        waveNo: order.W_ID,
+        saleNo: orderCode,
+        shelveId: shelf.SHELVE_ID,
+        isFullPallet: selectedArray.length === 0
+      });
+
+      if (!shiftRes.data.success) {
+        Alert({ text: shiftRes.data.message || "出庫失敗" });
+        setLoading(false);
+        return;
+      }
+
+      // 3. 退回貨架
+      const dataId = generateRandomNumber();
+      const data = {
+        action: "wcstask",
+        dataid: dataId,
+        command: "RETURN",
+        SHELVE_ID: shelf?.SHELVE_ID,
+        FACE: 2,
+        STATION: currentStation,
+        PURPOSE: 0
+      };
+
+      const res = await sendToWMS(data);
+      if (res.data.success) {
+        // 4. 清空所有站點的資料(出庫會佔滿所有站點)
+        stations.forEach((stationId) => {
+          dispatch(setOutboundInternal({
+            station: stationId,
+            step: 1,
+            screen: "idle",
+            orderCode: "",
+            waveNo: null,
+            order: {},
+            shelf: {},
+            shelfItem: [],
+            selected: []
+          }));
+        });
+
+        // 5. 清空選擇的陣列
+        setSelectedArray([]);
+
+        // 6. 清空 lackStation
+        dispatch(updateOutboundLackStation({ type: "clear" }));
+
+        // 7. 從orderList刪除該訂單
+        dispatch(updateOrderList({ order: orderCode, type: "sub" }));
+
+        // 8. 刪除任務紀錄
+        await deleteTask_out(stations);
+
+        dispatch(resetOutboundExternal());
+
+        await getOutboundInternalTable();
+
+        Alert({ title: "出庫完成" });
+      }
+    } catch (error) {
+      console.warn("handleReturnShelf", error);
+    } finally {
+      setLoading(false);
+    }
+  }; 
+
+  // ===== table資料 =====
+  useEffect(() => {
+    getOutboundInternalTable();
+  }, []);
+  const getOutboundInternalTable = async () => {
+    try {
+      const res = await getOutboundInternal();
+      if (res.data.success) {
+        const newData = res.data.data.filter((v) => !orderList.includes(v.OUTSTOCK_NO));
+        setTableData(newData);
+        orderBarCodeRef?.current?.focus();
+      }
+    } catch (error) {
+      console.warn(`getOutboundInternalTable:`, error);
+    }
+  }
   return (
-    <OutboundTable />
-    // <>
-    //   <div className="flex justify-between">
-    //     <h1 className="sm:text-[length:var(--font-size-6xl)] px-12">入庫</h1>
-    //     {currentStep === 1 && <PageTitle title={`請點擊清單內工單單號或訂單單號、掃描工單或訂單條碼、外箱條碼`} />}
-    //     {currentStep === 2 && <PageTitle title={`檢視完入庫資訊確認沒問題，請點擊確定按鈕`} />}
-    //     {currentStep === 3 && <PageTitle title={`貨架到站點，請掃外箱條碼或點擊介面清單方框確定已將產品放上貨架`} />}
-    //     {currentStep === 4 && <PageTitle title={`上架完請點擊退回貨架按鈕`} />}
-    //     {currentStep === 5 && <PageTitle title={`等待無人車將貨架搬回庫區`} />}
-    //     <ActionBtn text="返回" icon="icon-goback" variant="darkBlue" />
-    //   </div>
-    //   <div></div>
-    //   <div className="flex justify-between gap-2">
-    //     {Array.from({ length: 10 }, (_, i) => i + 1).map((station) => (
-    //       <button key={station} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition" onClick={() => onClick(station)}>
-    //         站點 {station}
-    //       </button>
-    //     ))}
-    //   </div>
-    // </>
+    <>
+      {/* 頂部區域 */}
+      {step === 1 && <PageHeader title={`請點擊清單領用單號、領用單條碼`} backTo="/workspace" />}
+      {orderCode && step === 2 && <PageHeader title={`檢視完出庫資訊確認沒問題，請點擊確定按鈕`} />}
+      {step === 3 && <PageHeader title={`整板拉走後或揀選完請點擊實體站點按鈕或介面退回貨架按鈕`} />}
+      {/*{step === 3 && (
+        <button
+          onClick={() => {
+            // 模擬 socket 收到 push_button
+            dispatch(setOutboundInternal({
+              station: currentStationSafe,
+              pushButton: {
+                action: "push_button",
+                STATION: currentStationSafe,
+                PURPOSE: 0
+              }
+            }));
+          }}
+          className="bg-red-500 text-white p-2 rounded"
+        >
+          測試實體按鈕
+        </button>
+      )}*/}
+      {/* 主要內容區域 */}
+      <div className="flex flex-1 gap-4 px-2 py-8 items-stretch">
+        {/* 左側 */}
+        <div className="w-3/7">
+          <OutboundInternalTable 
+            data={tableData} 
+            selectedArray={selectedArray} 
+            setSelectedArray={setSelectedArray}
+            detailTableData={detailTableData}
+            setDetailTableData={setDetailTableData} 
+          />
+        </div>
+        {/* 右側 */}
+        <div className="w-4/7 font-bold text-black p-4 flex flex-col">
+          {/* 條碼 */}
+          <div className="flex space-x-4 pb-4">
+            {/* 領用單條碼 */}
+            <div className="flex flex-1 items-center">
+              <label htmlFor="order" className="font-bold text-black">
+                領用單條碼:
+              </label>
+              {step <= 2 ? (
+                <div className="w-50 flex items-center gap-2">
+                  <InputFrame 
+                    type="text" 
+                    name="orderCode" 
+                    id="order" 
+                    ref={orderBarCodeRef} 
+                    onKeyDown={handleOrderBarCode}
+                    disabled={askingOrder}
+                  />
+                  {askingOrder && <span className="text-orange-500">查詢中...</span>}
+                </div>
+              ) : (
+                <span className="ml-2">{orderCode}</span>
+              )}
+            </div>
+            {/* 外箱條碼 */}
+            {step === 3 && (
+              <div className="flex flex-1 items-center">
+                <label className="font-bold text-black">外箱條碼:</label>
+                <div className="w-50 flex items-center gap-2">
+                  <InputFrame 
+                    type="text" 
+                    ref={boxBarcodeRef} 
+                    onKeyDown={handleBoxBarcode}
+                    disabled={scanning}
+                  />
+                  {scanning && <span>處理中...</span>}
+                </div>
+              </div>
+            )}
+          </div>
+          {/* 資料 */}
+          <div className="flex flex-col flex-1 bg-white p-8 pb-4">
+            {/* 內容區 */}
+            <div className="flex flex-col gap-8 h-100 overflow-y-auto">
+              {step <= 2 ? (
+                orderCode &&
+                orderDetail?.map((v, i) => (
+                  <SchematicDiagramList key={i}>
+                    <div className="flex flex-col text-3xl">
+                      <div className="flex justify-between">
+                        <div>貨架編號:{v?.SHELVE_ID}</div>
+                        <div>出庫庫別:{v?.STOCK_AREA}</div>
+                      </div>
+                      <div className="flex justify-between">
+                        <div>產品品號:{v?.PRT_NO}</div>
+                        <div>棧板規格:{v?.type}</div>
+                      </div>
+                      <div>品名: {v?.PRT_NAME}</div>
+                        <div className="flex justify-between">
+                          <div>箱數: {v?.BOX_NO} 箱</div>
+                          <div>包數: {v?.BOX_PACK} 包</div>
+                          <div>{i + 1}/{orderDetail?.length}</div>
+                        </div>
+                    </div>
+                  </SchematicDiagramList>
+                ))
+              ) : (
+                <SchematicDiagram>
+                  <div className="flex flex-col text-3xl">
+                    <div className="flex justify-between">
+                      <div>貨架編號:{shelf?.SHELVE_ID}</div>
+                      <div>出庫庫別:{shelf?.area}</div>
+                    </div>
+                  </div>
+                  {shelfItem?.map((item, index) => (
+                    <div key={index}>
+                      <div className="flex justify-between text-3xl">
+                        <div>產品品號:{item?.PRT_NO}</div>
+                        <div>棧板規格:{item?.type}</div>
+                      </div>
+                      <div className="text-3xl">
+                        <div>品名: {item?.PRT_NAME}</div>
+                          <div className="flex justify-between">
+                          <div>箱數: {item?.BOX_NO} 箱</div>
+                          <div>包數: {item?.PP_NO} 包</div>
+                          <div>{index + 1}/{shelfItem?.length}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </SchematicDiagram>
+              )}
+            </div>
+            {/* 按鈕區 */}
+            <div className="flex flex-1 flex-col justify-end items-center">
+              {step <= 2 && <ActionBtn text="確定" variant="orange" onClick={() => setConfirmModal(true)} disabled={!waveNo} />}
+              {step > 2 && (
+                <ActionBtn icon="" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* 站點 */}
+      <div className="w-full flex justify-between z-15">
+        {stations.map((station, i) => (
+          <div key={i} className="flex-1">
+            <ActionBtn 
+              key={i} 
+              text={`站點${i + 1}`} 
+              variant={lackStation?.includes(station) ? "" : "green"} 
+              disabled={currentStation === station ? true : false} 
+              onClick={() => handleSwitchStation(station)} 
+              className="w-80 flex justify-center"
+            />
+          </div>
+        ))}
+      </div>
+      {/* loading */}
+      {screen === "loading" && <LoadingShelf />}
+      {loading && <Loading />}
+
+      {/* Modal - 確認出庫 */}
+      <Modal
+        showModal={confirmModal}
+        title="確認出庫"
+        onClose={() => setConfirmModal(false)}
+        onConfirm={() => {
+          setConfirmModal(false);
+          handleOrderConfrim();
+        }}
+        width="30vw"
+        height="auto"
+      >
+        <div className="text-xl text-center">
+          <p>確定要出庫此訂單嗎？</p>
+          <p className="font-bold mt-2">{orderCode}</p>
+        </div>
+      </Modal>
+
+      {/* Modal - 退回貨架 */}
+      <Modal
+        showModal={returnModal}
+        title="退回貨架"
+        onClose={() => setReturnModal(false)}
+        onConfirm={() => {
+          setReturnModal(false);
+          handleReturnShelf();
+        }}
+        width="30vw"
+        height="auto"
+      >
+        <div className="text-xl text-center">
+          <p>確定要退回貨架嗎？</p>
+          <p className="font-bold mt-2">貨架編號：{shelf?.SHELVE_ID}</p>
+        </div>
+      </Modal>
+    </>
   );
 }
