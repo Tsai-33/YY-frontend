@@ -158,7 +158,7 @@ export default function Login() {
   };
 
   //
-  const handleWriteIn = (email,password) => {
+  const handleWriteIn = (email, password) => {
     setFormData({
       email: email,
       password: password,
@@ -177,85 +177,38 @@ export default function Login() {
             <h2 className="text-2xl font-bold text-black mb-8 text-center">
               登入 Log in
               {/* 暫時使用--- 上線後刪除 */}
-              <ActionBtn
-                text="測帳密1"
-                variant="yellow"
-                className="absolute top-0"
-                onClick={()=>handleWriteIn("ADMIN001","admin")}
-              />
-                            <ActionBtn
-                text="測帳密2"
-                variant="rose"
-                className="absolute top-0"
-                onClick={()=>handleWriteIn("ADMIN002","admin")}
-              />
-                            <ActionBtn
-                text="測帳密3"
-                variant="violet"
-                className="absolute top-0"
-                onClick={()=>handleWriteIn("ADMIN003","admin")}
-              />
+              <ActionBtn text="測帳密1" variant="yellow" className="absolute top-0 left-50" onClick={() => handleWriteIn("ADMIN001", "admin")} />
+              <ActionBtn text="測帳密2" variant="rose" className="absolute top-0 left-100" onClick={() => handleWriteIn("ADMIN002", "admin")} />
+              <ActionBtn text="測帳密3" variant="violet" className="absolute top-0 left-150" onClick={() => handleWriteIn("ADMIN003", "admin")} />
               {/* 暫時使用--- 上線後刪除 */}
             </h2>
 
             <form onSubmit={handleLogin} className="space-y-5">
               {/* 帳號输入 (支持帳號編號或郵箱) */}
               <div>
-                <InputFrame
-                  type="text"
-                  name="email"
-                  id="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  onKeyDown={handleKeyDown}
-                  placeholder="帳號編號或郵箱 Account Number or Email"
-                  borderColor=""
-                  className="text-base w-full"
-                />
+                <InputFrame type="text" name="email" id="email" value={formData.email} onChange={handleChange} onKeyDown={handleKeyDown} placeholder="帳號編號或郵箱 Account Number or Email" borderColor="" className="text-base w-full" />
               </div>
 
               {/* 密码输入 */}
               <div>
                 <div className="relative">
-                  <InputFrame
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    id="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    onKeyDown={handleKeyDown}
-                    placeholder="密碼 Password"
-                    borderColor=""
-                    className="text-base w-full pr-12"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors">
-                    {showPassword ? (
-                      <span className="icon-openEye"></span>
-                    ) : (
-                      <span className="icon-closeEye"></span>
-                    )}
+                  <InputFrame type={showPassword ? "text" : "password"} name="password" id="password" value={formData.password} onChange={handleChange} onKeyDown={handleKeyDown} placeholder="密碼 Password" borderColor="" className="text-base w-full pr-12" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors">
+                    {showPassword ? <span className="icon-openEye"></span> : <span className="icon-closeEye"></span>}
                   </button>
                 </div>
               </div>
 
               {/* 忘记密码链接 - 右对齐 */}
               <div className="text-right">
-                <Link
-                  href="/auth/forgot-password"
-                  className="text-600 hover:text-gray-800 text-sm transition-colors">
+                <Link href="/auth/forgot-password" className="text-600 hover:text-gray-800 text-sm transition-colors">
                   忘記密碼 Forgot your password?
                 </Link>
               </div>
 
               {/* 登录按钮 - 確定 */}
               <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 bg-[#008b48] hover:bg-[#007a3f] text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <button type="submit" disabled={loading} className="w-full py-3 bg-[#008b48] hover:bg-[#007a3f] text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   確定
                 </button>
               </div>
