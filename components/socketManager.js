@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import { setInbound } from "@/redux/reducer/reducerInbound";
 import { setTransfer } from "@/redux/reducer/reducerTransfer";
 import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
+import { setOutboundInternal } from "@/redux/reducer/reducerOutboundInternal";
 import { setShelfTransfer } from "@/redux/reducer/reducerShelfTransfer";
 import { setInventory } from "@/redux/reducer/reducerInventory";
 
@@ -75,9 +76,8 @@ export default function SocketManager() {
                 step: 3,
               })
             );
-            // 理貨
             dispatch(
-              setShelfTransfer({
+              setOutboundInternal({
                 station: eventData.STATION,
                 screen: "working",
                 shelf: eventData,
@@ -122,23 +122,32 @@ export default function SocketManager() {
                 step: 3,
               })
             );
+          } else if (eventData?.PURPOSE === 4) {
+            // 理貨
+            dispatch(
+              setShelfTransfer({
+                station: eventData.STATION,
+                screen: "working",
+                shelf: eventData,
+                shelfItem: eventData?.ITEMS,
+                step: 3,
+              })
+            );
           }
         }
         if (eventData?.action === "push_button") {
-          dispatch(
-            setOutboundExternal({
-              station: eventData.STATION,
-              pushButton: eventData,
-            })
-          );
+          dispatch(setOutboundExternal({
+            station: eventData.STATION,
+            pushButton: eventData
+          }));
+          dispatch(setOutboundInternal({
+            station: eventData.STATION,
+            pushButton: eventData
+          }));
         }
         if (eventData?.action === "show_msg") {
         }
-        if (
-          eventData?.action === "taskdone" &&
-          command === "RETURN" &&
-          eventData?.PURPOSE === 0
-        ) {
+        if (eventData?.action === "taskdone" && command === "RETURN" && eventData?.PURPOSE === 4) {
           dispatch(setShelfTransfer({ shelf: eventData, isReturn: true }));
         }
       };

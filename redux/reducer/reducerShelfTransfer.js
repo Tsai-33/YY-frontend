@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const stationList = ["B01", "B02", "B03", "B04", "B05"];
+const stationList = ["B01", "B02", "B03", "B04", "B05", "C01", "C02", "C03", "C04", "C05", "D01", "D02", "D03", "D04"];
 
 const createStation = () => ({
     step: 1,                // 1: 選擇訂單, 2: 選擇貨架, 3: 理貨中
@@ -37,11 +37,12 @@ const shelfTransferSlice = createSlice({
             // 處理退回貨架
             if (isReturn && shelf) {
                 const shelveId = shelf.SHELVE_ID;
-                
+
+                // 更新所有包含該貨架的站點(因為叫車時每個站點都有相同的selectedShelves)
                 for (const stationId of stationList) {
                     const stationData = state[stationId];
                     if (!stationData?.selectedShelves?.includes(shelveId)) continue;
-                    
+
                     // 標記貨架退回
                     stationData.shelveStatus[shelveId] = "returned";
 
@@ -56,7 +57,6 @@ const shelfTransferSlice = createSlice({
                     if (allReturned) {
                         state[stationId] = createStation();
                     }
-                    break;
                 }
                 return;
             }
@@ -66,7 +66,7 @@ const shelfTransferSlice = createSlice({
                 for (const stationId of stationList) {
                     const stationData = state[stationId];
                     // 檢查這個貨架是否在selectedShelves裡面確保是理貨的車
-                    if (stationData.selectedShelves?.includes(shelveId)) {        
+                    if (stationData.selectedShelves?.includes(shelveId)) {
                         const itemsWithId = shelfItem.map(item => ({
                             ...item,
                             id: item.MAKE_NO
@@ -89,13 +89,17 @@ const shelfTransferSlice = createSlice({
                             const status = stationData.shelveStatus[id];
                             return status === "ready";
                         });
-                        
+
+                        // 所有貨架到站才切換到working 否則保持 loading
                         if (allReady) {
                             stationData.screen = "working";
                         }
+
+                        // 確保step是 3(理貨中)
+                        stationData.step = 3;
                     }
                 }
-                return; 
+                return;
             }
         
             if (!state[station]) return;

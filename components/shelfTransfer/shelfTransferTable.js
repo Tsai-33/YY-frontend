@@ -43,7 +43,6 @@ export default function ShelfTransferTable() {
     const fetchList = async () => {
         try {
             const res = await getShelfTransfer();
-            console.log('res: ', res)
             if (res.data.success) {
                 const detail = res.data.data;
                 setTableData(detail);
@@ -62,7 +61,6 @@ export default function ShelfTransferTable() {
         }
         try {
             const res = await getWMSBySaleNo(sale_no);
-            console.log('res: ', res)
             if (res.data.success) {
                 const detail = res.data.data;
                 setShelveData(detail);
@@ -152,10 +150,10 @@ export default function ShelfTransferTable() {
         }));
     }
 
-    // 確定按鈕叫車 TODO 要改成直接寫入資料庫
+    // 確定按鈕叫車
     const handleConfirm = async () => {
-        if (selectedShelve.length < 2 || selectedShelve.length > 5) {
-            Alert({html: "請選擇2~5個貨架"});
+        if (selectedShelve.length < 2 || selectedShelve.length > stations.length) {
+            Alert({html: `請選擇2~${stations.length}個貨架`});
             return;
         }
         try {
@@ -164,15 +162,15 @@ export default function ShelfTransferTable() {
                 SHELVE_ID: shelveId,
                 BAR_CODE: null,
                 FACE: 2,
-                STATION: `B0${index + 1}`,
-                PURPOSE: 0,
+                STATION: stations[index],
+                PURPOSE: 4,
                 STATUS: 0,
                 CART_ID: "",
                 DATA_ID: generateRandomNumber(),
                 WAVENO: selectedOrder?.W_ID || 0,
                 GGROUP: "",
             }));
-            console.log("tasks: ", tasks)
+
             const res = await insertShelfTask({ tasks });
 
             if (res.data.success) {
@@ -181,8 +179,9 @@ export default function ShelfTransferTable() {
                     initialShelveStatus[shelveId] = "loading";
                 });
 
+                // 更新所有相關站點的狀態
                 selectedShelve.forEach((shelveId, index) => {
-                    const stationId = `B0${index + 1}`;
+                    const stationId = stations[index];
                     dispatch(setShelfTransfer({
                         station: stationId,
                         step: 3,
@@ -195,6 +194,21 @@ export default function ShelfTransferTable() {
                     }));
                 });
 
+                // 確保當前站點也更新
+                const updatedStations = selectedShelve.map((_, index) => stations[index]);
+                if (currentStationSafe && !updatedStations.includes(currentStationSafe)) {
+                    dispatch(setShelfTransfer({
+                        station: currentStationSafe,
+                        step: 3,
+                        screen: "loading",
+                        mode: "order",
+                        orderCode: orderInput,
+                        selectedShelves: selectedShelve,
+                        shelveStatus: initialShelveStatus,
+                        shelveData: {},
+                    }));
+                }
+
                 setTableData((prev) => prev.filter((v) => v.SALE_NO !== orderInput));
             } else {
                 Alert({ text: res.data.message || "派車失敗", icon: "error" });
@@ -204,8 +218,8 @@ export default function ShelfTransferTable() {
         }
     }
 
-    // 檢查是否可以按確定(至少2個最多5個)
-    const canConfirm = selectedShelve.length >= 2 && selectedShelve.length <= 5;
+    // 檢查是否可以按確定(至少2個最多站點數量)
+    const canConfirm = selectedShelve.length >= 2 && selectedShelve.length <= stations.length;
 
     return (
         <>
@@ -353,21 +367,14 @@ export default function ShelfTransferTable() {
                 </div>
                 {/* 站點 */}
                 <div className="flex gap-2">
-                    <button className="flex-1 bg-green-600 text-white py-3 rounded-lg text-lg font-medium">
-                        站點 1
-                    </button>
-                    <button className="flex-1 bg-green-600 text-white py-3 rounded-lg text-lg font-medium">
-                        站點 2
-                    </button>
-                    <button className="flex-1 bg-green-600 text-white py-3 rounded-lg text-lg font-medium">
-                        站點 3
-                    </button>
-                    <button className="flex-1 bg-green-600 text-white py-3 rounded-lg text-lg font-medium">
-                        站點 4
-                    </button>
-                    <button className="flex-1 bg-green-600 text-white py-3 rounded-lg text-lg font-medium">
-                        站點 5
-                    </button>
+                    {stations.map((station, index) => (
+                        <button
+                            key={station}
+                            className="flex-1 bg-green-600 text-white py-3 rounded-lg text-lg font-medium"
+                        >
+                            站點 {index + 1}
+                        </button>
+                    ))}
                 </div>
             </div>
         </>

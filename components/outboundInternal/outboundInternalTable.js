@@ -2,18 +2,18 @@ import Table from "@/components/common/table/table";
 import { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
-import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
-import { getOutBoundExternalOrderDetailByWID } from "@/pages/api";
+import { setOutboundInternal } from "@/redux/reducer/reducerOutboundInternal";
+import { getOutboundInternalOrderDetailByWID } from "@/pages/api";
 
-export default function OutboundExternalTable({ data, selectedArray, setSelectedArray, detailTableData, setDetailTableData }) {
+export default function OutboundInternalTable({ data, selectedArray, setSelectedArray, detailTableData, setDetailTableData }) {
     const dispatch = useDispatch();
     const { stations, currentStation } = useSelector((s) => s.workstation);
     const currentStationSafe = currentStation || stations?.[0] || "";
-    const { orderCode, step, waveNo, shelfItem, selected } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
+    const { orderCode, step, waveNo, shelfItem, selected } = useSelector((s) => s.outboundInternal[currentStationSafe] || {});
 
     // =============== 畫面一 ====================
     const headers = [
-        { label: "銷貨單號", key: "SALE_NO", width: "60%" },
+        { label: "領用單號", key: "SALE_NO", width: "60%" },
         { label: "出庫日期", key: "WORK_TIME", width: "30%" },
     ];
 
@@ -43,7 +43,7 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
         } else if (name === "radio") {
             // 點擊只選擇 掃條碼才進 step 2
             dispatch(
-                setOutboundExternal({
+                setOutboundInternal({
                     station: currentStationSafe,
                     order: value,
                     orderCode: value?.SALE_NO,
@@ -66,7 +66,7 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
     }, [waveNo, step]);
     const getList = async () => {
         try {
-            const res = await getOutBoundExternalOrderDetailByWID(waveNo);
+            const res = await getOutboundInternalOrderDetailByWID(waveNo);
             if (res.data.success) {
                 const detail = res.data.data;
                 setDetailTableData(detail);
@@ -103,7 +103,7 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
                     headers={headers} 
                     data={data} 
                     type="radio" 
-                    name="outboundExternal" 
+                    name="outboundInternal" 
                     variants="green" 
                     idKey="SALE_NO" 
                     checked={orderCode} 
@@ -114,7 +114,7 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
                     headers={detailHeaders} 
                     data={detailTableData} 
                     type="checkbox" 
-                    name="outboundExternal2" 
+                    name="outboundInternal2" 
                     variants="green" 
                     idKey="MAKE_NO" 
                     checked={checkedMakeNos} 

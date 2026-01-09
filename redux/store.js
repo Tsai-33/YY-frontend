@@ -13,6 +13,7 @@ import {
 
 import pageReducer from "./reducer/reducerPage";
 import outboundExternalReducer from "./reducer/reducerOutboundExternal";
+import outboundInternalReducer from "./reducer/reducerOutboundInternal";
 import inboundReducer from "./reducer/reducerInbound";
 import userReducer from "./reducer/reducerUser";
 import workStationsReducer from "@/redux/reducer/reducerWorkStations";
@@ -27,6 +28,11 @@ const pagePersistConfig = {
 
 const outboundExternalPersistConfig = {
   key: "outboundExternal",
+  storage,
+};
+
+const outboundInternalPersistConfig = {
+  key: "outboundInternal",
   storage,
 };
 
@@ -65,6 +71,10 @@ const rootReducer = combineReducers({
   outboundExternal: persistReducer(
     outboundExternalPersistConfig,
     outboundExternalReducer
+  ),
+  outboundInternal: persistReducer(
+    outboundInternalPersistConfig,
+    outboundInternalReducer
   ),
   shelfTransfer: persistReducer(
     shelfTransferPersistConfig,

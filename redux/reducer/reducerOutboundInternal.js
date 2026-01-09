@@ -7,7 +7,7 @@ const createStation = () => ({
   screen: "idle",
   orderCode: "",
   waveNo: null,
-  order: {}, // 銷貨單的內容
+  order: {}, // 領用單的內容
   shelf: {},// 貨架到站後的資料
   shelfItem: [], // 貨架上的資料
   selected: [], // 目前選擇
@@ -23,11 +23,11 @@ const initialState = stationList.reduce(
 )
 
 
-const outboundExternalSlice = createSlice({
-  name: "outboundExternal",
+const outboundInternalSlice = createSlice({
+  name: "outboundInternal",
   initialState,
   reducers: {
-    setOutboundExternal: (state, action) => {
+    setOutboundInternal: (state, action) => {
       const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation, pushButton } = action.payload;
       // 沒有指定站點的話不執行
       if (!state[station]) return;
@@ -93,7 +93,7 @@ const outboundExternalSlice = createSlice({
       }
     },
 
-    managerOutboundExternal: (state, action) => {
+    manageroutboundInternal: (state, action) => {
       const { station, name, value, index } = action.payload;
       if (!state[station]) return;
 
@@ -104,17 +104,17 @@ const outboundExternalSlice = createSlice({
       }
     },
 
-    resetOutboundExternal: () => initialState
+    resetoutboundInternal: () => initialState
   }
 });
 
 export const { 
-  setOutboundExternal, 
+  setOutboundInternal, 
   updateLackStation, 
   updateOrderList, 
   clearPushButton,
-  managerOutboundExternal, 
-  resetOutboundExternal 
-} = outboundExternalSlice.actions;
+  manageroutboundInternal, 
+  resetoutboundInternal 
+} = outboundInternalSlice.actions;
 
-export default outboundExternalSlice.reducer;
+export default outboundInternalSlice.reducer;
