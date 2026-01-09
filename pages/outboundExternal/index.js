@@ -221,7 +221,7 @@ export default function OutboundExternal() {
         Alert({ title: "條碼不符合，找不到對應箱號" });
       }
     } catch (error) {
-      console.error("解密失敗:", error);
+      console.warn("解密失敗:", error);
       Alert({ title: "條碼解密失敗", icon: "error" });
     } finally {
       setScanning(false);
@@ -269,7 +269,7 @@ export default function OutboundExternal() {
             // 把單引號換成雙引號後解析
             lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
           } catch (error) {
-            console.error("lack_station 格式錯誤:", lack_station, error);
+            console.warn("lack_station 格式錯誤:", lack_station, error);
             lack_station = [];
           }
         }

@@ -90,7 +90,7 @@ export default function InventoryManage({ isOpen, onClose }) {
           },
         });
       } catch (e) {
-        console.error(`重置 ${station} 失敗:`, e);
+        console.warn(`重置 ${station} 失敗:`, e);
       }
     });
 

@@ -58,7 +58,7 @@ export default function OnlyReadTable({
         }));
       }
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     } finally {
       setLoadingRow(null);
     }

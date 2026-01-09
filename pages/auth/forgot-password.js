@@ -47,7 +47,7 @@ export default function ForgotPassword() {
         });
       }
     } catch (error) {
-      console.error("发送重置链接错误:", error);
+      console.warn("发送重置链接错误:", error);
       // 为了安全，即使出错也显示成功消息 (network error, server error)
       setEmailSent(true);
       Alert({

@@ -31,7 +31,7 @@ api.interceptors.request.use(
               }
             }
           } catch (err) {
-            console.error("Error parsing persist:user:", err);
+            console.warn("Error parsing persist:user:", err);
           }
         }
       }
@@ -133,12 +133,12 @@ function handleApiError(error) { // 400, 404, 422, 429, 500
       break;
 
     case 500:
-      console.error("Server error:", error.response.data);
+      console.warn("Server error:", error.response.data);
       break;
 
     default:
       if (!error.response) {
-        console.error("Network error");
+        console.warn("Network error");
       }
       break;
   }

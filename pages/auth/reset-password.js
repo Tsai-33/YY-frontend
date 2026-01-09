@@ -128,7 +128,7 @@ export default function ResetPassword() {
         });
       }
     } catch (error) {
-      console.error("重置密码错误:", error);
+      console.warn("重置密码错误:", error);
       const errorMessage =
         error.response?.data?.message || "重置鏈接無效或已過期";
 

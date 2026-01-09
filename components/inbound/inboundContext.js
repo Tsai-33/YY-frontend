@@ -79,7 +79,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
           // 嘗試把字串轉成陣列
           lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
         } catch (e) {
-          console.error("lack_station 格式錯誤:", lack_station, e);
+          console.warn("lack_station 格式錯誤:", lack_station, e);
           lack_station = []; // fallback 防止爆掉
         }
       }

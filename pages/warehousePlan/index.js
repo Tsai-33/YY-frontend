@@ -118,7 +118,7 @@ export default function WarehousePlanIndex() {
         setShelvesMapData(shelvesRes.data.data);
       }
     } catch (error) {
-      console.error("載入資料失敗:", error);
+      console.warn("載入資料失敗:", error);
       Swal.fire({
         icon: "error",
         title: "載入失敗",
@@ -156,7 +156,7 @@ export default function WarehousePlanIndex() {
         await fetchData();
       }
     } catch (error) {
-      console.error("更新失敗:", error);
+      console.warn("更新失敗:", error);
       Swal.fire({
         icon: "error",
         title: "更新失敗",

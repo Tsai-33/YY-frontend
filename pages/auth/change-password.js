@@ -141,7 +141,7 @@ export default function ChangePassword() {
         });
       }
     } catch (error) {
-      console.error("修改密码错误:", error);
+      console.warn("修改密码错误:", error);
       Alert({
         title: "修改失敗",
         text: error.response?.data?.message || "舊密碼錯誤或網絡異常",

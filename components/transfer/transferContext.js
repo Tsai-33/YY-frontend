@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import InputFrame from "@/components/common/input/inputFrame";
@@ -225,6 +225,33 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     getList(waveNo, setTableData2);
   }, [shelfItem]);
 
+  // * 貨架上的加減 */
+  const displayItems = useMemo(() => {
+    const shelfList = Array.isArray(shelfItem) ? shelfItem : [];
+    const selectedList = Array.isArray(selected) ? selected : [];
+    const tempMap = new Map(shelfList.map((item) => [item.PRT_NO, { ...item, selectedBox: 0, selectedPP: 0, isNew: false }]));
+
+    selectedList.forEach((sel) => {
+      if (!sel?.PRT_NO) return;
+      if (tempMap.has(sel.PRT_NO)) {
+        const exist = tempMap.get(sel.PRT_NO);
+        exist.selectedBox += sel.BOX_NO || 0;
+        exist.selectedPP += sel.PP_NO || 0;
+      } else {
+        tempMap.set(sel.PRT_NO, {
+          ...sel,
+          BOX_NO: 0,
+          PP_NO: 0,
+          selectedBox: sel.BOX_NO || 0,
+          selectedPP: sel.PP_NO || 0,
+          isNew: true,
+        });
+      }
+    });
+
+    return Array.from(tempMap.values());
+  }, [shelfItem, selected]);
+
   return (
     <>
       {/* 主要內容區域 */}
@@ -290,117 +317,22 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                 ) : (
                   <SchematicDiagram>
                     <div className="flex flex-col">
-                      {currentStation === stations[0] ? (
-                        <div className="flex justify-between pb-2">
-                          <div
-                            className="text-[var(--blue-vivid)]"
-                            style={{
-                              textShadow: `
-                                      -1px -1px 0 white,
-                                      -1px 1px 0 white,
-                                      1px -1px 0 white,
-                                      1px 1px 0 white
-                                    `,
-                            }}
-                          >
-                            {shelf ? `站點${currentStation}-目的貨架編號:${shelf?.SHELVE_ID}` : ""}
-                          </div>
-                          <div>{shelf ? `目的庫別: ${shelf?.area}` : ""}</div>
+                      {/* 標題區：根據是否為目的地站點切換顏色 */}
+                      <div className={`flex justify-between pb-2 ${currentStation === stations[0] ? "text-[var(--blue-vivid)]" : "text-[var(--red)]"}`}>
+                        <div style={currentStation === stations[0] ? { textShadow: "1px 1px 0 white" } : {}}>
+                          站點{currentStation}-{currentStation === stations[0] ? "目的" : "來源"}貨架編號:{shelf?.SHELVE_ID}
                         </div>
+                        <div>
+                          {currentStation === stations[0] ? "目的" : "來源"}庫別: {shelf?.area}
+                        </div>
+                      </div>
+
+                      {/* 內容區：渲染處理後的資料 */}
+                      {displayItems.length === 0 ? (
+                        <div className="text-gray-400 p-4">暫無資料</div>
                       ) : (
-                        <div className="flex justify-between text-[var(--red)] pb-2">
-                          <div>{shelf ? `站點${currentStation}-來源貨架編號:${shelf?.SHELVE_ID}` : ""}</div>
-                          <div>{shelf ? `來源庫別: ${shelf?.area}` : ""}</div>
-                        </div>
+                        displayItems.map((item, index) => <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} isDestination={currentStation === stations[0]} isLastItem={index === displayItems.length - 1} cars={shelf?.CARS} />)
                       )}
-
-                      {(() => {
-                        // Step 1: 安全處理 shelfItem
-                        const shelfList = Array.isArray(shelfItem) ? shelfItem : [];
-                        const selectedList = Array.isArray(selected) ? selected : [];
-
-                        // Step 2: 建立 Map
-                        const tempMap = new Map(shelfList.map((item) => [item.PRT_NO, { ...item, selectedBox: 0, selectedPP: 0, isNew: false }]));
-
-                        // Step 3: 合併 selected
-                        selectedList.forEach((sel) => {
-                          if (!sel?.PRT_NO) return; // 保護無效資料
-
-                          if (tempMap.has(sel.PRT_NO)) {
-                            const exist = tempMap.get(sel.PRT_NO);
-                            exist.selectedBox += sel.BOX_NO || 0;
-                            exist.selectedPP += sel.PP_NO || 0;
-                          } else {
-                            tempMap.set(sel.PRT_NO, {
-                              ...sel,
-                              BOX_NO: 0,
-                              PP_NO: 0,
-                              selectedBox: sel.BOX_NO || 0,
-                              selectedPP: sel.PP_NO || 0,
-                              isNew: true,
-                            });
-                          }
-                        });
-
-                        const displayItems = Array.from(tempMap.values());
-
-                        // 🚨 如果沒有資料 → 顯示空畫面，不要 map
-                        if (displayItems.length === 0) {
-                          return <div className="text-gray-400 p-4"></div>;
-                        }
-
-                        // Step 4: 渲染
-                        return displayItems.map((item, index) => {
-                          const isNew = item.isNew || (item.selectedBox > 0 && (item.BOX_NO || 0) === 0 && (item.PP_NO || 0) === 0);
-
-                          const textClass = isNew ? "text-red-500" : "";
-                          const isLastItem = index  === displayItems.length - 1;
-
-                          if (currentStation === stations[0]) {
-                            return (
-                              <div key={item.PRT_NO + index} className={`mb-2 ${textClass}`}>
-                                <div className="flex justify-between">
-                                  <div>產品品號: {item.PRT_NO}</div>
-                                </div>
-                                <div className="flex justify-between">
-                                  <div>產品品名: {item.PRT_NAME}</div>
-                                </div>
-                                <div className="flex justify-between">
-                                  <div>
-                                    箱數: {item.BOX_NO} 箱{item.selectedBox > 0 && <span className="text-red-500">{`(-${item.selectedBox})`}</span>}
-                                  </div>
-                                  <div>
-                                    數量: {item.PP_NO} {item.UNIT}
-                                    {item.selectedPP > 0 && <span className="text-red-500">{`(+${item.selectedPP})`}</span>}
-                                  </div>
-                                  {isLastItem && shelf.CARS ? <div>車數 {shelf.CARS}</div> : <div />}
-                                </div>
-                              </div>
-                            );
-                          } else {
-                            return (
-                              <div key={item.PRT_NO + index} className={`mb-2 ${textClass}`}>
-                                <div className="flex justify-between">
-                                  <div>產品品號: {item.PRT_NO}</div>
-                                </div>
-                                <div className="flex justify-between">
-                                  <div>產品品名: {item.PRT_NAME}</div>
-                                </div>
-                                <div className="flex justify-between">
-                                  <div>
-                                    箱數: {item.BOX_NO} 箱{item.selectedBox > 0 && <span className="text-red-500">{`(-${item.selectedBox})`}</span>}
-                                  </div>
-                                  <div>
-                                    數量: {item.PP_NO} {item.UNIT}
-                                    {item.selectedPP > 0 && <span className="text-red-500">{`(-${item.selectedPP})`}</span>}
-                                  </div>
-                                  {isLastItem && shelf.CARS ? <div>車數 {shelf.CARS}</div> : <div />}
-                                </div>
-                              </div>
-                            );
-                          }
-                        });
-                      })()}
                     </div>
                   </SchematicDiagram>
                 )
@@ -487,3 +419,36 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     </>
   );
 }
+
+
+
+
+
+const ShelfItemRow = ({ item, isDestination, isLastItem, cars }) => {
+  const isNew = item.isNew || (item.selectedBox > 0 && (item.BOX_NO || 0) === 0 && (item.PP_NO || 0) === 0);
+  const textClass = isNew ? "text-red-500" : "";
+
+  // 目的地顯示 (+), 來源地顯示 (-)
+  const operator = isDestination ? "+" : "-";
+
+  return (
+    <div className={`mb-2 ${textClass}`}>
+      <div className="flex justify-between">
+        <div>產品品號: {item.PRT_NO}</div>
+      </div>
+      <div className="flex justify-between">
+        <div>產品品名: {item.PRT_NAME}</div>
+      </div>
+      <div className="flex justify-between">
+        <div>
+          箱數: {item.BOX_NO} 箱{item.selectedBox > 0 && <span className="text-red-500">{`(-${item.selectedBox})`}</span>}
+        </div>
+        <div>
+          數量: {item.PP_NO} {item.UNIT}
+          {item.selectedPP > 0 && <span className="text-red-500">{`(${operator}${item.selectedPP})`}</span>}
+        </div>
+        {isLastItem && cars ? <div>車數 {cars}</div> : <div />}
+      </div>
+    </div>
+  );
+};

@@ -151,7 +151,7 @@ export function exportUserLogsToExcel(logs, userId = null, startTime = '', endTi
       message: 'Excel 文件導出成功'
     };
   } catch (error) {
-    console.error('導出 Excel 失敗:', error);
+    console.warn('導出 Excel 失敗:', error);
     throw new Error(`導出 Excel 失敗: ${error.message}`);
   }
 }

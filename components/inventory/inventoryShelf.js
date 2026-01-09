@@ -298,7 +298,7 @@ export default function InventoryShelf() {
         }
       }
     } catch (error) {
-      console.error(error);
+      console.warn(error);
     } finally {
       dispatch(
         setInventory({

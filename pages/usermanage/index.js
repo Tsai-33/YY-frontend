@@ -104,7 +104,7 @@ function UserManage() {
         });
       }
     } catch (error) {
-      console.error("獲取用戶列表失敗:", error);
+      console.warn("獲取用戶列表失敗:", error);
       Alert({
         title: "錯誤",
         text: "獲取用戶列表失敗",
@@ -326,7 +326,7 @@ function UserManage() {
         });
       }
     } catch (error) {
-      console.error("更新用戶失敗:", error);
+      console.warn("更新用戶失敗:", error);
       Alert({
         title: "更新錯誤",
         text: error.response?.data?.message || "更新用戶失敗",
@@ -379,7 +379,7 @@ function UserManage() {
         });
       }
     } catch (error) {
-      console.error("下載日誌失敗:", error);
+      console.warn("下載日誌失敗:", error);
       Alert({
         title: "錯誤",
         text: error.message || "下載用戶日志失敗",
@@ -453,7 +453,7 @@ function UserManage() {
         });
       }
     } catch (error) {
-      console.error("創建用戶失敗:", error);
+      console.warn("創建用戶失敗:", error);
       Alert({
         title: "創建錯誤",
         text: error.response?.data?.message || "創建用戶失敗",
@@ -502,7 +502,7 @@ function UserManage() {
             });
           }
         } catch (error) {
-          console.error("批量刪除失敗:", error);
+          console.warn("批量刪除失敗:", error);
           Alert({
             title: "刪除失敗",
             text: "批量刪除用戶失敗",

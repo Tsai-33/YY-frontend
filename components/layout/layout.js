@@ -52,7 +52,7 @@ export default function Layout({ children }) {
       // 調用後端 API (可選)
       await logoutAPI();
     } catch (error) {
-      console.error("Logout API error:", error);
+      console.warn("Logout API error:", error);
     } finally {
       // 清除 Redux 和 localStorage
       dispatch(logout());

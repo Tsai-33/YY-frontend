@@ -110,7 +110,7 @@ export default function StockQuery() {
         window.URL.revokeObjectURL(url);
       }
     } catch (error) {
-      console.error("下載失敗", error);
+      console.warn("下載失敗", error);
       alert("下載失敗，請稍後再試");
     }
   };

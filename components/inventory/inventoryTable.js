@@ -143,7 +143,7 @@ export default function InventoryTable() {
         setStockData(data);
       }
     } catch (error) {
-      console.error(error);
+      console.warn(error);
     }
   };
 
@@ -174,7 +174,7 @@ export default function InventoryTable() {
         );
       }
     } catch (error) {
-      console.error(error);
+      console.warn(error);
     }
   };
   return (

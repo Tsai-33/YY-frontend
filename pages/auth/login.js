@@ -139,7 +139,7 @@ export default function Login() {
         });
       }
     } catch (error) {
-      console.error("登录错误:", error);
+      console.warn("登录错误:", error);
       Alert({
         title: "登入失敗",
         text: error.response?.data?.message || "帳號或密碼錯誤",

@@ -43,7 +43,7 @@ export default function UploadMapPage() {
       const data = await readExcelFile(selectedFile);
       setPreviewData(data.slice(0, 10)); // 只顯示前10筆預覽
     } catch (error) {
-      console.error("讀取檔案失敗:", error);
+      console.warn("讀取檔案失敗:", error);
       Swal.fire({
         icon: "error",
         title: "讀取失敗",
@@ -158,7 +158,7 @@ export default function UploadMapPage() {
       // 返回主頁
       router.push("/warehousePlan");
     } catch (error) {
-      console.error("上傳失敗:", error);
+      console.warn("上傳失敗:", error);
       Swal.fire({
         icon: "error",
         title: "上傳失敗",
