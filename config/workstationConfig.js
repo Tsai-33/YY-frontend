@@ -1,6 +1,6 @@
 export const workstationConfig = {
   A: {
-    computers: ["172.16.11.99", "localhost"],
+    computers: ["172.16.11.99","192.168.1.100", "localhost"],
     stations: {
       "172.16.11.99": [
         "A01",
@@ -14,6 +14,18 @@ export const workstationConfig = {
         "A09",
         "A10",
       ],
+      "192.168.1.100":[
+        "A01",
+        "A02",
+        "A03",
+        "A04",
+        "A05",
+        "A06",
+        "A07",
+        "A08",
+        "A09",
+        "A10",
+      ]
     },
     jobs: [
       { key: "inbound", text: "入倉", path: "/inbound", icon: "icon-inbound" },
