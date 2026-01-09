@@ -1,13 +1,13 @@
 import ActionBtn from "@/components/common/btns/actionBtn";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { 
-    updateShelveData, 
-    updateSelectedItems, 
+import {
+    updateShelveData,
+    updateSelectedItems,
     setTargetShelve,
     setShelveCheck,
     setShelfTransfer,
-    resetStation 
+    resetStation
 } from "@/redux/reducer/reducerShelfTransfer";
 import { updateTransferItems, sendToWMS, updateShelveCheck, transferItems, updateAbnormal, getAbnormalStatus } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
@@ -531,22 +531,23 @@ export default function ShelfTransferStation() {
                             const isEmptySlot = shelveId === "貨架代號";
                             const status = shelveStatus?.[shelveId];
                             const hasData = shelveData?.[shelveId]?.length > 0;
+                            const variant = isEmptySlot
+                                ? "green"
+                                : hasData
+                                ? "blue"
+                                : status === "loading"
+                                ? "yellow"
+                                : "green";
 
                             return (
-                                <button
-                                    key={index}
-                                    className={`flex-1 text-white py-3 rounded-lg text-lg font-bold transition-colors ${
-                                        isEmptySlot
-                                            ? "bg-green-600"                          // 空白欄位固定綠色
-                                            : hasData
-                                            ? "bg-blue-400 hover:bg-blue-500"       // 有資料藍色
-                                            : status === "loading"
-                                            ? "bg-yellow-500"                         // loading
-                                            : "bg-green-600 hover:bg-green-700"     // 其他
-                                    }`}
-                                >
-                                    站點 { index + 1 }
-                                </button>
+                                <div key={index} className="flex-1">
+                                    <ActionBtn
+                                        text={`站點${index + 1}`}
+                                        variant={variant}
+                                        disabled={false}
+                                        className="w-full flex justify-center"
+                                    />
+                                </div>
                             );
                         })}
                     </div>
