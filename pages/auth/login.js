@@ -158,10 +158,10 @@ export default function Login() {
   };
 
   //
-  const handleWriteIn = () => {
+  const handleWriteIn = (email,password) => {
     setFormData({
-      email: "ADMIN001",
-      password: "admin",
+      email: email,
+      password: password,
     });
   };
 
@@ -178,10 +178,22 @@ export default function Login() {
               登入 Log in
               {/* 暫時使用--- 上線後刪除 */}
               <ActionBtn
-                text="測試用-帳密"
+                text="測帳密1"
                 variant="yellow"
                 className="absolute top-0"
-                onClick={handleWriteIn}
+                onClick={()=>handleWriteIn("ADMIN001","admin")}
+              />
+                            <ActionBtn
+                text="測帳密2"
+                variant="rose"
+                className="absolute top-0"
+                onClick={()=>handleWriteIn("ADMIN002","admin")}
+              />
+                            <ActionBtn
+                text="測帳密3"
+                variant="violet"
+                className="absolute top-0"
+                onClick={()=>handleWriteIn("ADMIN003","admin")}
               />
               {/* 暫時使用--- 上線後刪除 */}
             </h2>
