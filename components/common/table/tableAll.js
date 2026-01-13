@@ -24,14 +24,9 @@ export default function TableAll({ headers = [], data = [], type, name, onChange
     return String(checked) === rowId;
   };
 
-  const containerHeight = height || "65vh";
-  const innerHeight = height
-    ? `calc(${height} - 1vh)` // 如果有傳，動態計算
-    : "65vh"; // 沒傳就用原本的
-
   return (
-    <div className="w-full bg-[var(--white)] border border-white rounded-md text-center overflow-y-auto custom-scrollbar" style={{ height: containerHeight, maxHeight: innerHeight, "--scrollbar-thumb-color": `var(--green-vivid)`, "--scrollbar-thumb-hover-color": `var(--green-vivid)` }}>
-      <table className="table-auto w-full font-bold text-black">
+    <div className="w-full h-full bg-[var(--white)] border border-white text-center overflow-y-auto custom-scrollbar text-(length:--font-size-2xl)" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
+      <table className="table-auto w-full">
         <thead className="sticky top-0 bg-white z-5">
           <tr className={`bg-[var(--gray-light)]`}>
             {headers.map((header, idx) => {
@@ -69,18 +64,18 @@ export default function TableAll({ headers = [], data = [], type, name, onChange
             })}
           </tr>
         </thead>
-        <tbody className="h-100 overflow-y-scroll scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200 ">
+        <tbody className="overflow-y-scroll scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200 ">
           {data.map((row, idx) => (
-            <tr key={idx} className={`px-4 py-2 text-center border-b border-[var(--green-vivid)] text-center`}>
+            <tr key={idx} className={`px-4 py-2 text-center border-b-3 border-[var(--green-vivid)] text-center`}>
               {headers.map((header, i) => {
                 if (i === 0) {
                   return (
                     <td key={i}>
                       <label className="relative cursor-pointer flex items-center justify-center">
                         {/* 隱藏 checkbox */}
-                        <input type={type} name={name ? name : "option"} className="peer absolute w-6 h-6 opacity-0 cursor-pointer z-10" checked={isRowChecked(row)} onChange={() => onChange("checkbox", row, idKey)} />
+                        <input type={type} name={name ? name : "option"} className="peer absolute w-6 h-6 opacity-0 cursor-pointer z-10 " checked={isRowChecked(row)} onChange={() => onChange("checkbox", row, idKey)} />
                         {/* 外框 */}
-                        <div className="w-6 h-6 rounded-sm border-2 border-[var(--green-vivid)] transition-colors duration-200 peer-checked:bg-[var(--green-vivid)]"></div>
+                        <div className="w-6 h-6 rounded-sm border-3 border-[var(--green-vivid)] transition-colors duration-200 peer-checked:bg-[var(--green-vivid)]"></div>
                         <span
                           className={`
                               absolute top-1/2 left-1/2 w-3 h-2
@@ -101,7 +96,7 @@ export default function TableAll({ headers = [], data = [], type, name, onChange
                       style={{
                         width: `${header.width}`,
                       }}
-                      className="border-[var(--green-vivid)] px-4 py-2 text-center border-b truncate"
+                      className="border-[var(--green-vivid)] px-4 py-2 text-center border-b-3 truncate"
                     >
                       {header.render ? header.render(row) : row[header.key]}
                     </td>

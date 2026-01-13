@@ -56,17 +56,17 @@ export default function InboundManager({ isOpen, onClose }) {
   }, []);
 
   return (
-    <div id="modal" className={`${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} fixed inset-0 flex items-center justify-center bg-black/50 z-50`}>
+    <div id="modal" className={`${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} text-sm fixed inset-0 flex items-center justify-center bg-black/50 z-50`}>
       <div className="p-4 bg-white rounded-xl shadow-lg w-[50vw] max-h-[80vh] flex flex-col overflow-hidden">
         {/* title */}
         <div className="sticky top-0 bg-white z-10 border-b p-2">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">控制面板</h2>
+            <h2>控制面板</h2>
 
-            <button onClick={() => handleClear("one", currentStation)} className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-500 text-white">
+            <button onClick={() => handleClear("one", currentStation)} className="px-4 py-2 rounded-lg transition bg-gray-500 text-white">
               清空入庫
             </button>
-            <button onClick={() => handleClear("all", stations)} className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-500 text-white">
+            <button onClick={() => handleClear("all", stations)} className="px-4 py-2 rounded-lg transition bg-gray-500 text-white">
               清空所有入庫
             </button>
 
@@ -83,7 +83,7 @@ export default function InboundManager({ isOpen, onClose }) {
               <button
                 key={s}
                 onClick={() => setStation(s)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition 
+                className={`px-4 py-2 rounded-lg font-semibold transition 
                 ${station === s ? "bg-green-500 text-white" : "bg-gray-300 text-gray-800"}`}
               >
                 {s}
@@ -93,44 +93,10 @@ export default function InboundManager({ isOpen, onClose }) {
         </div>
 
         <div className="flex justify-between">
-          {/* 站點顏色 */}
-          {/* <div className="flex flex-col gap-4 py-4 w-1/2">
-            <div className="text-lg font-bold flex items-center">
-              <div>忙線站點：</div>
-              <div className="flex">
-                <select name="station" value={s || "A01"} className="px-4 py-1 border border-gray-300 rounded-md shadow-sm" onChange={(e) => setS(e.target.value)}>
-                  {stations.map((v) => (
-                    <option value={v}>{v}</option>
-                  ))}
-                </select>
-                <button onClick={() => handleStation("add")} className="bg-blue-500 text-white px-4 py-1 rounded">
-                  新增
-                </button>
-              </div>
-              <div>
-                <button onClick={() => handleStation("clear")} className="bg-red-500 text-white px-4 py-1 rounded">
-                  全除
-                </button>
-              </div>
-            </div>
-
-            <div className="flex gap-2 flex-wrap">
-              {lackStation
-                ? lackStation.map((v, idx) => (
-                    <div key={idx} className="px-3 py-1 bg-gray-200 rounded-full flex gap-2 items-center">
-                      <span>{v}</span>
-                      <button onClick={() => handleStation("sub")} className="text-red-500 font-bold">
-                        ✕
-                      </button>
-                    </div>
-                  ))
-                : ""}
-            </div>
-          </div> */}
-
+         
           {/* 排除訂單 */}
           <div className="flex flex-col gap-4 py-4">
-            <div className="text-lg font-bold flex items-center">
+            <div className="flex items-center">
               <div>排除訂單：</div>
               <div className="flex">
                 <select name="station" value={o || ""} className="px-4 py-1 border border-gray-300 rounded-md shadow-sm" onChange={(e) => setO(e.target.value)}>
@@ -150,7 +116,7 @@ export default function InboundManager({ isOpen, onClose }) {
                 </button>
               </div>
             </div>
-            <span className="text-sm text-black">*排除後要重新整理</span>
+            <span>*排除後要重新整理</span>
             <div className="flex gap-2 flex-wrap">
               {orderList
                 ? orderList.map((v, idx) => (
@@ -169,7 +135,7 @@ export default function InboundManager({ isOpen, onClose }) {
 
         {/* 內容 */}
         <div className="p-4">
-          <h1 className="text-3xl text-left">
+          <h1 className="text-left">
             <div>目前貨架：{shelf?.SHELVE_ID}</div>
           </h1>
         </div>

@@ -255,18 +255,20 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   return (
     <>
       {/* 主要內容區域 */}
-      <div className="flex flex-1 gap-4 px-2 py-8 items-stretch">
+      <div className="flex gap-4 px-2 py-8 items-stretch h-[75vh]">
         {/* 左側 */}
-        <div className="w-3/7">
-          <TransferTable data={tableData} data2={tableData2} setAbnormal={setAbnormal} />
+        <div className="w-3/7 flex flex-col">
+          <div className="flex-1 h-0">
+            <TransferTable data={tableData} data2={tableData2} setAbnormal={setAbnormal} />
+          </div>
         </div>
         {/* 右側 */}
-        <div className="w-4/7 font-bold text-black p-4 flex flex-col">
+        <div className="w-4/7 flex flex-col">
           {/* 條碼 */}
           <div className="flex space-x-4 pb-4">
             <div className="flex flex-1 items-center">
-              <label htmlFor="order" className="font-bold text-black">
-                調撥單號:
+              <label htmlFor="order">
+                調撥單號<span className="text-lg px-1">:</span>
               </label>
               {step <= 2 ? (
                 <div className="w-75">
@@ -287,23 +289,40 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                     <SchematicDiagramList>
                       <div className="flex flex-col">
                         <div className="flex justify-end">
-                          <div>目的庫別:{order?.STOCK_AREA}</div>
+                          <div className="flex gap-x-2">
+                            <span>目的庫別:</span>
+                            <span>{order?.STOCK_AREA}</span>
+                          </div>
                         </div>
                         {tableDataTotal2.map((v, i) => {
-                          const OUTSTOCK_NO = v.OUTSTOCK_NO.split("-").slice(0, 2).join("-");
+                          const OUTSTOCK_NO = v?.OUTSTOCK_NO?.split("-").slice(0, 2).join("-");
                           if (OUTSTOCK_NO !== orderCode) return;
                           return (
-                            <div key={i} className="mt-2">
+                            <div key={i}>
                               <div className="flex justify-between">
-                                <div>產品品號:{v?.PRT_NO}</div>
-                                {/* 來源庫別是看SHEVLE_ID */}
-                                <div className="text-[var(--red)]">來源庫別:{v?.MEMO}</div>
+                                <div className="flex gap-x-2">
+                                  <span>產品品號:</span>
+                                  <span>{v?.PRT_NO}</span>
+                                </div>
+                                <div className="flex gap-x-2 text-[var(--red)]">
+                                  <span>來源庫別:</span>
+                                  <span>{v?.MEMO}</span>
+                                </div>
                               </div>
-                              <div>品名: {v?.PRT_NAME}</div>
-                              <div className="w-100 flex justify-between">
-                                <div>箱數: {v?.BOX_NO}箱</div>
-                                <div>
-                                  數量: {v?.PP_NO} {v?.UNIT}
+                              <div className="flex gap-x-2">
+                                <span>品名:</span>
+                                <span>{v?.PRT_NAME}</span>
+                              </div>
+                              <div className="flex gap-16">
+                                <div className="flex gap-x-2">
+                                  <span>箱數:</span>
+                                  <span>{v?.BOX_NO}</span>
+                                  <span>箱</span>
+                                </div>
+                                <div className="flex gap-x-2">
+                                  <span>數量:</span>
+                                  <span>{order?.PP_NOS}</span>
+                                  <span>{order?.UNIT}</span>
                                 </div>
                               </div>
                             </div>
@@ -329,7 +348,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
 
                       {/* 內容區：渲染處理後的資料 */}
                       {displayItems.length === 0 ? (
-                        <div className="text-gray-400 p-4">暫無資料</div>
+                        <div className="h-25"></div>
                       ) : (
                         displayItems.map((item, index) => <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} isDestination={currentStation === stations[0]} isLastItem={index === displayItems.length - 1} cars={shelf?.CARS} />)
                       )}
@@ -420,10 +439,6 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   );
 }
 
-
-
-
-
 const ShelfItemRow = ({ item, isDestination, isLastItem, cars }) => {
   const isNew = item.isNew || (item.selectedBox > 0 && (item.BOX_NO || 0) === 0 && (item.PP_NO || 0) === 0);
   const textClass = isNew ? "text-red-500" : "";
@@ -433,21 +448,26 @@ const ShelfItemRow = ({ item, isDestination, isLastItem, cars }) => {
 
   return (
     <div className={`mb-2 ${textClass}`}>
-      <div className="flex justify-between">
-        <div>產品品號: {item.PRT_NO}</div>
+      <div className="flex gap-x-2">
+        <span>產品品號:</span>
+        <span>{item.PRT_NO}</span>
       </div>
-      <div className="flex justify-between">
-        <div>產品品名: {item.PRT_NAME}</div>
+      <div className="flex gap-x-2">
+        <span>產品品名:</span>
+        <span>{item.PRT_NAME}</span>
       </div>
-      <div className="flex justify-between">
-        <div>
-          箱數: {item.BOX_NO} 箱{item.selectedBox > 0 && <span className="text-red-500">{`(-${item.selectedBox})`}</span>}
+      <div className="flex gap-16 relative">
+        <div className="flex gap-x-2">
+          <span>箱數:</span>
+          <span>{item.BOX_NO}</span>
+          <span>箱</span>
+          {item.selectedBox > 0 && <span className="text-red-500">{`(-${item.selectedBox})`}</span>}
         </div>
-        <div>
+        <div className="flex gap-x-2">
           數量: {item.PP_NO} {item.UNIT}
           {item.selectedPP > 0 && <span className="text-red-500">{`(${operator}${item.selectedPP})`}</span>}
         </div>
-        {isLastItem && cars ? <div>車數 {cars}</div> : <div />}
+        <div className="absolute bottom-0 right-0">{isLastItem && cars && <div>{cars}</div>}</div>
       </div>
     </div>
   );

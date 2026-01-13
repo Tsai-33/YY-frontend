@@ -1,15 +1,9 @@
-import clsx from "clsx";
 import React from "react";
-
-export default function PurposeTable({ headers = [], data = [], height }) {
-  const containerHeight = height || "65vh";
-  const innerHeight = height
-    ? `calc(${height} - 1vh)` // 如果有傳，動態計算
-    : "65vh"; // 沒傳就用原本的
-
+import { X,Check } from "lucide-react";
+export default function PurposeTable({ headers = [], data = [] }) {
   return (
-    <div className="w-full bg-[var(--white)] rounded-md text-center overflow-y-auto custom-scrollbar" style={{ height: containerHeight, maxHeight: innerHeight, "--scrollbar-thumb-color": `var(--green-vivid)`, "--scrollbar-thumb-hover-color": `var(--green-vivid)` }}>
-      <table className="table-auto w-full font-bold text-black">
+    <div className="w-full h-full bg-[var(--white)] rounded-md text-center overflow-y-auto custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
+      <table className="table-auto w-full">
         <thead className="sticky top-0 bg-white z-5">
           <tr className="bg-[var(--blue-pale)]">
             {headers.map((header, idx) => {
@@ -50,7 +44,7 @@ export default function PurposeTable({ headers = [], data = [], height }) {
                     return (
                       <td key={i}>
                         <label className="relative cursor-pointer flex items-center justify-center">
-                          <span className="font-bold text-sm">{row.STATUS == 2 ? "V" : "　"}</span>
+                          <span className="font-bold text-sm">{row.STATUS == 2 ? <Check className="text-green-800 w-6 h-6" strokeWidth={3} /> : <X className="text-red-800 w-6 h-6" strokeWidth={3} />}</span>
                         </label>
                       </td>
                     );

@@ -7,7 +7,7 @@ export default function InputFrame({ type, name, id, value, onChange, onBlur, on
       className={`
       flex-1 w-full pl-3 pr-2 py-0.75 bg-[var(--gray-deep)]
       focus:bg-[#d9d9d9] ${value !== "" ? "bg-[#d9d9d9]" : ""} 
-      text-[length:var(--middle-fontSize)] font-normal  ${className || ""}`}
+      text-[length:var(--font-size-xl)] font-normal  ${className || ""}`}
       type={type}
       name={name}
       id={id}

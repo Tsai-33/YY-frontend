@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import InputFrame from "@/components/common/input/inputFrame";
@@ -27,14 +27,17 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const { orderList } = useSelector((s) => s.inbound);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo } = useSelector((s) => s.inbound[currentStationSafe] || {});
 
+  // 設置
+  const displayItems = useShelfDisplay(shelfItem, selected);
+
   // 掃描 QR code (ERP抓取新資料)
   const handleBarCode = async (e) => {
     if (screen === "loading") return;
     if (e.key !== "Enter") return;
     const inputBarCode = e.target.value.trim();
-    const result = tableData.some((item) => item.INSTOCK_NO === inputBarCode);
+    const result = tableData.some((item) => item?.INSTOCK_NO === inputBarCode);
     if (result) {
-      const value = tableData.find((item) => item.INSTOCK_NO === inputBarCode);
+      const value = tableData.find((item) => item?.INSTOCK_NO === inputBarCode);
       dispatch(
         setInbound({
           station: currentStation,
@@ -61,7 +64,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     // 確認是否有其他任務
     const task = await checkTask_in(stations);
     if (!task?.success) return;
-    const hasTask = task?.data?.data?.some((item) => item.location === "inbound" || item.location === "");
+    const hasTask = task?.data?.data?.some((item) => item?.location === "inbound" || item?.location === "");
     if (!hasTask) {
       Alert({ title: "目前有其他任務正在執行" });
       return;
@@ -110,7 +113,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     const res = await onToShelf_in(setLoading, selected, shelf, order, dispatch, setInbound, currentStation, setConfirmModal);
 
     if (res?.success) {
-      let newShelf = shelfItem.map((s) => ({ ...s })); // ⬅ 防止 freeze
+      let newShelf = shelfitem?.map((s) => ({ ...s })); // ⬅ 防止 freeze
       selected.forEach((v) => {
         const index = newShelf.findIndex((s) => s.PRT_NO === v.PRT_NO);
 
@@ -241,29 +244,32 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   return (
     <>
       {/* 主要內容區域 */}
-      <div className="flex flex-1 gap-4 px-2 py-8 items-stretch">
+      <div className="flex gap-4 px-2 py-8 items-stretch h-[75vh]">
         {/* 左側 */}
-        <div className="w-3/7">
+        <div className="w-3/7 flex flex-col">
           {step > 2 && (
-            <div className="flex  font-bold text-black space-x-4 p-2">
+            <div className="flex h-[66px] p-2">
               <div className="flex flex-1 items-center">
                 {shelf?.EstBoxes > 0 &&
                   `建議入倉總數：${shelf?.EstPPs}
                 ${shelf?.UNIT} (${shelf?.EstBoxes}箱)
                 `}
               </div>
-              <ActionBtn icon="icon-check" text="入倉單完成" variant="orange" className="p-1" textSize={`16px`} disabled={tableData2.length > 0} onClick={handleFinish} />
+              <ActionBtn icon="icon-check" text="入倉單完成" variant="orange" disabled={tableData2.length > 0} onClick={handleFinish} />
             </div>
           )}
-          <InboundTable data={tableData} data2={tableData2} setData2={setTableData2} />
+          <div className="flex-1 h-0">
+            <InboundTable data={tableData} data2={tableData2} setData2={setTableData2} />
+          </div>
         </div>
         {/* 右側 */}
-        <div className="w-4/7 font-bold text-black p-4 flex flex-col">
+        <div className="w-4/7 flex flex-col">
           {/* 條碼 */}
-          <div className="flex space-x-4 pb-4">
+          <div className="flex h-[66px] p-2">
             <div className="flex flex-1 items-center">
-              <label htmlFor="order" className="font-bold text-black">
-                入庫單條碼:
+              <label htmlFor="order">
+                入庫單條碼
+                <span className="text-lg px-1">:</span>
               </label>
               {step <= 2 ? (
                 <div className="w-75">
@@ -277,25 +283,39 @@ export default function InboundContext({ barCodeRef, setLoading }) {
           {/* 資料 */}
           <div className="flex flex-col flex-1 bg-white p-8 pb-4">
             {/* 內容區 */}
-            <div className="flex flex-col gap-8 h-100 overflow-y-auto">
+            <div className="flex flex-col">
               {orderCode ? (
                 step <= 2 ? (
                   <SchematicDiagramList>
                     <div className="flex flex-col">
                       <div className="flex justify-between">
-                        <div>入倉單單號:{order?.INSTOCK_NO}</div>
-                        <div>入庫庫別:{order?.STOCK_AREA}</div>
+                        <div className="flex gap-x-2">
+                          <span>入倉單單號:</span>
+                          <span>{order?.INSTOCK_NO}</span>
+                        </div>
+                        <div className="flex gap-x-2">
+                          <span>入庫庫別:</span>
+                          <span>{order?.STOCK_AREA}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <div>產品品號:{order?.PRT_NO}</div>
+                      <div className="flex gap-x-2">
+                        <span>產品品號:</span>
+                        <span>{order?.PRT_NO}</span>
                       </div>
-                      <div className="mt-2 border-gray-300">
-                        <div>品名: {order?.PRT_NAME}</div>
-                        <div className="w-100 flex justify-between">
-                          <div>箱數: {order?.BOX_NOS}箱</div>
-                          <div>
-                            數量: {order?.PP_NOS} {order?.UNIT}
-                          </div>
+                      <div className="flex gap-x-2">
+                        <span>品名:</span>
+                        <span>{order?.PRT_NAME}</span>
+                      </div>
+                      <div className="flex gap-16">
+                        <div className="flex gap-x-2">
+                          <span>箱數:</span>
+                          <span>{order?.BOX_NOS}</span>
+                          <span>箱</span>
+                        </div>
+                        <div className="flex gap-x-2">
+                          <span>數量:</span>
+                          <span>{order?.PP_NOS}</span>
+                          <span>{order?.UNIT}</span>
                         </div>
                       </div>
                     </div>
@@ -303,77 +323,20 @@ export default function InboundContext({ barCodeRef, setLoading }) {
                 ) : (
                   <SchematicDiagram>
                     <div className="flex flex-col">
-                      <div className="flex justify-between">
-                        <div>{shelf ? `貨架編號: ${shelf?.SHELVE_ID}` : ""}</div>
-                        <div>{shelf ? `入庫庫別: ${shelf?.area}` : ""}</div>
-                      </div>
-
-                      {(() => {
-                        // Step 1: 安全處理 shelfItem
-                        const shelfList = Array.isArray(shelfItem) ? shelfItem : [];
-                        const selectedList = Array.isArray(selected) ? selected : [];
-
-                        // Step 2: 建立 Map
-                        const tempMap = new Map(shelfList.map((item) => [item.PRT_NO, { ...item, selectedBox: 0, selectedPP: 0, isNew: false }]));
-
-                        // Step 3: 合併 selected
-                        selectedList.forEach((sel) => {
-                          if (!sel?.PRT_NO) return; // 保護無效資料
-
-                          if (tempMap.has(sel.PRT_NO)) {
-                            const exist = tempMap.get(sel.PRT_NO);
-                            exist.selectedBox += sel.BOX_NO || 0;
-                            exist.selectedPP += sel.PP_NO || 0;
-                          } else {
-                            tempMap.set(sel.PRT_NO, {
-                              ...sel,
-                              BOX_NO: 0,
-                              PP_NO: 0,
-                              selectedBox: sel.BOX_NO || 0,
-                              selectedPP: sel.PP_NO || 0,
-                              isNew: true,
-                            });
-                          }
-                        });
-
-                        const displayItems = Array.from(tempMap.values());
-
-                        // 🚨 如果沒有資料 → 顯示空畫面，不要 map
-                        if (displayItems.length === 0) {
-                          return <div className="text-gray-400 p-4"></div>;
-                        }
-
-                        // Step 4: 渲染
-                        return displayItems.map((item, index) => {
-                          const isNew = item.isNew || (item.selectedBox > 0 && (item.BOX_NO || 0) === 0 && (item.PP_NO || 0) === 0);
-
-                          const textClass = isNew ? "text-red-500" : "";
-
-                          const isLastItem = index === displayItems.length - 1;
-
-                          return (
-                            <div key={item.PRT_NO + index} className={`mb-4 ${textClass}`}>
-                              <div className="flex justify-between">
-                                <div>產品品號: {item.PRT_NO}</div>
-                              </div>
-                              <div className="flex justify-between">
-                                <div>產品品名: {item.PRT_NAME}</div>
-                              </div>
-                              <div className="flex justify-between">
-                                <div>
-                                  箱數: {item.BOX_NO} 箱{item.selectedBox > 0 && <span className="text-red-500">{`(+${item.selectedBox})`}</span>}
-                                </div>
-                                <div>
-                                  數量: {item.PP_NO} {item.UNIT}
-                                  {item.selectedPP > 0 && <span className="text-red-500">{`(+${item.selectedPP})`}</span>}
-                                </div>
-
-                                {isLastItem && shelf.CARS ? <div>車數 {shelf.CARS}</div> : <div />}
-                              </div>
-                            </div>
-                          );
-                        });
-                      })()}
+                      {shelf && (
+                        <div className="flex justify-between">
+                          <div className="flex gap-x-2">
+                            <span>貨架編號:</span>
+                            <span>{shelf?.SHELVE_ID}</span>
+                          </div>
+                          <div className="flex justify-start">
+                            <div className="pr-2 w-[9rem]">入庫庫別:</div>
+                            <div>{shelf?.area}</div>
+                          </div>
+                        </div>
+                      )}
+                      {/* 列表渲染 */}
+                      {displayItems.length === 0 ? <div className="h-25"></div> : displayItems.map((item, index) => <ShelfItemRow key={`${item?.PRT_NO}-${index}`} item={item} isLast={index === displayItems.length - 1} shelfCars={shelf?.CARS} index={index} />)}
                     </div>
                   </SchematicDiagram>
                 )
@@ -404,13 +367,13 @@ export default function InboundContext({ barCodeRef, setLoading }) {
               selected.length > 0 &&
               (() => {
                 const grouped = selected.reduce((acc, item) => {
-                  if (!acc[item.PRT_NO]) {
-                    acc[item.PRT_NO] = {
+                  if (!acc[item?.PRT_NO]) {
+                    acc[item?.PRT_NO] = {
                       ...item,
-                      PP_NO: Number(item.PP_NO) || 0,
+                      PP_NO: Number(item?.PP_NO) || 0,
                     };
                   } else {
-                    acc[item.PRT_NO].PP_NO += Number(item.PP_NO) || 0;
+                    acc[item?.PRT_NO].PP_NO += Number(item?.PP_NO) || 0;
                   }
                   return acc;
                 }, {});
@@ -437,3 +400,85 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     </>
   );
 }
+
+const useShelfDisplay = (shelfItem, selected) => {
+  const displayItems = useMemo(() => {
+    const shelfList = Array.isArray(shelfItem) ? shelfItem : [];
+    const selectedList = Array.isArray(selected) ? selected : [];
+
+    // 建立 Map
+    const tempMap = new Map(shelfList.map((item) => [item?.PRT_NO, { ...item, selectedBox: 0, selectedPP: 0, isNew: false }]));
+
+    selectedList.forEach((sel) => {
+      if (!sel?.PRT_NO) return;
+      if (tempMap.has(sel.PRT_NO)) {
+        const exist = tempMap.get(sel.PRT_NO);
+        exist.selectedBox += sel.BOX_NO || 0;
+        exist.selectedPP += sel.PP_NO || 0;
+      } else {
+        tempMap.set(sel.PRT_NO, {
+          ...sel,
+          BOX_NO: 0,
+          PP_NO: 0,
+          selectedBox: sel.BOX_NO || 0,
+          selectedPP: sel.PP_NO || 0,
+          isNew: true,
+        });
+      }
+    });
+
+    return Array.from(tempMap.values());
+  }, [shelfItem, selected]);
+
+  return displayItems;
+};
+
+const ShelfItemRow = ({ item, isLast, shelfCars, index }) => {
+  const isNew = item?.isNew || (item?.selectedBox > 0 && (item?.BOX_NO || 0) === 0 && (item?.PP_NO || 0) === 0);
+  return (
+    <div className={`${!isLast && "mb-12"} ${isNew && "text-red-500"}`}>
+      <div className="flex justify-between">
+        <div className="flex gap-x-2">
+          <span>產品品號:</span>
+          <span>{item?.PRT_NO}</span>
+        </div>
+        {index === 0 && (
+          <div className="flex justify-start gap-x-2">
+            <div>棧板規格:</div>
+            <div>{item?.error || "美規"}</div>
+          </div>
+        )}
+      </div>
+      <div className="flex justify-between">
+        <div className="flex gap-x-2">
+          <span>產品品名:</span>
+          <span>{item?.PRT_NAME}</span>
+        </div>
+      </div>
+      <div className="flex gap-16 relative">
+        <div className="flex gap-x-2">
+          <span>箱數:</span>
+          <span>{item?.BOX_NO}</span>
+          <span>箱</span>
+          {item?.selectedBox > 0 && <span className="text-red-500">{`(+${item?.selectedBox})`}</span>}
+        </div>
+        <div className="flex gap-x-2">
+          <span>數量:</span>
+          <span>{item?.PP_NO}</span>
+          <span>{item?.UNIT}</span>
+          {item?.selectedPP > 0 && <span className="text-red-500">{`(+${item?.selectedPP})`}</span>}
+        </div>
+        <div className="absolute bottom-0 right-0">
+          {isLast && shelfCars ? (
+            <div>
+              {/* <span className="pr-2">車數:</span> */}
+              <span>{shelfCars}</span>
+            </div>
+          ) : (
+            <div className="w-20" />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};

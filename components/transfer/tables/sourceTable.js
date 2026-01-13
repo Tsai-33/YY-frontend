@@ -24,14 +24,9 @@ export default function SourceTable({ headers = [], data = [], type, name, onCha
     return String(checked) === rowId;
   };
 
-  const containerHeight = height || "65vh";
-  const innerHeight = height
-    ? `calc(${height} - 1vh)` // 如果有傳，動態計算
-    : "65vh"; // 沒傳就用原本的
-
   return (
-    <div className="w-full bg-[var(--white)] border border-white rounded-md text-center overflow-y-auto custom-scrollbar" style={{ height: containerHeight, maxHeight: innerHeight, "--scrollbar-thumb-color": `var(--green-vivid)`, "--scrollbar-thumb-hover-color": `var(--green-vivid)` }}>
-      <table className="table-auto w-full font-bold text-black">
+    <div className="w-full h-full bg-[var(--white)] border border-white rounded-md text-center overflow-y-auto custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
+      <table className="table-auto w-full">
         <thead className="sticky top-0 bg-white z-5">
           <tr className="bg-(--gray-light)">
             {headers.map((header, idx) => {
@@ -97,7 +92,7 @@ export default function SourceTable({ headers = [], data = [], type, name, onCha
                   } else if (i === headers.length - 1) {
                     return (
                       <td key={i} style={{ width: `${header.width}` }}>
-                        <button onClick={()=>setAbnormal(data)}>
+                        <button onClick={() => setAbnormal(data)}>
                           <span className="text-2xl icon-abnormalList"></span>
                         </button>
                       </td>

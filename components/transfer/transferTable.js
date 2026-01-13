@@ -38,14 +38,14 @@ export default function TransferTable({ data, data2, setAbnormal }) {
   const tableHeader2 = [
     { label: "", key: "checkbox", width: `10%` },
     { label: "產品品號", key: "PRT_NO", width: `60%` },
-    { label: "調入數量", key: "PP_NO", width: `30%` },
+    { label: "調入總數", key: "PP_NO", width: `30%` },
   ];
 
   const tableHeader3 = [
     { label: "", key: "checkbox", width: `10%` },
-    { label: "產品品號", key: "PRT_NO", width: `60%` },
+    { label: "產品品號", key: "PRT_NO", width: `55%` },
     { label: "調出數量", key: "PP_NO", width: `20%` },
-    { label: "動作", key: "", width: `10%` },
+    { label: "動作", key: "", width: `15%` },
   ];
 
   //  全選 / 全不選
@@ -75,10 +75,8 @@ export default function TransferTable({ data, data2, setAbnormal }) {
   return (
     <>
       {step <= 2 && <NoCheckBoxTable headers={tableHeader} data={data} type="radio" name="transfer" variants="green" idKey="INSTOCK_NO" checked={orderCode} onChange={handleSelectedOption} />}
-      {currentStation === stations[0] && step > 2 && <PurposeTable height={`65vh`} headers={tableHeader2} data={data2} name="transfer1" idKey="INSTOCK_NO" />}
-      {currentStation !== stations[0] && step > 2 && (
-        <SourceTable height={`65vh`} headers={tableHeader3} data={job} type="checkbox" name="transfer2" idKey="PRT_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} setAbnormal={setAbnormal} />
-      )}
+      {currentStation === stations[0] && step > 2 && <PurposeTable headers={tableHeader2} data={data2} name="transfer1" idKey="INSTOCK_NO" />}
+      {currentStation !== stations[0] && step > 2 && <SourceTable headers={tableHeader3} data={job} type="checkbox" name="transfer2" idKey="PRT_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} setAbnormal={setAbnormal} />}
     </>
   );
 }

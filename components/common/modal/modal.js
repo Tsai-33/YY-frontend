@@ -24,7 +24,7 @@ export default function Modal({
         <div className="w-full h-full p-6 shadow-md flex flex-col justify-between items-center gap-8">
           {/* topzone */}
           <div className="relative w-full flex items-center justify-center">
-            <div className="font-bold text-black text-(length:--font-size-6xl)">
+            <div className="text-(length:--font-size-6xl)">
               {title}
             </div>
             <button
@@ -48,7 +48,7 @@ export default function Modal({
           </div>
 
           {/* middlezone */}
-          <div className="flex flex-col gap-5">{children}</div>
+          <div className="flex flex-col gap-5 font-normal text-(length:--font-size-4xl)">{children}</div>
 
           {/* bottomZone */}
           <div className="cursor-pointer" onClick={onConfirm}>

@@ -52,7 +52,7 @@ export default function InboundTable({ data, data2, setData2 }) {
   const tableHeader2 = [
     { label: "", key: "checkbox", width: `48px` },
     { label: "產品品號", key: "PRT_NO", width: `60%` },
-    { label: "每箱包數", key: "BOX_PACK", width: `30%` },
+    { label: "總包數", key: "BOX_PACK", width: `30%` },
   ];
   useEffect(() => {
     if (!waveNo) return;
@@ -86,7 +86,7 @@ export default function InboundTable({ data, data2, setData2 }) {
   return (
     <>
       {step <= 2 && <NoCheckBoxTable headers={tableHeader} data={data} type="radio" name="inbound" variants="green" idKey="INSTOCK_NO" checked={orderCode} onChange={handleSelectedOption} />}
-      {step > 2 && <TableAll height={`59vh`} headers={tableHeader2} data={data2} type="checkbox" name="inbound2" variants="green" idKey="INSTOCK_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} />}
+      {step > 2 && <TableAll headers={tableHeader2} data={data2} type="checkbox" name="inbound2" variants="green" idKey="INSTOCK_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} />}
     </>
   );
 }

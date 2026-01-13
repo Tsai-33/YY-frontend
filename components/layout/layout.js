@@ -103,7 +103,7 @@ export default function Layout({ children }) {
                   return (
                     <Link href="/workspace_admin">
                       <span className="text-gray-700 font-medium cursor-pointer hover:underline">
-                      <i className="icon-user"></i>{userName}
+                      <i className="icon-user p-2"></i>{userName}
                       </span>
                     </Link>
                   );

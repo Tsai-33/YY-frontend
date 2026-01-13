@@ -8,24 +8,18 @@ export default function NoCheckBoxTable({
   onChange,
   checked,
   idKey,
-  height,
 }) {
-  const containerHeight = height || "65vh";
-  const innerHeight = height ? `calc(${height} - 1vh)` : "65vh"; // 沒傳就用原本的
-
   return (
     <div
-      className="w-full bg-[var(--white)] border border-white rounded-md text-center overflow-y-auto custom-scrollbar"
+      className="w-full h-full bg-[var(--white)] border border-white text-center overflow-y-auto custom-scrollbar text-(length:--font-size-2xl)"
       style={{
-        height: containerHeight,
-        maxHeight: innerHeight,
         "--scrollbar-thumb-color": `var(--green-vivid)`,
         "--scrollbar-thumb-hover-color": `var(--green-vivid)`,
       }}>
       {/* 表頭 */}
-      <table className="table-auto w-full font-bold">
+      <table className="table-auto w-full">
         <thead className="sticky top-0 bg-white z-5">
-          <tr className={`font-bold text-black bg-[var(--gray-light)]`}>
+          <tr className={`bg-[var(--gray-light)]`}>
             {headers.map((header, idx) => (
               <th
                 key={idx}

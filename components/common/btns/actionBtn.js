@@ -16,6 +16,7 @@ export default function ActionBtn({
     flex justify-center items-center gap-2 
     font-bold cursor-pointer 
     transition-colors duration-500 ease-in-out
+    text-[length:var(--font-size-3xl)]
     `;
 
   const variants = {
