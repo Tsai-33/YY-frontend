@@ -20,9 +20,8 @@ export default function Inbound() {
   const currentStationSafe = currentStation || stations?.[0] || "";
   const { lackStation } = useSelector((s) => s.inbound);
   const { step, screen } = useSelector((s) => s.inbound[currentStationSafe] || {});
-  
-  const barCodeRef = useRef(null);
 
+  const barCodeRef = useRef(null);
 
   // =========== 生成站點
   useEffect(() => {
@@ -31,7 +30,9 @@ export default function Inbound() {
     });
   }, [stations]);
 
-  // =========== 測試單亂數產生
+  // ============================
+  // ⭐ 產生隨機訂單號 (後續需刪除)
+  // ============================
   const handleTest = () => {
     // ===== 前綴隨機 =====
     const prefixes = ["M560", "M540"];
@@ -52,12 +53,14 @@ export default function Inbound() {
   };
   return (
     <>
+      {/* 頂部區域 */}
       <InboundTitle />
+      {/* 主要內容區域 */}
       <InboundContext barCodeRef={barCodeRef} setLoading={setLoading} />
       {/* 底部按鈕區域 */}
-      <div className="w-full flex justify-between z-15">
+      <div className="w-full flex justify-between gap-4 z-20">
         {stations.map((station, i) => (
-          <ActionBtn key={i} text={station} variant={lackStation?.includes(station) ? "orange" : "green"} disabled={currentStation === station ? true : false} onClick={() => handleSwitchStation(station)} />
+          <ActionBtn key={i} text={station} variant={lackStation?.includes(station) ? "orange" : "green"} className="flex-1" disabled={currentStation === station ? true : false} onClick={() => handleSwitchStation(station)} />
         ))}
       </div>
       {/* loading */}

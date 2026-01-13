@@ -314,7 +314,7 @@ export default function InventoryShelf() {
       {/* 頂部區域 */}
       <PageHeader title="請檢視棧板內容並執行盤點" />
       {/* 主要內容區域 */}
-      <div className="flex-1 flex gap-4 px-2 py-8 items-stretch">
+      <div className="flex-1 flex gap-4 py-2 items-stretch">
         {/* 左側 */}
         <div className="w-[47%]">
           <CheckTable

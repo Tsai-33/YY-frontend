@@ -25,10 +25,7 @@ export default function CheckTable({
     return String(checked) === String(row[idKey]);
   };
 
-  const containerHeight = height || "65vh";
-  const innerHeight = height
-    ? `calc(${height} - 1vh)` // 如果有傳，動態計算
-    : "65vh"; // 沒傳就用原本的
+  const containerHeight = height || "100%";
 
   return (
     <div

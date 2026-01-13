@@ -13,6 +13,7 @@ import { checkNodePos } from "@/pages/api";
 
 export default function InboundContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
+
   const [tableData, setTableData] = useState([]); // 入庫單資訊
   const [tableData2, setTableData2] = useState([]); // 入庫單上的明細
 
@@ -244,12 +245,12 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   return (
     <>
       {/* 主要內容區域 */}
-      <div className="flex gap-4 px-2 py-8 items-stretch h-[75vh]">
+      <div className="flex gap-4 py-2 items-stretch h-[72vh]">
         {/* 左側 */}
-        <div className="w-3/7 flex flex-col">
+        <div className="w-[47%] flex flex-col">
           {step > 2 && (
-            <div className="flex h-[66px] p-2">
-              <div className="flex flex-1 items-center">
+            <div className="flex p-2">
+              <div className="flex flex-1 min-h-0 items-center">
                 {shelf?.EstBoxes > 0 &&
                   `建議入倉總數：${shelf?.EstPPs}
                 ${shelf?.UNIT} (${shelf?.EstBoxes}箱)
@@ -258,36 +259,35 @@ export default function InboundContext({ barCodeRef, setLoading }) {
               <ActionBtn icon="icon-check" text="入倉單完成" variant="orange" disabled={tableData2.length > 0} onClick={handleFinish} />
             </div>
           )}
-          <div className="flex-1 h-0">
+          <div className="flex-1 min-h-0">
             <InboundTable data={tableData} data2={tableData2} setData2={setTableData2} />
           </div>
         </div>
         {/* 右側 */}
-        <div className="w-4/7 flex flex-col">
+        <div className="w-[53%] flex flex-col">
           {/* 條碼 */}
-          <div className="flex h-[66px] p-2">
-            <div className="flex flex-1 items-center">
-              <label htmlFor="order">
-                入庫單條碼
-                <span className="text-lg px-1">:</span>
-              </label>
-              {step <= 2 ? (
-                <div className="w-75">
-                  <InputFrame type="text" name="orderCode" id="order" ref={barCodeRef} onKeyDown={handleBarCode} />
-                </div>
-              ) : (
-                orderCode
-              )}
-            </div>
+          <div className="flex items-center p-4">
+            <label htmlFor="order">
+              入庫單條碼
+              <span className="text-lg px-1">:</span>
+            </label>
+            {step <= 2 ? (
+              <div className="w-75">
+                <InputFrame type="text" name="orderCode" id="order" ref={barCodeRef} onKeyDown={handleBarCode} />
+              </div>
+            ) : (
+              orderCode
+            )}
           </div>
+
           {/* 資料 */}
-          <div className="flex flex-col flex-1 bg-white p-8 pb-4">
+          <div className="flex-1 min-h-0 bg-white p-8 pb-4 custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
             {/* 內容區 */}
             <div className="flex flex-col">
               {orderCode ? (
                 step <= 2 ? (
                   <SchematicDiagramList>
-                    <div className="flex flex-col">
+                    <div className="flex flex-col ">
                       <div className="flex justify-between">
                         <div className="flex gap-x-2">
                           <span>入倉單單號:</span>
@@ -329,8 +329,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
                             <span>貨架編號:</span>
                             <span>{shelf?.SHELVE_ID}</span>
                           </div>
-                          <div className="flex justify-start">
-                            <div className="pr-2 w-[9rem]">入庫庫別:</div>
+                          <div className="flex gap-2">
+                            <div className="w-[9rem]">入庫庫別:</div>
                             <div>{shelf?.area}</div>
                           </div>
                         </div>
@@ -345,7 +345,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
               )}
             </div>
             {/* 按鈕區 */}
-            <div className="flex flex-1 flex-col justify-end items-center">
+            <div className="w-full flex justify-center pt-8">
               {step <= 2 && <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfrimList} disabled={!waveNo} />}
               {step > 2 && (
                 <div className="w-full flex justify-between">
