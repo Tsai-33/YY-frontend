@@ -24,6 +24,7 @@ export default function SourceTable({ headers = [], data = [], type, name, onCha
     return String(checked) === rowId;
   };
 
+
   return (
     <div className="w-full h-full bg-[var(--white)] border border-white rounded-md text-center overflow-y-auto custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
       <table className="table-auto w-full">
@@ -92,7 +93,7 @@ export default function SourceTable({ headers = [], data = [], type, name, onCha
                   } else if (i === headers.length - 1) {
                     return (
                       <td key={i} style={{ width: `${header.width}` }}>
-                        <button onClick={() => setAbnormal(data)}>
+                        <button onClick={()=>setAbnormal(data)}>
                           <span className="text-2xl icon-abnormalList"></span>
                         </button>
                       </td>

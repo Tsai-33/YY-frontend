@@ -281,7 +281,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
           </div>
 
           {/* 資料 */}
-          <div className="flex flex-col flex-1 min-h-0 bg-white p-8 pb-4 h-full">
+          <div className="flex flex-col flex-1 min-h-0 bg-white p-8 pb-4">
             {/* 內容區 */}
             <div className="flex-1 min-h-0 custom-scrollbar pb-8" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
               {orderCode ? (
@@ -345,7 +345,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
               )}
             </div>
             {/* 按鈕區 */}
-            <div className="flex flex-col justify-end items-center p-4">
+            <div className="flex-1 min-h-0 flex flex-col justify-end items-center p-4">
               {step <= 2 && <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfrimList} disabled={!waveNo} />}
               {step > 2 && (
                 <div className="w-full flex justify-between">

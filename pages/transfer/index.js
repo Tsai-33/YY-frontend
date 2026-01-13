@@ -18,7 +18,7 @@ export default function Transfer() {
     dispatch(setCurrentStation(station));
   };
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { step} = useSelector((s) => s.transfer);
+  const { step } = useSelector((s) => s.transfer);
   const { screen } = useSelector((s) => s.transfer[currentStationSafe] || {});
 
   const barCodeRef = useRef(null);
@@ -50,22 +50,21 @@ export default function Transfer() {
     barCodeRef.current.value = passSN;
   };
 
-
   return (
     <>
       <TransferTitle />
       <TransferContext barCodeRef={barCodeRef} setLoading={setLoading} />
       {/* 底部按鈕區域 */}
-      <div className="w-full flex justify-between z-15">
+      <div className="w-full flex justify-between gap-4 z-20">
         {stations.map((station, i) => (
-          <ActionBtn key={i} text={station} variant={(i === 0? "blue" : "green")} disabled={currentStation === station ? true : false} onClick={() => handleSwitchStation(station)} />
+          <ActionBtn key={i} text={station} variant={i === 0 ? "blue" : "green"} className="flex-1" disabled={currentStation === station ? true : false} onClick={() => handleSwitchStation(station)} />
         ))}
       </div>
       {/* loading */}
       {screen === "loading" && <LoadingShelf />}
       {loading && <Loading />}
       {/* 測試按鈕 */}
-      {step <= 2 && <ActionBtn text="測試用-產生單據" className="absolute top-0 right-50" variant="yellow" onClick={handleTest} />}
+      {step <= 2 && <ActionBtn text="測試用-產生單據" className="absolute top-0 right-50 gle" variant="yellow" onClick={handleTest} />}
     </>
   );
 }

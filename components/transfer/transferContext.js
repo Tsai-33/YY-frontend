@@ -255,17 +255,17 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   return (
     <>
       {/* 主要內容區域 */}
-      <div className="flex gap-4 px-2 py-8 items-stretch h-[75vh]">
+      <div className="flex gap-4 py-2 items-stretch h-[72vh]">
         {/* 左側 */}
-        <div className="w-3/7 flex flex-col">
+        <div className="w-[47%] flex flex-col">
           <div className="flex-1 h-0">
             <TransferTable data={tableData} data2={tableData2} setAbnormal={setAbnormal} />
           </div>
         </div>
         {/* 右側 */}
-        <div className="w-4/7 flex flex-col">
+        <div className="w-[53%] flex flex-col">
           {/* 條碼 */}
-          <div className="flex space-x-4 pb-4">
+          <div className="flex space-x-4 p-4">
             <div className="flex flex-1 items-center">
               <label htmlFor="order">
                 調撥單號<span className="text-lg px-1">:</span>
@@ -280,9 +280,9 @@ export default function TransferContext({ barCodeRef, setLoading }) {
             </div>
           </div>
           {/* 資料 */}
-          <div className="flex flex-col flex-1 bg-white p-8 pb-4">
+          <div className="flex flex-col flex-1 min-h-0 bg-white p-8 pb-4">
             {/* 內容區 */}
-            <div className="flex flex-col gap-8 h-100 overflow-y-auto">
+            <div className="flex flex-col gap-8 overflow-y-auto">
               {orderCode ? (
                 step <= 2 ? (
                   Object.values(order).length > 0 ? (
@@ -360,7 +360,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
               )}
             </div>
             {/* 按鈕區 */}
-            <div className="flex flex-1 flex-col justify-end items-center">
+            <div className="flex flex-1 min-h-0 flex-col justify-end items-center p-4">
               {step <= 2 && <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfirmList} disabled={!waveNo} />}
               {step > 2 && (
                 <div className="w-full flex justify-between">
