@@ -53,8 +53,6 @@ const transferSlice = createSlice({
       const { station, items, ppStation } = action.payload;
       if (!state[station]) return;
 
-      console.log(station, items, ppStation, "123");
-
       // 來源扣除
       state[station].shelfItem = state[station].shelfItem.map((v) => {
         const matched = items.find((i) => i.PRT_NO === v.PRT_NO);
@@ -65,18 +63,26 @@ const transferSlice = createSlice({
       });
 
       // 目的加入
-      state[ppStation].shelfItem = state[ppStation].shelfItem.map((v) => {
-        const matched = items.find((i) => i.PRT_NO === v.PRT_NO);
-        if (matched) {
-          return { ...v, PP_NO: v.PP_NO + matched.PP_NO, BOX_NO: v.BOX_NO + matched.BOX_NO };
+      const currentDestItems = [...(state[ppStation].shelfItem || [])];
+      items.forEach((newItem) => {
+        const existingIdx = currentDestItems.findIndex((v) => v.PRT_NO === newItem.PRT_NO);
+        if (existingIdx > -1) {
+          const existingItem = currentDestItems[existingIdx];
+          currentDestItems[existingIdx] = {
+            ...existingItem,
+            PP_NO: Number(existingItem.PP_NO || 0) + Number(newItem.PP_NO || 0),
+            BOX_NO: Number(existingItem.BOX_NO || 0) + Number(newItem.BOX_NO || 0),
+          };
+        } else {
+          // 🚨 如果 B 站原本沒有這個產品 (暫無資料的情況)，就直接 push 進去
+          currentDestItems.push({ ...newItem });
         }
-        return v;
       });
+      state[ppStation].shelfItem = currentDestItems;
 
       // JOB移除
       const removeSet = new Set(items.map((i) => i.PRT_NO));
       state[station].job = state[station].job.filter((v) => !removeSet.has(v.PRT_NO));
-
     },
     // 控制面板
     managerTransfer: (state, action) => {
@@ -92,6 +98,9 @@ const transferSlice = createSlice({
     // 重置
     resetTransfer: (state, action) => {
       const { type, station, W_ID } = action.payload;
+
+      console.log(type, station, W_ID, "station");
+
       if (type === "one") {
         state[station].screen = "loading";
       } else if (type === "all") {
@@ -100,7 +109,7 @@ const transferSlice = createSlice({
           nextState[s] = createStation(s);
         });
         return nextState;
-      }
+      } 
     },
   },
 });

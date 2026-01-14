@@ -3,131 +3,195 @@ import { managerTransfer, resetTransfer } from "@/redux/reducer/reducerTransfer"
 import Alert from "../common/alert/alert";
 import { useEffect, useState } from "react";
 import { getTable } from "./transferFunction";
+import { Settings, Trash2, AlertCircle, Package, Activity, X } from "lucide-react"; // 建議安裝 lucide-react
+import { deleteTask } from "@/pages/api";
 
 export default function TransferManager({ isOpen, onClose }) {
   const dispatch = useDispatch();
   const { stations } = useSelector((s) => s.workstation);
-
-  // UI local state
-  const [station, setStation] = useState("A01");
-
-  // 全部 transfer 資料
   const transfer = useSelector((state) => state.transfer);
-  const { lackStation } = useSelector((state) => state.transfer);
+  const { lackStation } = transfer;
 
-  // 依照選擇站台拿資料
+  const [station, setStation] = useState("A01");
+  const [allOrderList, setAllOrderList] = useState([]);
+
   const stationData = transfer[station] || {};
-  const { step, screen, waveNo, shelf, shelfItem } = stationData;
+  const { screen, shelf, shelfItem } = stationData;
 
-  // 更改站台資料
+  useEffect(() => {
+    getTable(setAllOrderList);
+  }, []);
+
   const handleChange = (e, index) => {
+    const { name, value, type, checked } = e.target;
     dispatch(
       managerTransfer({
         station,
-        name: e.target.name,
-        value: e.target.value,
-        checked: e.target.checked,
+        name,
+        value: type === "checkbox" ? checked : value,
         index,
       })
     );
   };
 
-  // 清除當前 station 的資料
   const handleClear = (type) => {
     Alert({
-      title: "是否確定清除？",
+      title: type === "all" ? "確定清空所有站台資料？" : `確定清空 ${station} 資料？`,
+      html: "此動作無法還原",
       showCancel: true,
       onConfirm: () => {
-        dispatch(resetTransfer({ type: type, station: stations }));
+        dispatch(resetTransfer({ type, station: type === "all" ? stations : station }));
       },
     });
   };
 
-  const [allOrderList, setAllOrderList] = useState([]);
-  useEffect(() => {
-    getTable(setAllOrderList);
-  }, []);
+  const handleClearTask = () => {
+    Alert({
+      title: `清除調撥單Task任務`,
+      html: "此動作無法還原，請確認是否至後台清除資料",
+      showCancel: true,
+      onConfirm: async () => {
+        await deleteTask({ stations: stations[0] });
+      },
+    });
+  };
+
+  // 取得狀態對應顏色
+  const getStatusColor = (s) => {
+    if (lackStation?.includes(s)) return "bg-red-500 text-white";
+    const st = transfer[s]?.screen;
+    if (st === "working") return "bg-green-500 text-white";
+    if (st === "idle") return "bg-amber-500 text-white";
+    return "bg-slate-400 text-white";
+  };
+
+  if (!isOpen) return null;
 
   return (
-    <div id="modal" className={`${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} fixed inset-0 flex items-center justify-center bg-black/50 z-50`}>
-      <div className="p-4 bg-white rounded-xl shadow-lg w-[50vw] max-h-[80vh] flex flex-col overflow-hidden">
-        {/* title */}
-        <div className="sticky top-0 bg-white z-10 border-b p-2">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">控制面板</h2>
-            <button onClick={() => handleClear("all", stations)} className="px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-500 text-white">
-              清空所有調撥
+    <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 backdrop-blur-sm">
+      <div className="bg-slate-50 rounded-2xl shadow-2xl w-[90vw] max-w-5xl h-[85vh] flex flex-col overflow-hidden border border-slate-200">
+        {/* Header: 控制列 */}
+        <div className="p-4 bg-white border-b flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-slate-800 rounded-lg text-white">
+              <Settings size={20} />
+            </div>
+            <h2 className="text-xl  text-slate-800">調撥單控制面板</h2>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => handleClearTask()} className="flex items-center gap-1 px-4 py-2 bg-red-50 text-red-600 hover:bg-yellow-300 hover:text-black rounded-lg text-sm  transition-colors border border-red-200">
+              <Trash2 size={16} /> 清除任務
             </button>
-
-            <button className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 transition-colors" onClick={onClose}>
-              X
+            <button onClick={() => handleClear("all")} className="flex items-center gap-1 px-4 py-2 bg-red-500 text-red-100 bg-red-50 hover:bg-yellow-500 hover:text-black rounded-lg text-sm   transition-colors border border-red-200">
+              <Trash2 size={16} /> 全部重置
+            </button>
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+              <X size={24} className="text-slate-400" />
             </button>
           </div>
         </div>
-        {/* 站點按鈕 */}
-        <div className="flex items-center gap-2 relative py-4">
-          {stations.map((s) => (
-            <button
-              key={s}
-              onClick={() => setStation(s)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-300 text-gray-800`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-        {/* 內容 */}
-        <div className="p-4">
-          <h1 className="text-3xl text-left">
-            <div>目前貨架：{shelf?.SHELVE_ID}</div>
-          </h1>
-        </div>
-        {/* 控制欄 */}
-        <div className="flex flex-wrap gap-8 py-4 overflow-y-auto">
-          <div className="flex items-center">
-            <span>步驟：</span>
-            <select name="step" value={step || 1} className="px-3 py-2 border border-gray-300 rounded-md shadow-sm" onChange={handleChange}>
-              <option value={1}>1</option>
-              <option value={2}>2</option>
-              <option value={3}>3</option>
-              <option value={4}>4</option>
-              <option value={5}>5</option>
-            </select>
+
+        <div className="flex flex-1 overflow-hidden">
+          {/* 左側：站點快速切換 */}
+          <div className="w-64 bg-slate-100 p-4 border-r overflow-y-auto space-y-2">
+            <p className="text-xs   text-slate-500 uppercase tracking-wider mb-3">站點列表</p>
+            {stations.map((s) => (
+              <button
+                key={s}
+                onClick={() => setStation(s)}
+                className={`w-full flex justify-between items-center px-4 py-2 rounded-xl transition-all ${station === s ? "ring-2 ring-blue-500 shadow-md transform scale-[1.02] " + getStatusColor(s) : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"}`}
+              >
+                <span className="font-mono  ">{s}</span>
+                <div className={`w-2 h-2 rounded-full ${station === s ? "bg-white" : getStatusColor(s)}`} />
+              </button>
+            ))}
           </div>
 
-          <div className="flex items-center">
-            <span>行為：</span>
-            <select name="screen" value={screen || "loading"} className="px-3 py-2 border border-gray-300 rounded-md shadow-sm" onChange={handleChange}>
-              <option value="loading">等待</option>
-              <option value="working">執行中</option>
-              <option value="idle">閒置</option>
-            </select>
-          </div>
-
-          <div className="flex items-center">
-            <span>WID：</span>
-            <input type="text" name="waveNo" value={waveNo || ""} onChange={handleChange} className="px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-          </div>
-
-          <div className="flex items-center">
-            <span>是否鎖住：</span>
-            <input type="checkbox" name="lackStation" checked={lackStation?.includes(station)} onChange={handleChange} className="px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-          </div>
-        </div>
-        <hr className="w-full border-t border-gray-300 my-2" />
-        {/* 貨架資訊 */}
-        <div>
-          貨架資訊：
-          {shelfItem?.map((v, index) => (
-            <div key={index} className="flex justify-between items-center w-full">
-              <div className="flex gap-4 text-right">
-                <span>調撥單號:{v?.INSTOCK_NO}</span>
-                <span>產品名稱:{v?.PRT_NAME}</span>
-                <span>單包數:{v?.BOX_PACK}</span>
-                <span>總包數:{v?.PP_NO}</span>
+          {/* 右側：詳細內容區 */}
+          <div className="flex-1 flex flex-col bg-white overflow-y-auto">
+            {/* 狀態卡片 */}
+            <div className="p-6 grid grid-cols-3 gap-4 border-b bg-slate-50/50">
+              <div className="p-4 bg-white rounded-xl border shadow-sm">
+                <p className="text-slate-400 text-xs mb-1">當前貨架</p>
+                <div className="text-2xl text-blue-600">{shelf?.SHELVE_ID || "---"}</div>
+              </div>
+              <div className="p-4 bg-white rounded-xl border shadow-sm">
+                <p className="text-slate-400 text-xs mb-1">任務單號 (WID)</p>
+                <div className="text-2xl text-slate-700">{transfer.waveNo || "無"}</div>
+              </div>
+              <div className="p-4 bg-white rounded-xl border shadow-sm flex flex-col justify-center">
+                <p className="text-slate-400 text-xs mb-1">調撥單號 (order)</p>
+                <div className="text-xl text-slate-700">{transfer.orderCode || "無"}</div>
               </div>
             </div>
-          ))}
+
+            {/* 控制表單 */}
+            <div className="p-6 grid grid-cols-12 gap-6">
+              <div className="col-span-5 space-y-4">
+                <h3 className="flex items-center gap-2   text-slate-700">
+                  <Activity size={18} /> 流程控制
+                </h3>
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border">
+                  <span className="text-sm text-slate-600">作業步驟</span>
+                  <select name="step" value={transfer.step || 1} onChange={handleChange} className="bg-white border rounded px-3 py-1  ">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>
+                        Step {n}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="col-span-7 space-y-4">
+                <div className="h-9"></div>
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border">
+                  <span className="text-sm text-slate-600">運行行為</span>
+                  <select name="screen" value={screen || "loading"} onChange={handleChange} className="bg-white border rounded px-3 py-1  ">
+                    <option value="loading">等待中 (Loading)</option>
+                    <option value="working">執行中 (Working)</option>
+                    <option value="idle">閒置 (Idle)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* 貨架內容表格 */}
+            <div className="p-6 pt-0">
+              <h3 className="flex items-center gap-2   text-slate-700 mb-4">
+                <Package size={18} /> 貨架詳情
+              </h3>
+              <div className="border rounded-xl overflow-hidden">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 border-b">
+                    <tr>
+                      <th className="w-[25%] px-4 py-3 font-semibold text-slate-600">產品代號</th>
+                      <th className="w-[50%] px-4 py-3 font-semibold text-slate-600">產品名稱</th>
+                      <th className="w-[15%] px-4 py-3 font-semibold text-slate-600">包裝</th>
+                      <th className="w-[15%] px-4 py-3 font-semibold text-slate-600">數量</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y text-slate-700">
+                    {shelfItem?.length > 0 ? (
+                      shelfItem.map((v, index) => (
+                        <tr key={index} className="hover:bg-blue-50 transition-colors">
+                          <td className="px-4 py-3">{v?.PRT_NO}</td>
+                          <td className="px-4 py-3">{v?.PRT_NAME}</td>
+                          <td className="px-4 py-3 text-slate-500">{v?.BOX_NO}</td>
+                          <td className="px-4 py-3 text-slate-500">{v?.PP_NO}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="px-4 py-10 text-center text-slate-400 italic">
+                          目前貨架無品項
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
