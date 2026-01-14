@@ -199,54 +199,54 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ============================
   // ⭐ 撈ERP資料 / 顯示入庫單號
   // ============================
-  const OrderTitle = () => (
-    <div className="flex items-center p-4">
-      <label>
-        入庫單條碼<span className="text-lg px-1">:</span>
-      </label>
-      {step <= 2 ? (
-        <div className="w-75 ml-2">
-          <InputFrame type="text" ref={barCodeRef} onKeyDown={handleBarCode} />
-        </div>
-      ) : (
-        <span>{orderCode}</span>
-      )}
-    </div>
-  );
-
-  // ============================
-  // ⭐ 所有入庫單
-  // ============================
-  const OrderList = ({ order }) => (
-    <SchematicDiagramList>
-      <div className="flex flex-col">
-        <div className="flex justify-between">
-          <span>入倉單單號: {order?.INSTOCK_NO}</span>
-          <span>入庫庫別: {order?.STOCK_AREA}</span>
-        </div>
-        <div>產品品號: {order?.PRT_NO}</div>
-        <div>品名: {order?.PRT_NAME}</div>
-        <div className="flex gap-16">
-          <span>箱數: {order?.BOX_NOS} 箱</span>
-          <span>
-            數量: {order?.PP_NOS} {order?.UNIT}
-          </span>
-        </div>
+  const OrderTitle = () => {
+    if (step > 2) return <span>{orderCode}</span>;
+    return (
+      <div className="w-75 ml-2">
+        <InputFrame type="text" ref={barCodeRef} onKeyDown={handleBarCode} />
       </div>
-    </SchematicDiagramList>
-  );
+    );
+  };
 
   // ============================
   // ⭐ 貨架上資訊
   // ============================
-  const ShelfData = ({ shelf, displayItems }) => (
+  const ActionOrderList = () => {
+    if (step <= 2)
+      return (
+        <SchematicDiagramList>
+          <div className="flex flex-col">
+            <div className="flex justify-between">
+              <span>入倉單單號: {order?.INSTOCK_NO}</span>
+              <span>入庫庫別: {order?.STOCK_AREA}</span>
+            </div>
+            <div>產品品號: {order?.PRT_NO}</div>
+            <div>品名: {order?.PRT_NAME}</div>
+            <div className="flex gap-16">
+              <span>箱數: {order?.BOX_NOS} 箱</span>
+              <span>
+                數量: {order?.PP_NOS} {order?.UNIT}
+              </span>
+            </div>
+          </div>
+        </SchematicDiagramList>
+      );
+    else return <ShelfData />;
+  };
+  const ShelfData = () => (
     <SchematicDiagram>
       <div className="flex flex-col">
         <div className="flex justify-between">
           <div>貨架編號: {shelf?.SHELVE_ID}</div>
           <div>入庫庫別: {shelf?.area}</div>
         </div>
-        {displayItems.length === 0 ? <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div> : displayItems.map((item, index) => <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} isLast={index === displayItems.length - 1} shelfCars={shelf?.CARS} index={index} />)}
+        <div className="flex flex-col gap-16">
+          {displayItems.length === 0 ? (
+            <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
+          ) : (
+            displayItems.map((item, index) => <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} isLast={index === displayItems.length - 1} shelfCars={shelf?.CARS} index={index} />)
+          )}
+        </div>
       </div>
     </SchematicDiagram>
   );
@@ -280,7 +280,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
             <span>{item?.UNIT}</span>
             {item?.selectedPP > 0 && <span className="text-red-500">{`(+${item?.selectedPP})`}</span>}
           </div>
-          <div className="absolute bottom-0 right-0">{isLast && shelfCars && <span>{shelfCars}</span>}</div>
+          <div className="absolute bottom-0 right-0">{isLast && shelfCars && <span className="text-black">{shelfCars}</span>}</div>
         </div>
       </div>
     );
@@ -305,7 +305,6 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     }, {});
     return Object.values(grouped);
   }, [confirmModal]);
-
   const ActionButtons = () => {
     if (step <= 2) return <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfirmList} disabled={!waveNo} />;
     return (
@@ -334,7 +333,17 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         <div className="w-[47%] flex flex-col">
           {step > 2 && (
             <div className="flex p-2 items-center justify-between">
-              <div className="flex-1 text-sm">{shelf?.EstBoxes > 0 && `建議入倉總數：${shelf?.EstPPs} ${shelf?.UNIT} (${shelf?.EstBoxes}箱)`}</div>
+              <div className="flex-1">
+                {shelf?.EstBoxes > 0 && (
+                  <div className="flex items-end gap-x-2">
+                    <span>建議入倉總數:</span>
+                    <span className="text-4xl">{shelf?.EstPPs}</span>
+                    <span className="pr-4">{shelf?.UNIT}</span>
+                    <span className="text-4xl">{shelf?.EstBoxes}</span>
+                    <span>箱</span>
+                  </div>
+                )}
+              </div>
               <ActionBtn icon="icon-check" text="入倉單完成" variant="orange" disabled={tableData2.length > 0} onClick={handleFinish} />
             </div>
           )}
@@ -345,18 +354,21 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
         {/* 右側資訊區 */}
         <div className="w-[53%] flex flex-col">
-          <OrderTitle />
+          <div className="flex items-center p-4">
+            <label htmlFor="order">
+              入庫單條碼<span className="text-lg px-1">:</span>
+            </label>
+            <OrderTitle />
+          </div>
           <div className="flex flex-col flex-1 min-h-0 bg-white p-8 pb-4">
-            <div className="flex-1 min-h-0 custom-scrollbar pb-8">{orderCode && (step <= 2 ? <OrderList order={order} /> : <ShelfData shelf={shelf} displayItems={displayItems} />)}</div>
-            <div className="flex flex-col justify-end items-center p-4">
-              <ActionButtons />
-            </div>
+            {orderCode && <ActionOrderList />}
+            <div className="flex flex-col justify-end items-center p-4">{orderCode && <ActionButtons />}</div>
           </div>
         </div>
       </div>
 
       {/* Modals */}
-      <Modal showModal={confirmModal} title="確認上架" onClose={() => setConfirmModal(false)} onConfirm={handleConfirmShelf} width="30vw">
+      <Modal showModal={confirmModal} title="確認上架" onClose={() => setConfirmModal(false)} onConfirm={handleConfirmShelf} width="39vw" height="40vh">
         <div>請確定是否上架以下品項</div>
         {modalGroupedItems.map((v) => (
           <div key={v.PRT_NO} className="flex justify-between items-center gap-x-6">
@@ -374,11 +386,12 @@ export default function InboundContext({ barCodeRef, setLoading }) {
           setAddModal(false);
           handleAddShelf();
         }}
-        width="30vw"
+        width="39vw"
+        height="40vh"
       >
         確定是否新增貨架
       </Modal>
-      <Modal showModal={returnModal} title="退回貨架" onClose={() => setReturnModal(false)} onConfirm={handleReturnShelf} width="30vw">
+      <Modal showModal={returnModal} title="退回貨架" onClose={() => setReturnModal(false)} onConfirm={handleReturnShelf} width="39vw" height="40vh">
         確定是否返回貨架
       </Modal>
     </>

@@ -204,34 +204,26 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       Alert({ title: `${res?.error?.message}` });
     }
   };
-  const ActionButtons = ({ step, isDestination, waveNo, tableData2, selected, onAction }) => {
+  const ActionButtons = () => {
     // 1. 第一階段：掃描單據
     if (step <= 2) {
-      return <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={() => onAction("confirmList")} disabled={!waveNo} />;
+      return <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfirmList} disabled={!waveNo} />;
     }
-
-    // 2. 第二階段 - 目的站點 (Destination)
-    if (isDestination) {
-      const isAllCompleted = tableData2.every((v) => v.STATUS === 2);
-      const hasAnyCompleted = tableData2.some((v) => v.STATUS === 2);
-
+    if (currentStation === stations[0]) {
       return (
         <div className="w-full flex justify-between">
-          <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => onAction("add")} disabled={isAllCompleted} />
-
-          <ActionBtn icon="icon-transfer" text="完成調撥" variant="orange" onClick={() => onAction("finish")} disabled={!hasAnyCompleted} />
-
-          <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => onAction("return")} />
+          <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2.every((v) => v.STATUS === 2)} />
+          <ActionBtn icon="icon-transfer" text="完成調撥" variant="orange" onClick={() => setFinishModal(true)} disabled={tableData2.every((v) => v.STATUS !== 2)} />
+          <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />{" "}
+        </div>
+      );
+    } else {
+      return (
+        <div className="w-full flex justify-center">
+          <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
         </div>
       );
     }
-
-    // 3. 第二階段 - 來源站點 (Source)
-    return (
-      <div className="w-full flex justify-center">
-        <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={() => onAction("confirmShelf")} disabled={selected?.length <= 0} />
-      </div>
-    );
   };
   // ============================
   // ⭐ 貨架顯示用的資料
@@ -287,47 +279,70 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     );
   };
   // ============================
-  // ⭐ 所有調撥單
-  // ============================
-  const OrderList = ({ order, orderCode, tableDataTotal2 }) => {
-    // 先把需要顯示的資料過濾好
-    const filteredItems = useMemo(() => {
-      return tableDataTotal2.filter((v) => {
-        const prefix = v?.OUTSTOCK_NO?.split("-").slice(0, 2).join("-");
-        return prefix === orderCode;
-      });
-    }, [tableDataTotal2, orderCode]);
-
-    if (Object.values(order).length === 0) return null;
-
-    return (
-      <SchematicDiagramList>
-        <div className="flex flex-col">
-          <div className="flex justify-end mb-2">
-            <span>目的庫別: {order?.STOCK_AREA}</span>
-          </div>
-          {filteredItems.map((v, i) => (
-            <div key={i} className="mb-4 border-b pb-2 last:border-0">
-              <div className="flex justify-between">
-                <span>產品品號: {v?.PRT_NO}</span>
-                <span className="text-[var(--red)]">來源庫別: {v?.MEMO}</span>
-              </div>
-              <div>品名: {v?.PRT_NAME}</div>
-              <div className="flex gap-16">
-                <span>箱數: {v?.BOX_NO} 箱</span>
-                <span>
-                  數量: {order?.PP_NOS} {order?.UNIT}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </SchematicDiagramList>
-    );
-  };
-  // ============================
   // ⭐ 貨架上資訊
   // ============================
+  const ActionOrderList = () => {
+    if (step <= 2) {
+      const filteredItems = useMemo(() => {
+        return tableDataTotal2.filter((v) => {
+          const prefix = v?.OUTSTOCK_NO?.split("-").slice(0, 2).join("-");
+          return prefix === orderCode;
+        });
+      }, [tableDataTotal2, orderCode]);
+
+      if (Object.values(order).length === 0) return null;
+      return (
+        <SchematicDiagramList>
+          <div className="flex flex-col">
+            <div className="flex justify-end mb-2">
+              <span>目的庫別: {order?.STOCK_AREA}</span>
+            </div>
+            {filteredItems.map((v, i) => (
+              <div key={i} className="mb-4 border-b pb-2 last:border-0">
+                <div className="flex justify-between">
+                  <span>產品品號: {v?.PRT_NO}</span>
+                  <span className="text-[var(--red)]">來源庫別: {v?.MEMO}</span>
+                </div>
+                <div>品名: {v?.PRT_NAME}</div>
+                <div className="flex gap-16">
+                  <span>箱數: {v?.BOX_NO} 箱</span>
+                  <span>
+                    數量: {order?.PP_NOS} {order?.UNIT}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SchematicDiagramList>
+      );
+    } else return <ShelfData />;
+  };
+  const ShelfData = () => {
+    const isDestination = currentStation === stations[0];
+    const stationLabel = isDestination ? "目的" : "來源";
+    const titleColor = isDestination ? "text-[var(--blue-vivid)]" : "text-[var(--red)]";
+
+    return (
+      <SchematicDiagram>
+        <div className="flex flex-col gap-8">
+          <div className={`flex justify-between pb-2 ${titleColor}`}>
+            <div style={isDestination ? { textShadow: "1px 1px 0 white" } : {}}>
+              站點{currentStation}-{stationLabel}貨架編號: {shelf?.SHELVE_ID}
+            </div>
+            <div>
+              {stationLabel}庫別: {shelf?.area}
+            </div>
+          </div>
+
+          {displayItems.length === 0 ? (
+            <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
+          ) : (
+            displayItems.map((item, index) => <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} isDestination={isDestination} isLastItem={index === displayItems.length - 1} cars={shelf?.CARS} />)
+          )}
+        </div>
+      </SchematicDiagram>
+    );
+  };
   const ShelfItemRow = ({ item, isDestination, isLastItem, cars }) => {
     const isNew = item.isNew || (item.selectedBox > 0 && (item.BOX_NO || 0) === 0 && (item.PP_NO || 0) === 0);
     const textClass = isNew ? "text-red-500" : "";
@@ -355,34 +370,9 @@ export default function TransferContext({ barCodeRef, setLoading }) {
             數量: {item.PP_NO} {item.UNIT}
             {item.selectedPP > 0 && <span className="text-red-500">{`(${operator}${item.selectedPP})`}</span>}
           </div>
-          <div className="absolute bottom-0 right-0">{isLastItem && cars && <div>{cars}</div>}</div>
+          <div className="absolute bottom-0 right-0">{isLastItem && cars && <span className="text-black">{cars}</span>}</div>
         </div>
       </div>
-    );
-  };
-  const ShelfData = ({ shelf, displayItems, currentStation, isDestination }) => {
-    const stationLabel = isDestination ? "目的" : "來源";
-    const titleColor = isDestination ? "text-[var(--blue-vivid)]" : "text-[var(--red)]";
-
-    return (
-      <SchematicDiagram>
-        <div className="flex flex-col gap-8">
-          <div className={`flex justify-between pb-2 ${titleColor}`}>
-            <div style={isDestination ? { textShadow: "1px 1px 0 white" } : {}}>
-              站點{currentStation}-{stationLabel}貨架編號: {shelf?.SHELVE_ID}
-            </div>
-            <div>
-              {stationLabel}庫別: {shelf?.area}
-            </div>
-          </div>
-
-          {displayItems.length === 0 ? (
-            <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
-          ) : (
-            displayItems.map((item, index) => <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} isDestination={isDestination} isLastItem={index === displayItems.length - 1} cars={shelf?.CARS} />)
-          )}
-        </div>
-      </SchematicDiagram>
     );
   };
 
@@ -414,30 +404,14 @@ export default function TransferContext({ barCodeRef, setLoading }) {
             <OrderTitle />
           </div>
           <div className="flex flex-col flex-1 min-h-0 bg-white p-8 pb-4">
-            {step <= 2 && <OrderList order={order} orderCode={orderCode} tableDataTotal2={tableDataTotal2} />}
-            {step > 2 && <ShelfData shelf={shelf} displayItems={displayItems} currentStation={currentStation} stations={stations} isDestination={currentStation === stations[0]} />}
-            <div className="flex flex-1 flex-col justify-end items-center p-4">
-              <ActionButtons
-                step={step}
-                isDestination={currentStation === stations[0]}
-                waveNo={waveNo}
-                tableData2={tableData2}
-                selected={selected}
-                onAction={(type) => {
-                  if (type === "confirmList") handleConfirmList();
-                  if (type === "add") setAddModal(true);
-                  if (type === "finish") setFinishModal(true);
-                  if (type === "return") setReturnModal(true);
-                  if (type === "confirmShelf") setConfirmModal(true);
-                }}
-              />
-            </div>
+            {orderCode && <ActionOrderList />}
+            <div className="flex flex-col justify-end items-center p-4">{orderCode && <ActionButtons />}</div>
           </div>
         </div>
       </div>
 
       {/* Modal */}
-      <Modal showModal={confirmModal} title="確認" onClose={() => setConfirmModal(false)} onConfirm={handleConfirmShelf} width={`30vw`} height={`auto`}>
+      <Modal showModal={confirmModal} title="確認" onClose={() => setConfirmModal(false)} onConfirm={handleConfirmShelf} width={`39vw`} height={`auto`}>
         <>
           <div>請確定是否搬移以下品項</div>
           <div>
@@ -467,20 +441,21 @@ export default function TransferContext({ barCodeRef, setLoading }) {
           </div>
         </>
       </Modal>
-      <Modal showModal={addModal} title="新增貨架" onClose={() => setAddModal(false)} onConfirm={handleAddShelf} width={`30vw`} height={`35vh`}>
+      <Modal showModal={addModal} title="新增貨架" onClose={() => setAddModal(false)} onConfirm={handleAddShelf} width={`39vw`} height={`40vh`}>
         確定是否新增貨架
       </Modal>
-      <Modal showModal={returnModal} title="退回貨架" onClose={() => setReturnModal(false)} onConfirm={handleReturnShelf} width={`30vw`} height={`35vh`}>
+      <Modal showModal={returnModal} title="退回貨架" onClose={() => setReturnModal(false)} onConfirm={handleReturnShelf} width={`39vw`} height={`40vh`}>
         確定是否返回貨架
       </Modal>
-      <Modal showModal={finishModal} title="完成調撥" onClose={() => setFinishModal(false)} onConfirm={handleFinish} width={`30vw`} height={`35vh`}>
+      <Modal showModal={finishModal} title="完成調撥" onClose={() => setFinishModal(false)} onConfirm={handleFinish} width={`39vw`} height={`40vh`}>
         確定完成調撥單
       </Modal>
-      <Modal showModal={wmsModal} title="數量異常" onClose={() => setWmsModal(false)} onConfirm={handleAbnormal} width={`30vw`} height={`auto`}>
+      <Modal showModal={wmsModal} title="數量異常" onClose={() => setWmsModal(false)} onConfirm={handleAbnormal} width={`39vw`} height={`auto`}>
         <>
-          <div>「 {abData?.PRT_NO} 」系統數量與實際數量不相符</div>
-          <div>按下「確認」後退回所有貨架並結束此張調撥單</div>
-          <div>請至盤點更正為正確數量，並重新開立單據</div>
+          <div>產品編號:「 {abData?.PRT_NO} 」</div>
+          <div>系統數量與實際數量不相符</div>
+          <div>按下「確認」後退回所有貨架</div>
+          <div>請至盤點更正為正確數量並重新開立單據</div>
         </>
       </Modal>
     </>

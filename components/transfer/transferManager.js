@@ -58,10 +58,9 @@ export default function TransferManager({ isOpen, onClose }) {
 
   // 取得狀態對應顏色
   const getStatusColor = (s) => {
-    if (lackStation?.includes(s)) return "bg-red-500 text-white";
-    const st = transfer[s]?.screen;
-    if (st === "working") return "bg-green-500 text-white";
-    if (st === "idle") return "bg-amber-500 text-white";
+    if (transfer[s]?.screen === "working") return "bg-green-600 text-white shadow-green-200";
+    if (transfer[s]?.screen === "loading") return "bg-red-500 text-white shadow-red-200";
+    if (transfer[s]?.screen === "idle") return "bg-slate-500 text-white shadow-slate-200";
     return "bg-slate-400 text-white";
   };
 
@@ -85,8 +84,8 @@ export default function TransferManager({ isOpen, onClose }) {
             <button onClick={() => handleClear("all")} className="flex items-center gap-1 px-4 py-2 bg-red-500 text-red-100 bg-red-50 hover:bg-yellow-500 hover:text-black rounded-lg text-sm   transition-colors border border-red-200">
               <Trash2 size={16} /> 全部重置
             </button>
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-              <X size={24} className="text-slate-400" />
+            <button onClick={onClose} className="p-2.5 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200">
+              <X size={20} className="text-slate-500" />
             </button>
           </div>
         </div>
@@ -108,7 +107,7 @@ export default function TransferManager({ isOpen, onClose }) {
           </div>
 
           {/* 右側：詳細內容區 */}
-          <div className="flex-1 flex flex-col bg-white overflow-hidden overflow-y-auto relative">
+          <div className="flex-1 flex flex-col bg-white overflow-hidden relative">
             {/* 狀態卡片 */}
             <div className="p-6 grid grid-cols-3 gap-4 border-b bg-slate-300">
               <div className="p-4 bg-white rounded-xl border shadow-sm">
@@ -126,7 +125,7 @@ export default function TransferManager({ isOpen, onClose }) {
             </div>
 
             {/* 控制表單 */}
-            <div className="px-6 pt-3 grid grid-cols-12 gap-6">
+            <div className="px-6 pt-3 grid grid-cols-12 gap-6 z-1">
               <div className="col-span-5 space-y-4">
                 <h3 className="flex items-center gap-2  text-slate-700">
                   <Activity size={18} /> 流程控制
@@ -156,11 +155,11 @@ export default function TransferManager({ isOpen, onClose }) {
             </div>
 
             {/* 貨架內容表格 */}
-            <div className="px-6 pt-3">
+            <div className="px-6 pt-3 z-1">
               <h3 className="flex items-center gap-2   text-slate-700 mb-4">
                 <Package size={18} /> 貨架詳情
               </h3>
-              <div className="border rounded-xl overflow-hidden">
+              <div className="border rounded-xl overflow-hidden bg-white">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-slate-50 border-b">
                     <tr>
@@ -170,7 +169,7 @@ export default function TransferManager({ isOpen, onClose }) {
                       <th className="w-[15%] px-4 py-3 font-semibold text-slate-600">數量</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y text-slate-700">
+                  <tbody className="divide-y text-slate-700 overflow-y-auto">
                     {shelfItem?.length > 0 ? (
                       shelfItem.map((v, index) => (
                         <tr key={index} className="hover:bg-blue-50 transition-colors">
@@ -192,7 +191,7 @@ export default function TransferManager({ isOpen, onClose }) {
               </div>
             </div>
 
-               <Database className="absolute -bottom-15 -right-20 text-slate-200 opacity-50" size={500} />
+            <Database className="absolute -bottom-15 -right-20 text-slate-200 opacity-50 pointer-events-none" size={500} />
           </div>
         </div>
       </div>

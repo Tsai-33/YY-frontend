@@ -59,9 +59,9 @@ export default function InboundManager({ isOpen, onClose }) {
   };
 
   const getStatusColor = (s) => {
-    if (lackStation?.includes(s)) return "bg-red-500 text-white shadow-red-200";
     if (inbound[s]?.screen === "working") return "bg-green-600 text-white shadow-green-200";
-    if (inbound[s]?.screen === "idle") return "bg-amber-500 text-white shadow-amber-200";
+    if (inbound[s]?.screen === "loading") return "bg-red-500 text-white shadow-red-200";
+    if (inbound[s]?.screen === "idle") return "bg-slate-500 text-white shadow-slate-200";
     return "bg-slate-400 text-white";
   };
 
@@ -107,7 +107,7 @@ export default function InboundManager({ isOpen, onClose }) {
           </div>
 
           {/* 右側：主工作區 */}
-          <div className="flex-1 flex flex-col bg-white overflow-hidden overflow-y-auto relative">
+          <div className="flex-1 flex flex-col bg-white overflow-hidden relative">
             {/* 狀態卡片 */}
             <div className="p-6 grid grid-cols-3 gap-4 border-b bg-slate-300">
               <div className="p-4 bg-white rounded-xl border shadow-sm">
@@ -201,7 +201,7 @@ export default function InboundManager({ isOpen, onClose }) {
                       <th className="w-[15%] px-4 py-3 font-semibold text-slate-600">數量</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y text-slate-700">
+                  <tbody className="divide-y text-slate-700 overflow-y-auto">
                     {shelfItem?.length > 0 ? (
                       shelfItem.map((v, index) => (
                         <tr key={index} className="hover:bg-blue-50 transition-colors">
@@ -223,7 +223,7 @@ export default function InboundManager({ isOpen, onClose }) {
               </div>
             </div>
 
-            <Database className="absolute -bottom-15 -right-20 text-slate-200 opacity-50" size={500} />
+            <Database className="absolute -bottom-15 -right-20 text-slate-200 opacity-50 pointer-events-none" size={500} />
           </div>
         </div>
       </div>

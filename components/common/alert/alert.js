@@ -17,7 +17,7 @@ export default function Alert({ title, html = ``, showConfirm = true, confirmBut
     cancelButtonColor,
     allowOutsideClick: !showConfirm && !showCancel,
     customClass: {
-      popup: 'my-swal-popup',
+      popup: "my-swal-popup",
       title: "my-swal-title", // 標題樣式
       htmlContainer: "my-swal-content", // 內容樣式
       confirmButton: "my-swal-confirm-btn", // 確認按鈕
