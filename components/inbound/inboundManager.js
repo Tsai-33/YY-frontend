@@ -127,7 +127,7 @@ export default function InboundManager({ isOpen, onClose }) {
             {/* 排除訂單區  */}
             <div className="px-6 pt-3 z-1">
               <div className="col-span-5 space-y-4">
-                <h3 className="flex items-center gap-2">
+                <h3 className="flex items-center gap-2 text-slate-700">
                   <Filter size={18} /> 顯示訂單
                 </h3>
                 <div className="flex items-center justify-between gap-3 p-3 bg-slate-50 rounded-lg border">
@@ -159,7 +159,7 @@ export default function InboundManager({ isOpen, onClose }) {
             {/* 控制表單 */}
             <div className="px-6 pt-3 grid grid-cols-12 gap-6 z-1">
               <div className="col-span-5 space-y-4">
-                <h3 className="flex items-center gap-2">
+                <h3 className="flex items-center gap-2 text-slate-700">
                   <Activity size={18} /> 流程控制
                 </h3>
                 <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border">
@@ -188,7 +188,7 @@ export default function InboundManager({ isOpen, onClose }) {
 
             {/* 貨架內容表格 */}
             <div className="px-6 pt-3 z-1">
-              <h3 className="flex items-center gap-2 mb-4 z-1">
+              <h3 className="flex items-center gap-2 mb-4 text-slate-700">
                 <Package size={18} /> 貨架詳情
               </h3>
               <div className="border rounded-xl overflow-hidden bg-white">

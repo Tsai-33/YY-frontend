@@ -3,7 +3,7 @@ import { managerTransfer, resetTransfer } from "@/redux/reducer/reducerTransfer"
 import Alert from "../common/alert/alert";
 import { useEffect, useState } from "react";
 import { getTable } from "./transferFunction";
-import { Settings, Trash2, AlertCircle, Package, Activity, X } from "lucide-react"; // 建議安裝 lucide-react
+import { Settings, Trash2, AlertCircle, Package, Activity, X, Database } from "lucide-react"; // 建議安裝 lucide-react
 import { deleteTask } from "@/pages/api";
 
 export default function TransferManager({ isOpen, onClose }) {
@@ -69,14 +69,14 @@ export default function TransferManager({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 backdrop-blur-sm">
-      <div className="bg-slate-50 rounded-2xl shadow-2xl w-[90vw] max-w-5xl h-[85vh] flex flex-col overflow-hidden border border-slate-200">
+      <div className="bg-slate-50 rounded-2xl shadow-2xl w-[90vw] max-w-5xl h-[85vh] flex flex-col overflow-hidden">
         {/* Header: 控制列 */}
-        <div className="p-4 bg-white border-b flex justify-between items-center">
+        <div className="p-4 bg-slate-800 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-slate-800 rounded-lg text-white">
               <Settings size={20} />
             </div>
-            <h2 className="text-xl  text-slate-800">調撥單控制面板</h2>
+            <h2 className="text-xl text-white">調撥單控制面板</h2>
           </div>
           <div className="flex gap-3">
             <button onClick={() => handleClearTask()} className="flex items-center gap-1 px-4 py-2 bg-red-50 text-red-600 hover:bg-yellow-300 hover:text-black rounded-lg text-sm  transition-colors border border-red-200">
@@ -108,9 +108,9 @@ export default function TransferManager({ isOpen, onClose }) {
           </div>
 
           {/* 右側：詳細內容區 */}
-          <div className="flex-1 flex flex-col bg-white overflow-y-auto">
+          <div className="flex-1 flex flex-col bg-white overflow-hidden overflow-y-auto relative">
             {/* 狀態卡片 */}
-            <div className="p-6 grid grid-cols-3 gap-4 border-b bg-slate-50/50">
+            <div className="p-6 grid grid-cols-3 gap-4 border-b bg-slate-300">
               <div className="p-4 bg-white rounded-xl border shadow-sm">
                 <p className="text-slate-400 text-xs mb-1">當前貨架</p>
                 <div className="text-2xl text-blue-600">{shelf?.SHELVE_ID || "---"}</div>
@@ -126,9 +126,9 @@ export default function TransferManager({ isOpen, onClose }) {
             </div>
 
             {/* 控制表單 */}
-            <div className="p-6 grid grid-cols-12 gap-6">
+            <div className="px-6 pt-3 grid grid-cols-12 gap-6">
               <div className="col-span-5 space-y-4">
-                <h3 className="flex items-center gap-2   text-slate-700">
+                <h3 className="flex items-center gap-2  text-slate-700">
                   <Activity size={18} /> 流程控制
                 </h3>
                 <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border">
@@ -156,7 +156,7 @@ export default function TransferManager({ isOpen, onClose }) {
             </div>
 
             {/* 貨架內容表格 */}
-            <div className="p-6 pt-0">
+            <div className="px-6 pt-3">
               <h3 className="flex items-center gap-2   text-slate-700 mb-4">
                 <Package size={18} /> 貨架詳情
               </h3>
@@ -191,6 +191,8 @@ export default function TransferManager({ isOpen, onClose }) {
                 </table>
               </div>
             </div>
+
+               <Database className="absolute -bottom-15 -right-20 text-slate-200 opacity-50" size={500} />
           </div>
         </div>
       </div>
