@@ -39,9 +39,9 @@ export default function OutboundInternal() {
 
   // TODO 暫時不透過workspace進來
   useEffect(() => {
-    if (!currentStation) {
-      dispatch(initWorkstation("172.16.11.75"));
-    }
+    // if (!currentStation) {
+    //   dispatch(initWorkstation("172.16.11.75"));
+    // }
     // 強制更新為領用
     dispatch(setCurrentJob("領用"));
   }, [currentStation, dispatch]);

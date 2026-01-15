@@ -17,11 +17,11 @@ export default function ShelfTransferTable() {
     const { stations, currentStation } = useSelector((s) => s.workstation);
 
     // TODO 暫時不透過workspace進來
-    useEffect(() => {
-        if (!currentStation) {
-            dispatch(initWorkstation("172.16.11.75"));
-        }
-    }, [currentStation, dispatch]);
+    // useEffect(() => {
+    //     if (!currentStation) {
+    //         dispatch(initWorkstation("172.16.11.75"));
+    //     }
+    // }, [currentStation, dispatch]);
     const currentStationSafe = currentStation || stations?.[0] || "";
     const { orderList, lackStation } = useSelector((s) => s.shelfTransfer);
     const { step, screen, orderCode, order, selectedShelves } = useSelector(
@@ -95,7 +95,7 @@ export default function ShelfTransferTable() {
     // const selectedShelveData = selectedOrder
     //     ? testShelve.filter(item => item.SALE_NO === selectedOrder.SALE_NO)
     //     : [];
-    const handleRowClick = (row) => {
+    const handleRowClick = (name, row, idKey) => {
         setSelectedOrder(row);
         setOrderInput(row.SALE_NO);
         setSelectedShelve([]);
@@ -236,7 +236,7 @@ export default function ShelfTransferTable() {
                 <div className="flex gap-2 flex-1 mb-1">
                     {/* Table */}
                     <div className="w-1/2">
-                        <Table 
+                        <Table
                             variant="green"
                             type="checkbox"
                             name="shelfTransferList"
@@ -250,7 +250,7 @@ export default function ShelfTransferTable() {
                         />
                     </div>
                     {/* 右邊畫面 */}
-                    <div className="w-1/2 flex flex-col h-[70vh]">
+                    <div className="w-1/2 flex flex-col h-[76vh]">
                         <div>
                             <div className="flex items-center gap-3 mb-3">
                                 <label className="text-lg font-medium whitespace-nowrap">
@@ -266,7 +266,7 @@ export default function ShelfTransferTable() {
                                 />
                             </div>
                         </div>
-                        <div className="bg-gray-50 rounded-lg p-6 flex flex-col h-[70vh]">
+                        <div className="bg-gray-50 rounded-lg p-6 flex flex-col h-[69vh]">
                             {selectedOrder && groupedShelveData.length > 0 ? (
                                 <>
                                     <div className="flex-1 overflow-auto space-y-6 mb-6">
@@ -276,15 +276,9 @@ export default function ShelfTransferTable() {
                                                 <div
                                                     key={shelveGroup.SHELVE_ID}
                                                     onClick={() => handleShelveClick(shelveGroup)}
-                                                    className={`
-                                                        cursor-pointer transition-all
-                                                        ${isSelected 
-                                                            ? 'ring-4 ring-green-500 ring-offset-4 rounded-3xl' 
-                                                            : 'hover:shadow-lg'
-                                                        }
-                                                    `}
+                                                    className="cursor-pointer transition-all hover:shadow-lg"
                                                 >
-                                                    <SchematicDiagram>
+                                                    <SchematicDiagram isSelected={isSelected}>
                                                         {/* 貨架、庫別 */}
                                                         <div className="flex justify-between items-center mb-4">
                                                             <div className="flex items-center gap-3">
@@ -368,12 +362,14 @@ export default function ShelfTransferTable() {
                 {/* 站點 */}
                 <div className="flex gap-2">
                     {stations.map((station, index) => (
-                        <button
-                            key={station}
-                            className="flex-1 bg-green-600 text-white py-3 rounded-lg text-lg font-medium"
-                        >
-                            站點 {index + 1}
-                        </button>
+                        <div key={station} className="flex-1">
+                            <ActionBtn
+                                text={`站點${index + 1}`}
+                                variant="green"
+                                disabled={false}
+                                className="w-full flex justify-center"
+                            />
+                        </div>
                     ))}
                 </div>
             </div>
