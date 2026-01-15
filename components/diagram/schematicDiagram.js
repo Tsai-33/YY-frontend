@@ -1,11 +1,14 @@
 import React from "react";
 
-export default function SchematicDiagram({ children }) {
+export default function SchematicDiagram({ children, isSelected = false }) {
   return (
     <>
       {/* 貨架 */}
       <div
-        className="flex-1 min-h-0 flex flex-col gap-0.5 text-[length:var(--font-size-3xl)] custom-scrollbar pr-2"
+        className={`flex-1 min-h-0 flex flex-col gap-0.5 text-[length:var(--font-size-3xl)] custom-scrollbar pr-2
+            rounded-3xl transition-all ${
+              isSelected ? 'border-8 border-green-500' : 'border-8 border-transparent'
+            }`}
         style={{"--scrollbar-thumb-color": `var(--green-vivid)`}}
       >
         <div className="w-full bg-[var(--shelf-color)] rounded-3xl p-8">{children}</div>

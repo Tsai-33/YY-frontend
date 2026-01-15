@@ -19,11 +19,11 @@ export default function ShelfTransferShelf() {
     const { stations, currentStation } = useSelector((s) => s.workstation);
 
     // TODO 暫時不透過 workspace 進來
-    useEffect(() => {
-        if (!currentStation) {
-            dispatch(initWorkstation("172.16.11.75"));
-        }
-    }, [currentStation, dispatch]);
+    // useEffect(() => {
+    //     if (!currentStation) {
+    //         dispatch(initWorkstation("172.16.11.75"));
+    //     }
+    // }, [currentStation, dispatch]);
 
     const currentStationSafe = currentStation || stations?.[0] || "";
     const { step, screen, selectedShelves } = useSelector(
@@ -275,7 +275,7 @@ export default function ShelfTransferShelf() {
                 </div>
                 {/* 主要內容區 */}
                 <div className="flex gap-4 flex-1">
-                    <div className="w-2/5">
+                    <div className="w-1/2">
                         <Table
                             variant="green"
                             type="checkbox"
@@ -290,7 +290,7 @@ export default function ShelfTransferShelf() {
                         />
                     </div>
                     {/* 詳細資訊 */}
-                    <div className="w-3/5 bg-gray-50 rounded-lg p-6 flex flex-col h-[70vh]">
+                    <div className="w-3/5 bg-gray-50 rounded-lg p-6 flex flex-col h-[64vh]">
                         {groupedShelveData.length > 0 ? (
                             <div className="flex-1 overflow-auto space-y-6">
                                 {groupedShelveData.map((shelveGroup, index) => (
@@ -346,7 +346,7 @@ export default function ShelfTransferShelf() {
                     </div>
                 </div>
                 {/* 按鈕區 */}
-                <div className="flex justify-center py-4">
+                <div className="flex justify-center py-14">
                     <ActionBtn
                         icon="icon-check"
                         text="確定"
@@ -356,16 +356,18 @@ export default function ShelfTransferShelf() {
                     />
                 </div>
                 {/* 站點 */}
-                <div className="flex gap-2">
+                {/* <div className="flex gap-2">
                     {stations.map((station, index) => (
-                        <button
-                            key={station}
-                            className="flex-1 bg-green-600 text-white py-3 rounded-lg text-lg font-medium"
-                        >
-                            站點 {index + 1}
-                        </button>
+                        <div key={station} className="flex-1">
+                            <ActionBtn
+                                text={`站點${index + 1}`}
+                                variant="green"
+                                disabled={false}
+                                className="w-full flex justify-center"
+                            />
+                        </div>
                     ))}
-                </div>
+                </div> */}
             </div>
         </>
     );
