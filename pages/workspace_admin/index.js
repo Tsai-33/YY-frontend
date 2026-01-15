@@ -8,7 +8,7 @@ export default function WorkspaceIndex() {
         <Link href="/usermanage">
           <CategoryBtn icon="icon-user" text="用戶管理" variant="darkGreen" />
         </Link>
-        <Link href="/warehousePlan">
+        <Link href="/stockAreaTest">
           <CategoryBtn
             icon="icon-stockArea"
             text="庫區倉別規劃"

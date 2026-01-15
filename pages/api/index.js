@@ -131,6 +131,10 @@ export const updateWarehouses = (payload) =>
 export const uploadShelvesMap = (payload) =>
   api.post("/warehousePlan/upload-shelves-map", payload, { timeout: 60000 });
 
+export const getMapNode = () => api.get("/stockArea/map-node");
+export const updateMapLayout = (payload) =>
+  api.post("/stockArea/map-layout/update", payload);
+
 export const checkNodePos = (payload) =>
   api.post("/wcs/check/nodepos", payload);
 export const checkTask = (payload) => api.post("/task/check", payload);
