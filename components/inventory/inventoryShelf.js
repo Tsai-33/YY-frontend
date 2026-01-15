@@ -312,9 +312,9 @@ export default function InventoryShelf() {
   return (
     <>
       {/* 頂部區域 */}
-      <PageHeader title="請檢視棧板內容並執行盤點" />
+      <PageHeader title="請檢視棧板內容並執行盤點" backTo="/workspace" />
       {/* 主要內容區域 */}
-      <div className="flex-1 flex gap-4 px-2 py-8 items-stretch">
+      <div className="flex-1 flex gap-4 py-2 items-stretch">
         {/* 左側 */}
         <div className="w-[47%]">
           <CheckTable
@@ -335,7 +335,7 @@ export default function InventoryShelf() {
           <div className="w-full flex justify-between text-(length:--font-size-2xl)">
             <div>{filterLabel}</div>
           </div>
-          <div className="flex-1 bg-white p-5 flex flex-col gap-5">
+          <div className="flex-1 bg-white p-5 flex flex-col gap-5 justify-between">
             <div className="flex-1 overflow-y-auto max-h-[473px]">
               <SchematicDiagram>
                 <div className="flex justify-between text-(length:--font-size-4xl)">
