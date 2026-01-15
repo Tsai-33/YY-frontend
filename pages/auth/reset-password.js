@@ -105,11 +105,7 @@ export default function ResetPassword() {
     setLoading(true);
 
     try {
-      const response = await resetPasswordAPI(
-        token,
-        formData.newPassword,
-        formData.confirmPassword
-      );
+      const response = await resetPasswordAPI(token, formData.newPassword, formData.confirmPassword);
 
       if (response.success) {
         Alert({
@@ -129,8 +125,7 @@ export default function ResetPassword() {
       }
     } catch (error) {
       console.warn("重置密码错误:", error);
-      const errorMessage =
-        error.response?.data?.message || "重置鏈接無效或已過期";
+      const errorMessage = error.response?.data?.message || "重置鏈接無效或已過期";
 
       Alert({
         title: "重置失敗",
@@ -167,9 +162,7 @@ export default function ResetPassword() {
         <div className="w-full max-w-md">
           {/* 表单 */}
           <div>
-            <h2 className="text-2xl font-bold text-black mb-8 text-center">
-              設置新密碼 Reset Password
-            </h2>
+            <h2 className="text-2xl font-bold text-black mb-8 text-center">設置新密碼 Reset Password</h2>
 
             <form onSubmit={handleResetPassword} className="space-y-5">
               {/* 新密码 */}
@@ -183,17 +176,20 @@ export default function ResetPassword() {
                     onChange={handleChange}
                     placeholder="新密碼 New Password"
                     borderColor=""
-                    className="text-base w-full pr-12"
+                    className="w-full h-[70px] py-4 pl-6 pr-14 rounded-2xl bg-white shadow-sm border-none outline-none
+                              transition-all duration-200
+                              
+                              placeholder:text-slate-600 
+                              placeholder:font-medium 
+                              placeholder:opacity-100
+                              
+                              focus:placeholder:text-black
+                              focus:placeholder:font-normal
+                              focus:placeholder:opacity-30
+                              "
                   />
-                  <button
-                    type="button"
-                    onClick={() => togglePasswordVisibility("new")}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors">
-                    {showPasswords.new ? (
-                      <span className="icon-openEye"></span>
-                    ) : (
-                      <span className="icon-closeEye"></span>
-                    )}
+                                <button type="button" onClick={() => togglePasswordVisibility("new")} className={`absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors ${showPasswords.new ? "mt-1" : "mt-2"}`}>
+                    {showPasswords.new ? <span className="icon-openEye text-4xl"></span> : <span className="icon-closeEye text-4xl"></span>}
                   </button>
                 </div>
               </div>
@@ -209,27 +205,27 @@ export default function ResetPassword() {
                     onChange={handleChange}
                     placeholder="確認新密碼 Confirm New Password"
                     borderColor=""
-                    className="text-base w-full pr-12"
+                    className="w-full h-[70px] py-4 pl-6 pr-14 rounded-2xl bg-white shadow-sm border-none outline-none
+                              transition-all duration-200
+                              
+                              placeholder:text-slate-600 
+                              placeholder:font-medium 
+                              placeholder:opacity-100
+                              
+                              focus:placeholder:text-black
+                              focus:placeholder:font-normal
+                              focus:placeholder:opacity-30
+                              "
                   />
-                  <button
-                    type="button"
-                    onClick={() => togglePasswordVisibility("confirm")}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors">
-                    {showPasswords.confirm ? (
-                      <span className="icon-openEye"></span>
-                    ) : (
-                      <span className="icon-closeEye"></span>
-                    )}
+                  <button type="button" onClick={() => togglePasswordVisibility("confirm")} className={`absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors ${showPasswords.confirm ? "mt-1" : "mt-2"}`}>
+                    {showPasswords.confirm ? <span className="icon-openEye text-4xl"></span> : <span className="icon-closeEye text-4xl"></span>}
                   </button>
                 </div>
               </div>
 
               {/* 按钮 */}
               <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 bg-[#008b48] hover:bg-[#007a3f] text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <button type="submit" disabled={loading} className="w-full py-3 bg-[#008b48] hover:bg-[#007a3f] text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   重置密碼
                 </button>
               </div>

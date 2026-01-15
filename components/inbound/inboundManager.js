@@ -3,13 +3,14 @@ import { managerInbound, resetInbound, updateOrderList } from "@/redux/reducer/r
 import Alert from "../common/alert/alert";
 import { useEffect, useState } from "react";
 import { getTable } from "./inboundFunction";
-import { Settings, Trash2, Package, Activity, X, Filter, Lock, Database, Search, ListCheck, List } from "lucide-react";
+import { Settings, Trash2, Package, Activity, X, Filter, Lock, Database, Search } from "lucide-react";
+import { deleteTask } from "@/pages/api";
 
 export default function InboundManager({ isOpen, onClose }) {
   const dispatch = useDispatch();
-  const { stations, currentStation } = useSelector((s) => s.workstation);
+  const { stations } = useSelector((s) => s.workstation);
   const inbound = useSelector((state) => state.inbound);
-  const { orderList, lackStation } = inbound;
+
 
   const [station, setStation] = useState("A01");
   const [o, setO] = useState("");

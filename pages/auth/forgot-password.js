@@ -5,6 +5,7 @@ import InputFrame from "@/components/common/input/inputFrame";
 import Loading from "@/components/common/loading/loading";
 import Alert from "@/components/common/alert/alert";
 import Link from "next/link";
+import ActionBtn from "@/components/common/btns/actionBtn";
 
 export default function ForgotPassword() {
   const router = useRouter();
@@ -78,7 +79,7 @@ export default function ForgotPassword() {
             {!emailSent ? (
               <>
                 {/* 标题 */}
-                <h2 className="text-2xl font-bold text-black mb-8 text-center">
+                <h2 className="text-(--green-deep) mb-8 text-center">
                   忘記密碼 Forgot your password
                 </h2>
 
@@ -92,21 +93,24 @@ export default function ForgotPassword() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="輸入您的郵箱 Email"
+                      placeholder="輸入您的信箱 Email"
                       borderColor=""
-                      className="text-base w-full"
+                       className="w-full h-[70px] py-4 pl-6 pr-14 rounded-2xl bg-white shadow-sm border-none outline-none
+                              transition-all duration-200
+                              
+                              placeholder:text-slate-600 
+                              placeholder:font-medium 
+                              placeholder:opacity-100
+                              
+                              focus:placeholder:text-black
+                              focus:placeholder:font-normal
+                              focus:placeholder:opacity-30
+                              "
                     />
                   </div>
 
                   {/* 按钮 - 送出 */}
-                  <div className="pt-2">
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full py-3 bg-[#008b48] hover:bg-[#007a3f] text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                      送出
-                    </button>
-                  </div>
+                  <ActionBtn text="確定" type="submit" disabled={loading} className="w-full py-3 bg-(--primary-color) hover:bg-(--green-fresh) text-white disabled:opacity-50 disabled:cursor-not-allowed" />
                 </form>
               </>
             ) : (

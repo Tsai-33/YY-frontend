@@ -56,11 +56,22 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ⭐ 事件處理
   // ============================
   const handleBarCode = async (e) => {
-    if (screen === "loading") return;
-    if (e.key !== "Enter") return;
-    const inputBarCode = e.target.value.trim();
-    const result = tableData.some((item) => item?.INSTOCK_NO === inputBarCode);
-    if (result) {
+    if (screen === "loading" || e.key !== "Enter") return;
+
+    const inputBarCode = e.target.value.trim().toUpperCase();
+    if (!inputBarCode) return;
+
+    // 檢查是否含有中文字或全形字 (Regex: /[^\x00-\xff]/ 匹配雙位元字元)
+    if (/[^\x00-\xff]/.test(inputBarCode)) {
+      e.preventDefault();
+      Alert({ title: "偵測到非預期字元，請確保為英文輸入模式" });
+      barCodeRef.current.value = "";
+      return;
+    }
+
+    const matchedOrder = tableData.find((item) => item?.INSTOCK_NO === inputBarCode);
+
+    if (matchedOrder) {
       const value = tableData.find((item) => item?.INSTOCK_NO === inputBarCode);
       dispatch(setInbound({ station: currentStation, order: value, orderCode: value?.INSTOCK_NO, waveNo: value?.W_ID, step: 2 }));
       barCodeRef.current.value = "";
@@ -356,7 +367,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         <div className="w-[53%] flex flex-col">
           <div className="flex items-center p-4">
             <label htmlFor="order">
-              入庫單條碼<span className="text-lg px-1">:</span>
+              入倉單條碼<span className="text-lg px-1">:</span>
             </label>
             <OrderTitle />
           </div>

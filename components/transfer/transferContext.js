@@ -31,11 +31,22 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   // ⭐ 事件處理
   // ============================
   const handleBarCode = async (e) => {
-    if (screen === "loading") return;
-    if (e.key !== "Enter") return;
-    const inputBarCode = e.target.value.trim();
-    const result = tableData.some((item) => item.INSTOCK_NO === inputBarCode);
-    if (result) {
+    if (screen === "loading" || e.key !== "Enter") return;
+
+        const inputBarCode = e.target.value.trim().toUpperCase();
+    if (!inputBarCode) return;
+
+    // 檢查是否含有中文字或全形字 (Regex: /[^\x00-\xff]/ 匹配雙位元字元)
+    if (/[^\x00-\xff]/.test(inputBarCode)) {
+      e.preventDefault();
+      Alert({title:"偵測到非預期字元，請確保為英文輸入模式"}); 
+      barCodeRef.current.value = "";
+      return;
+    }
+
+    const matchedOrder = tableData.find((item) => item?.INSTOCK_NO === inputBarCode);
+
+    if (matchedOrder) {
       const value = tableData.find((item) => item.INSTOCK_NO === inputBarCode);
       dispatch(
         setTransfer({
@@ -225,6 +236,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       );
     }
   };
+
   // ============================
   // ⭐ 貨架顯示用的資料
   // ============================
