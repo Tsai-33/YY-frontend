@@ -56,19 +56,17 @@ export default function StockAreaTest() {
     try {
       setLoading(true);
 
-      const payloadData = Object.entries(nodeAssignments).map(
-        ([nodeCode, whId]) => ({
-          node_code: nodeCode,
-          warehouse_id: whId,
-        })
-      );
+      const payloadData = Object.entries(nodeAssignments).map(([nodeCode, whId]) => ({
+        node_code: nodeCode,
+        warehouse_id: whId,
+      }));
 
       const payload = { map_id: "4", data: payloadData };
       // console.log("payload:", payload);
       const res = await updateMapLayout(payload);
       console.log("res:", res.data);
 
-      if (res.data.success) {
+      if (res?.data?.success) {
         Swal.fire({
           icon: "success",
           title: "更新成功",
@@ -79,6 +77,8 @@ export default function StockAreaTest() {
 
         // 重新載入資料
         await fetchData();
+      } else {
+        Alert({ title: res?.error?.message });
       }
     } catch (error) {
       console.error("更新失敗:", error);
@@ -122,14 +122,7 @@ export default function StockAreaTest() {
         </div>
         {/* 右側 - 倉庫地圖 */}
         <div className="w-[70%] flex-1 flex flex-col gap-2 min-h-0">
-          <Map
-            shelvesData={shelvesMapData}
-            activeWh={activeWh}
-            isEraserMode={isEraserMode}
-            nodeAssignments={nodeAssignments}
-            setNodeAssignments={setNodeAssignments}
-            handleConfirm={handleConfirm}
-          />
+          <Map shelvesData={shelvesMapData} activeWh={activeWh} isEraserMode={isEraserMode} nodeAssignments={nodeAssignments} setNodeAssignments={setNodeAssignments} handleConfirm={handleConfirm} />
         </div>
       </div>
     </>

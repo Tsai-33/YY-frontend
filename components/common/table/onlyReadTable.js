@@ -2,16 +2,7 @@ import { searchStockDetail } from "@/pages/api";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function OnlyReadTable({
-  headers = [],
-  data = [],
-  type,
-  name,
-  onChange,
-  checked,
-  idKey,
-  height,
-}) {
+export default function OnlyReadTable({ headers = [], data = [], type, name, onChange, checked, idKey, height }) {
   const containerHeight = height || "65vh";
   const innerHeight = height ? `calc(${height} - 1vh)` : "65vh"; // 沒傳就用原本的
 
@@ -38,9 +29,7 @@ export default function OnlyReadTable({
       setLoadingRow(rowId);
 
       // 解析入倉單號 (可能有多個)
-      const instockNos = row.INSTOCK_NO
-        ? row.INSTOCK_NO.split(",").map((s) => s.trim())
-        : [];
+      const instockNos = row.INSTOCK_NO ? row.INSTOCK_NO.split(",").map((s) => s.trim()) : [];
 
       const prtNo = row.PRT_NO;
 
@@ -49,13 +38,15 @@ export default function OnlyReadTable({
         instockNos: instockNos,
       };
       const res = await searchStockDetail(payload);
-      if (res.data.success) {
+      if (res?.data?.success) {
         const data = res.data.data;
         // console.log("data:", data);
         setDetailMap((prev) => ({
           ...prev,
           [rowId]: data,
         }));
+      } else {
+        Alert({ title: res?.error?.message });
       }
     } catch (err) {
       console.warn(err);
@@ -72,7 +63,8 @@ export default function OnlyReadTable({
         maxHeight: innerHeight,
         "--scrollbar-thumb-color": `var(--green-vivid)`,
         "--scrollbar-thumb-hover-color": `var(--green-vivid)`,
-      }}>
+      }}
+    >
       <table className="table-auto min-w-max text-black text-(length:--font-size-2xl) font-bold">
         <thead className="sticky top-0 bg-white z-5">
           <tr className={`bg-(--gray-light)`}>
@@ -83,10 +75,9 @@ export default function OnlyReadTable({
                 style={{
                   width: `${header.width}`,
                   boxShadow: "inset 0 0 0 1px #ffffff",
-                }}>
-                {header.renderHeader
-                  ? header.renderHeader(header)
-                  : header.label}
+                }}
+              >
+                {header.renderHeader ? header.renderHeader(header) : header.label}
               </th>
             ))}
           </tr>
@@ -101,21 +92,10 @@ export default function OnlyReadTable({
             return (
               <React.Fragment key={rowId}>
                 {/* ===== 主資料列 ===== */}
-                <tr
-                  className={`cursor-pointer hover:bg-(--green-pale) ${
-                    checked === rowId ? "bg-(--green-vivid-50) text-white" : ""
-                  }`}
-                  onClick={() => toggleRow(row)}>
+                <tr className={`cursor-pointer hover:bg-(--green-pale) ${checked === rowId ? "bg-(--green-vivid-50) text-white" : ""}`} onClick={() => toggleRow(row)}>
                   {headers.map((header, i) => (
-                    <td
-                      key={i}
-                      style={{ width: header.width }}
-                      className="border-(--green-vivid) px-4 py-2 border-b truncate">
-                      {header.hideInMain
-                        ? ""
-                        : header.render
-                        ? header.render(row)
-                        : row[header.key]}
+                    <td key={i} style={{ width: header.width }} className="border-(--green-vivid) px-4 py-2 border-b truncate">
+                      {header.hideInMain ? "" : header.render ? header.render(row) : row[header.key]}
                     </td>
                   ))}
                 </tr>
@@ -126,12 +106,7 @@ export default function OnlyReadTable({
                     <tr className="bg-(--gray-light)">
                       {/* 1. 使用 colSpan 確保這一列佔滿全部寬度，避免跑位 */}
                       <td colSpan={headers.length} className="p-0 border-none">
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.3, ease: "easeInOut" }}
-                          className="overflow-hidden">
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="overflow-hidden">
                           {/* 2. 內部嵌套一個 table 以維持與 Header 一致的對齊感 */}
                           <table className="w-full table-fixed ">
                             <tbody>
@@ -139,10 +114,7 @@ export default function OnlyReadTable({
                               {loadingRow === rowId && (
                                 <tr>
                                   {headers.map((header, i) => (
-                                    <td
-                                      key={i}
-                                      style={{ width: header.width }}
-                                      className="px-4 py-2 text-(length:--font-size-xl) font-medium text-black text-center">
+                                    <td key={i} style={{ width: header.width }} className="px-4 py-2 text-(length:--font-size-xl) font-medium text-black text-center">
                                       {i === 0 ? "讀取中…" : ""}
                                     </td>
                                   ))}
@@ -153,22 +125,12 @@ export default function OnlyReadTable({
                               {loadingRow !== rowId &&
                                 details?.length > 0 &&
                                 details.map((detail, detailIdx) => {
-                                  const isLast =
-                                    detailIdx === details.length - 1;
+                                  const isLast = detailIdx === details.length - 1;
                                   return (
                                     <tr key={`${rowId}-detail-${detailIdx}`}>
                                       {headers.map((header, i) => (
-                                        <td
-                                          key={i}
-                                          style={{ width: header.width }}
-                                          className={`px-4 py-2 text-(length:--font-size-xl) font-medium text-black truncate ${
-                                            isLast
-                                              ? "border-b border-(--green-vivid)"
-                                              : ""
-                                          }`}>
-                                          {header.renderDetail
-                                            ? header.renderDetail(detail)
-                                            : ""}
+                                        <td key={i} style={{ width: header.width }} className={`px-4 py-2 text-(length:--font-size-xl) font-medium text-black truncate ${isLast ? "border-b border-(--green-vivid)" : ""}`}>
+                                          {header.renderDetail ? header.renderDetail(detail) : ""}
                                         </td>
                                       ))}
                                     </tr>
@@ -176,19 +138,15 @@ export default function OnlyReadTable({
                                 })}
 
                               {/* 無資料 */}
-                              {loadingRow !== rowId &&
-                                (!details || details.length === 0) && (
-                                  <tr>
-                                    {headers.map((header, i) => (
-                                      <td
-                                        key={i}
-                                        style={{ width: header.width }}
-                                        className="px-4 py-2 text-(length:--font-size-xl) font-medium text-black text-center">
-                                        {i === 0 ? "無詳細資料" : ""}
-                                      </td>
-                                    ))}
-                                  </tr>
-                                )}
+                              {loadingRow !== rowId && (!details || details.length === 0) && (
+                                <tr>
+                                  {headers.map((header, i) => (
+                                    <td key={i} style={{ width: header.width }} className="px-4 py-2 text-(length:--font-size-xl) font-medium text-black text-center">
+                                      {i === 0 ? "無詳細資料" : ""}
+                                    </td>
+                                  ))}
+                                </tr>
+                              )}
                             </tbody>
                           </table>
                         </motion.div>

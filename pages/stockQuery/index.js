@@ -4,6 +4,7 @@ import TextInput from "@/components/common/input/textInput";
 import SelectInput from "@/components/common/input/selectInput";
 import OnlyReadTable from "@/components/common/table/onlyReadTable";
 import { searchStock, stockDownload } from "../api";
+import Alert from "@/components/common/alert/alert";
 
 export default function StockQuery() {
   const tableHeader = [
@@ -67,30 +68,24 @@ export default function StockQuery() {
   const handleSearch = async () => {
     const payload = {
       ...filters,
-      BILL_TIME: filters.BILL_TIME
-        ? Number(filters.BILL_TIME.replace(/-/g, ""))
-        : null,
-      WORK_TIME: filters.WORK_TIME
-        ? Number(filters.WORK_TIME.replace(/-/g, ""))
-        : null,
+      BILL_TIME: filters.BILL_TIME ? Number(filters.BILL_TIME.replace(/-/g, "")) : null,
+      WORK_TIME: filters.WORK_TIME ? Number(filters.WORK_TIME.replace(/-/g, "")) : null,
     };
 
     const res = await searchStock(payload);
-    if (res.data.success) {
+    if (res?.data?.success) {
       const data = res.data.data;
       setStockData(data);
+    } else {
+      Alert({ title: res?.error?.message });
     }
   };
 
   const handleDownload = async () => {
     const payload = {
       ...filters,
-      BILL_TIME: filters.BILL_TIME
-        ? Number(filters.BILL_TIME.replace(/-/g, ""))
-        : null,
-      WORK_TIME: filters.WORK_TIME
-        ? Number(filters.WORK_TIME.replace(/-/g, ""))
-        : null,
+      BILL_TIME: filters.BILL_TIME ? Number(filters.BILL_TIME.replace(/-/g, "")) : null,
+      WORK_TIME: filters.WORK_TIME ? Number(filters.WORK_TIME.replace(/-/g, "")) : null,
     };
 
     try {
@@ -123,19 +118,8 @@ export default function StockQuery() {
       <div className="flex-1 flex flex-col justify-between">
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-5 gap-6">
-            <TextInput
-              label="訂單單號:"
-              className=""
-              value={filters.SALE_NO}
-              onChange={(e) => handleChange("SALE_NO", e.target.value)}
-              disabled={stockData.length > 0}
-            />
-            <TextInput
-              label="產品品號:"
-              value={filters.PRT_NO}
-              onChange={(e) => handleChange("PRT_NO", e.target.value)}
-              disabled={stockData.length > 0}
-            />
+            <TextInput label="訂單單號:" className="" value={filters.SALE_NO} onChange={(e) => handleChange("SALE_NO", e.target.value)} disabled={stockData.length > 0} />
+            <TextInput label="產品品號:" value={filters.PRT_NO} onChange={(e) => handleChange("PRT_NO", e.target.value)} disabled={stockData.length > 0} />
             <SelectInput
               label="入庫庫別:"
               value={filters.STOCK_AREA}
@@ -154,13 +138,7 @@ export default function StockQuery() {
               onChange={(value) => handleChange("STOCK_AREA", value)}
               disabled={stockData.length > 0}
             />
-            <TextInput
-              label="產品/進貨日期:"
-              type="date"
-              value={filters.BILL_TIME}
-              onChange={(e) => handleChange("BILL_TIME", e.target.value)}
-              disabled={stockData.length > 0}
-            />
+            <TextInput label="產品/進貨日期:" type="date" value={filters.BILL_TIME} onChange={(e) => handleChange("BILL_TIME", e.target.value)} disabled={stockData.length > 0} />
             <SelectInput
               label="備註:"
               value={filters.SEAL}
@@ -173,39 +151,13 @@ export default function StockQuery() {
             />
           </div>
           <div className="grid grid-cols-5 gap-6 items-end">
-            <TextInput
-              label="產品品名:"
-              value={filters.PRT_NAME}
-              onChange={(e) => handleChange("PRT_NAME", e.target.value)}
-              disabled={stockData.length > 0}
-            />
-            <TextInput
-              label="貨號:"
-              value={filters.PRT_CODE}
-              onChange={(e) => handleChange("PRT_CODE", e.target.value)}
-              disabled={stockData.length > 0}
-            />
-            <TextInput
-              label="客戶代號:"
-              value={filters.CUS_NO}
-              onChange={(e) => handleChange("CUS_NO", e.target.value)}
-              disabled={stockData.length > 0}
-            />
-            <TextInput
-              label="訂單預交日:"
-              type="date"
-              value={filters.WORK_TIME}
-              onChange={(e) => handleChange("WORK_TIME", e.target.value)}
-              disabled={stockData.length > 0}
-            />
+            <TextInput label="產品品名:" value={filters.PRT_NAME} onChange={(e) => handleChange("PRT_NAME", e.target.value)} disabled={stockData.length > 0} />
+            <TextInput label="貨號:" value={filters.PRT_CODE} onChange={(e) => handleChange("PRT_CODE", e.target.value)} disabled={stockData.length > 0} />
+            <TextInput label="客戶代號:" value={filters.CUS_NO} onChange={(e) => handleChange("CUS_NO", e.target.value)} disabled={stockData.length > 0} />
+            <TextInput label="訂單預交日:" type="date" value={filters.WORK_TIME} onChange={(e) => handleChange("WORK_TIME", e.target.value)} disabled={stockData.length > 0} />
 
             <div className="flex justify-end gap-3">
-              <button
-                className={`px-4 py-2 bg-green-600 text-white rounded-md text-lg font-bold ${
-                  stockData.length > 0 ? "cursor-pointer" : "cursor-not-allowed"
-                }`}
-                onClick={handleDownload}
-                disabled={stockData.length === 0}>
+              <button className={`px-4 py-2 bg-green-600 text-white rounded-md text-lg font-bold ${stockData.length > 0 ? "cursor-pointer" : "cursor-not-allowed"}`} onClick={handleDownload} disabled={stockData.length === 0}>
                 下載
               </button>
               <button
@@ -223,30 +175,18 @@ export default function StockQuery() {
                     CUS_NO: "",
                   });
                   setStockData([]);
-                }}>
+                }}
+              >
                 清除
               </button>
-              <button
-                className={`px-4 py-2 bg-blue-600 text-white rounded-md text-lg font-bold ${
-                  stockData.length > 0 ? "cursor-not-allowed" : "cursor-pointer"
-                }`}
-                onClick={handleSearch}
-                disabled={stockData.length > 0}>
+              <button className={`px-4 py-2 bg-blue-600 text-white rounded-md text-lg font-bold ${stockData.length > 0 ? "cursor-not-allowed" : "cursor-pointer"}`} onClick={handleSearch} disabled={stockData.length > 0}>
                 查詢
               </button>
             </div>
           </div>
         </div>
         <div>
-          <OnlyReadTable
-            headers={tableHeader}
-            data={stockData}
-            type="radio"
-            name="stockQuery"
-            variants="green"
-            idKey="INDEX"
-            height="67vh"
-          />
+          <OnlyReadTable headers={tableHeader} data={stockData} type="radio" name="stockQuery" variants="green" idKey="INDEX" height="67vh" />
         </div>
       </div>
     </>

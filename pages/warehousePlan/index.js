@@ -131,9 +131,7 @@ export default function WarehousePlanIndex() {
 
   // 處理輸入變更
   const handleInputChange = (id, field, value) => {
-    setWarehouseData((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
-    );
+    setWarehouseData((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   };
 
   // 處理確定按鈕
@@ -143,7 +141,7 @@ export default function WarehousePlanIndex() {
 
       const res = await updateWarehouses(warehouseData);
 
-      if (res.data.success) {
+      if (res?.data?.success) {
         Swal.fire({
           icon: "success",
           title: "更新成功",
@@ -154,6 +152,8 @@ export default function WarehousePlanIndex() {
 
         // 重新載入資料
         await fetchData();
+      } else {
+        Alert({ title: res?.error?.message });
       }
     } catch (error) {
       console.warn("更新失敗:", error);
@@ -181,22 +181,13 @@ export default function WarehousePlanIndex() {
       <div className="flex flex-1 gap-4 px-2 py-4 min-h-0">
         {/* 左側 - 倉別配置表格 */}
         <div className="col-span-4 flex flex-col min-h-0">
-          <WarehouseTable
-            warehouseData={warehouseData}
-            onInputChange={handleInputChange}
-            onConfirm={handleConfirm}
-          />
+          <WarehouseTable warehouseData={warehouseData} onInputChange={handleInputChange} onConfirm={handleConfirm} />
         </div>
         {/* 右側 - 倉庫地圖 */}
         <div className="col-span-8 flex flex-col min-h-0 min-w-0">
           {/* 上傳按鈕 */}
           <div className="mb-2 flex justify-end shrink-0">
-            <ActionBtn
-              icon="icon-upload"
-              text="上傳地圖資料"
-              variant="blue"
-              onClick={() => router.push("/warehousePlan/uploadMap")}
-            />
+            <ActionBtn icon="icon-upload" text="上傳地圖資料" variant="blue" onClick={() => router.push("/warehousePlan/uploadMap")} />
           </div>
           <WarehouseMap shelvesData={shelvesMapData} />
         </div>
