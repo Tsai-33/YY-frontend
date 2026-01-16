@@ -40,24 +40,24 @@ export default function Login() {
         sessionStorage.removeItem("logoutReason");
 
         let title = "登入已過期";
-        let text = "請重新登入";
+        let html = "請重新登入";
 
         switch (reason || logoutReason) {
           case "session_expired":
             title = "Session 已過期";
-            text = "系統已自動登出。請重新登入";
+            html = "系統已自動登出。請重新登入";
             break;
           case "token_expired":
             title = "Token 已過期";
-            text = "登入憑證已過期，請重新登入";
+            html = "登入憑證已過期，請重新登入";
             break;
           case "unauthorized":
             title = "未授權";
-            text = "您沒有權限訪問該資源，請重新登入";
+            html = "您沒有權限訪問該資源，請重新登入";
             break;
           default:
             title = "需要重新登入";
-            text = "請重新登入以繼續使用";
+            html = "請重新登入以繼續使用";
         }
 
         // Hiển thị alert
