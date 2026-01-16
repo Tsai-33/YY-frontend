@@ -15,7 +15,7 @@ export default function SelectInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="flex-1 rounded-md px-3 py-2 bg-[#878787] text-white outline-none">
+        className="flex-1 rounded-md px-3 py-2 bg-[#878787] text-white text-[16px] outline-none">
         <option value="">請選擇{label}</option>
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>

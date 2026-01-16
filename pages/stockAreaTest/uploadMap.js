@@ -70,9 +70,11 @@ export default function UploadMapPage() {
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
           // 跳過標題行，轉換為物件格式
-          // 欄位對應: F=5, G=6, H=7, I=8
+          // 欄位對應: A=0, E=4, F=5, G=6, H=7, I=8
           const rows = jsonData.slice(1).map((row, index) => ({
             rowNum: index + 2,
+            shelfCode: row[0] || "", // A欄: 貨架編碼
+            shelfNumber: row[4] || "", // E欄: 貨架數字碼
             mapCode: row[5] || "", // F欄: 地圖編碼
             nodeCode: row[6] || "", // G欄: 貨架停靠點
             dockX: row[7] || 0, // H欄: 停靠座標x
@@ -154,7 +156,7 @@ export default function UploadMapPage() {
       });
 
       // 返回主頁
-      router.push("/warehousePlan");
+      router.push("/stockAreaTest");
     } catch (error) {
       console.error("上傳失敗:", error);
       Swal.fire({
@@ -178,23 +180,23 @@ export default function UploadMapPage() {
   };
 
   return (
-    <div className="flex flex-col flex-1 p-6 gap-6">
+    <div className="p-6 flex-1 flex flex-col gap-6">
       {/* Loading Overlay */}
       {loading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg shadow-xl min-w-[300px]">
+        <div className="bg-black bg-opacity-50 flex items-center justify-center fixed inset-0 z-50">
+          <div className="min-w-[300px] p-8 bg-white rounded-lg shadow-xl">
             <div className="text-center">
               <div className="mb-4">
-                <div className="w-full bg-gray-200 rounded-full h-4">
+                <div className="w-full h-4 bg-gray-200 rounded-full">
                   <div
-                    className="bg-blue-500 h-4 rounded-full transition-all duration-300"
+                    className="h-4 bg-blue-500 rounded-full transition-all duration-300"
                     style={{ width: `${uploadProgress}%` }}></div>
                 </div>
               </div>
               <p className="text-lg font-medium text-gray-700">
                 上傳中... {uploadProgress}%
               </p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="mt-2 text-sm text-gray-500">
                 正在處理資料，請勿關閉頁面
               </p>
             </div>
@@ -206,24 +208,26 @@ export default function UploadMapPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">上傳地圖資料</h1>
         <ActionBtn
-          icon="icon-arrow-left"
+          icon="icon-goback"
           text="返回"
           variant="gray"
-          onClick={() => router.push("/warehousePlan")}
+          onClick={() => router.push("/stockAreaTest")}
         />
       </div>
 
       {/* 上傳區域 */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold mb-4">選擇 Excel 檔案</h2>
+      <div className="p-6 bg-white rounded-lg shadow-sm">
+        <h2 className="mb-4 text-lg font-semibold">選擇 Excel 檔案</h2>
 
         {/* 說明 */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h3 className="font-medium text-blue-800 mb-2">Excel 格式說明：</h3>
-          <p className="text-sm text-blue-700 mb-2">
+        <div className="p-4 mb-6 bg-blue-50 border border-blue-200 rounded-lg flex flex-col gap-2">
+          <h3 className="font-medium text-blue-800">Excel 格式說明：</h3>
+          <p className="text-base text-blue-700">
             請確保 Excel 檔案包含以下欄位：
           </p>
-          <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
+          <ul className="text-base text-blue-700 list-disc list-inside space-y-1">
+            <li>A欄: 貨架編碼 (例如: A01, B02)</li>
+            <li>E欄: 貨架數字碼 (例如: 1, 2, 3)</li>
             <li>F欄: 地圖編碼 (地圖標識)</li>
             <li>G欄: 貨架停靠點 (例如: 0001, 0002, 0003)</li>
             <li>H欄: 停靠座標X (數字)</li>
@@ -232,7 +236,7 @@ export default function UploadMapPage() {
         </div>
 
         {/* 檔案選擇 */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="mb-6 flex items-center gap-4">
           <input
             ref={fileInputRef}
             type="file"
@@ -243,18 +247,18 @@ export default function UploadMapPage() {
           />
           <label
             htmlFor="excel-upload"
-            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg cursor-pointer transition-colors font-medium">
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white text-lg font-medium cursor-pointer transition-colors">
             選擇檔案
           </label>
 
           {file && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 text-base">
               <span className="text-gray-700">
                 已選擇: <strong>{file.name}</strong>
               </span>
               <button
                 onClick={handleClear}
-                className="text-red-500 hover:text-red-700 text-sm">
+                className="px-2 py-1 border rounded-md text-red-500 hover:text-red-700 text-sm cursor-pointer">
                 清除
               </button>
             </div>
@@ -264,14 +268,20 @@ export default function UploadMapPage() {
         {/* 預覽區域 */}
         {previewData.length > 0 && (
           <div className="mb-6">
-            <h3 className="font-medium text-gray-700 mb-3">
+            <h3 className="mb-3 font-medium text-gray-700">
               資料預覽（前10筆）：
             </h3>
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300 text-sm">
+              <table className="w-full border-collapse border border-gray-300 text-base">
                 <thead>
                   <tr className="bg-gray-100">
                     <th className="border border-gray-300 px-3 py-2">行號</th>
+                    <th className="border border-gray-300 px-3 py-2">
+                      貨架編碼
+                    </th>
+                    <th className="border border-gray-300 px-3 py-2">
+                      貨架數字碼
+                    </th>
                     <th className="border border-gray-300 px-3 py-2">
                       地圖編碼
                     </th>
@@ -293,6 +303,12 @@ export default function UploadMapPage() {
                       className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                       <td className="border border-gray-300 px-3 py-2 text-center">
                         {row.rowNum}
+                      </td>
+                      <td className="border border-gray-300 px-3 py-2 text-center">
+                        {row.shelfCode}
+                      </td>
+                      <td className="border border-gray-300 px-3 py-2 text-center">
+                        {row.shelfNumber}
                       </td>
                       <td className="border border-gray-300 px-3 py-2 text-center">
                         {row.mapCode}
@@ -320,17 +336,17 @@ export default function UploadMapPage() {
         {/* 上傳按鈕 */}
         <div className="flex gap-4">
           <ActionBtn
-            icon="icon-upload"
+            icon=""
             text="確認上傳"
             variant="orange"
             onClick={handleUpload}
             disabled={!file || loading}
           />
           <ActionBtn
-            icon="icon-close"
+            icon=""
             text="取消"
             variant="gray"
-            onClick={() => router.push("/warehousePlan")}
+            onClick={() => router.push("/stockAreaTest")}
           />
         </div>
       </div>
