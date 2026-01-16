@@ -66,7 +66,7 @@ export default function ShelfTransferShelf() {
         if (searching) return;
 
         if (!selectedArea) {
-            Alert({ text: "請選擇庫別" });
+            Alert({ title: "請選擇庫別" });
             return;
         }
         setSearching(true);
@@ -78,7 +78,7 @@ export default function ShelfTransferShelf() {
                 setPrtNo(inputValue);
             } else {
                 setTableData([]);
-                Alert({ text: "查無資料" });
+                Alert({ title: "查無資料" });
             }
         } catch (error) {
             console.warn("getWMSByAreaAndPrtNo:", error);
@@ -111,7 +111,7 @@ export default function ShelfTransferShelf() {
                     return prev.filter((id) => id !== shelveId);
                 } else {
                     if (prev.length >= stations.length) {
-                        Alert({ text: `最多只能選擇${stations.length}個貨架` });
+                        Alert({ title: `此站最多只能選擇${stations.length}個貨架` });
                         return prev;
                     }
                     return [...prev, shelveId];
@@ -147,7 +147,7 @@ export default function ShelfTransferShelf() {
 
     const handleConfirm = async () => {
         if (!canConfirm) {
-            Alert({ text: `請選擇1~${stations.length}個貨架` });
+            Alert({ title: `請選擇1~${stations.length}個貨架` });
         }
 
         try {
@@ -205,11 +205,11 @@ export default function ShelfTransferShelf() {
                 setTableData([]);
                 setSelectedRows([]);
             } else {
-                Alert({ text: res.data.message || "派車失敗", icon: "error" });
+                Alert({ title: res.data.message || "派車失敗", icon: "error" });
             }
         } catch (error) {
             console.warn("handleConfirm:", error);
-            Alert({ text: "派車失敗" });
+            Alert({ title: "派車失敗" });
         }
     }
 

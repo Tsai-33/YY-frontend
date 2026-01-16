@@ -104,7 +104,7 @@ export default function OutboundInternal() {
       orderBarCodeRef.current.value = "";
     } else if (orderCode && orderCode !== inputBarCode) {
       // 已選擇但條碼不匹配
-      Alert({ text: "條碼與選擇的領用單不符" });
+      Alert({ title: "條碼與選擇的領用單不符" });
       orderBarCodeRef.current.value = "";
     } else {
       setAskingOrder(true);
@@ -134,13 +134,13 @@ export default function OutboundInternal() {
                 step: 2
               }));
             } else {
-              Alert({ text: "單號已更新但清單中找不到該筆資料，請稍後再試" });
+              Alert({ title: "單號已更新但清單中找不到該筆資料，請稍後再試" });
             }
           }
         } else if (result === "NG") {
-          Alert({ text: res.data.data?.message || "無此單號" });
+          Alert({ title: res.data.data?.message || "無此單號" });
         } else {
-          Alert({ text: "查詢單號失敗" });
+          Alert({ title: "查詢單號失敗" });
         }
       } catch (error) {
         console.warn("ask_order 錯誤:", error);
@@ -338,11 +338,11 @@ export default function OutboundInternal() {
 
   const handleReturnShelf = async () => {
     if (!currentStation) {
-      Alert({ html: "抓不到站點位置"});
+      Alert({ title: "抓不到站點位置"});
       return;
     }
     if (!shelf?.SHELVE_ID) {
-        Alert({ text: "找不到貨架資訊" });
+        Alert({ title: "找不到貨架資訊" });
         return;
     }
 
@@ -365,7 +365,7 @@ export default function OutboundInternal() {
       }
 
       if (itemsToShift.length === 0) {
-        Alert({ text: "沒有出庫的產品" });
+        Alert({ title: "沒有出庫的產品" });
         setLoading(false);
         return;
       }
@@ -380,7 +380,7 @@ export default function OutboundInternal() {
       });
 
       if (!shiftRes.data.success) {
-        Alert({ text: shiftRes.data.message || "出庫失敗" });
+        Alert({ title: shiftRes.data.message || "出庫失敗" });
         setLoading(false);
         return;
       }

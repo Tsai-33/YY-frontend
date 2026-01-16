@@ -4,8 +4,8 @@ import CategoryBtn from "@/components/common/btns/categoryBtn";
 
 export default function ShelfTransfer() {
     const menuItems = [
-        { key: "order", text: "訂單理貨", path: "/shelfTransfer/order", icon: "" },
-        { key: "shelf", text: "貨架調整", path: "/shelfTransfer/shelf", icon: "" },
+        { key: "order", text: "訂單理貨", path: "/shelfTransfer/order", svgPath: "/common/icon-shelfTransfer-order.svg" },
+        { key: "shelf", text: "貨架調整", path: "/shelfTransfer/shelf", svgPath: "/common/icon-shelfTransfer-adjust.svg" },
     ];
 
     return (
@@ -14,7 +14,7 @@ export default function ShelfTransfer() {
             <div className="flex-1 flex justify-center items-center gap-20">
                 {menuItems.map((item) => (
                     <Link key={item.key} href={item.path}>
-                        <CategoryBtn icon={item.icon} text={item.text} variant="darkGreen" />
+                        <CategoryBtn svgPath={item.svgPath} text={item.text} variant="darkGreen" />
                     </Link>
                 ))}
             </div>
