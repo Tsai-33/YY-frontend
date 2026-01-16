@@ -24,11 +24,11 @@ export default function StockAreaTest() {
       // 取得所有貨架地圖資料
       const shelvesRes = await getMapNode();
       // console.log("shelvesRes.data:", shelvesRes.data.data);
-      if (shelvesRes.data.success && shelvesRes.data.data) {
-        setShelvesMapData(shelvesRes.data.data);
+      if (shelvesRes?.data?.success && shelvesRes?.data?.data) {
+        setShelvesMapData(shelvesRes?.data?.data);
 
         const savedAssignments = {};
-        shelvesRes.data.data.forEach((item) => {
+        shelvesRes?.data?.data.forEach((item) => {
           if (item.STOCK_AREA) {
             savedAssignments[item.NODE_CODE] = item.STOCK_AREA;
           }
@@ -64,7 +64,7 @@ export default function StockAreaTest() {
       const payload = { map_id: "4", data: payloadData };
       // console.log("payload:", payload);
       const res = await updateMapLayout(payload);
-      console.log("res:", res.data);
+      // console.log("res:", res?.data);
 
       if (res?.data?.success) {
         Swal.fire({

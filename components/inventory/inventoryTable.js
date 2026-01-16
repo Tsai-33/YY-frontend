@@ -1,6 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { setInventory, setPage, setBatchNo } from "@/redux/reducer/reducerInventory";
+import {
+  setInventory,
+  setPage,
+  setBatchNo,
+} from "@/redux/reducer/reducerInventory";
 import { getInventoryItems, createInventoryTask } from "../../pages/api";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
 import TextInput from "@/components/common/input/textInput";
@@ -69,7 +73,11 @@ export default function InventoryTable() {
     if (!dateTime) return "";
     // 如果已經是 Date 物件，轉成 ISO 字串後再裁切掉 T/Z
     if (dateTime instanceof Date) {
-      return dateTime.toISOString().replace("T", " ").replace("Z", "").slice(0, 19);
+      return dateTime
+        .toISOString()
+        .replace("T", " ")
+        .replace("Z", "")
+        .slice(0, 19);
     }
 
     // 如果是字串，就直接處理
@@ -83,9 +91,13 @@ export default function InventoryTable() {
 
     if (!CHECK_TIME_START && !CHECK_TIME_END) return "請選擇時間";
 
-    if (CHECK_TIME_START && CHECK_TIME_END) return `排除${formatDate(CHECK_TIME_START)}~${formatDate(CHECK_TIME_END)}之中的資料`;
+    if (CHECK_TIME_START && CHECK_TIME_END)
+      return `排除${formatDate(CHECK_TIME_START)}~${formatDate(
+        CHECK_TIME_END
+      )}之中的資料`;
 
-    if (CHECK_TIME_START) return `排除 ${formatDate(CHECK_TIME_START)} 之後的資料`;
+    if (CHECK_TIME_START)
+      return `排除 ${formatDate(CHECK_TIME_START)} 之後的資料`;
 
     return `排除 ${formatDate(CHECK_TIME_END)} 之前的資料`;
   }, [filters]);
@@ -112,7 +124,7 @@ export default function InventoryTable() {
     try {
       const res = await getInventoryItems(payload);
       if (res?.data?.success) {
-        const data = res.data.data;
+        const data = res?.data?.data;
 
         dispatch(
           setInventory({
@@ -156,7 +168,7 @@ export default function InventoryTable() {
       const res = await createInventoryTask(payload);
       if (res?.data?.success) {
         dispatch(setPage("inventory-shelf"));
-        dispatch(setBatchNo(res.data.data.batchNo));
+        dispatch(setBatchNo(res?.data?.data?.batchNo));
         dispatch(
           setInventory({
             station: "*",
@@ -173,7 +185,14 @@ export default function InventoryTable() {
   return (
     <>
       {/* 頂部區域 */}
-      {stockData?.length === 0 ? <PageHeader title="請輸入下方盤點參數查詢盤點貨架，輸入完請點擊檢視按鈕" backTo="/workspace" /> : <PageHeader title="請選擇盤點方式" backTo="/workspace" />}
+      {stockData?.length === 0 ? (
+        <PageHeader
+          title="請輸入下方盤點參數查詢盤點貨架，輸入完請點擊檢視按鈕"
+          backTo="/workspace"
+        />
+      ) : (
+        <PageHeader title="請選擇盤點方式" backTo="/workspace" />
+      )}
 
       {/* 主要內容區域 */}
       <div className="flex-1 flex flex-col justify-between">
@@ -197,13 +216,38 @@ export default function InventoryTable() {
               onChange={(value) => handleChange("STOCK_AREA", value)}
               disabled={stockData.length > 0}
             />
-            <TextInput label="訂單/工單單號:" value={filters.SALE_NO} onChange={(e) => handleChange("SALE_NO", e.target.value)} disabled={stockData.length > 0} />
-            <TextInput label="產品品號:" value={filters.PRT_NO} onChange={(e) => handleChange("PRT_NO", e.target.value)} disabled={stockData.length > 0} />
-            <TextInput label="客戶代號:" value={filters.CUS_NO} onChange={(e) => handleChange("CUS_NO", e.target.value)} disabled={stockData.length > 0} />
+            <TextInput
+              label="訂單/工單單號:"
+              value={filters.SALE_NO}
+              onChange={(e) => handleChange("SALE_NO", e.target.value)}
+              disabled={stockData.length > 0}
+            />
+            <TextInput
+              label="產品品號:"
+              value={filters.PRT_NO}
+              onChange={(e) => handleChange("PRT_NO", e.target.value)}
+              disabled={stockData.length > 0}
+            />
+            <TextInput
+              label="客戶代號:"
+              value={filters.CUS_NO}
+              onChange={(e) => handleChange("CUS_NO", e.target.value)}
+              disabled={stockData.length > 0}
+            />
           </div>
           <div className="grid grid-cols-3 gap-10 items-center">
-            <DateInput label="時間區間：" onClick={() => setTimeModalOpen(true)} timeRangeText={timeRangeText} disabled={stockData.length > 0} />
-            <CheckInput label={"標註異常資料"} onChange={(e) => handleChange("HAS_EXCEPTION", e.target.checked)} checked={filters.HAS_EXCEPTION} disabled={stockData.length > 0} />
+            <DateInput
+              label="時間區間："
+              onClick={() => setTimeModalOpen(true)}
+              timeRangeText={timeRangeText}
+              disabled={stockData.length > 0}
+            />
+            <CheckInput
+              label={"標註異常資料"}
+              onChange={(e) => handleChange("HAS_EXCEPTION", e.target.checked)}
+              checked={filters.HAS_EXCEPTION}
+              disabled={stockData.length > 0}
+            />
             <div className="flex gap-5 justify-end">
               <button
                 className="px-4 py-2 bg-gray-400 text-white rounded-md text-lg font-bold cursor-pointer"
@@ -223,18 +267,28 @@ export default function InventoryTable() {
                       data: { prtNo: "", stockArea: "", cusNo: "", saleNo: "" },
                     })
                   );
-                }}
-              >
+                }}>
                 清除
               </button>
-              <button className={`px-4 py-2 ${stockData.length === 0 ? "bg-blue-600" : "bg-orange-600"}  text-white rounded-md text-lg font-bold cursor-pointer`} onClick={stockData.length === 0 ? handleSearch : handleComfirm}>
+              <button
+                className={`px-4 py-2 ${
+                  stockData.length === 0 ? "bg-blue-600" : "bg-orange-600"
+                }  text-white rounded-md text-lg font-bold cursor-pointer`}
+                onClick={stockData.length === 0 ? handleSearch : handleComfirm}>
                 {stockData.length === 0 ? "查詢" : "確定"}
               </button>
             </div>
           </div>
         </div>
         <div>
-          <ReadTable headers={tableHeader} data={stockData || []} type="radio" name="stockQuery" variants="green" idKey="INDEX" />
+          <ReadTable
+            headers={tableHeader}
+            data={stockData || []}
+            type="radio"
+            name="stockQuery"
+            variants="green"
+            idKey="INDEX"
+          />
         </div>
       </div>
 
@@ -251,21 +305,41 @@ export default function InventoryTable() {
           setTimeModalOpen(false);
         }}
         width={`35vw`}
-        height={`40vh`}
-      >
+        height={`40vh`}>
         <div className="flex flex-col items-center gap-2.5">
-          <div className="text-(length:--font-size-4xl) font-bold text-[#000E19]">請輸入排除盤點紀錄時間區間</div>
+          <div className="text-(length:--font-size-4xl) font-bold text-[#000E19]">
+            請輸入排除盤點紀錄時間區間
+          </div>
           <div className="flex items-center gap-6 w-full text-[#000E19] ">
             {/* 起始時間 */}
             <div className="flex flex-col gap-1 w-full">
-              <label className="text-(length:--font-size-xl) font-bold">起始時間</label>
-              <input type="datetime-local" title="起始時間" value={tempTime.start || ""} onChange={(e) => setTempTime((t) => ({ ...t, start: e.target.value }))} className="border rounded px-3 py-2 bg-[#878787] text-white border-[#878787] focus:outline-none focus:ring-2 focus:ring-white/40" />
+              <label className="text-(length:--font-size-xl) font-bold">
+                起始時間
+              </label>
+              <input
+                type="datetime-local"
+                title="起始時間"
+                value={tempTime.start || ""}
+                onChange={(e) =>
+                  setTempTime((t) => ({ ...t, start: e.target.value }))
+                }
+                className="border rounded px-3 py-2 bg-[#878787] text-white border-[#878787] focus:outline-none focus:ring-2 focus:ring-white/40"
+              />
             </div>
             <div className="text-(length:--font-size-4xl) font-bold">~</div>
             {/* 結束時間 */}
             <div className="flex flex-col gap-1 w-full">
-              <label className="text-(length:--font-size-xl) font-bold">結束時間</label>
-              <input type="datetime-local" value={tempTime.end || ""} onChange={(e) => setTempTime((t) => ({ ...t, end: e.target.value }))} className="border rounded px-3 py-2 bg-[#878787] text-white border-[#878787] focus:outline-none focus:ring-2 focus:ring-white/40" />
+              <label className="text-(length:--font-size-xl) font-bold">
+                結束時間
+              </label>
+              <input
+                type="datetime-local"
+                value={tempTime.end || ""}
+                onChange={(e) =>
+                  setTempTime((t) => ({ ...t, end: e.target.value }))
+                }
+                className="border rounded px-3 py-2 bg-[#878787] text-white border-[#878787] focus:outline-none focus:ring-2 focus:ring-white/40"
+              />
             </div>
           </div>
         </div>
