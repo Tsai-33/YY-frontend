@@ -166,7 +166,7 @@ export default function ShelfTransferShelf() {
             }));
             const res = await insertShelfTask({ tasks });
 
-            if (res.data.success) {
+            if (res?.data.success) {
                 const initialShelveStatus = {};
                 selectedRows.forEach((shelveId) => {
                     initialShelveStatus[shelveId] = "loading";

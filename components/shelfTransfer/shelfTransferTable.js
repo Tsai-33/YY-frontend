@@ -167,7 +167,7 @@ export default function ShelfTransferTable() {
                 STATUS: 0,
                 CART_ID: "",
                 DATA_ID: generateRandomNumber(),
-                WAVENO: selectedOrder?.W_ID || 0,
+                WAVENO: selectedOrder?.W_ID,
                 GGROUP: "",
             }));
 
