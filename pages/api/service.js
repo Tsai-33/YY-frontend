@@ -5,6 +5,7 @@ export const api = axios.create({
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
+    "x-device-id": process.env.NEXT_PUBLIC_YY_UNIQUE,
   },
 });
 
@@ -13,7 +14,7 @@ api.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
       let token = null;
-      
+
       // 優先從 localStorage 直接讀取
       token = localStorage.getItem("accessToken");
 
@@ -23,9 +24,9 @@ api.interceptors.request.use(
           try {
             const parsed = JSON.parse(persistUser);
             token = parsed?.accessToken || parsed?.user?.accessToken;
-            
+
             // 處理雙引號 token
-            if (token && typeof token === 'string') {
+            if (token && typeof token === "string") {
               while (token.startsWith('"') && token.endsWith('"')) {
                 token = token.slice(1, -1);
               }
@@ -35,7 +36,7 @@ api.interceptors.request.use(
           }
         }
       }
-      
+
       // 將 header 設定到當前請求的 config 中 (重要!)
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -64,17 +65,17 @@ api.interceptors.response.use(
 
     if (code === "SESSION_LOGGED_OUT" || code === "NO_SESSION") {
       handleSessionLoggedOut();
-      return new Promise(() => {}); 
+      return new Promise(() => {});
     }
 
     if (status === 403) {
       handleTokenExpired();
-      return new Promise(() => {}); 
+      return new Promise(() => {});
     }
 
     if (status === 401) {
       handleUnauthorized();
-      return new Promise(() => {}); 
+      return new Promise(() => {});
     }
 
     handleApiError(error);
@@ -86,9 +87,8 @@ api.interceptors.response.use(
         status,
         message,
         raw: error,
-      }
+      },
     });
-
   }
 );
 
@@ -99,21 +99,24 @@ function handleSessionLoggedOut() {
   window.location.replace("/auth/login?reason=session_expired");
 }
 
-function handleTokenExpired() { // 403
+function handleTokenExpired() {
+  // 403
   if (typeof window === "undefined") return;
   clearAuth();
   sessionStorage.setItem("logoutReason", "token_expired");
   window.location.replace("/auth/login?reason=token_expired");
 }
 
-function handleUnauthorized() { // 401
+function handleUnauthorized() {
+  // 401
   if (typeof window === "undefined") return;
   clearAuth();
   sessionStorage.setItem("logoutReason", "unauthorized");
   window.location.replace("/auth/login?reason=unauthorized");
 }
 
-function handleApiError(error) { // 400, 404, 422, 429, 500
+function handleApiError(error) {
+  // 400, 404, 422, 429, 500
   const status = error.response?.status;
   switch (status) {
     case 400:
@@ -150,4 +153,3 @@ function clearAuth() {
     localStorage.removeItem("persist:user");
   }
 }
-

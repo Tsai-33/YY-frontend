@@ -21,7 +21,7 @@ export default function ForgotPassword() {
     if (!email) {
       Alert({
         title: "錯誤",
-        text: "請輸入帳號",
+        html: "請輸入帳號",
         confirmButtonColor: "#b32627",
       });
       return;
@@ -36,14 +36,14 @@ export default function ForgotPassword() {
         setEmailSent(true);
         Alert({
           title: "郵件已發送",
-          text: "如果該郵箱已註冊，您將收到密碼重置鏈接",
+          html: "如果該郵箱已註冊，您將收到密碼重置鏈接",
           confirmButtonColor: "#008b48",
         });
       } else {
         // Validation errors (格式錯誤，缺少欄位) → 顯示錯誤訊息
         Alert({
           title: "錯誤",
-          text: response.message || "發送失敗，請重試",
+          html: response.message || "發送失敗，請重試",
           confirmButtonColor: "#b32627",
         });
       }
@@ -53,7 +53,7 @@ export default function ForgotPassword() {
       setEmailSent(true);
       Alert({
         title: "郵件已發送",
-        text: "如果該郵箱已註冊，您將收到密碼重置鏈接",
+        html: "如果該郵箱已註冊，您將收到密碼重置鏈接",
         confirmButtonColor: "#008b48",
       });
     } finally {

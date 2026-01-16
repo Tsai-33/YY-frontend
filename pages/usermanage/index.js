@@ -99,7 +99,7 @@ function UserManage() {
       } else {
         Alert({
           title: "錯誤",
-          text: response,
+          html: response.message,
           confirmButtonColor: "#b32627",
         });
       }
@@ -107,7 +107,7 @@ function UserManage() {
       console.warn("獲取用戶列表失敗:", error);
       Alert({
         title: "錯誤",
-        text: "獲取用戶列表失敗",
+        html: "獲取用戶列表失敗",
         confirmButtonColor: "#b32627",
       });
     } finally {
@@ -262,7 +262,7 @@ function UserManage() {
     ) {
       Alert({
         title: "錯誤",
-        text: "請填寫所有必填字段",
+        html: "請填寫所有必填字段",
         confirmButtonColor: "#b32627",
       });
       return;
@@ -273,7 +273,7 @@ function UserManage() {
     if (!emailRegex.test(editingUser.email)) {
       Alert({
         title: "錯誤",
-        text: "郵箱格式不正確",
+        html: "郵箱格式不正確",
         confirmButtonColor: "#b32627",
       });
       return;
@@ -293,7 +293,7 @@ function UserManage() {
       if (response.success) {
         Alert({
           title: "成功",
-          text: "用戶更新成功",
+          html: "用戶更新成功",
           confirmButtonColor: "#008b48",
         });
 
@@ -321,7 +321,7 @@ function UserManage() {
       } else {
         Alert({
           title: "更新失敗",
-          text: response.message,
+          html: response.message,
           confirmButtonColor: "#b32627",
         });
       }
@@ -329,7 +329,7 @@ function UserManage() {
       console.warn("更新用戶失敗:", error);
       Alert({
         title: "更新錯誤",
-        text: error.response?.data?.message || "更新用戶失敗",
+        html: error.response?.data?.message || "更新用戶失敗",
         confirmButtonColor: "#b32627",
       });
     } finally {
@@ -357,13 +357,13 @@ function UserManage() {
           );
           Alert({
             title: "成功",
-            text: "下載用戶日志成功",
+            html: "下載用戶日志成功",
             confirmButtonColor: "#008b48",
           });
         } else {
           Alert({
             title: "無資料",
-            text: "無資料可下載",
+            html: "無資料可下載",
             confirmButtonColor: "#b32627",
           });
         }
@@ -374,7 +374,7 @@ function UserManage() {
       } else {
         Alert({
           title: "錯誤",
-          text: response.message || "發生未知錯誤",
+          html: response.message || "發生未知錯誤",
           confirmButtonColor: "#b32627",
         });
       }
@@ -382,7 +382,7 @@ function UserManage() {
       console.warn("下載日誌失敗:", error);
       Alert({
         title: "錯誤",
-        text: error.message || "下載用戶日志失敗",
+       html: error.message || "下載用戶日志失敗",
         confirmButtonColor: "#b32627",
       });
     } finally {
@@ -396,7 +396,7 @@ function UserManage() {
     if (!newUser.username || !newUser.email || !newUser.accountNumber) {
       Alert({
         title: "錯誤",
-        text: "請填寫所有必填字段",
+        html: "請填寫所有必填字段",
         confirmButtonColor: "#b32627",
       });
       return;
@@ -407,7 +407,7 @@ function UserManage() {
     if (!emailRegex.test(newUser.email)) {
       Alert({
         title: "錯誤",
-        text: "郵箱格式不正確",
+       html: "郵箱格式不正確",
         confirmButtonColor: "#b32627",
       });
       return;
@@ -421,7 +421,7 @@ function UserManage() {
       if (response.success) {
         Alert({
           title: "成功",
-          text: "用戶創建成功，默認密碼已發送至郵箱",
+          html: "用戶創建成功，默認密碼已發送至郵箱",
           confirmButtonColor: "#008b48",
         });
 
@@ -448,7 +448,7 @@ function UserManage() {
       } else {
         Alert({
           title: "創建失敗",
-          text: response.message,
+          html: response.message,
           confirmButtonColor: "#b32627",
         });
       }
@@ -456,7 +456,7 @@ function UserManage() {
       console.warn("創建用戶失敗:", error);
       Alert({
         title: "創建錯誤",
-        text: error.response?.data?.message || "創建用戶失敗",
+        html: error.response?.data?.message || "創建用戶失敗",
         confirmButtonColor: "#b32627",
       });
     } finally {
@@ -469,7 +469,7 @@ function UserManage() {
     if (selectedUsers.length === 0) {
       Alert({
         title: "提示",
-        text: "請先選擇要刪除的用戶",
+       html: "請先選擇要刪除的用戶",
         confirmButtonColor: "#FA8350",
       });
       return;
@@ -477,7 +477,7 @@ function UserManage() {
 
     Alert({
       title: "確認批量刪除",
-      text: `確定要刪除選中的 ${selectedUsers.length} 個用戶嗎？`,
+      html: `確定要刪除選中的 ${selectedUsers.length} 個用戶嗎？`,
       showCancel: true,
       confirmButtonText: "確定",
       cancelButtonText: "取消",
@@ -489,7 +489,7 @@ function UserManage() {
           if (response.success) {
             Alert({
               title: "成功",
-              text: `已刪除 ${selectedUsers.length} 個用戶`,
+             html: `已刪除 ${selectedUsers.length} 個用戶`,
               confirmButtonColor: "#008b48",
             });
             setSelectedUsers([]);
@@ -497,7 +497,7 @@ function UserManage() {
           } else {
             Alert({
               title: "刪除失敗",
-              text: response.message,
+             html: response.message,
               confirmButtonColor: "#b32627",
             });
           }
@@ -505,7 +505,7 @@ function UserManage() {
           console.warn("批量刪除失敗:", error);
           Alert({
             title: "刪除失敗",
-            text: "批量刪除用戶失敗",
+           html: "批量刪除用戶失敗",
             confirmButtonColor: "#b32627",
           });
         } finally {

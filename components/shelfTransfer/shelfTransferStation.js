@@ -84,7 +84,7 @@ export default function ShelfTransferStation() {
 
     const handleConfirm = async () => {
         if (!confirmCheck()) {
-            Alert({ text: "請確認已選擇的貨架" });
+            Alert({ html: "請確認已選擇的貨架" });
             return;
         }
         if (!operator) {
@@ -163,7 +163,7 @@ export default function ShelfTransferStation() {
                     value: res.data.data.newValue
                 }));
             } else {
-                Alert({ text: "更新失敗" });
+                Alert({ html: "更新失敗" });
             }
         } catch (error) {
             console.warn("updateShelveCheck: ", error);

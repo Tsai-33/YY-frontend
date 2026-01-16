@@ -27,7 +27,7 @@ export default function ResetPassword() {
       setTokenValid(false);
       Alert({
         title: "錯誤",
-        text: "無效的重置鏈接",
+        html: "無效的重置鏈接",
         confirmButtonColor: "#b32627",
         onConfirm: () => {
           router.push("/auth/login");
@@ -75,7 +75,7 @@ export default function ResetPassword() {
     if (!formData.newPassword || !formData.confirmPassword) {
       Alert({
         title: "錯誤",
-        text: "請填寫所有字段",
+        html: "請填寫所有字段",
         confirmButtonColor: "#b32627",
       });
       return;
@@ -86,7 +86,7 @@ export default function ResetPassword() {
     if (passwordError) {
       Alert({
         title: "密碼強度不足",
-        text: passwordError,
+        html: passwordError,
         confirmButtonColor: "#b32627",
       });
       return;
@@ -96,7 +96,7 @@ export default function ResetPassword() {
     if (formData.newPassword !== formData.confirmPassword) {
       Alert({
         title: "錯誤",
-        text: "兩次輸入的密碼不一致",
+        html: "兩次輸入的密碼不一致",
         confirmButtonColor: "#b32627",
       });
       return;
@@ -110,7 +110,7 @@ export default function ResetPassword() {
       if (response.success) {
         Alert({
           title: "成功",
-          text: "密碼重置成功！請使用新密碼登入",
+          html: "密碼重置成功！請使用新密碼登入",
           confirmButtonColor: "#008b48",
           onConfirm: () => {
             router.push("/auth/login");
@@ -119,7 +119,7 @@ export default function ResetPassword() {
       } else {
         Alert({
           title: "重置失敗",
-          text: response.message || "密碼重置失敗，請重試",
+          html: response.message || "密碼重置失敗，請重試",
           confirmButtonColor: "#b32627",
         });
       }
@@ -129,7 +129,7 @@ export default function ResetPassword() {
 
       Alert({
         title: "重置失敗",
-        text: errorMessage,
+        html: errorMessage,
         confirmButtonColor: "#b32627",
         onConfirm: () => {
           if (errorMessage.includes("無效") || errorMessage.includes("過期")) {

@@ -63,7 +63,7 @@ export default function Login() {
         // Hiển thị alert
         Alert({
           title,
-          text,
+          html,
           icon: "info",
           confirmButtonColor: "#3085d6",
           confirmButtonText: "確定",
@@ -92,7 +92,7 @@ export default function Login() {
     if (!formData.email || !formData.password) {
       Alert({
         title: "錯誤",
-        text: "請輸入帳號（帳號編號或郵箱）和密碼",
+        html: "請輸入帳號（帳號編號或郵箱）和密碼",
         confirmButtonColor: "#b32627",
       });
       return;
@@ -103,9 +103,10 @@ export default function Login() {
     try {
       // 调用登录API
       const response = await loginAPI(formData.email, formData.password);
-
+              console.log(response ,'user')
       if (response.success) {
         const { user, accessToken, refreshToken } = response.data;
+
 
         // 保存到Redux
         dispatch(
@@ -121,7 +122,7 @@ export default function Login() {
         // 显示成功消息
         Alert({
           title: "登入成功",
-          text: `歡迎回來，${user.username}！`,
+          html: `歡迎回來，${user.username}！`,
           timer: 1500,
           showConfirm: false,
           confirmButtonColor: "#008b48",
@@ -134,7 +135,7 @@ export default function Login() {
       } else {
         Alert({
           title: "登入失敗",
-          text: response.message || "登入失敗，請重試",
+          html: response.message || "登入失敗，請重試",
           confirmButtonColor: "#b32627",
         });
       }
@@ -142,7 +143,7 @@ export default function Login() {
       console.warn("登录错误:", error);
       Alert({
         title: "登入失敗",
-        text: error.response?.data?.message || "帳號或密碼錯誤",
+        html: error.response?.data?.message || "帳號或密碼錯誤",
         confirmButtonColor: "#b32627",
       });
     } finally {

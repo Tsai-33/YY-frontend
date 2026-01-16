@@ -211,7 +211,7 @@ export default function ShelfTransferTable() {
 
                 setTableData((prev) => prev.filter((v) => v.SALE_NO !== orderInput));
             } else {
-                Alert({ text: res.data.message || "派車失敗", icon: "error" });
+                Alert({ html: res.data.message || "派車失敗", icon: "error" });
             }
         } catch (error) {
             console.warn("handleConfirm:", error);

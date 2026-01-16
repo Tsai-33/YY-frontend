@@ -99,7 +99,7 @@ export default function ProtectedRoute({ children, requiredPermission = null }) 
           alertShown.current = true;
           Alert({
             title: "限制訪問",
-            text: "此頁面僅限管理員或管理人員訪問",
+            html: "此頁面僅限管理員或管理人員訪問",
             confirmButtonColor: "#b32627",
             onConfirm: () => router.replace("/workspace"),
           });
@@ -116,7 +116,7 @@ export default function ProtectedRoute({ children, requiredPermission = null }) 
           const display = PERMISSION_DISPLAY_NAMES[autoPermissionKey] || autoPermissionKey;
           Alert({
             title: "權限不足",
-            text: `您沒有「${display}」權限，無法訪問此頁面`,
+            html: `您沒有「${display}」權限，無法訪問此頁面`,
             confirmButtonColor: "#b32627",
             onConfirm: () => router.replace("/workspace"),
           });
