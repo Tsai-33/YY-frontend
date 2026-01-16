@@ -9,13 +9,21 @@ import { getShelfTransfer, getWMSBySaleNo, insertShelfTask } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import SchematicDiagram from "../diagram/schematicDiagram";
 import { setShelfTransfer } from "@/redux/reducer/reducerShelfTransfer";
+import { initWorkstation } from "@/redux/reducer/reducerWorkStations";
 import Alert from "../common/alert/alert";
 
 export default function ShelfTransferTable() {
     const dispatch = useDispatch();
     const { stations, currentStation } = useSelector((s) => s.workstation);
 
+    // TODO 暫時不透過workspace進來
+    // useEffect(() => {
+    //     if (!currentStation) {
+    //         dispatch(initWorkstation("172.16.11.75"));
+    //     }
+    // }, [currentStation, dispatch]);
     const currentStationSafe = currentStation || stations?.[0] || "";
+    const { orderList, lackStation } = useSelector((s) => s.shelfTransfer);
     const { step, screen, orderCode, order, selectedShelves } = useSelector(
         (s) => s.shelfTransfer[currentStationSafe] || {}
     );
@@ -42,7 +50,7 @@ export default function ShelfTransferTable() {
         } catch (error) {
             console.warn("getShelfTransfer: ", error);
         }
-    };
+    }
 
     // ===== 貨架內容 =====
     const [shelveData, setShelveData] = useState([]);
@@ -62,7 +70,7 @@ export default function ShelfTransferTable() {
         } catch (error) {
             console.warn("getWMSBySaleNo: ", error);
         }
-    };
+    }
 
     // ===== 根據相同的SHELVE_ID資料分組 =====
     const groupedShelveData = useMemo(() => {
@@ -74,7 +82,7 @@ export default function ShelfTransferTable() {
                     SHELVE_ID: id,
                     STOCK_AREA: item.STOCK_AREA,
                     SHELVE_TYPE: item.SHELVE_TYPE,
-                    items: []
+                    items:[]
                 };
             }
             grouped[id].items.push(item);
@@ -84,6 +92,9 @@ export default function ShelfTransferTable() {
 
     // =====過濾Table選中的資料=====
     const [selectedOrder, setSelectedOrder] = useState(null);
+    // const selectedShelveData = selectedOrder
+    //     ? testShelve.filter(item => item.SALE_NO === selectedOrder.SALE_NO)
+    //     : [];
     const handleRowClick = (name, row, idKey) => {
         setSelectedOrder(row);
         setOrderInput(row.SALE_NO);
@@ -97,7 +108,7 @@ export default function ShelfTransferTable() {
             selectedShelves: [],
             step: 1,
         }));
-    };
+    }
 
     // =====處理訂單單號Input=====
     const [orderInput, setOrderInput] = useState("");
@@ -123,7 +134,7 @@ export default function ShelfTransferTable() {
         } else {
             setSelectedOrder(null);
         }
-    };
+    }
 
     // =====處理右側貨架點擊=====
     const [selectedShelve, setSelectedShelve] = useState([]);
@@ -137,12 +148,12 @@ export default function ShelfTransferTable() {
             station: currentStationSafe,
             selectedShelves: newSelected,
         }));
-    };
+    }
 
     // 確定按鈕叫車
     const handleConfirm = async () => {
         if (selectedShelve.length < 2 || selectedShelve.length > stations.length) {
-            Alert({ title: `請選擇2~${stations.length}個貨架` });
+            Alert({title: `請選擇2~${stations.length}個貨架`});
             return;
         }
         try {
@@ -156,13 +167,13 @@ export default function ShelfTransferTable() {
                 STATUS: 0,
                 CART_ID: "",
                 DATA_ID: generateRandomNumber(),
-                WAVENO: selectedOrder?.W_ID || 0,
+                WAVENO: selectedOrder?.W_ID,
                 GGROUP: "",
             }));
 
             const res = await insertShelfTask({ tasks });
 
-            if (res?.data?.success) {
+            if (res.data.success) {
                 const initialShelveStatus = {};
                 selectedShelve.forEach(shelveId => {
                     initialShelveStatus[shelveId] = "loading";
@@ -205,7 +216,7 @@ export default function ShelfTransferTable() {
         } catch (error) {
             console.warn("handleConfirm:", error);
         }
-    };
+    }
 
     // 檢查是否可以按確定(至少2個最多站點數量)
     const canConfirm = selectedShelve.length >= 2 && selectedShelve.length <= stations.length;
@@ -245,7 +256,7 @@ export default function ShelfTransferTable() {
                                 <label className="text-lg font-medium whitespace-nowrap">
                                     訂單單號：
                                 </label>
-                                <InputFrame
+                                <InputFrame 
                                     type="text"
                                     name="orderNo"
                                     className="border-2 rounded px-4 py-2 w-[400px]"
@@ -277,17 +288,17 @@ export default function ShelfTransferTable() {
                                                                 {/* 打勾 */}
                                                                 {isSelected && (
                                                                     <div className="bg-green-500 rounded-full w-8 h-8 flex items-center justify-center">
-                                                                        <svg
-                                                                            className="w-5 h-5 text-white"
-                                                                            fill="none"
-                                                                            stroke="currentColor"
+                                                                        <svg 
+                                                                            className="w-5 h-5 text-white" 
+                                                                            fill="none" 
+                                                                            stroke="currentColor" 
                                                                             viewBox="0 0 24 24"
                                                                         >
-                                                                            <path
-                                                                                strokeLinecap="round"
-                                                                                strokeLinejoin="round"
-                                                                                strokeWidth={3}
-                                                                                d="M5 13l4 4L19 7"
+                                                                            <path 
+                                                                                strokeLinecap="round" 
+                                                                                strokeLinejoin="round" 
+                                                                                strokeWidth={3} 
+                                                                                d="M5 13l4 4L19 7" 
                                                                             />
                                                                         </svg>
                                                                     </div>
@@ -363,5 +374,5 @@ export default function ShelfTransferTable() {
                 </div>
             </div>
         </>
-    );
+    )
 }
