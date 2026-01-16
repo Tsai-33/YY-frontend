@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect} from "react";
 import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import Link from "next/link";
-import ActionBtn from "../common/btns/actionBtn";
 import { logout } from "@/redux/reducer/reducerUser";
 import { logout as logoutAPI } from "@/pages/api/authService";
 import ProtectedRoute from "../common/ProtectedRoute";
@@ -13,7 +12,6 @@ import ShelfTransferManager from "../shelfTransfer/shelfTransferManager";
 import OutboundInternalManager from "../outboundInternal/outboundInternalManager";
 
 import InventoryManage from "../inventory/inventoryManage";
-import FingerprintLoader from "../fingerprintLoader";
 // 控制面板
 
 // 頁面標題配置
@@ -134,9 +132,6 @@ export default function Layout({ children }) {
       <main className={mainClass}>
         <ProtectedRoute>{children}</ProtectedRoute>
       </main>
-
-      {/* 指紋辨識 */}
-      <FingerprintLoader />
 
       {/* 依照路由渲染不同面板 */}
       {path.startsWith("/inbound") && (
