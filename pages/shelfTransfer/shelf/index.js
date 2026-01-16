@@ -15,8 +15,8 @@ import LoadingShelf from "@/components/common/loading/loading-shelf";
 import SchematicDiagram from "@/components/diagram/schematicDiagram";
 
 export default function ShelfTransferShelf() {
-    const dispatch = useDispatch();
-    const { stations, currentStation } = useSelector((s) => s.workstation);
+  const dispatch = useDispatch();
+  const { stations, currentStation } = useSelector((s) => s.workstation);
 
     // TODO 暫時不透過 workspace 進來
     // useEffect(() => {
@@ -25,45 +25,43 @@ export default function ShelfTransferShelf() {
     //     }
     // }, [currentStation, dispatch]);
 
-    const currentStationSafe = currentStation || stations?.[0] || "";
-    const { step, screen, selectedShelves } = useSelector(
-        (s) => s.shelfTransfer[currentStationSafe] || {}
-    );
+  const currentStationSafe = currentStation || stations?.[0] || "";
+  const { step, screen, selectedShelves } = useSelector((s) => s.shelfTransfer[currentStationSafe] || {});
 
-    // ===== 庫別下拉選單 =====
-    const [stockAreas, setStockAreas] = useState([]);
-    const [selectedArea, setSelectedArea] = useState("");
+  // ===== 庫別下拉選單 =====
+  const [stockAreas, setStockAreas] = useState([]);
+  const [selectedArea, setSelectedArea] = useState("");
 
-    useEffect(() => {
-        fetchStockAreas();
-    }, []);
+  useEffect(() => {
+    fetchStockAreas();
+  }, []);
 
-    const fetchStockAreas = async () => {
-        try {
-            const res = await getStockAreas();
-            if (res.data.success) {
-                setStockAreas(res.data.data || []);
-            }
-        } catch (error) {
-            console.warn("getStockAreas:", error);
-        }
-    };
+  const fetchStockAreas = async () => {
+    try {
+      const res = await getStockAreas();
+      if (res.data.success) {
+        setStockAreas(res.data.data || []);
+      }
+    } catch (error) {
+      console.warn("getStockAreas:", error);
+    }
+  };
 
-    // ===== 產品品號 =====
-    const [prtNo, setPrtNo] = useState("");
-    const prtNoRef = useRef(null);
-    const [searching, setSearching] = useState(false);
+  // ===== 產品品號 =====
+  const [prtNo, setPrtNo] = useState("");
+  const prtNoRef = useRef(null);
+  const [searching, setSearching] = useState(false);
 
-    // ===== 查詢結果 =====
-    const [tableData, setTableData] = useState([]);
-    const [selectedRows, setSelectedRows] = useState([]);
+  // ===== 查詢結果 =====
+  const [tableData, setTableData] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
 
-    const handleSearch = async (e) => {
-        if (e.key !== "Enter") return;
+  const handleSearch = async (e) => {
+    if (e.key !== "Enter") return;
 
-        const inputValue = e.target.value.trim();
-        if (!inputValue) return;
-        if (searching) return;
+    const inputValue = e.target.value.trim();
+    if (!inputValue) return;
+    if (searching) return;
 
         if (!selectedArea) {
             Alert({ title: "請選擇庫別" });
@@ -87,21 +85,21 @@ export default function ShelfTransferShelf() {
         }
     };
 
-    // ===== 清除 =====
-    const handleClear = () => {
-        setPrtNo("");
-        setTableData([]);
-        setSelectedRows([]);
-        prtNoRef.current?.focus();
-    };
+  // ===== 清除 =====
+  const handleClear = () => {
+    setPrtNo("");
+    setTableData([]);
+    setSelectedRows([]);
+    prtNoRef.current?.focus();
+  };
 
-    // ===== Table =====
-    const headers = [
-        { label: "", key: "checkbox", width: "10%" },
-        { label: "產品品號", key: "PRT_NO", width: "40%" },
-        { label: "貨架編號", key: "SHELVE_ID", width: "30%" },
-        { label: "箱數", key: "BOX_NO", width: "20%" },
-    ];
+  // ===== Table =====
+  const headers = [
+    { label: "", key: "checkbox", width: "10%" },
+    { label: "產品品號", key: "PRT_NO", width: "40%" },
+    { label: "貨架編號", key: "SHELVE_ID", width: "30%" },
+    { label: "箱數", key: "BOX_NO", width: "20%" },
+  ];
 
     const handleRowSelect = (name, value, idKey) => {
         const shelveId = value[idKey];
@@ -120,87 +118,91 @@ export default function ShelfTransferShelf() {
         }
     };
 
-    // ===== 根據 selectedRows 過濾出要顯示的貨架詳細資訊 =====
-    const groupedShelveData = useMemo(() => {
-        if (selectedRows.length === 0) return [];
-        // 過濾出被選中的資料
-        const selectedData = tableData.filter(item => selectedRows.includes(item.SHELVE_ID));
-        // 根據 SHELVE_ID 分組
-        const grouped = {};
-        selectedData.forEach(item => {
-            const id = item.SHELVE_ID;
-            if (!grouped[id]) {
-                grouped[id] = {
-                    SHELVE_ID: id,
-                    STOCK_AREA: item.STOCK_AREA,
-                    SHELVE_TYPE: item.SHELVE_TYPE,
-                    items: []
-                };
-            }
-            grouped[id].items.push(item);
-        });
-        return Object.values(grouped);
-    }, [selectedRows, tableData]);
+  // ===== 根據 selectedRows 過濾出要顯示的貨架詳細資訊 =====
+  const groupedShelveData = useMemo(() => {
+    if (selectedRows.length === 0) return [];
+    // 過濾出被選中的資料
+    const selectedData = tableData.filter((item) => selectedRows.includes(item.SHELVE_ID));
+    // 根據 SHELVE_ID 分組
+    const grouped = {};
+    selectedData.forEach((item) => {
+      const id = item.SHELVE_ID;
+      if (!grouped[id]) {
+        grouped[id] = {
+          SHELVE_ID: id,
+          STOCK_AREA: item.STOCK_AREA,
+          SHELVE_TYPE: item.SHELVE_TYPE,
+          items: [],
+        };
+      }
+      grouped[id].items.push(item);
+    });
+    return Object.values(grouped);
+  }, [selectedRows, tableData]);
 
-    // ===== 叫車 =====
-    const canConfirm = selectedRows.length >= 1 && selectedRows.length <= stations.length;
+  // ===== 叫車 =====
+  const canConfirm = selectedRows.length >= 1 && selectedRows.length <= stations.length;
 
     const handleConfirm = async () => {
         if (!canConfirm) {
             Alert({ title: `請選擇1~${stations.length}個貨架` });
         }
 
-        try {
-            const tasks = selectedRows.map((shelveId, index) => ({
-                Command: "MOVE",
-                SHELVE_ID: shelveId,
-                BAR_CODE: null,
-                FACE: 2,
-                STATION: stations[index],
-                PURPOSE: 4,
-                STATUS: 0,
-                CART_ID: "",
-                DATA_ID: generateRandomNumber(),
-                WAVENO: 0,
-                GGROUP: "",
-            }));
-            const res = await insertShelfTask({ tasks });
+    try {
+      const tasks = selectedRows.map((shelveId, index) => ({
+        Command: "MOVE",
+        SHELVE_ID: shelveId,
+        BAR_CODE: null,
+        FACE: 2,
+        STATION: stations[index],
+        PURPOSE: 4,
+        STATUS: 0,
+        CART_ID: "",
+        DATA_ID: generateRandomNumber(),
+        WAVENO: 0,
+        GGROUP: "",
+      }));
+      const res = await insertShelfTask({ tasks });
 
-            if (res.data.success) {
-                const initialShelveStatus = {};
-                selectedRows.forEach((shelveId) => {
-                    initialShelveStatus[shelveId] = "loading";
-                });
+      if (res.data.success) {
+        const initialShelveStatus = {};
+        selectedRows.forEach((shelveId) => {
+          initialShelveStatus[shelveId] = "loading";
+        });
 
-                // 更新所有相關站點的狀態
-                selectedRows.forEach((shelveId, index) => {
-                    const stationId = stations[index];
-                    dispatch(setShelfTransfer({
-                        station: stationId,
-                        step: 3,
-                        screen: "loading",
-                        mode: "shelf",
-                        orderCode: `${selectedArea}`,
-                        selectedShelves: selectedRows,
-                        shelveStatus: initialShelveStatus,
-                        shelveData: {},
-                    }));
-                });
+        // 更新所有相關站點的狀態
+        selectedRows.forEach((shelveId, index) => {
+          const stationId = stations[index];
+          dispatch(
+            setShelfTransfer({
+              station: stationId,
+              step: 3,
+              screen: "loading",
+              mode: "shelf",
+              orderCode: `${selectedArea}`,
+              selectedShelves: selectedRows,
+              shelveStatus: initialShelveStatus,
+              shelveData: {},
+            })
+          );
+        });
 
-                // 確保當前站點也更新
-                const updatedStations = selectedRows.map((_, index) => stations[index]);
-                if (currentStationSafe && !updatedStations.includes(currentStationSafe)) {
-                    dispatch(setShelfTransfer({
-                        station: currentStationSafe,
-                        step: 3,
-                        screen: "loading",
-                        mode: "shelf",
-                        orderCode: `${selectedArea}`,
-                        selectedShelves: selectedRows,
-                        shelveStatus: initialShelveStatus,
-                        shelveData: {},
-                    }));
-                }
+        // 確保當前站點也更新
+        const updatedStations = selectedRows.map((_, index) => stations[index]);
+        if (currentStationSafe && !updatedStations.includes(currentStationSafe)) {
+          dispatch(
+            setShelfTransfer({
+              station: currentStationSafe,
+              step: 3,
+              screen: "loading",
+              mode: "shelf",
+              orderCode: `${selectedArea}`,
+              selectedShelves: selectedRows,
+              shelveStatus: initialShelveStatus,
+              shelveData: {},
+            })
+          );
+        }
 
                 setTableData([]);
                 setSelectedRows([]);
@@ -212,14 +214,15 @@ export default function ShelfTransferShelf() {
             Alert({ title: "派車失敗" });
         }
     }
+  };
 
-    if (screen === "loading") {
-        return <LoadingShelf />;
-    }
+  if (screen === "loading") {
+    return <LoadingShelf />;
+  }
 
-    if (step === 3) {
-        return <ShelfTransferStation />;
-    }
+  if (step === 3) {
+    return <ShelfTransferStation />;
+  }
 
     return (
         <>

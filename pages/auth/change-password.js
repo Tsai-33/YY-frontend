@@ -77,7 +77,7 @@ export default function ChangePassword() {
     ) {
       Alert({
         title: "錯誤",
-        text: "請填寫所有字段",
+        html: "請填寫所有字段",
         confirmButtonColor: "#b32627",
       });
       return;
@@ -88,7 +88,7 @@ export default function ChangePassword() {
     if (passwordError) {
       Alert({
         title: "密碼強度不足",
-        text: passwordError,
+        html: passwordError,
         confirmButtonColor: "#b32627",
       });
       return;
@@ -98,7 +98,7 @@ export default function ChangePassword() {
     if (formData.newPassword !== formData.confirmPassword) {
       Alert({
         title: "錯誤",
-        text: "新密碼和確認密碼不一致",
+        html: "新密碼和確認密碼不一致",
         confirmButtonColor: "#b32627",
       });
       return;
@@ -108,7 +108,7 @@ export default function ChangePassword() {
     if (formData.oldPassword === formData.newPassword) {
       Alert({
         title: "錯誤",
-        text: "新密碼不能與舊密碼相同",
+        html: "新密碼不能與舊密碼相同",
         confirmButtonColor: "#b32627",
       });
       return;
@@ -126,7 +126,7 @@ export default function ChangePassword() {
       if (response.success) {
         Alert({
           title: "成功",
-          text: "密碼修改成功！",
+          html: "密碼修改成功！",
           confirmButtonColor: "#008b48",
           onConfirm: () => {
             // 跳转到工作站页面
@@ -136,7 +136,7 @@ export default function ChangePassword() {
       } else {
         Alert({
           title: "修改失敗",
-          text: response.message || "修改密碼失敗，請重試",
+          html: response.message || "修改密碼失敗，請重試",
           confirmButtonColor: "#b32627",
         });
       }
@@ -144,7 +144,7 @@ export default function ChangePassword() {
       console.warn("修改密码错误:", error);
       Alert({
         title: "修改失敗",
-        text: error.response?.data?.message || "舊密碼錯誤或網絡異常",
+        html: error.response?.data?.message || "舊密碼錯誤或網絡異常",
         confirmButtonColor: "#b32627",
       });
     } finally {

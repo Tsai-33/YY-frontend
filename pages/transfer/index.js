@@ -8,29 +8,50 @@ import TransferTitle from "@/components/transfer/transferTitle";
 import TransferContext from "@/components/transfer/transferContext";
 import { initStation } from "@/redux/reducer/reducerTransfer";
 
+/**
+ * 過帳主頁面組件 (Transfer Component)
+ * 負責處理工作站切換、條碼掃描上下文以及測試單據生成
+ * @returns {JSX.Element}
+ */
+
 export default function Transfer() {
   const dispatch = useDispatch();
-  const { stations, currentStation } = useSelector((s) => s.workstation);
   const [loading, setLoading] = useState(false);
+  const barCodeRef = useRef(null);
 
-  // 目前選擇的工作站
-  const handleSwitchStation = (station) => {
-    dispatch(setCurrentStation(station));
-  };
+  const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
   const { step } = useSelector((s) => s.transfer);
   const { screen } = useSelector((s) => s.transfer[currentStationSafe] || {});
 
-  const barCodeRef = useRef(null);
+  /**
+   * 安全取得當前工作站，若無則預設取第一個
+   * 使用 useMemo 優化，避免每次 re-render 重新計算
+   */
 
-  // =========== 生成站點
+
+  /**
+   * 切換當前工作站站點
+   * @param {string} station - 目標站點名稱
+   */
+  const handleSwitchStation = (station) => {
+    dispatch(setCurrentStation(station));
+  };
+
+  /**
+   * 初始化所有工作站數據狀態
+   * 當站點清單更新時觸發
+   */
   useEffect(() => {
     stations.forEach((s) => {
       dispatch(initStation(s));
     });
   }, [stations]);
 
-  // =========== 測試單亂數產生
+  /**
+   * 測試用：自動產生隨機測試單號 (SN)
+   * 格式範例：F120-1130120001 (前綴-民國年月日序號)
+   */
   const handleTest = () => {
     // ===== 前綴隨機 =====
     const prefixes = ["F120"];
@@ -54,13 +75,11 @@ export default function Transfer() {
     <>
       <TransferTitle />
       <TransferContext barCodeRef={barCodeRef} setLoading={setLoading} />
-      {/* 底部按鈕區域 */}
       <div className="w-full flex justify-between gap-4 z-20">
         {stations.map((station, i) => (
           <ActionBtn key={i} text={station} variant={i === 0 ? "blue" : "green"} className="flex-1" disabled={currentStation === station ? true : false} onClick={() => handleSwitchStation(station)} />
         ))}
       </div>
-      {/* loading */}
       {screen === "loading" && <LoadingShelf />}
       {loading && <Loading />}
       {/* 測試按鈕 */}

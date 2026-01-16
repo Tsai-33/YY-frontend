@@ -10,6 +10,14 @@ import TransferTable from "@/components/transfer/transferTable";
 import { resetTransfer, setAllLoading, setTransfer, updateShelfItem } from "@/redux/reducer/reducerTransfer";
 import { addAbnormal_tr, addShelf_tr, addTask_tr, cancelShelf_tr, checkTask_tr, checkWCS_tr, confrimList_tr, deleteTask_tr, finishList_tr, getEPR, getList, getTable, restoreList_tr, returnShelf_tr, updateWMS_tr } from "@/components/transfer/transferFunction";
 
+/**
+ * 調撥系統核心上下文組件 (TransferContext)
+ * 處理條碼掃描、工作站邏輯、貨架增刪以及與 WMS/ERP 系統的交互
+ * * @param {Object} props
+ * @param {React.RefObject} props.barCodeRef - 綁定外部 input 的 ref，用於自動聚焦與清空值
+ * @param {Function} props.setLoading - 控制全域 Loading 遮罩的狀態函式
+ */
+
 export default function TransferContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
   const [tableData, setTableData] = useState([]); // 調撥單資訊
@@ -27,19 +35,20 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   const { step, orderCode, order, waveNo } = useSelector((s) => s.transfer);
   const { screen, shelf, shelfItem, selected } = useSelector((s) => s.transfer[currentStationSafe] || {});
 
-  // ============================
-  // ⭐ 事件處理
-  // ============================
+  /**
+   * 處理條碼輸入 (Enter 鍵觸發)
+   * 包含防呆檢查（全形字元偵測）與單據自動匹配
+   * 與ERP 連接配對資料 有=選取 沒有=新增
+   */
   const handleBarCode = async (e) => {
     if (screen === "loading" || e.key !== "Enter") return;
 
-        const inputBarCode = e.target.value.trim().toUpperCase();
+    const inputBarCode = e.target.value.trim().toUpperCase();
     if (!inputBarCode) return;
 
-    // 檢查是否含有中文字或全形字 (Regex: /[^\x00-\xff]/ 匹配雙位元字元)
     if (/[^\x00-\xff]/.test(inputBarCode)) {
       e.preventDefault();
-      Alert({title:"偵測到非預期字元，請確保為英文輸入模式"}); 
+      Alert({ title: "偵測到非預期字元，請確保為英文輸入模式" });
       barCodeRef.current.value = "";
       return;
     }
@@ -237,25 +246,26 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     }
   };
 
-  // ============================
-  // ⭐ 貨架顯示用的資料
-  // ============================
+  /**
+   * 核心邏輯：計算貨架顯示資訊
+   * 透過 Map 合併「現有貨架項目 (shelfItem)」與「本次勾選待處理項目 (selected)」
+   * 這能讓 AI 理解資料合併的邏輯，避免誤刪新產生的 UI 列表
+   */
   const displayItems = useMemo(() => {
-    // 2. 根據目前是在哪一站，去拿該站點最新的資料
     const stationData = transfer[currentStationSafe] || {};
     const currentShelfItems = stationData.shelfItem || [];
     const currentSelected = stationData.selected || [];
 
     const tempMap = new Map();
 
-    // 3. 把該站點原本有的東西放進 Map
+   // 處理現有項目
     currentShelfItems.forEach((item) => {
       if (item?.PRT_NO) {
         tempMap.set(item.PRT_NO, { ...item, selectedBox: 0, selectedPP: 0, isNew: false });
       }
     });
 
-    // 4. 合併這次操作選中的東西 (這就是讓「暫無資料」變成「有資料」的關鍵)
+  // 疊加勾選項目：若為新項目則建立 row，若已存在則累加數量
     currentSelected.forEach((sel) => {
       if (!sel?.PRT_NO) return;
       if (tempMap.has(sel.PRT_NO)) {
