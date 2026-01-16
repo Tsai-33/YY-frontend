@@ -59,6 +59,7 @@ export default function StockQuery() {
   });
 
   const [stockData, setStockData] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const handleChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -76,8 +77,11 @@ export default function StockQuery() {
     };
 
     const res = await searchStock(payload);
-    if (res.data.success) {
-      const data = res.data.data;
+
+    setHasSearched(true);
+
+    if (res?.data?.success) {
+      const data = res?.data?.data;
       setStockData(data);
     }
   };
@@ -95,8 +99,8 @@ export default function StockQuery() {
 
     try {
       const res = await stockDownload(payload);
-      if (res.success) {
-        const blob = res.data;
+      if (res?.success) {
+        const blob = res?.data;
         const url = window.URL.createObjectURL(blob);
 
         const a = document.createElement("a");
@@ -223,6 +227,7 @@ export default function StockQuery() {
                     CUS_NO: "",
                   });
                   setStockData([]);
+                  setHasSearched(false);
                 }}>
                 清除
               </button>
@@ -246,6 +251,7 @@ export default function StockQuery() {
             variants="green"
             idKey="INDEX"
             height="67vh"
+            hasSearched={hasSearched}
           />
         </div>
       </div>

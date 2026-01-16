@@ -122,8 +122,8 @@ export default function InventoryTable() {
 
     try {
       const res = await getInventoryItems(payload);
-      if (res.data.success) {
-        const data = res.data.data;
+      if (res?.data?.success) {
+        const data = res?.data?.data;
 
         dispatch(
           setInventory({
@@ -163,9 +163,9 @@ export default function InventoryTable() {
 
     try {
       const res = await createInventoryTask(payload);
-      if (res.data.success) {
+      if (res?.data?.success) {
         dispatch(setPage("inventory-shelf"));
-        dispatch(setBatchNo(res.data.data.batchNo));
+        dispatch(setBatchNo(res?.data?.data?.batchNo));
         dispatch(
           setInventory({
             station: "*",

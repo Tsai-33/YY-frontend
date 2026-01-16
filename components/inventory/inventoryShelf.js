@@ -209,8 +209,8 @@ export default function InventoryShelf() {
       UserId: userId,
     };
     const res = await updateInventoryResult(payload);
-    if (res.data.success) {
-      if (res.data.data.remainCount === 0) {
+    if (res?.data?.success) {
+      if (res?.data?.data?.remainCount === 0) {
         dispatch(setPage("inventory-table"));
         dispatch(setBatchNo(null));
         dispatch(
@@ -268,10 +268,10 @@ export default function InventoryShelf() {
         STATION: currentStation,
       };
       const res = await sendToWMS(data);
-      if (res.data.success) {
+      if (res?.data?.success) {
         const deleteRes = await deleteTask({ stations: stations[0] });
 
-        if (deleteRes.data && deleteRes.data.success) {
+        if (deleteRes?.data && deleteRes?.data?.success) {
           dispatch(setPage("inventory-table"));
           dispatch(setBatchNo(null));
           dispatch(
