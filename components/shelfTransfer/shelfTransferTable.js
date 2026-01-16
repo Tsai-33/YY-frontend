@@ -153,7 +153,7 @@ export default function ShelfTransferTable() {
     // 確定按鈕叫車
     const handleConfirm = async () => {
         if (selectedShelve.length < 2 || selectedShelve.length > stations.length) {
-            Alert({html: `請選擇2~${stations.length}個貨架`});
+            Alert({title: `請選擇2~${stations.length}個貨架`});
             return;
         }
         try {
@@ -211,7 +211,7 @@ export default function ShelfTransferTable() {
 
                 setTableData((prev) => prev.filter((v) => v.SALE_NO !== orderInput));
             } else {
-                Alert({ text: res.data.message || "派車失敗", icon: "error" });
+                Alert({ title: res.data.message || "派車失敗", icon: "error" });
             }
         } catch (error) {
             console.warn("handleConfirm:", error);

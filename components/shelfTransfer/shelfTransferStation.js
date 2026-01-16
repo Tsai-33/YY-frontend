@@ -84,7 +84,7 @@ export default function ShelfTransferStation() {
 
     const handleConfirm = async () => {
         if (!confirmCheck()) {
-            Alert({ text: "請確認已選擇的貨架" });
+            Alert({ title: "請確認已選擇的貨架" });
             return;
         }
         if (!operator) {
@@ -163,7 +163,7 @@ export default function ShelfTransferStation() {
                     value: res.data.data.newValue
                 }));
             } else {
-                Alert({ text: "更新失敗" });
+                Alert({ title: "更新失敗" });
             }
         } catch (error) {
             console.warn("updateShelveCheck: ", error);
@@ -174,13 +174,13 @@ export default function ShelfTransferStation() {
     // ===== 退回貨架 =====
     const handleReturnShelve = async (shelveId) => {
         if (!shelveId) {
-            Alert({ html: "抓不到貨架編號" });
+            Alert({ title: "抓不到貨架編號" });
             return;
         }
 
         // 檢查 selectedShelves 是否存在
         if (!selectedShelves || selectedShelves.length === 0) {
-            Alert({ html: "找不到選中的貨架資料" });
+            Alert({ title: "找不到選中的貨架資料" });
             return;
         }
 
@@ -188,14 +188,14 @@ export default function ShelfTransferStation() {
         const shelveIndex = selectedShelves.indexOf(shelveId);
 
         if (shelveIndex === -1) {
-            Alert({ html: "找不到對應的站點" });
+            Alert({ title: "找不到對應的站點" });
             return;
         }
 
         const stationId = stations[shelveIndex];
 
         if (!stationId) {
-            Alert({ html: "站點 ID 無效" });
+            Alert({ title: "站點 ID 無效" });
             return;
         }
         // setLoading(true);
