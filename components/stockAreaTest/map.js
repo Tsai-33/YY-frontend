@@ -190,10 +190,10 @@ export default function Map({
   };
 
   return (
-    <div className="bg-white flex-1 flex flex-col rounded-lg shadow-sm relative min-h-0 overflow-hidden">
+    <div className="bg-white rounded-lg flex-1 flex flex-col shadow-sm relative min-h-0 overflow-hidden">
       {/* 頂部控制欄 */}
-      <div className="p-2 flex gap-4 bg-gray-100 border-b items-center">
-        <div className="flex bg-white rounded shadow-sm p-1 border">
+      <div className="p-2 bg-gray-100 border-b flex gap-4 items-center">
+        <div className="p-1 bg-white border rounded flex shadow-sm text-[18px]">
           <button
             onClick={() => setMode("pan")}
             className={`px-4 py-1 rounded ${

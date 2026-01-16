@@ -27,16 +27,16 @@ export default function WarehouseList({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white shadow-inner border-r border-gray-200 rounded-lg">
-      <div className="p-4 flex items-center gap-2">
+    <div className="h-full bg-white border-r border-gray-200 rounded-lg flex flex-col shadow-inner">
+      <div className="p-4 flex items-center gap-2 ">
         <h2 className="text-lg font-bold text-gray-800">1. 選擇操作倉別</h2>
-        <span className=" text-gray-500">
+        <span className=" text-gray-500 text-base">
           (點選下方倉別後，即可在右側地圖進行框選分配。)
         </span>
       </div>
 
       {/* 倉別列表區域 */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
+      <div className="px-4 pb-4 space-y-2 flex-1 overflow-y-auto">
         {warehouseConfig.map((wh) => {
           const isActive = activeWh === wh.id; // 使用 ID 比對
           const count = getCount(wh.id);
@@ -45,7 +45,7 @@ export default function WarehouseList({
             <button
               key={wh.id}
               onClick={() => setActiveWh(wh.id)}
-              className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${
+              className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all duration-200 ${
                 isActive
                   ? "bg-white border-blue-500 shadow-md ring-2 ring-blue-100 translate-x-1"
                   : "bg-gray-100 border-transparent hover:bg-gray-200 text-gray-600"
@@ -55,7 +55,7 @@ export default function WarehouseList({
                   className="w-4 h-4 rounded-full shadow-sm"
                   style={{ backgroundColor: wh.color }}
                 />
-                <div className="flex items-start text-s font-semibold">
+                <div className="flex items-start text-base font-semibold">
                   <span
                     style={{
                       color: wh.color,
@@ -73,7 +73,7 @@ export default function WarehouseList({
 
               <div className="flex items-center gap-2">
                 <span
-                  className={`text-s px-2 py-0.5 rounded-full ${
+                  className={`text-base px-2 py-0.5 rounded-full ${
                     count > 0
                       ? "bg-gray-200 text-gray-700"
                       : "bg-gray-100 text-gray-400"
@@ -91,14 +91,14 @@ export default function WarehouseList({
         <div className="p-4 border-t space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-lg font-bold text-gray-800">2. 修改模式</span>
-            <span className="text-[16px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded">
+            <span className="px-2 py-0.5 bg-blue-100 rounded text-base text-blue-600">
               已選定 {activeWh}
             </span>
           </div>
 
           <button
             onClick={() => setIsEraserMode(!isEraserMode)}
-            className={`w-full py-2 rounded-xl border-2 flex items-center justify-center gap-2 font-bold transition-all ${
+            className={`w-full py-2 rounded-xl border-2 flex items-center justify-center gap-2 text-lg font-bold transition-all ${
               isEraserMode
                 ? "bg-red-500 border-red-600 text-white shadow-inner"
                 : "bg-white border-gray-300 text-gray-600 hover:border-red-400 hover:text-red-500"
@@ -114,7 +114,7 @@ export default function WarehouseList({
             )}
           </button>
 
-          <p className="text-[14px] text-center text-gray-400">
+          <p className="text-sm text-center text-gray-400">
             {isEraserMode
               ? `注意：框選將只移除屬於 ${activeWh} 的點位`
               : `提示：框選將為 ${activeWh} 增加可用點位`}
@@ -123,7 +123,7 @@ export default function WarehouseList({
       )}
 
       {!activeWh && (
-        <div className="p-4 text-center border-t">
+        <div className="p-4 border-t text-center">
           <p className="text-xs text-gray-400 italic">尚未選擇操作對象</p>
         </div>
       )}
