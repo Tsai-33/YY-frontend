@@ -13,7 +13,7 @@ import ShelfTransferManager from "../shelfTransfer/shelfTransferManager";
 import OutboundInternalManager from "../outboundInternal/outboundInternalManager";
 
 import InventoryManage from "../inventory/inventoryManage";
-
+import FingerprintLoader from "../fingerprintLoader";
 // 控制面板
 
 // 頁面標題配置
@@ -134,6 +134,9 @@ export default function Layout({ children }) {
       <main className={mainClass}>
         <ProtectedRoute>{children}</ProtectedRoute>
       </main>
+
+      {/* 指紋辨識 */}
+      <FingerprintLoader />
 
       {/* 依照路由渲染不同面板 */}
       {path.startsWith("/inbound") && (

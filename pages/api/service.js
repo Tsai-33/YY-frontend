@@ -5,7 +5,6 @@ export const api = axios.create({
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
-    "x-device-id": process.env.NEXT_PUBLIC_YY_UNIQUE,
   },
 });
 
@@ -14,9 +13,11 @@ api.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
       let token = null;
+      let device_id = null;
 
       // 優先從 localStorage 直接讀取
       token = localStorage.getItem("accessToken");
+      device_id = localStorage.getItem("device_id");
 
       if (!token) {
         const persistUser = localStorage.getItem("persist:user");
@@ -42,6 +43,10 @@ api.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       } else {
         console.warn("⚠️ No token found in localStorage or persist:user");
+      }
+
+      if (device_id) {
+        config.headers["device-id"] = device_id;
       }
     }
     return config;
