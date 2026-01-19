@@ -124,7 +124,7 @@ export default function Login() {
         );
 
         // dispatch(initWorkstation(user.ipAddress));
-        dispatch(initWorkstation(thisStation ? thisStation : user.ipAddress)); // 暫時使用
+        dispatch(initWorkstation(thisStation ? thisStation : user.ipAddress)); // 暫時使用 上線後砍掉
 
         // 显示成功消息
         Alert({
@@ -200,8 +200,8 @@ export default function Login() {
                   >
                     <option value="172.16.11.99">A01~A10</option>
                     <option value="172.16.11.75">B01~B05</option>
-                    <option value="172.168.1.67">C01~C05</option>
-                    <option value="172.16.11.74">D01~D04</option>
+                    <option value="172.16.11.76">C01~C05</option>
+                    <option value="192.168.1.100">D01~D04</option>
                   </select>
 
                   <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
