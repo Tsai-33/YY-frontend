@@ -1,9 +1,37 @@
+const IP_A = process.env.NEXT_PUBLIC_IP_A;
+const IP_A1 = process.env.NEXT_PUBLIC_IP_A1;
+const IP_B = process.env.NEXT_PUBLIC_IP_B;
+const IP_C = process.env.NEXT_PUBLIC_IP_C;
+const IP_D = process.env.NEXT_PUBLIC_IP_D;
+
 export const workstationConfig = {
   A: {
-    computers: ["172.16.11.99", "192.168.1.100", "localhost"],
+    computers: [IP_A, IP_A1, "localhost"],
     stations: {
-      "172.16.11.99": ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"],
-      "192.168.1.100": ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"],
+      [IP_A]: [
+        "A01",
+        "A02",
+        "A03",
+        "A04",
+        "A05",
+        "A06",
+        "A07",
+        "A08",
+        "A09",
+        "A10",
+      ],
+      [IP_A1]: [
+        "A01",
+        "A02",
+        "A03",
+        "A04",
+        "A05",
+        "A06",
+        "A07",
+        "A08",
+        "A09",
+        "A10",
+      ],
     },
     jobs: [
       { key: "inbound", text: "入倉", path: "/inbound", icon: "icon-inbound" },
@@ -29,11 +57,11 @@ export const workstationConfig = {
   },
 
   B: {
-    computers: ["172.16.11.75", "172.16.11.74"],
+    computers: [IP_B, IP_C, IP_D],
     stations: {
-      "172.16.11.75": ["B01", "B02", "B03", "B04", "B05"],
-      "172.168.1.67": ["C01", "C02", "C03", "C04", "C05"],
-      "172.16.11.74": ["D01", "D02", "D03", "D04"],
+      [IP_B]: ["B01", "B02", "B03", "B04", "B05"],
+      [IP_C]: ["C01", "C02", "C03", "C04", "C05"],
+      [IP_D]: ["D01", "D02", "D03", "D04"],
     },
     jobs: [
       {
