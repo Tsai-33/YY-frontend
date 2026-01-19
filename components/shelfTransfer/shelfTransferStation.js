@@ -7,7 +7,8 @@ import {
     setTargetShelve,
     setShelveCheck,
     setShelfTransfer,
-    resetStation
+    resetStation,
+    clearPushButton
 } from "@/redux/reducer/reducerShelfTransfer";
 import { updateTransferItems, sendToWMS, updateShelveCheck, transferItems, updateAbnormal, getAbnormalStatus } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
@@ -29,7 +30,8 @@ export default function ShelfTransferStation() {
         shelveStatus,
         targetShelve,
         selectedItems,
-        shelveChecks = {}
+        shelveChecks = {},
+        pushButton
     } = useSelector((s) => s.shelfTransfer[currentStationSafe] || {});
 
     // ===== 根據站點數量動態產生 Table =====
@@ -171,6 +173,33 @@ export default function ShelfTransferStation() {
     };
 
     
+    // ===== 接收實體按鈕訊號 =====
+    useEffect(() => {
+        if (!pushButton || !selectedShelves || selectedShelves.length === 0) return;
+
+        const handlePushButton = async () => {
+            // 根據按鈕的 STATION 找到對應的貨架
+            const stationIndex = stations.indexOf(pushButton.STATION);
+            if (stationIndex === -1) {
+                console.warn("找不到對應的站點:", pushButton.STATION);
+                dispatch(clearPushButton({ station: currentStationSafe }));
+                return;
+            }
+
+            const shelveId = selectedShelves[stationIndex];
+            if (!shelveId || shelveId === "貨架代號") {
+                console.warn("該站點沒有貨架:", pushButton.STATION);
+                dispatch(clearPushButton({ station: currentStationSafe }));
+                return;
+            }
+
+            await handleReturnShelve(shelveId);
+            dispatch(clearPushButton({ station: currentStationSafe }));
+        };
+
+        handlePushButton();
+    }, [pushButton]);
+
     // ===== 退回貨架 =====
     const handleReturnShelve = async (shelveId) => {
         if (!shelveId) {

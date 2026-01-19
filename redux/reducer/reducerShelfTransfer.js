@@ -14,7 +14,8 @@ const createStation = () => ({
     shelveStatus: {},       // 每個貨架的狀態
     targetShelve: "",       // 目的貨架
     selectedItems: {},      // 選中的項目
-    shelveChecks: {}        // 護角/封膜checkbox狀態
+    shelveChecks: {},       // 護角/封膜checkbox狀態
+    pushButton: null        // 實體按鈕訊號
 });
 
 const initialState = stationList.reduce(
@@ -30,8 +31,8 @@ const shelfTransferSlice = createSlice({
     initialState,
     reducers: {
         setShelfTransfer: (state, action) => {
-            const { station, step, screen, mode, orderCode, waveNo, order, selectedShelves, 
-                shelveData, shelveStatus, targetShelve, selectedItems, orderList, lackStation, shelf, shelfItem, isReturn
+            const { station, step, screen, mode, orderCode, waveNo, order, selectedShelves,
+                shelveData, shelveStatus, targetShelve, selectedItems, orderList, lackStation, shelf, shelfItem, isReturn, pushButton
             } = action.payload;
 
             // 處理退回貨架
@@ -117,6 +118,7 @@ const shelfTransferSlice = createSlice({
             if (selectedItems !== undefined) state[station].selectedItems = selectedItems;
             if (orderList !== undefined) state.orderList = [...new Set([...state.orderList, orderList])];
             if (lackStation !== undefined) state.lackStation = [...new Set([...state.lackStation, lackStation])];
+            if (pushButton !== undefined) state[station].pushButton = pushButton;
         },
 
         // 單一貨架到站時更新
@@ -271,6 +273,14 @@ const shelfTransferSlice = createSlice({
             }
         },
 
+        // 清除實體按鈕訊號
+        clearPushButton: (state, action) => {
+            const { station } = action.payload;
+            if (state[station]) {
+                state[station].pushButton = null;
+            }
+        },
+
         resetShelfTransfer: () => initialState,
     }
 });
@@ -287,6 +297,7 @@ export const {
     handleShelveReturn,
     managerShelfTransfer,
     resetStation,
+    clearPushButton,
     resetShelfTransfer,
 } = shelfTransferSlice.actions;
 
