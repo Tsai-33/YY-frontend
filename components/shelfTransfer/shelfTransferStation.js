@@ -36,8 +36,11 @@ export default function ShelfTransferStation() {
 
     // ===== 根據站點數量動態產生 Table =====
     const totalSlots = stations.length;
+    // 已退回的貨架顯示"貨架代號"
     const shelvePositions = [
-        ...(selectedShelves || []),
+        ...(selectedShelves || []).map(id =>
+            shelveStatus?.[id] === "returned" ? "貨架代號" : id
+        ),
         ...Array(Math.max(0, totalSlots - (selectedShelves?.length || 0))).fill("貨架代號")
     ];
 
