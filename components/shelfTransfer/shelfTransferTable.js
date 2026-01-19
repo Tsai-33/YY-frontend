@@ -361,15 +361,14 @@ export default function ShelfTransferTable() {
                 </div>
                 {/* 站點 */}
                 <div className="flex gap-2">
-                    {stations.map((station, index) => (
-                        <div key={station} className="flex-1">
-                            <ActionBtn
-                                text={`站點${index + 1}`}
-                                variant="green"
-                                disabled={false}
-                                className="w-full flex justify-center"
-                            />
-                        </div>
+                    {stations.map((station, i) => (
+                        <ActionBtn
+                            key={i}
+                            text={station}
+                            variant="green"
+                            disabled={false}
+                            className="w-full flex flex-1 justify-center"
+                        />
                     ))}
                 </div>
             </div>

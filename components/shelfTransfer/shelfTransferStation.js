@@ -527,7 +527,8 @@ export default function ShelfTransferStation() {
                     </div>
                     {/* 站點 */}
                     <div className="flex gap-2">
-                        {shelvePositions.slice(0, totalSlots).map((shelveId, index) => {
+                        {stations.map((station, i) => {
+                            const shelveId = shelvePositions[i];
                             const isEmptySlot = shelveId === "貨架代號";
                             const status = shelveStatus?.[shelveId];
                             const hasData = shelveData?.[shelveId]?.length > 0;
@@ -540,14 +541,13 @@ export default function ShelfTransferStation() {
                                 : "green";
 
                             return (
-                                <div key={index} className="flex-1">
-                                    <ActionBtn
-                                        text={`站點${index + 1}`}
-                                        variant={variant}
-                                        disabled={false}
-                                        className="w-full flex justify-center"
-                                    />
-                                </div>
+                                <ActionBtn
+                                    key={i}
+                                    text={station}
+                                    variant={variant}
+                                    disabled={false}
+                                    className="w-full flex flex-1 justify-center"
+                                />
                             );
                         })}
                     </div>

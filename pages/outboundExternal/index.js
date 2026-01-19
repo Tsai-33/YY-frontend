@@ -597,16 +597,14 @@ export default function OutboundExternal() {
       {/* 站點 */}
       <div className="w-full flex justify-between z-15">
         {stations.map((station, i) => (
-          <div key={i} className="flex-1">
             <ActionBtn 
               key={i} 
-              text={`站點${i + 1}`} 
-              variant={lackStation?.includes(station) ? "" : "green"} 
+              text={station} 
+              variant={lackStation?.includes(station) ? "green" : "green"} 
               disabled={currentStation === station ? true : false} 
               onClick={() => handleSwitchStation(station)} 
-              className="w-80 flex justify-center"
+              className="w-80 flex flex-1 justify-center"
             />
-          </div>
         ))}
       </div>
       {/* loading */}
