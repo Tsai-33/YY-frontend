@@ -32,7 +32,6 @@ export default function OutboundExternal() {
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const [loading, setLoading] = useState(false);
   const [tableData, setTableData] = useState([]);
-  const [selectedArray, setSelectedArray] = useState([]);
   const [orderDetail, setOrderDetail] = useState([]);
   const [confirmModal, setConfirmModal] = useState(false);
   const [returnModal, setReturnModal] = useState(false);
@@ -214,26 +213,25 @@ export default function OutboundExternal() {
       // );
 
       if (matchedItem) {
-        setSelectedArray(prev => {
+        const alreadyScanned = (selected || []).some(p =>
+          p.MAKE_NO === decryptedBarcode ||
+          p.MAKE_NO?.includes(decryptedBarcode)
+        );
 
-          const alreadyScanned = prev.some(p => 
-            p.MAKE_NO === decryptedBarcode || 
-            p.MAKE_NO?.includes(decryptedBarcode)
-          );
-              
-          if (alreadyScanned) {
-            Alert({ title: `已掃描過: ${decryptedBarcode}`, icon: "warning", timer: 1000 });
-            return prev;
-          }
-          
-          return [...prev, {
-            PRT_NO: matchedItem.PRT_NO,
-            MAKE_NO: decryptedBarcode,
-            outBoxNo: matchedItem.BOX_NO,
-            outPpNo: matchedItem.BOX_PACK  
-          }];
-        });
-        Alert({ title: `已掃描: ${decryptedBarcode}`, icon: "success", timer: 1000 });
+        if (alreadyScanned) {
+          Alert({ title: `已掃描過: ${decryptedBarcode}`, icon: "warning", timer: 1000 });
+        } else {
+          dispatch(setOutboundExternal({
+            station: currentStationSafe,
+            selected: [...(selected || []), {
+              PRT_NO: matchedItem.PRT_NO,
+              MAKE_NO: decryptedBarcode,
+              outBoxNo: matchedItem.BOX_NO,
+              outPpNo: matchedItem.BOX_PACK
+            }]
+          }));
+          Alert({ title: `已掃描: ${decryptedBarcode}`, icon: "success", timer: 1000 });
+        }
       } else {
         Alert({ title: "條碼不符合，找不到對應箱號" });
       }
@@ -350,9 +348,9 @@ export default function OutboundExternal() {
       // 1.判斷是整板還是零散
       let itemsToShift = [];
 
-      if (selectedArray.length > 0) {
+      if ((selected || []).length > 0) {
         // 零散掃條碼
-        itemsToShift = selectedArray;
+        itemsToShift = selected;
       } else {
         // 整板出貨
         itemsToShift = shelfItem?.map(item => ({
@@ -375,7 +373,7 @@ export default function OutboundExternal() {
         waveNo: order.W_ID,
         saleNo: orderCode,
         shelveId: shelf.SHELVE_ID,
-        isFullPallet: selectedArray.length === 0
+        isFullPallet: (selected || []).length === 0
       });
 
       if (!shiftRes.data.success) {
@@ -413,10 +411,7 @@ export default function OutboundExternal() {
           }));
         });
 
-        // 5. 清空選擇的陣列
-        setSelectedArray([]);
-
-        // 6. 清空 lackStation
+        // 5. 清空 lackStation
         dispatch(updateOutboundLackStation({ type: "clear" }));
 
         // 7. 從orderList刪除該訂單
@@ -482,12 +477,15 @@ export default function OutboundExternal() {
       <div className="flex flex-1 gap-4 px-2 py-8 items-stretch">
         {/* 左側 */}
         <div className="w-3/7">
-          <OutboundExternalTable 
-            data={tableData} 
-            selectedArray={selectedArray} 
-            setSelectedArray={setSelectedArray}
+          <OutboundExternalTable
+            data={tableData}
+            selectedArray={selected || []}
+            setSelectedArray={(updater) => {
+              const newSelected = typeof updater === 'function' ? updater(selected || []) : updater;
+              dispatch(setOutboundExternal({ station: currentStationSafe, selected: newSelected }));
+            }}
             detailTableData={detailTableData}
-            setDetailTableData={setDetailTableData} 
+            setDetailTableData={setDetailTableData}
           />
         </div>
         {/* 右側 */}
@@ -597,16 +595,14 @@ export default function OutboundExternal() {
       {/* 站點 */}
       <div className="w-full flex justify-between z-15">
         {stations.map((station, i) => (
-          <div key={i} className="flex-1">
             <ActionBtn 
               key={i} 
-              text={`站點${i + 1}`} 
-              variant={lackStation?.includes(station) ? "" : "green"} 
+              text={station} 
+              variant={lackStation?.includes(station) ? "green" : "green"} 
               disabled={currentStation === station ? true : false} 
               onClick={() => handleSwitchStation(station)} 
-              className="w-80 flex justify-center"
+              className="w-80 flex flex-1 justify-center"
             />
-          </div>
         ))}
       </div>
       {/* loading */}

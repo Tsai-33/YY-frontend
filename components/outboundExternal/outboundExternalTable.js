@@ -78,7 +78,9 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
 
     // ============= 預設勾選整箱BOX_NO > 0 零散不勾 =============
     useEffect(() => {
-        if (step !== 3 || detailTableData.length === 0) return;
+        // 只有當 step 為 3、有資料、且尚未選擇任何項目時才顯示預設值
+        if (step !== 3 || detailTableData.length === 0 || selectedArray.length > 0) return;
+
         const fullBoxItems = detailTableData
             .filter(item => {
                 const boxNo = Number(item.BOX_NO) || 0;
@@ -88,11 +90,11 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
                 PRT_NO: item.PRT_NO,
                 MAKE_NO: item.MAKE_NO,
                 outBoxNo: item.BOX_NO,
-                outPpNo: item.BOX_PACK 
+                outPpNo: item.BOX_PACK
             }));
 
         setSelectedArray(fullBoxItems);
-    }, [step, detailTableData]);
+    }, [step, detailTableData, selectedArray.length]);
 
     const checkedMakeNos = selectedArray.map(item => item.MAKE_NO);
 

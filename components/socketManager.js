@@ -144,6 +144,10 @@ export default function SocketManager() {
             station: eventData.STATION,
             pushButton: eventData
           }));
+          dispatch(setShelfTransfer({
+            station: eventData.STATION,
+            pushButton: eventData
+          }));
         }
         if (eventData?.action === "show_msg") {
         }
