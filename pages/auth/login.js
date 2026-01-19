@@ -22,6 +22,13 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // 測試選站 上市後刪掉)
+  const [thisStation, setThisStation] = useState("");
+  const handleChangeStation = (e) => {
+    setThisStation(e.target.value);
+  };
+  // 測試選站 上市後刪掉)
+
   // 如果已登录，重定向到工作站页面
   useEffect(() => {
     if (isAuthenticated) {
@@ -103,10 +110,9 @@ export default function Login() {
     try {
       // 调用登录API
       const response = await loginAPI(formData.email, formData.password);
-              console.log(response ,'user')
+      console.log(response, "user");
       if (response.success) {
         const { user, accessToken, refreshToken } = response.data;
-
 
         // 保存到Redux
         dispatch(
@@ -117,7 +123,8 @@ export default function Login() {
           })
         );
 
-        dispatch(initWorkstation(user.ipAddress));
+        // dispatch(initWorkstation(user.ipAddress));
+        dispatch(initWorkstation(thisStation ? thisStation : user.ipAddress)); // 暫時使用
 
         // 显示成功消息
         Alert({
@@ -181,6 +188,29 @@ export default function Login() {
               <ActionBtn text="測帳密1" variant="yellow" className="absolute top-0 left-50" onClick={() => handleWriteIn("ADMIN001", "admin")} />
               <ActionBtn text="測帳密2" variant="rose" className="absolute top-0 left-100" onClick={() => handleWriteIn("ADMIN002", "admin")} />
               <ActionBtn text="測帳密3" variant="violet" className="absolute top-0 left-150" onClick={() => handleWriteIn("ADMIN003", "admin")} />
+              <div className="max-w-sm absolute top-0 left-200">
+                <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">
+                  選擇目前測試站點
+                </label>
+                <div class="relative">
+                  <select
+                    id="quantity"
+                    className="block w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-gray-700 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-gray-50"
+                    onChange={handleChangeStation}
+                  >
+                    <option value="172.16.11.99">A01~A10</option>
+                    <option value="172.16.11.75">B01~B05</option>
+                    <option value="172.168.1.67">C01~C05</option>
+                    <option value="172.16.11.74">D01~D04</option>
+                  </select>
+
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
               {/* 暫時使用--- 上線後刪除 */}
             </h2>
 
