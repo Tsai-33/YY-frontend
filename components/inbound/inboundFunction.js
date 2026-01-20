@@ -16,7 +16,7 @@ export const getERP = async (setLoading, inputBarCode, setTableData, orderList) 
       Alert({ title: `${res?.error?.message}` });
     }
   } catch (error) {
-    console.warn(`ask_order handleBarCode :`, error);
+    console.log(`ask_order handleBarCode :`, error);
   } finally {
     setLoading(false);
   }
@@ -37,7 +37,7 @@ export const getTable = async (setTableData, orderList = null) => {
       Alert({ title: `目前網路不穩定，請重新再試。` });
     }
   } catch (err) {
-    console.warn(`getTable:`, err);
+    console.log(`getTable:`, err);
   }
 };
 
@@ -53,7 +53,7 @@ export const getList = async (waveNo, setTableData2) => {
       Alert({ title: `目前網路不穩定，請重新再試。` });
     }
   } catch (err) {
-    console.warn("getList :", err);
+    console.log("getList :", err);
   }
 };
 
@@ -66,7 +66,7 @@ export const confrimList_in = async (setLoading, order) => {
     const data = { action: "ask_wave", dataid: random9, wave_no: String(order.W_ID), station_no: "A" };
     return await sendToWMS(data);
   } catch (err) {
-    console.warn("handleConfrimList :", err);
+    console.log("handleConfrimList :", err);
   } finally {
     setLoading(false);
   }
@@ -79,7 +79,7 @@ export const onToShelf_in = async (setLoading, selected, shelf, order, dispatch,
     const data = { itemArray: selected, area: shelf.area, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO };
     return await updateInboundWMS(data);
   } catch (err) {
-    console.warn("handleConfrimShelf :", err);
+    console.log("handleConfrimShelf :", err);
   } finally {
     setLoading(false);
     dispatch(setInbound({ station: currentStation, selected: [] }));
@@ -93,7 +93,7 @@ export const addShelf_in = async (setLoading, setAddModal, shelf, order) => {
     setLoading(true);
     return await addInboundWCS({ area: shelf?.area, W_ID: order?.W_ID });
   } catch (err) {
-    console.warn("handleAddShelf :", err);
+    console.log("handleAddShelf :", err);
   } finally {
     setLoading(false);
     setAddModal(false);
@@ -108,7 +108,7 @@ export const returnShelf_in = async (setLoading, shelf, currentStation, order) =
     const data = { Command: "RETURN", SHELVE_ID: shelf?.SHELVE_ID, BAR_CODE: "", FACE: 2, STATION: currentStation, PURPOSE: 1, STATUS: 0, CART_ID: "", DATA_ID: random9, WAVENO: String(order.W_ID), GGROUP: String(order.W_ID) };
     return await addShelf(data);
   } catch (err) {
-    console.warn("handleReturn :", err);
+    console.log("handleReturn :", err);
   } finally {
     setLoading(false);
   }
@@ -122,7 +122,7 @@ export const cancelShelf_in = async (setLoading, currentStation) => {
     const data = { action: "cancel", dataid: random9, STATION: currentStation };
     return await sendToWMS(data);
   } catch (err) {
-    console.warn("handleCancel:", err);
+    console.log("handleCancel:", err);
   } finally {
     setLoading(false);
   }
@@ -134,7 +134,7 @@ export const restoreList_in = async (setLoading, waveNo) => {
   try {
     return await restoreOrders({ W_ID: waveNo });
   } catch (err) {
-    console.warn(`handleReturnShelf :`, err);
+    console.log(`handleReturnShelf :`, err);
   } finally {
     setLoading(false);
   }
@@ -146,7 +146,7 @@ export const finishList_in = async (setLoading, order) => {
   try {
     return await finishInboundOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME });
   } catch (err) {
-    console.warn(`handleFinish:`, err);
+    console.log(`handleFinish:`, err);
   } finally {
     setLoading(false);
   }
@@ -157,7 +157,7 @@ export const checkCar = async (waveNo) => {
   try {
     return await checkWCS({ W_ID: waveNo });
   } catch (err) {
-    console.warn(`handleReturnShelf:`, err);
+    console.log(`handleReturnShelf:`, err);
   }
 };
 // 檢查是否他站有任務
@@ -165,7 +165,7 @@ export const checkTask_in = async (stations) => {
   try {
     return await selectTask({ stations: stations[0] });
   } catch (err) {
-    console.warn(`handleConfrimList:`, err);
+    console.log(`handleConfrimList:`, err);
   }
 };
 
@@ -173,7 +173,7 @@ export const addTask_in = async (stations) => {
   try {
     return await updateTask({ stations: stations[0], location: "inbound" });
   } catch (err) {
-    console.warn(`handleConfrimList:`, err);
+    console.log(`handleConfrimList:`, err);
   }
 };
 
@@ -181,6 +181,6 @@ export const deleteTask_in = async (stations) => {
   try {
     return await deleteTask({ stations: stations[0] });
   } catch (err) {
-    console.warn(`handleConfrimList:`, err);
+    console.log(`handleConfrimList:`, err);
   }
 };
