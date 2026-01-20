@@ -7,16 +7,18 @@ import { api } from "./service";
 
 /**
  * 用户登录
- * @param {string} identifier - 邮箱或账号编号 (Email hoặc AccountNumber)
+ * @param {string} identifier - 邮箱或账号编号 (Email 或 AccountNumber)
  * @param {string} password - 密码
+ * @param {boolean} forceLogin - 強制登入 (踢掉其他設備)
  * @returns {Promise} 登录结果
  */
-export const login = async (identifier, password) => {
-  // Backend controller会检查 email, accountNumber, 或 identifier 字段
-  // 使用 email 字段名以保持向后兼容，backend会查找 Email 或 AccountNumber
-  const response = await api.post("/auth/login", { 
-    email: identifier, // Backend会使用此值查找 Email 或 AccountNumber
-    password: password, // 密码字段
+export const login = async (identifier, password, forceLogin = false) => {
+  // Backend controller 會檢查 email, accountNumber, 或 identifier 欄位
+  // 使用 email 欄位名以保持向後兼容，backend 會查找 Email 或 AccountNumber
+  const response = await api.post("/auth/login", {
+    email: identifier, // Backend 會使用此值查找 Email 或 AccountNumber
+    password: password, // 密碼欄位
+    forceLogin: forceLogin, // 強制登入
   });
   return response.data;
 };

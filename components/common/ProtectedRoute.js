@@ -15,6 +15,11 @@ const PUBLIC_ROUTES = [
   "/auth/logout",
 ];
 
+// 所有已登入用戶都可訪問的路由 (不需要特定權限)
+const AUTHENTICATED_ROUTES = [
+  "/workspace",
+];
+
 // 需要特定权限的路由配置 (使用英文權限名稱)
 const PERMISSION_ROUTES = {
   "/outboundExternal": "outboundExternal",
@@ -74,8 +79,16 @@ export default function ProtectedRoute({ children, requiredPermission = null }) 
       return;
     }
 
-    // 4) User => 檢查 PERMISSION_ROUTES
+    // 4) User => 先檢查 AUTHENTICATED_ROUTES, 再檢查 PERMISSION_ROUTES
     if (userRole === "user") {
+      // 先檢查是否為所有已登入用戶都可訪問的路由
+      const isAuthenticatedRoute = AUTHENTICATED_ROUTES.some((r) =>
+        r === "/" ? pathname === "/" : pathname === r || pathname.startsWith(r + "/")
+      );
+      if (isAuthenticatedRoute) {
+        return; // 允許訪問
+      }
+
       // autoPermission: 如果傳入 requiredPermission 則優先使用, 否則在 map 中尋找
       // 注意: PERMISSION_ROUTES 可以使用精確 key 或前綴; 這裡我們支援前綴 (startsWith)
       const autoPermissionKey = requiredPermission
@@ -143,7 +156,14 @@ export default function ProtectedRoute({ children, requiredPermission = null }) 
   // 3) Admin/Manager => render
   if (userRole === "admin" || userRole === "manager") return <>{children}</>;
 
-  // 4) User: 僅在路由被映射且 user 有權限時渲染
+  // 4) User: 先檢查 AUTHENTICATED_ROUTES, 再檢查 PERMISSION_ROUTES
+  const isAuthenticatedRoute = AUTHENTICATED_ROUTES.some((r) =>
+    r === "/" ? pathname === "/" : pathname === r || pathname.startsWith(r + "/")
+  );
+  if (isAuthenticatedRoute) {
+    return <>{children}</>;
+  }
+
   const autoPermissionKey = requiredPermission
     ? requiredPermission
     : (() => {

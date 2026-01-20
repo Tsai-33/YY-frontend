@@ -104,17 +104,57 @@ function handleSessionLoggedOut() {
   window.location.replace("/auth/login?reason=session_expired");
 }
 
-function handleTokenExpired() {
-  // 403
+async function handleTokenExpired() {
+  // 403 - Token 已過期
   if (typeof window === "undefined") return;
+
+  // ✅ 嘗試調用 logout API 以更新 DB 中的 LogoutTime
+  // 這確保用戶可以在其他設備上重新登入
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (accessToken) {
+      const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3947";
+      await axios.post(
+        `${baseURL}/auth/logout`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          timeout: 3000, // 3 秒超時
+        }
+      );
+    }
+  } catch (e) {
+    // 忽略錯誤 - token 可能已過期或無效
+    console.warn("[handleTokenExpired] Logout API failed:", e.message);
+  }
+
   clearAuth();
   sessionStorage.setItem("logoutReason", "token_expired");
   window.location.replace("/auth/login?reason=token_expired");
 }
 
-function handleUnauthorized() {
-  // 401
+async function handleUnauthorized() {
+  // 401 - 未授權 (token 無效或 session 已登出)
   if (typeof window === "undefined") return;
+
+  // ✅ 嘗試調用 logout API 以更新 DB 中的 LogoutTime
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (accessToken) {
+      const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3947";
+      await axios.post(
+        `${baseURL}/auth/logout`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          timeout: 3000,
+        }
+      );
+    }
+  } catch (e) {
+    console.warn("[handleUnauthorized] Logout API failed:", e.message);
+  }
+
   clearAuth();
   sessionStorage.setItem("logoutReason", "unauthorized");
   window.location.replace("/auth/login?reason=unauthorized");
