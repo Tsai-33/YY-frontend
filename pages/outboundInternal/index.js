@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import OutboundInternalTable from "@/components/outboundInternal/outboundInternalTable";
 import { setCurrentStation, setCurrentJob, updateLackStation } from "@/redux/reducer/reducerWorkStations";
@@ -83,6 +83,24 @@ export default function OutboundInternal() {
       setOrderDetail([]);
     }
   }
+
+  // =====根據相同的SHELVE_ID資料分組=====
+  const groupedOrderDetail = useMemo(() => {
+    const grouped = {};
+    orderDetail.forEach(item => {
+      const id = item.SHELVE_ID;
+      if (!grouped[id]) {
+        grouped[id] = {
+          SHELVE_ID: id,
+          STOCK_AREA: item.STOCK_AREA,
+          SHELVE_TYPE: item.type,
+          items: []
+        };
+      }
+      grouped[id].items.push(item);
+    });
+    return Object.values(grouped);
+  }, [orderDetail]);
 
   // =====掃領用單條碼=====
   const orderBarCodeRef = useRef(null);
@@ -540,23 +558,30 @@ export default function OutboundInternal() {
             <div className="flex flex-col gap-8 h-100 overflow-y-auto">
               {step <= 2 ? (
                 orderCode &&
-                orderDetail?.map((v, i) => (
-                  <SchematicDiagramList key={i}>
-                    <div className="flex flex-col text-3xl">
-                      <div className="flex justify-between">
-                        <div>貨架編號:{v?.SHELVE_ID}</div>
-                        <div>出庫庫別:{v?.STOCK_AREA}</div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div>產品品號:{v?.PRT_NO}</div>
-                        <div>棧板規格:{v?.type}</div>
-                      </div>
-                      <div>品名: {v?.PRT_NAME}</div>
-                        <div className="flex justify-between">
-                          <div>箱數: {v?.BOX_NO} 箱</div>
-                          <div>包數: {v?.BOX_PACK} 包</div>
-                          <div>{i + 1}/{orderDetail?.length}</div>
+                groupedOrderDetail?.map((shelveGroup, index) => (
+                  <SchematicDiagramList key={shelveGroup.SHELVE_ID}>
+                    {/* 貨架編號、庫別 */}
+                    <div className="flex justify-between items-center mb-4 text-3xl">
+                      <div>貨架編號:{shelveGroup.SHELVE_ID}</div>
+                      <div>出庫庫別:{shelveGroup.STOCK_AREA}</div>
+                    </div>
+                    {/* 該貨架的所有產品 */}
+                    {shelveGroup.items.map((item, itemIndex) => (
+                      <div key={itemIndex} className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0">
+                        <div className="flex justify-between text-3xl">
+                          <div>產品品號:{item?.PRT_NO}</div>
+                          <div>棧板規格:{item?.type}</div>
                         </div>
+                        <div className="text-3xl">品名: {item?.PRT_NAME}</div>
+                        <div className="flex justify-between text-3xl">
+                          <div>箱數: {item?.BOX_NO} 箱</div>
+                          <div>包數: {item?.BOX_PACK} 包</div>
+                        </div>
+                      </div>
+                    ))}
+                    {/* 進度 */}
+                    <div className="text-3xl text-right mt-4">
+                      {index + 1}/{groupedOrderDetail?.length}
                     </div>
                   </SchematicDiagramList>
                 ))
