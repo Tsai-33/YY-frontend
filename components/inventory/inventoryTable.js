@@ -53,6 +53,7 @@ export default function InventoryTable() {
     start: filters.CHECK_TIME_START,
     end: filters.CHECK_TIME_END,
   });
+  const [isSearched, setIsSearched] = useState(false);
 
   const handleChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -124,6 +125,7 @@ export default function InventoryTable() {
     try {
       const res = await getInventoryItems(payload);
       if (res?.data?.success) {
+        setIsSearched(true);
         const data = res?.data?.data;
 
         dispatch(
@@ -267,6 +269,7 @@ export default function InventoryTable() {
                       data: { prtNo: "", stockArea: "", cusNo: "", saleNo: "" },
                     })
                   );
+                  setIsSearched(false);
                 }}>
                 清除
               </button>
@@ -288,6 +291,7 @@ export default function InventoryTable() {
             name="stockQuery"
             variants="green"
             idKey="INDEX"
+            isSearched={isSearched}
           />
         </div>
       </div>
@@ -323,7 +327,7 @@ export default function InventoryTable() {
                 onChange={(e) =>
                   setTempTime((t) => ({ ...t, start: e.target.value }))
                 }
-                className="border rounded px-3 py-2 bg-[#878787] text-white border-[#878787] focus:outline-none focus:ring-2 focus:ring-white/40"
+                className="border rounded px-3 py-2 bg-[#878787] text-white text-[16px] border-[#878787] focus:outline-none focus:ring-2 focus:ring-white/40"
               />
             </div>
             <div className="text-(length:--font-size-4xl) font-bold">~</div>
@@ -338,7 +342,7 @@ export default function InventoryTable() {
                 onChange={(e) =>
                   setTempTime((t) => ({ ...t, end: e.target.value }))
                 }
-                className="border rounded px-3 py-2 bg-[#878787] text-white border-[#878787] focus:outline-none focus:ring-2 focus:ring-white/40"
+                className="border rounded px-3 py-2 bg-[#878787] text-white text-[16px] border-[#878787] focus:outline-none focus:ring-2 focus:ring-white/40"
               />
             </div>
           </div>
