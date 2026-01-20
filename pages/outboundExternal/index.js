@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import OutboundExternalTable from "@/components/outboundExternal/outboundExternalTable";
 import { setCurrentStation, setCurrentJob, updateLackStation } from "@/redux/reducer/reducerWorkStations";
@@ -81,6 +81,25 @@ export default function OutboundExternal() {
       setOrderDetail([]);
     }
   }
+
+  // =====根據相同的SHELVE_ID資料分組=====
+  const groupedOrderDetail = useMemo(() => {
+    const grouped = {};
+
+    orderDetail.forEach(item => {
+      const id = item.SHELVE_ID;
+      if (!grouped[id]) {
+        grouped[id] = {
+          SHELVE_ID: id,
+          STOCK_AREA: item.STOCK_AREA,
+          SHELVE_TYPE: item.type,
+          items: []
+        };
+      }
+      grouped[id].items.push(item);
+    });
+    return Object.values(grouped);
+  }, [orderDetail]);
 
   // =====掃銷貨單條碼=====
   const orderBarCodeRef = useRef(null);
@@ -267,6 +286,61 @@ export default function OutboundExternal() {
       return;
     }
 
+    // 檢查庫區是否為 F01
+    console.log("orderDetail: ", orderDetail)
+    const invalidStockArea = orderDetail?.find(item => item.STOCK_AREA !== "F01");
+    if (invalidStockArea) {
+      Alert({ title: `庫區錯誤：貨架 ${invalidStockArea.SHELVE_ID} 的庫區為 ${invalidStockArea.STOCK_AREA}，非 F01` });
+      return;
+    }
+
+    // 檢查庫存是否足夠
+    try {
+      const detailRes = await getOutBoundExternalOrderDetailByWID(order.W_ID);
+      if (detailRes.data.success) {
+        const demandData = detailRes.data.data || [];
+
+        // 將需求按 PRT_NO 分組加總
+        const demandByPrtNo = {};
+        demandData.forEach(item => {
+          const prtNo = item.PRT_NO;
+          if (!demandByPrtNo[prtNo]) {
+            demandByPrtNo[prtNo] = { PP_NO: 0, BOX_NO: 0 };
+          }
+          demandByPrtNo[prtNo].PP_NO += item.PP_NO || 0;
+          demandByPrtNo[prtNo].BOX_NO += item.BOX_NO || 0;
+        });
+
+        // 將 WMS 庫存按 PRT_NO 分組加總
+        const stockByPrtNo = {};
+        orderDetail?.forEach(item => {
+          const prtNo = item.PRT_NO;
+          if (!stockByPrtNo[prtNo]) {
+            stockByPrtNo[prtNo] = { PP_NO: 0, BOX_NO: 0 };
+          }
+          stockByPrtNo[prtNo].PP_NO += item.PP_NO || 0;
+          stockByPrtNo[prtNo].BOX_NO += item.BOX_NO || 0;
+        });
+
+        // 比較每個 PRT_NO 的庫存是否足夠
+        for (const prtNo of Object.keys(demandByPrtNo)) {
+          const demand = demandByPrtNo[prtNo];
+          const stock = stockByPrtNo[prtNo] || { PP_NO: 0, BOX_NO: 0 };
+          if (stock.PP_NO < demand.PP_NO || stock.BOX_NO < demand.BOX_NO) {
+            Alert({
+              title: `庫存不足：產品 ${prtNo}`,
+              text: `需求: ${demand.BOX_NO} 箱 ${demand.PP_NO} 包\n庫存: ${stock.BOX_NO} 箱 ${stock.PP_NO} 包`
+            });
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.warn("檢查庫存失敗:", error);
+      Alert({ title: "檢查庫存失敗" });
+      return;
+    }
+
     setLoading(true);
     try {
       const dataId = generateRandomNumber();
@@ -280,15 +354,18 @@ export default function OutboundExternal() {
       console.log("data: ", data)
       const res = await sendToWMS(data);
       console.log("res: ", res)
+      const resiveData = res.data.data;
 
-      // 清空該站的資料
-      if (res.data.success) {
+      // 檢查 LabVIEW 回傳結果
+      if (resiveData?.result === "NG") {
+        Alert({ title: `${resiveData?.message}` });
+      } else if (resiveData?.message2?.length > 0) {
+        // 清空該站的資料
         dispatch(setOutboundExternal({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
-      }
-      if (res.data.success) {
+
         await updateStatusForOutboundCallCar({ W_ID: order.W_ID });
         // 存被占用的站點
-        let lack_station = res.data.data.message2;
+        let lack_station = resiveData.message2;
         if (!Array.isArray(lack_station)) {
           try {
             // 把單引號換成雙引號後解析
@@ -308,7 +385,7 @@ export default function OutboundExternal() {
               waveNo: order.W_ID,
               order: order,
               orderList: orderCode,
-              lackStation:station
+              lackStation: station
             }));
           });
         }
@@ -317,9 +394,12 @@ export default function OutboundExternal() {
 
         // 寫入任務紀錄
         await addTask_out(stations);
+      } else {
+        Alert({ title: "伺服器有問題，請稍後再試。" });
       }
     } catch (error) {
       console.warn("出庫確認 :", error);
+      Alert({ title: "出庫確認失敗", text: error?.message || "發生錯誤" });
     } finally {
       setLoading(false);
     }
@@ -397,38 +477,49 @@ export default function OutboundExternal() {
         STATION: currentStation,
         PURPOSE: 0
       };
-
       const res = await sendToWMS(data);
       if (res.data.success) {
-        // 4. 清空所有站點的資料(出庫會佔滿所有站點)
-        stations.forEach((stationId) => {
+        const taskCount = res.data.data?.task_count ?? 0;
+        console.log("task_count:", taskCount);
+
+        if (taskCount > 0) {
+          // 還有其他工作站未完成，當前工作站設為 loading
           dispatch(setOutboundExternal({
-            station: stationId,
-            step: 1,
-            screen: "idle",
-            orderCode: "",
-            waveNo: null,
-            order: {},
-            shelf: {},
-            shelfItem: [],
-            selected: []
+            station: currentStation,
+            screen: "loading"
           }));
-        });
+          Alert({ title: `還有 ${taskCount} 個工作站未完成退回貨架` });
+        } else {
+          // 4. 所有工作站都完成了清空所有站點的資料(出庫會佔滿所有站點)
+          stations.forEach((stationId) => {
+            dispatch(setOutboundExternal({
+              station: stationId,
+              step: 1,
+              screen: "idle",
+              orderCode: "",
+              waveNo: null,
+              order: {},
+              shelf: {},
+              shelfItem: [],
+              selected: []
+            }));
+          });
 
-        // 5. 清空 lackStation
-        dispatch(updateOutboundLackStation({ type: "clear" }));
+          // 5. 清空 lackStation
+          dispatch(updateOutboundLackStation({ type: "clear" }));
 
-        // 7. 從orderList刪除該訂單
-        dispatch(updateOrderList({ order: orderCode, type: "sub" }));
+          // 6. 從orderList刪除該訂單
+          dispatch(updateOrderList({ order: orderCode, type: "sub" }));
 
-        // 8. 刪除任務紀錄
-        await deleteTask_out(stations);
+          // 7. 刪除任務紀錄
+          await deleteTask_out(stations);
 
-        dispatch(resetoutboundInternal());
+          dispatch(resetoutboundInternal());
 
-        await getOutboundExternalTable();
+          await getOutboundExternalTable();
 
-        Alert({ title: "出庫完成" });
+          Alert({ title: "出庫完成" });
+        }
       }
     } catch (error) {
       console.warn("handleReturnShelf", error);
@@ -536,23 +627,30 @@ export default function OutboundExternal() {
             <div className="flex flex-col gap-8 h-100 overflow-y-auto">
               {step <= 2 ? (
                 orderCode &&
-                orderDetail?.map((v, i) => (
-                  <SchematicDiagramList key={i}>
-                    <div className="flex flex-col text-3xl">
-                      <div className="flex justify-between">
-                        <div>貨架編號:{v?.SHELVE_ID}</div>
-                        <div>出庫庫別:{v?.STOCK_AREA}</div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div>產品品號:{v?.PRT_NO}</div>
-                        <div>棧板規格:{v?.type}</div>
-                      </div>
-                      <div>品名: {v?.PRT_NAME}</div>
-                        <div className="flex justify-between">
-                          <div>箱數: {v?.BOX_NO} 箱</div>
-                          <div>包數: {v?.BOX_PACK} 包</div>
-                          <div>{i + 1}/{orderDetail?.length}</div>
+                groupedOrderDetail?.map((shelveGroup, index) => (
+                  <SchematicDiagramList key={shelveGroup.SHELVE_ID}>
+                    {/* 貨架編號、庫別 */}
+                    <div className="flex justify-between items-center mb-4 text-3xl">
+                      <div>貨架編號:{shelveGroup.SHELVE_ID}</div>
+                      <div>出庫庫別:{shelveGroup.STOCK_AREA}</div>
+                    </div>
+                    {/* 該貨架的所有產品 */}
+                    {shelveGroup.items.map((item, itemIndex) => (
+                      <div key={itemIndex} className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0">
+                        <div className="flex justify-between text-3xl">
+                          <div>產品品號:{item?.PRT_NO}</div>
+                          <div>棧板規格:{item?.type}</div>
                         </div>
+                        <div className="text-3xl">品名: {item?.PRT_NAME}</div>
+                        <div className="flex justify-between text-3xl">
+                          <div>箱數: {item?.BOX_NO} 箱</div>
+                          <div>包數: {item?.BOX_PACK} 包</div>
+                        </div>
+                      </div>
+                    ))}
+                    {/* 進度 */}
+                    <div className="text-3xl text-right mt-4">
+                      {index + 1}/{groupedOrderDetail?.length}
                     </div>
                   </SchematicDiagramList>
                 ))
@@ -648,3 +746,6 @@ export default function OutboundExternal() {
     </>
   );
 }
+
+
+
