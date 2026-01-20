@@ -120,9 +120,8 @@ export default function Login() {
             user,
             accessToken,
             refreshToken,
-          })
+          }),
         );
-
         // dispatch(initWorkstation(user.ipAddress));
         dispatch(initWorkstation(thisStation ? thisStation : user.ipAddress)); // 暫時使用 上線後砍掉
 
@@ -198,6 +197,9 @@ export default function Login() {
                     className="block w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-gray-700 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-gray-50"
                     onChange={handleChangeStation}
                   >
+                    <option value="" disabled hidden>
+                      請選擇
+                    </option>
                     <option value={process.env.NEXT_PUBLIC_IP_A}>A01~A10</option>
                     <option value={process.env.NEXT_PUBLIC_IP_B}>B01~B05</option>
                     <option value={process.env.NEXT_PUBLIC_IP_C}>C01~C05</option>
