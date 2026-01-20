@@ -36,10 +36,10 @@ export default function Login() {
     }
   }, [isAuthenticated, router]);
 
-  // ✅ Kiểm tra lý do logout (session hết hạn, auto logout, v.v.)
+  // ✅ 檢查登出原因 (session 過期、自動登出等)
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Kiểm tra query params
+      // 檢查 query 參數
       const reason = router.query.reason;
       const logoutReason = sessionStorage.getItem("logoutReason");
 
@@ -67,7 +67,7 @@ export default function Login() {
             html = "請重新登入以繼續使用";
         }
 
-        // Hiển thị alert
+        // 顯示 alert
         Alert({
           title,
           html,
@@ -76,7 +76,7 @@ export default function Login() {
           confirmButtonText: "確定",
         });
 
-        // Clear query params để không lặp lại alert khi refresh
+        // 清除 query 參數以避免刷新時重複顯示 alert
         router.replace("/auth/login", undefined, { shallow: true });
       }
     }
@@ -138,6 +138,53 @@ export default function Login() {
         setTimeout(() => {
           router.push("/workspace");
         }, 1500);
+      } else if (response.code === "ALREADY_LOGGED_IN") {
+        // ✅ 已在其他設備登入 → 顯示強制登入選項
+        Alert({
+          title: "帳號已在其他設備登入",
+          html: response.message,
+          showConfirm: true,
+          showCancel: true,
+          confirmButtonColor: "#d33",
+          cancelButtonColor: "#3085d6",
+          confirmButtonText: "強制登入",
+          cancelButtonText: "取消",
+          onConfirm: async () => {
+            // 執行強制登入
+            setLoading(true);
+            try {
+              const forceResponse = await loginAPI(formData.email, formData.password, true);
+              if (forceResponse.success) {
+                const { user, accessToken, refreshToken } = forceResponse.data;
+                dispatch(loginSuccess({ user, accessToken, refreshToken }));
+                dispatch(initWorkstation(thisStation ? thisStation : user.ipAddress));
+
+                Alert({
+                  title: "登入成功",
+                  html: `已登出其他設備，歡迎回來，${user.username}！`,
+                  timer: 1500,
+                  showConfirm: false,
+                  confirmButtonColor: "#008b48",
+                });
+                setTimeout(() => router.push("/workspace"), 1500);
+              } else {
+                Alert({
+                  title: "登入失敗",
+                  html: forceResponse.message || "強制登入失敗",
+                  confirmButtonColor: "#b32627",
+                });
+              }
+            } catch (err) {
+              Alert({
+                title: "登入失敗",
+                html: err.response?.data?.message || "強制登入失敗",
+                confirmButtonColor: "#b32627",
+              });
+            } finally {
+              setLoading(false);
+            }
+          },
+        });
       } else {
         Alert({
           title: "登入失敗",
