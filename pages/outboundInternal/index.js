@@ -36,6 +36,7 @@ export default function OutboundInternal() {
   const [orderDetail, setOrderDetail] = useState([]);
   const [confirmModal, setConfirmModal] = useState(false);
   const [returnModal, setReturnModal] = useState(false);
+  const [orderInput, setOrderInput] = useState("");
 
   // TODO 暫時不透過workspace進來
   useEffect(() => {
@@ -66,6 +67,11 @@ export default function OutboundInternal() {
     }
   }, [orderCode]);
 
+  // 同步 orderCode 到 orderInput
+  useEffect(() => {
+    setOrderInput(orderCode || "");
+  }, [orderCode]);
+
   const fetchOrderDetail = async (saleNo) => {
     try {
       const res = await getOutboundInternalOrderDetailBySaleNo(saleNo);
@@ -92,7 +98,6 @@ export default function OutboundInternal() {
     // 如果已經點擊選擇會檢查掃的條碼是否匹配
     if (orderCode && orderCode === inputBarCode) {
       dispatch(setOutboundInternal({ station: currentStationSafe, step: 2 }));
-      orderBarCodeRef.current.value = "";
       return;
     }
 
@@ -101,11 +106,11 @@ export default function OutboundInternal() {
     const [value] = tableData.filter((item) => item.SALE_NO === inputBarCode);
     if (result) {
       dispatch(setOutboundInternal({ station: currentStationSafe, order: value, orderCode: inputBarCode, waveNo: value.W_ID, step: 2 }));
-      orderBarCodeRef.current.value = "";
+      // orderInput 會由 useEffect 同步 orderCode
     } else if (orderCode && orderCode !== inputBarCode) {
       // 已選擇但條碼不匹配
       Alert({ title: "條碼與選擇的領用單不符" });
-      orderBarCodeRef.current.value = "";
+      setOrderInput(orderCode || "");
     } else {
       setAskingOrder(true);
       try {
@@ -146,7 +151,7 @@ export default function OutboundInternal() {
         console.warn("ask_order 錯誤:", error);
       } finally {
         setAskingOrder(false);
-        orderBarCodeRef.current.value = "";
+        // 如果沒配對到，清空輸入；如果配對到，useEffect 會同步 orderCode
       }
     }
   }
@@ -500,21 +505,18 @@ export default function OutboundInternal() {
               <label htmlFor="order" className="font-bold text-black">
                 領用單條碼:
               </label>
-              {step <= 2 ? (
-                <div className="w-50 flex items-center gap-2">
-                  <InputFrame 
-                    type="text" 
-                    name="orderCode" 
-                    id="order" 
-                    ref={orderBarCodeRef} 
-                    onKeyDown={handleOrderBarCode}
-                    disabled={askingOrder}
-                  />
-                  {askingOrder && <span className="text-orange-500">查詢中...</span>}
-                </div>
-              ) : (
-                <span className="ml-2">{orderCode}</span>
-              )}
+              <div className="w-80 flex items-center gap-2">
+                <InputFrame
+                  type="text"
+                  name="orderCode"
+                  id="order"
+                  ref={orderBarCodeRef}
+                  onKeyDown={handleOrderBarCode}
+                  value={orderInput}
+                  onChange={(e) => setOrderInput(e.target.value)}
+                />
+                {askingOrder && <span className="text-orange-500">查詢中...</span>}
+              </div>
             </div>
             {/* 外箱條碼 */}
             {step === 3 && (

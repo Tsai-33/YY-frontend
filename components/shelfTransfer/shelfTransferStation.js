@@ -292,9 +292,8 @@ export default function ShelfTransferStation() {
         }
         await Alert({
             title: "標記異常",
-            text: `確定要將貨架 ${data.shelveId} 標記為異常嗎？`,
-            icon: "warning",
-            showCancelButton: true,
+            html: `確定要將貨架 ${data.shelveId} 標記為異常嗎？`,
+            showCancel: true,
             confirmButtonText: "確定",
             cancelButtonText: "取消",
             onConfirm: async () => {
@@ -382,8 +381,8 @@ export default function ShelfTransferStation() {
                     </div>
                 </div>
                 {/* 貨架Table(固定五個) */}
-                <div className="flex-1 flex flex-col">
-                    <div className="flex gap-2 mb-3 flex-1">
+                <div className="flex-1 flex flex-col min-h-0">
+                    <div className="flex gap-2 mb-3 flex-1 min-h-0">
                         {shelvePositions.map((shelveId, index) => {
                             // 判斷是不是空白欄位貨架
                             const isEmptySlot = shelveId === "貨架代號";
@@ -411,7 +410,7 @@ export default function ShelfTransferStation() {
                                 <div
                                     key={index}
                                     className={`
-                                        flex-1 bg-white rounded-lg shadow-md p-4 flex flex-col transition-all ${
+                                        flex-1 min-h-0 bg-white rounded-lg shadow-md p-4 flex flex-col transition-all ${
                                             isDisabled ? 'opacity-50' : ''
                                         } ${
                                             isActive ? 'ring-4 ring-green-500' : ''
@@ -472,9 +471,12 @@ export default function ShelfTransferStation() {
                                         </div>
                                     ) : (
                                         <>
-                                            <div className={`flex-1 overflow-auto mb-3 ${
-                                                isDisabled ? 'pointer-events-none' : ''
-                                            }`}>
+                                            <div
+                                                className={`flex-1 min-h-0 mb-3 custom-scrollbar ${
+                                                    isDisabled ? 'pointer-events-none' : ''
+                                                }`}
+                                                style={{ '--scrollbar-thumb-color': 'var(--green-vivid)' }}
+                                            >
                                                 {hasData ? (
                                                     <div className="space-y-1">
                                                         {data.map((item) => {
@@ -492,7 +494,7 @@ export default function ShelfTransferStation() {
                                                                         type="checkbox"
                                                                         checked={isChecked}
                                                                         onChange={() => handleItemChange(shelveId, item)}
-                                                                        className="w-4 h-4 "
+                                                                        className="w-4 h-4 accent-green-600"
                                                                     />
                                                                     <span className="text-xl truncate">
                                                                         {item.PRT_NO}
@@ -510,33 +512,39 @@ export default function ShelfTransferStation() {
                                             {/* 護角 / 封膜 / 打包 checkbox */}
                                             {hasData && (
                                                 <div className="flex gap-4 mb-3 justify-between">
-                                                    <label className="flex items-center gap-2 cursor-pointer border rounded-md bg-gray-500 text-white">
-                                                        <input 
+                                                    <label className={`flex items-center gap-2 cursor-pointer border rounded-md text-white transition-colors ${
+                                                        hasCheck(checkValue, CHECK_VALUES.CORNER) ? 'bg-green-600' : 'bg-gray-500'
+                                                    }`}>
+                                                        <input
                                                             type="checkbox"
                                                             checked={hasCheck(checkValue, CHECK_VALUES.CORNER)}
                                                             onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.CORNER)}
                                                             disabled={isDisabled}
-                                                            className="w-5 h-5 m-2"
+                                                            className="w-5 h-5 m-2 accent-white"
                                                         />
                                                         <span className="text-2xl mx-4 my-2">護角</span>
                                                     </label>
-                                                    <label className="flex items-center gap-2 cursor-pointer border rounded-md bg-gray-500 text-white">
+                                                    <label className={`flex items-center gap-2 cursor-pointer border rounded-md text-white transition-colors ${
+                                                        hasCheck(checkValue, CHECK_VALUES.SEAL) ? 'bg-green-600' : 'bg-gray-500'
+                                                    }`}>
                                                         <input
                                                             type="checkbox"
                                                             checked={hasCheck(checkValue, CHECK_VALUES.SEAL)}
                                                             onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.SEAL)}
                                                             disabled={isDisabled}
-                                                            className="w-5 h-5 m-2"
+                                                            className="w-5 h-5 m-2 accent-white"
                                                         />
                                                         <span className="text-2xl mx-4 my-2">封膜</span>
                                                     </label>
-                                                    <label className="flex items-center gap-2 cursor-pointer border rounded-md bg-gray-500 text-white">
+                                                    <label className={`flex items-center gap-2 cursor-pointer border rounded-md text-white transition-colors ${
+                                                        hasCheck(checkValue, CHECK_VALUES.PACK) ? 'bg-green-600' : 'bg-gray-500'
+                                                    }`}>
                                                         <input
                                                             type="checkbox"
                                                             checked={hasCheck(checkValue, CHECK_VALUES.PACK)}
                                                             onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.PACK)}
                                                             disabled={isDisabled}
-                                                            className="w-5 h-5 m-2"
+                                                            className="w-5 h-5 m-2 accent-white"
                                                         />
                                                         <span className="text-2xl mx-4 my-2">打包</span>
                                                     </label>

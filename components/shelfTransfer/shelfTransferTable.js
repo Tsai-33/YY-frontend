@@ -121,9 +121,14 @@ export default function ShelfTransferTable() {
         }
     }, [orderCode, selectedShelves]);
     const handleInputChange = (e) => {
-        const value = e.target.value;
-        setOrderInput(value);
-        // 匹配
+        setOrderInput(e.target.value);
+    }
+
+    const handleInputKeyDown = (e) => {
+        if (e.key !== "Enter") return;
+        const value = e.target.value.trim();
+        if (!value) return;
+
         const matchOrder = tableData.find(
             item => item.SALE_NO === value
         );
@@ -226,7 +231,7 @@ export default function ShelfTransferTable() {
             <div className="flex flex-col h-screen p-4">
                 {/* 標題 */}
                 <div className="flex items-center justify-between mb-4">
-                    <div className="text-4xl font-bold">理貨</div>
+                    <div className="text-5xl font-bold">訂單理貨</div>
                     <PageTitle title="請輸入訂單單號"/>
                     <Link href="/shelfTransfer">
                         <ActionBtn icon="icon-goback" text="返回" variant="darkBlue" />
@@ -256,12 +261,13 @@ export default function ShelfTransferTable() {
                                 <label className="text-lg font-medium whitespace-nowrap">
                                     訂單單號：
                                 </label>
-                                <InputFrame 
+                                <InputFrame
                                     type="text"
                                     name="orderNo"
                                     className="border-2 rounded px-4 py-2 w-[400px]"
                                     value={orderInput}
                                     onChange={handleInputChange}
+                                    onKeyDown={handleInputKeyDown}
                                     placeholder="請輸入訂單單號"
                                 />
                             </div>

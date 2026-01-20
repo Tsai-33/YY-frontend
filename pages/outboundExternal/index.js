@@ -35,6 +35,7 @@ export default function OutboundExternal() {
   const [orderDetail, setOrderDetail] = useState([]);
   const [confirmModal, setConfirmModal] = useState(false);
   const [returnModal, setReturnModal] = useState(false);
+  const [orderInput, setOrderInput] = useState("");
 
   // TODO 暫時不透過workspace進來
   useEffect(() => {
@@ -64,6 +65,11 @@ export default function OutboundExternal() {
     }
   }, [orderCode]);
 
+  // 同步 orderCode 到 orderInput
+  useEffect(() => {
+    setOrderInput(orderCode || "");
+  }, [orderCode]);
+
   const fetchOrderDetail = async (saleNo) => {
     try {
       const res = await getOutBoundExternalOrderDetailBySaleNo(saleNo);
@@ -90,7 +96,6 @@ export default function OutboundExternal() {
     // 如果已經點擊選擇會檢查掃的條碼是否匹配
     if (orderCode && orderCode === inputBarCode) {
       dispatch(setOutboundExternal({ station: currentStationSafe, step: 2 }));
-      orderBarCodeRef.current.value = "";
       return;
     }
 
@@ -99,11 +104,11 @@ export default function OutboundExternal() {
     const [value] = tableData.filter((item) => item.SALE_NO === inputBarCode);
     if (result) {
       dispatch(setOutboundExternal({ station: currentStationSafe, order: value, orderCode: inputBarCode, waveNo: value.W_ID, step: 2 }));
-      orderBarCodeRef.current.value = "";
+
     } else if (orderCode && orderCode !== inputBarCode) {
       // 已選擇但條碼不匹配
       Alert({ title: "條碼與選擇的銷貨單不符" });
-      orderBarCodeRef.current.value = "";
+      setOrderInput(orderCode || "");
     } else {
       setAskingOrder(true);
       try {
@@ -144,7 +149,6 @@ export default function OutboundExternal() {
         console.warn("ask_order 錯誤:", error);
       } finally {
         setAskingOrder(false);
-        orderBarCodeRef.current.value = "";
       }
     }
   }
@@ -497,21 +501,18 @@ export default function OutboundExternal() {
               <label htmlFor="order" className="font-bold text-black">
                 銷貨單條碼:
               </label>
-              {step <= 2 ? (
-                <div className="w-50 flex items-center gap-2">
-                  <InputFrame 
-                    type="text" 
-                    name="orderCode" 
-                    id="order" 
-                    ref={orderBarCodeRef} 
-                    onKeyDown={handleOrderBarCode}
-                    disabled={askingOrder}
-                  />
-                  {askingOrder && <span className="text-orange-500">查詢中...</span>}
-                </div>
-              ) : (
-                <span className="ml-2">{orderCode}</span>
-              )}
+              <div className="w-80 flex items-center gap-2">
+                <InputFrame
+                  type="text"
+                  name="orderCode"
+                  id="order"
+                  ref={orderBarCodeRef}
+                  onKeyDown={handleOrderBarCode}
+                  value={orderInput}
+                  onChange={(e) => setOrderInput(e.target.value)}
+                />
+                {askingOrder && <span className="text-orange-500">查詢中...</span>}
+              </div>
             </div>
             {/* 外箱條碼 */}
             {step === 3 && (
