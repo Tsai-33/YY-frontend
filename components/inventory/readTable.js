@@ -6,6 +6,7 @@ export default function ReadTable({
   checked,
   idKey,
   height,
+  isSearched,
 }) {
   const containerHeight = height || "65vh";
   const innerHeight = height ? `calc(${height} - 1vh)` : "65vh"; // 沒傳就用原本的
@@ -39,30 +40,54 @@ export default function ReadTable({
           </tr>
         </thead>
         <tbody>
-          {data.map((row, ridx) => (
-            <tr
-              key={ridx}
-              className={`hover:bg-(--green-pale) ${
-                checked === row[idKey] ? "bg-(--green-vivid-50) text-white" : ""
-              }`}>
-              <td className="absolute hidden">
-                <input
-                  type="radio"
-                  checked={checked === row[idKey]}
-                  readOnly
-                  className="opacity-0 w-0 h-0 pointer-events-none"
-                />
+          {data.length === 0 ? (
+            <tr>
+              <td
+                colSpan={headers.length}
+                className="py-20 text-gray-400 bg-white border-b border-(--green-vivid)"
+                style={{ height: `calc(${innerHeight} - 60px)` }} // 扣除表頭高度讓它置中
+              >
+                {isSearched ? (
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <span className="text-5xl">🔍</span>
+                    <p className="text-(length:--font-size-2xl) font-bold text-gray-500">
+                      找不到相對應的資料
+                    </p>
+                    <p className="text-sm font-normal">請嘗試調整搜尋條件</p>
+                  </div>
+                ) : (
+                  <div className="text-gray-300">請輸入條件並點擊查詢</div>
+                )}
               </td>
-              {headers.map((header, i) => (
-                <td
-                  key={i}
-                  style={{ width: header.width }}
-                  className="border-(--green-vivid) px-4 py-2 border-b truncate">
-                  {header.render ? header.render(row) : row[header.key]}
-                </td>
-              ))}
             </tr>
-          ))}
+          ) : (
+            data.map((row, ridx) => (
+              <tr
+                key={ridx}
+                className={`hover:bg-(--green-pale) ${
+                  checked === row[idKey]
+                    ? "bg-(--green-vivid-50) text-white"
+                    : ""
+                }`}>
+                <td className="absolute hidden">
+                  <input
+                    type="radio"
+                    checked={checked === row[idKey]}
+                    readOnly
+                    className="opacity-0 w-0 h-0 pointer-events-none"
+                  />
+                </td>
+                {headers.map((header, i) => (
+                  <td
+                    key={i}
+                    style={{ width: header.width }}
+                    className="border-(--green-vivid) px-4 py-2 border-b truncate">
+                    {header.render ? header.render(row) : row[header.key]}
+                  </td>
+                ))}
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
