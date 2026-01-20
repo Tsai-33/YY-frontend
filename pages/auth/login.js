@@ -198,10 +198,10 @@ export default function Login() {
                     className="block w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-gray-700 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-gray-50"
                     onChange={handleChangeStation}
                   >
-                    <option value="172.16.11.99">A01~A10</option>
-                    <option value="172.16.11.75">B01~B05</option>
-                    <option value="172.16.11.76">C01~C05</option>
-                    <option value="192.168.1.100">D01~D04</option>
+                    <option value={process.env.NEXT_PUBLIC_IP_A}>A01~A10</option>
+                    <option value={process.env.NEXT_PUBLIC_IP_B}>B01~B05</option>
+                    <option value={process.env.NEXT_PUBLIC_IP_C}>C01~C05</option>
+                    <option value={process.env.NEXT_PUBLIC_IP_D}>D01~D04</option>
                   </select>
 
                   <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
