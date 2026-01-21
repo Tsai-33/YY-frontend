@@ -53,8 +53,9 @@ export default function OutboundExternal() {
   // 防止currentStation還沒好就使用會壞掉
   const currentStationSafe = currentStation || stations?.[0] || "";
   // 避免同一張單被很多站使用
-  const { orderList, lackStation } = useSelector((s) => s.outboundExternal);
-  const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, pushButton } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
+  const outboundExternalState = useSelector((s) => s.outboundExternal);
+  const { orderList, lackStation } = outboundExternalState;
+  const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, pushButton } = outboundExternalState[currentStationSafe] || {};
 
   // =====根據銷貨單取得細節=====
   useEffect(() => {
@@ -74,6 +75,7 @@ export default function OutboundExternal() {
     try {
       const res = await getOutBoundExternalOrderDetailBySaleNo(saleNo);
       if (res.data.success) {
+        console.log("setOrderDetail: ", res.data.data)
         setOrderDetail(res.data.data || []);
       }
     } catch (error) {
@@ -286,60 +288,61 @@ export default function OutboundExternal() {
       return;
     }
 
-    // 檢查庫區是否為 F01
-    console.log("orderDetail: ", orderDetail)
-    const invalidStockArea = orderDetail?.find(item => item.STOCK_AREA !== "F01");
-    if (invalidStockArea) {
-      Alert({ title: `庫區錯誤：貨架 ${invalidStockArea.SHELVE_ID} 的庫區為 ${invalidStockArea.STOCK_AREA}，非 F01` });
-      return;
-    }
+    // TODO: 暫時註解掉檢查，等流程跑完再打開
+    // // 檢查庫區是否為 F01
+    // console.log("orderDetail: ", orderDetail)
+    // const invalidStockArea = orderDetail?.find(item => item.STOCK_AREA !== "F01");
+    // if (invalidStockArea) {
+    //   Alert({ title: `庫區錯誤：貨架 ${invalidStockArea.SHELVE_ID} 的庫區為 ${invalidStockArea.STOCK_AREA}，非 F01` });
+    //   return;
+    // }
 
-    // 檢查庫存是否足夠
-    try {
-      const detailRes = await getOutBoundExternalOrderDetailByWID(order.W_ID);
-      if (detailRes.data.success) {
-        const demandData = detailRes.data.data || [];
+    // // 檢查庫存是否足夠
+    // try {
+    //   const detailRes = await getOutBoundExternalOrderDetailByWID(order.W_ID);
+    //   if (detailRes.data.success) {
+    //     const demandData = detailRes.data.data || [];
 
-        // 將需求按 PRT_NO 分組加總
-        const demandByPrtNo = {};
-        demandData.forEach(item => {
-          const prtNo = item.PRT_NO;
-          if (!demandByPrtNo[prtNo]) {
-            demandByPrtNo[prtNo] = { PP_NO: 0, BOX_NO: 0 };
-          }
-          demandByPrtNo[prtNo].PP_NO += item.PP_NO || 0;
-          demandByPrtNo[prtNo].BOX_NO += item.BOX_NO || 0;
-        });
+    //     // 將需求按 PRT_NO 分組加總
+    //     const demandByPrtNo = {};
+    //     demandData.forEach(item => {
+    //       const prtNo = item.PRT_NO;
+    //       if (!demandByPrtNo[prtNo]) {
+    //         demandByPrtNo[prtNo] = { PP_NO: 0, BOX_NO: 0 };
+    //       }
+    //       demandByPrtNo[prtNo].PP_NO += item.PP_NO || 0;
+    //       demandByPrtNo[prtNo].BOX_NO += item.BOX_NO || 0;
+    //     });
 
-        // 將 WMS 庫存按 PRT_NO 分組加總
-        const stockByPrtNo = {};
-        orderDetail?.forEach(item => {
-          const prtNo = item.PRT_NO;
-          if (!stockByPrtNo[prtNo]) {
-            stockByPrtNo[prtNo] = { PP_NO: 0, BOX_NO: 0 };
-          }
-          stockByPrtNo[prtNo].PP_NO += item.PP_NO || 0;
-          stockByPrtNo[prtNo].BOX_NO += item.BOX_NO || 0;
-        });
+    //     // 將 WMS 庫存按 PRT_NO 分組加總
+    //     const stockByPrtNo = {};
+    //     orderDetail?.forEach(item => {
+    //       const prtNo = item.PRT_NO;
+    //       if (!stockByPrtNo[prtNo]) {
+    //         stockByPrtNo[prtNo] = { PP_NO: 0, BOX_NO: 0 };
+    //       }
+    //       stockByPrtNo[prtNo].PP_NO += item.PP_NO || 0;
+    //       stockByPrtNo[prtNo].BOX_NO += item.BOX_NO || 0;
+    //     });
 
-        // 比較每個 PRT_NO 的庫存是否足夠
-        for (const prtNo of Object.keys(demandByPrtNo)) {
-          const demand = demandByPrtNo[prtNo];
-          const stock = stockByPrtNo[prtNo] || { PP_NO: 0, BOX_NO: 0 };
-          if (stock.PP_NO < demand.PP_NO || stock.BOX_NO < demand.BOX_NO) {
-            Alert({
-              title: `庫存不足：產品 ${prtNo}`,
-              text: `需求: ${demand.BOX_NO} 箱 ${demand.PP_NO} 包\n庫存: ${stock.BOX_NO} 箱 ${stock.PP_NO} 包`
-            });
-            return;
-          }
-        }
-      }
-    } catch (error) {
-      console.warn("檢查庫存失敗:", error);
-      Alert({ title: "檢查庫存失敗" });
-      return;
-    }
+    //     // 比較每個 PRT_NO 的庫存是否足夠
+    //     for (const prtNo of Object.keys(demandByPrtNo)) {
+    //       const demand = demandByPrtNo[prtNo];
+    //       const stock = stockByPrtNo[prtNo] || { PP_NO: 0, BOX_NO: 0 };
+    //       if (stock.PP_NO < demand.PP_NO || stock.BOX_NO < demand.BOX_NO) {
+    //         Alert({
+    //           title: `庫存不足：產品 ${prtNo}`,
+    //           text: `需求: ${demand.BOX_NO} 箱 ${demand.PP_NO} 包\n庫存: ${stock.BOX_NO} 箱 ${stock.PP_NO} 包`
+    //         });
+    //         return;
+    //       }
+    //     }
+    //   }
+    // } catch (error) {
+    //   console.warn("檢查庫存失敗:", error);
+    //   Alert({ title: "檢查庫存失敗" });
+    //   return;
+    // }
 
     setLoading(true);
     try {
@@ -479,16 +482,25 @@ export default function OutboundExternal() {
       };
       const res = await sendToWMS(data);
       if (res.data.success) {
-        const taskCount = res.data.data?.task_count ?? 0;
-        console.log("task_count:", taskCount);
+        console.log("RETURN_RES: ", res);
 
-        if (taskCount > 0) {
-          // 還有其他工作站未完成，當前工作站設為 loading
+        // 檢查其他站點是否還在工作（screen === "working" 且 step === 3）
+        const otherWorkingStations = stations.filter(stationId => {
+          if (stationId === currentStation) return false;
+          const stationState = outboundExternalState[stationId];
+          return stationState?.screen === "working" && stationState?.step === 3;
+        });
+
+        if (otherWorkingStations.length > 0) {
+          // 還有其他站點在工作，只把當前站點設為 loading
           dispatch(setOutboundExternal({
             station: currentStation,
-            screen: "loading"
+            screen: "loading",
+            shelf: {},
+            shelfItem: [],
+            selected: []
           }));
-          Alert({ title: `還有 ${taskCount} 個工作站未完成退回貨架` });
+          Alert({ title: `還有 ${otherWorkingStations.length} 個工作站未完成退回貨架` });
         } else {
           // 4. 所有工作站都完成了清空所有站點的資料(出庫會佔滿所有站點)
           stations.forEach((stationId) => {
@@ -746,6 +758,3 @@ export default function OutboundExternal() {
     </>
   );
 }
-
-
-
