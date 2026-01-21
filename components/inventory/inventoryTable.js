@@ -197,7 +197,7 @@ export default function InventoryTable() {
       )}
 
       {/* 主要內容區域 */}
-      <div className="flex-1 flex flex-col justify-between">
+      <div className="flex-1 flex flex-col justify-between py-2">
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-4 gap-10">
             <SelectInput

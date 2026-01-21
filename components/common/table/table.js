@@ -1,6 +1,15 @@
 import React from "react";
 
-export default function Table({ headers = [], data = [], type, name, onChange, checked, idKey, height }) {
+export default function Table({
+  headers = [],
+  data = [],
+  type,
+  name,
+  onChange,
+  checked,
+  idKey,
+  height,
+}) {
   const isRowChecked = (row) => {
     // 1) 如果是陣列（checkbox 多選或父層傳陣列）
     if (Array.isArray(checked)) {
@@ -22,7 +31,13 @@ export default function Table({ headers = [], data = [], type, name, onChange, c
     : "65vh"; // 沒傳就用原本的
 
   return (
-    <div className="w-full bg-[var(--white)] border border-white rounded-md text-center overflow-y-auto custom-scrollbar" style={{ height: containerHeight, maxHeight: innerHeight, "--scrollbar-thumb-color": `var(--green-vivid)`, "--scrollbar-thumb-hover-color": `var(--green-vivid)` }}>
+    <div
+      className="w-full bg-[var(--white)] border border-white rounded-md text-center overflow-y-auto custom-scrollbar"
+      style={{
+        height: containerHeight,
+        "--scrollbar-thumb-color": `var(--green-vivid)`,
+        "--scrollbar-thumb-hover-color": `var(--green-vivid)`,
+      }}>
       <table className="table-auto w-full font-bold text-black">
         <thead className="sticky top-0 bg-white z-5">
           <tr className={`bg-(--gray-light)`}>
@@ -33,20 +48,30 @@ export default function Table({ headers = [], data = [], type, name, onChange, c
                 style={{
                   width: `${header.width}`,
                   boxShadow: "inset 0 0 0 1px #ffffff",
-                }}
-              >
-                {header.renderHeader ? header.renderHeader(header) : header.label}
+                }}>
+                {header.renderHeader
+                  ? header.renderHeader(header)
+                  : header.label}
               </th>
             ))}
           </tr>
         </thead>
         <tbody className="overflow-y-scroll scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200 ">
           {data.map((row, idx) => (
-            <tr key={idx} className={`px-4 py-2 text-center border-b border-(--green-vivid)`} style={{ width: headers[0].width }}>
+            <tr
+              key={idx}
+              className={`px-4 py-2 text-center border-b border-(--green-vivid)`}
+              style={{ width: headers[0].width }}>
               <td>
                 <label className="relative cursor-pointer flex items-center justify-center">
                   {/* 隱藏 checkbox */}
-                  <input type={type} name={name ? name : "option"} className="peer absolute w-6 h-6 opacity-0 cursor-pointer z-10" checked={isRowChecked(row)} onChange={() => onChange("checkbox", row, idKey)} />
+                  <input
+                    type={type}
+                    name={name ? name : "option"}
+                    className="peer absolute w-6 h-6 opacity-0 cursor-pointer z-10"
+                    checked={isRowChecked(row)}
+                    onChange={() => onChange("checkbox", row, idKey)}
+                  />
                   {/* 外框 */}
                   <div className="w-6 h-6 rounded-sm border-2 border-(--green-vivid) transition-colors duration-200 peer-checked:bg-(--green-vivid)"></div>
                   <span
@@ -56,8 +81,7 @@ export default function Table({ headers = [], data = [], type, name, onChange, c
                               -rotate-45 transform -translate-x-1/2 -translate-y-1/2
                               opacity-0 peer-checked:opacity-100
                               transition-opacity duration-200
-                            `}
-                  ></span>
+                            `}></span>
                 </label>
               </td>
               {headers.slice(1).map((header, i) => (
@@ -67,8 +91,7 @@ export default function Table({ headers = [], data = [], type, name, onChange, c
                   style={{
                     width: `${header.width}`,
                   }}
-                  className="border-[var(--green-vivid)] px-4 py-2 text-center border-b truncate"
-                >
+                  className="border-[var(--green-vivid)] px-4 py-2 text-center border-b truncate">
                   {header.render ? header.render(row) : row[header.key]}
                 </td>
               ))}

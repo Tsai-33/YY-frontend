@@ -318,7 +318,7 @@ export default function InventoryShelf() {
       {/* 頂部區域 */}
       <PageHeader title="請檢視棧板內容並執行盤點" backTo="/workspace" />
       {/* 主要內容區域 */}
-      <div className="flex-1 flex gap-4 py-2 items-stretch">
+      <div className="flex-1 min-h-0 flex gap-4 py-2 items-stretch">
         {/* 左側 */}
         <div className="w-[47%]">
           <CheckTable
@@ -330,17 +330,17 @@ export default function InventoryShelf() {
             idKey="PRT_NO"
             checked={checkedItems}
             onChange={() => {}}
-            height="100%"
+            height="74vh"
           />
         </div>
         {/* 右側 */}
-        <div className="w-[53%] font-bold text-black flex flex-col gap-5">
+        <div className="w-[53%] h-[74vh] font-bold text-black flex flex-col gap-5">
           {/* 條碼 */}
           <div className="w-full flex justify-between text-(length:--font-size-2xl)">
             <div>{filterLabel}</div>
           </div>
           <div className="flex-1 min-h-0 bg-white p-5 flex flex-col gap-5 justify-between">
-            <div className="flex-1 overflow-y-auto max-h-[473px]">
+            <div className="flex-1 min-h-0 overflow-y-auto max-h-[473px]">
               <SchematicDiagram>
                 <div className="flex justify-between text-(length:--font-size-4xl)">
                   <div>
