@@ -351,32 +351,6 @@ export default function ShelfTransferShelf() {
           )}
         </div>
       </div>
-                {/* 按鈕區 */}
-                <div className="flex justify-center py-14">
-                    <ActionBtn
-                        icon="icon-check"
-                        text="確定"
-                        variant="orange"
-                        disabled={!canConfirm}
-                        onClick={handleConfirm}
-                    />
-                </div>
-                  ))}
-                  <div className="text-2xl font-bold text-right mt-4">
-                    {index + 1}/{groupedShelveData.length}
-                  </div>
-                </SchematicDiagram>
-              ))}
-            </div>
-          ) : (
-            <div className="flex-1 min-h-0 flex items-center justify-center h-full text-gray-400 text-2xl">
-              {tableData.length > 0
-                ? "請在左側勾選貨架查看詳細資訊"
-                : "請先搜尋產品品號"}
-            </div>
-          )}
-        </div>
-      </div>
       {/* 按鈕區 */}
       <div className="flex justify-center">
         <ActionBtn
