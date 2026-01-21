@@ -1,4 +1,4 @@
-import { addInboundWCS, addShelf, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderByWID, getOrderDetailByWID, checkInboundWCS, checkWCS, checkTask, updateTask, deleteTask } from "@/pages/api";
+import { addInboundWCS, addShelf, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderDetailByWID, checkWCS, updateTask, deleteTask, getEPRData, returnInboundWCS, checkWCSLastCar } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
@@ -7,13 +7,11 @@ import { selectTask } from "../taskFunction";
 export const getERP = async (setLoading, inputBarCode, setTableData, orderList) => {
   setLoading(true);
   try {
-    const random = generateRandomNumber();
-    const data = { action: "ask_order", NO: inputBarCode, dataid: random };
-    const res = await sendToWMS(data);
+    const res = await getEPRData({ barCode: inputBarCode });
     if (res?.success) {
       getTable(setTableData, orderList);
-    } else if (!res?.success) {
-      Alert({ title: `${res?.error?.message}` });
+    } else if (!res?.success && res?.error) {
+      Alert({ title: "目前無法取得ERP資料" });
     }
   } catch (error) {
     console.log(`ask_order handleBarCode :`, error);
@@ -47,13 +45,13 @@ export const getList = async (waveNo, setTableData2) => {
     const res = await getOrderDetailByWID(String(waveNo));
     if (res?.success) {
       const detail = res.data.data; // 陣列
-      const newDetail = detail.filter((v) => v.STATUS == 1);
+      const newDetail = detail.filter((v) => v.STATUS == 1 && v.W_ID === waveNo);
       setTableData2(newDetail);
     } else if (!res?.success) {
       Alert({ title: `目前網路不穩定，請重新再試。` });
     }
   } catch (err) {
-    console.log("getList :", err);
+    console.log("inbound getList :", err);
   }
 };
 
@@ -67,19 +65,21 @@ export const confrimList_in = async (setLoading, order) => {
     return await sendToWMS(data);
   } catch (err) {
     console.log("handleConfrimList :", err);
+    return err;
   } finally {
     setLoading(false);
   }
 };
 
 // 確認上架
-export const onToShelf_in = async (setLoading, selected, shelf, order, dispatch, setInbound, currentStation, setConfirmModal) => {
+export const onToShelf_in = async (setLoading, selected, shelf, order, dispatch, setInbound, currentStation, setConfirmModal, tableData2) => {
   try {
     setLoading(true);
     const data = { itemArray: selected, area: shelf.area, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO };
     return await updateInboundWMS(data);
   } catch (err) {
     console.log("handleConfrimShelf :", err);
+    return err;
   } finally {
     setLoading(false);
     dispatch(setInbound({ station: currentStation, selected: [] }));
@@ -91,9 +91,21 @@ export const onToShelf_in = async (setLoading, selected, shelf, order, dispatch,
 export const addShelf_in = async (setLoading, setAddModal, shelf, order) => {
   try {
     setLoading(true);
-    return await addInboundWCS({ area: shelf?.area, W_ID: order?.W_ID });
+    return await addInboundWCS({ step: "inbound", STOCK_AREA: shelf?.area, WAVENO: order?.W_ID });
   } catch (err) {
     console.log("handleAddShelf :", err);
+    if (err?.code === "ECONNABORTED") {
+      try {
+        const checkRes = await checkWCS({ WAVENO: order?.W_ID, command: "MOVE" });
+        if (checkRes?.data?.data?.length > 0) {
+          return Alert({ title: "連線逾時但車輛已派發" });
+        } else {
+          return Alert({ title: "新增失敗，請重新再試" });
+        }
+      } catch (checkErr) {
+        return Alert({ title: checkErr?.message });
+      }
+    }
   } finally {
     setLoading(false);
     setAddModal(false);
@@ -104,9 +116,7 @@ export const addShelf_in = async (setLoading, setAddModal, shelf, order) => {
 export const returnShelf_in = async (setLoading, shelf, currentStation, order) => {
   setLoading(true);
   try {
-    const random9 = generateRandomNumber();
-    const data = { Command: "RETURN", SHELVE_ID: shelf?.SHELVE_ID, BAR_CODE: "", FACE: 2, STATION: currentStation, PURPOSE: 1, STATUS: 0, CART_ID: "", DATA_ID: random9, WAVENO: String(order.W_ID), GGROUP: String(order.W_ID) };
-    return await addShelf(data);
+    return await returnInboundWCS({ step: "inbound", SHELVE_ID: shelf?.SHELVE_ID, STATION: currentStation, WAVENO: order.W_ID });
   } catch (err) {
     console.log("handleReturn :", err);
   } finally {
@@ -147,6 +157,7 @@ export const finishList_in = async (setLoading, order) => {
     return await finishInboundOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME });
   } catch (err) {
     console.log(`handleFinish:`, err);
+    return err;
   } finally {
     setLoading(false);
   }
@@ -155,7 +166,7 @@ export const finishList_in = async (setLoading, order) => {
 // 檢查WCS是否有任務
 export const checkCar = async (waveNo) => {
   try {
-    return await checkWCS({ W_ID: waveNo });
+    return await checkWCSLastCar({ W_ID: waveNo });
   } catch (err) {
     console.log(`handleReturnShelf:`, err);
   }

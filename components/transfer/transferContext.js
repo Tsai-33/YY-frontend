@@ -126,7 +126,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       return;
     }
     const res = await addShelf_tr(setLoading, setAddModal, shelf, order, stations);
-    if (!res?.success) {
+    if (!res?.success && res?.error) {
       Alert({ title: `${res?.error.message}` });
     }
   };
