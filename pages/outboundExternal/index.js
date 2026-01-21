@@ -53,8 +53,9 @@ export default function OutboundExternal() {
   // 防止currentStation還沒好就使用會壞掉
   const currentStationSafe = currentStation || stations?.[0] || "";
   // 避免同一張單被很多站使用
-  const { orderList, lackStation } = useSelector((s) => s.outboundExternal);
-  const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, pushButton } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
+  const outboundExternalState = useSelector((s) => s.outboundExternal);
+  const { orderList, lackStation } = outboundExternalState;
+  const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, pushButton } = outboundExternalState[currentStationSafe] || {};
 
   // =====根據銷貨單取得細節=====
   useEffect(() => {
@@ -74,6 +75,7 @@ export default function OutboundExternal() {
     try {
       const res = await getOutBoundExternalOrderDetailBySaleNo(saleNo);
       if (res.data.success) {
+        console.log("setOrderDetail: ", res.data.data)
         setOrderDetail(res.data.data || []);
       }
     } catch (error) {
@@ -250,7 +252,7 @@ export default function OutboundExternal() {
               PRT_NO: matchedItem.PRT_NO,
               MAKE_NO: decryptedBarcode,
               outBoxNo: matchedItem.BOX_NO,
-              outPpNo: matchedItem.BOX_PACK
+              outPpNo: matchedItem.PP_NO
             }]
           }));
           Alert({ title: `已掃描: ${decryptedBarcode}`, icon: "success", timer: 1000 });
@@ -286,6 +288,7 @@ export default function OutboundExternal() {
       return;
     }
 
+    // TODO: 暫時註解掉檢查，等流程跑完再打開
     // 檢查庫區是否為 F01
     console.log("orderDetail: ", orderDetail)
     const invalidStockArea = orderDetail?.find(item => item.STOCK_AREA !== "F01");
@@ -441,7 +444,7 @@ export default function OutboundExternal() {
           PRT_NO: item.PRT_NO,
           MAKE_NO: item.MAKE_NO,
           outBoxNo: item.BOX_NO,
-          outPpNo: item.BOX_PACK
+          outPpNo: item.PP_NO
         })) || [];
       }
 
@@ -479,16 +482,25 @@ export default function OutboundExternal() {
       };
       const res = await sendToWMS(data);
       if (res.data.success) {
-        const taskCount = res.data.data?.task_count ?? 0;
-        console.log("task_count:", taskCount);
+        console.log("RETURN_RES: ", res);
 
-        if (taskCount > 0) {
-          // 還有其他工作站未完成，當前工作站設為 loading
+        // 檢查其他站點是否還在工作（screen === "working" 且 step === 3）
+        const otherWorkingStations = stations.filter(stationId => {
+          if (stationId === currentStation) return false;
+          const stationState = outboundExternalState[stationId];
+          return stationState?.screen === "working" && stationState?.step === 3;
+        });
+
+        if (otherWorkingStations.length > 0) {
+          // 還有其他站點在工作，只把當前站點設為 loading
           dispatch(setOutboundExternal({
             station: currentStation,
-            screen: "loading"
+            screen: "loading",
+            shelf: {},
+            shelfItem: [],
+            selected: []
           }));
-          Alert({ title: `還有 ${taskCount} 個工作站未完成退回貨架` });
+          Alert({ title: `還有 ${otherWorkingStations.length} 個工作站未完成退回貨架` });
         } else {
           // 4. 所有工作站都完成了清空所有站點的資料(出庫會佔滿所有站點)
           stations.forEach((stationId) => {
@@ -644,7 +656,7 @@ export default function OutboundExternal() {
                         <div className="text-3xl">品名: {item?.PRT_NAME}</div>
                         <div className="flex justify-between text-3xl">
                           <div>箱數: {item?.BOX_NO} 箱</div>
-                          <div>包數: {item?.BOX_PACK} 包</div>
+                          <div>包數: {item?.PP_NO} 包</div>
                         </div>
                       </div>
                     ))}
@@ -746,6 +758,3 @@ export default function OutboundExternal() {
     </>
   );
 }
-
-
-
