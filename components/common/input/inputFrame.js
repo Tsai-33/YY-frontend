@@ -2,7 +2,6 @@ import React from "react";
 
 export default function InputFrame({ type, name, id, value, onChange, onBlur, onKeyDown, ref, min, max, readOnly, inputMode, className, placeholder, borderColor, disabled }) {
   const containerBorder = borderColor || "border-black";
-  console.log(value);
   return (
     <input
       className={`
