@@ -1,4 +1,4 @@
-import { addInboundWCS, addShelf, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderDetailByWID, checkWCS, updateTask, deleteTask, getEPRData, returnInboundWCS, checkWCSLastCar } from "@/pages/api";
+import { addInboundWCS,  restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderDetailByWID, checkWCS, updateTask, deleteTask, getEPRData, returnInboundWCS, checkWCSLastCar } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
