@@ -1,13 +1,30 @@
 import React from "react";
 
-export default function InputFrame({ type, name, id, value, onChange, onBlur, onKeyDown, ref, min, max, readOnly, inputMode, className, placeholder, borderColor,disabled}) {
+export default function InputFrame({
+  type,
+  name,
+  id,
+  value,
+  onChange,
+  onBlur,
+  onKeyDown,
+  ref,
+  min,
+  max,
+  readOnly,
+  inputMode,
+  className,
+  placeholder,
+  borderColor,
+  disabled,
+}) {
   const containerBorder = borderColor || "border-black";
   return (
     <input
       className={`
-      flex-1 w-full pl-3 pr-2 py-0.75 bg-[var(--gray-deep)]
+      flex-1 w-full pl-3 pr-2 py-0.75 bg-(--gray-deep)
       focus:bg-[#d9d9d9] ${value !== "" ? "bg-[#d9d9d9]" : ""} 
-      text-[length:var(--font-size-xl)] font-normal  ${className || ""}`}
+      text-(length:--font-size-xl) font-normal  ${className || ""}`}
       type={type}
       name={name}
       id={id}

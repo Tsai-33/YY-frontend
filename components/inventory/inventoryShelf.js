@@ -339,7 +339,7 @@ export default function InventoryShelf() {
           <div className="w-full flex justify-between text-(length:--font-size-2xl)">
             <div>{filterLabel}</div>
           </div>
-          <div className="flex-1 bg-white p-5 flex flex-col gap-5 justify-between">
+          <div className="flex-1 min-h-0 bg-white p-5 flex flex-col gap-5 justify-between">
             <div className="flex-1 overflow-y-auto max-h-[473px]">
               <SchematicDiagram>
                 <div className="flex justify-between text-(length:--font-size-4xl)">
