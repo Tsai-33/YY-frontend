@@ -4,9 +4,10 @@ import withReactContent from "sweetalert2-react-content";
 
 const MySwal = withReactContent(Swal);
 
-export default function Alert({ title, html = ``, showConfirm = true, confirmButtonText = "確定", confirmButtonColor = "#008b48", showCancel = false, cancelButtonText = "取消", cancelButtonColor = "#d33", timer = null, onConfirm = null, onCancel = null }) {
+export default function Alert({ title, text,html = ``, showConfirm = true, confirmButtonText = "確定", confirmButtonColor = "#008b48", showCancel = false, cancelButtonText = "取消", cancelButtonColor = "#d33", timer = null, onConfirm = null, onCancel = null }) {
   const options = {
     title,
+    text,
     html,
     timer,
     showConfirmButton: showConfirm,
