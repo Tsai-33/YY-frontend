@@ -2,597 +2,640 @@ import ActionBtn from "@/components/common/btns/actionBtn";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import {
-    updateShelveData,
-    updateSelectedItems,
-    setTargetShelve,
-    setShelveCheck,
-    setShelfTransfer,
-    resetStation,
-    clearPushButton
+  updateShelveData,
+  updateSelectedItems,
+  setTargetShelve,
+  setShelveCheck,
+  setShelfTransfer,
+  resetStation,
+  clearPushButton,
 } from "@/redux/reducer/reducerShelfTransfer";
-import { updateTransferItems, sendToWMS, updateShelveCheck, transferItems, updateAbnormal, getAbnormalStatus } from "@/pages/api";
+import {
+  updateTransferItems,
+  sendToWMS,
+  updateShelveCheck,
+  transferItems,
+  updateAbnormal,
+  getAbnormalStatus,
+} from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
-import {AlertTriangle} from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 export default function ShelfTransferStation() {
-    const dispatch = useDispatch();
-    const { stations, currentStation } = useSelector((s) => s.workstation);
-    const { userId } = useSelector((s) => s.user);
-    const operator = String(userId || "");
-    const currentStationSafe = currentStation || stations?.[0] || "";
+  const dispatch = useDispatch();
+  const { stations, currentStation } = useSelector((s) => s.workstation);
+  const { userId } = useSelector((s) => s.user);
+  const operator = String(userId || "");
+  const currentStationSafe = currentStation || stations?.[0] || "";
 
-    const {
-        mode,
-        orderCode,
-        selectedShelves,
-        shelveData,
-        shelveStatus,
-        targetShelve,
-        selectedItems,
-        shelveChecks = {},
-        pushButton
-    } = useSelector((s) => s.shelfTransfer[currentStationSafe] || {});
+  const {
+    mode,
+    orderCode,
+    selectedShelves,
+    shelveData,
+    shelveStatus,
+    targetShelve,
+    selectedItems,
+    shelveChecks = {},
+    pushButton,
+  } = useSelector((s) => s.shelfTransfer[currentStationSafe] || {});
 
-    // ===== 根據站點數量動態產生 Table =====
-    const totalSlots = stations.length;
-    // 已退回的貨架顯示"貨架代號"
-    const shelvePositions = [
-        ...(selectedShelves || []).map(id =>
-            shelveStatus?.[id] === "returned" ? "貨架代號" : id
-        ),
-        ...Array(Math.max(0, totalSlots - (selectedShelves?.length || 0))).fill("貨架代號")
-    ];
+  // ===== 根據站點數量動態產生 Table =====
+  const totalSlots = stations.length;
+  // 已退回的貨架顯示"貨架代號"
+  const shelvePositions = [
+    ...(selectedShelves || []).map((id) =>
+      shelveStatus?.[id] === "returned" ? "貨架代號" : id
+    ),
+    ...Array(Math.max(0, totalSlots - (selectedShelves?.length || 0))).fill(
+      "貨架代號"
+    ),
+  ];
 
-    // =====找出選到的項目他的貨架ID=====
-    const getActiveShelveId = () => {
-        for (const shelveId in selectedItems) {
-            if (selectedItems[shelveId] && selectedItems[shelveId].length > 0) {
-                return shelveId;
-            }
-        }
-        return null;
-    };
-    const activeShelveId = getActiveShelveId();
+  // =====找出選到的項目他的貨架ID=====
+  const getActiveShelveId = () => {
+    for (const shelveId in selectedItems) {
+      if (selectedItems[shelveId] && selectedItems[shelveId].length > 0) {
+        return shelveId;
+      }
+    }
+    return null;
+  };
+  const activeShelveId = getActiveShelveId();
 
-    // =====處理資料的勾選取消=====
-    const handleItemChange = (shelveId, item) => {
-        dispatch(updateSelectedItems({
+  // =====處理資料的勾選取消=====
+  const handleItemChange = (shelveId, item) => {
+    dispatch(
+      updateSelectedItems({
+        station: currentStationSafe,
+        shelveId,
+        itemId: item.id,
+      })
+    );
+  };
+
+  // =====處理下拉式選單的內容=====
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const getAvailableTargetShelves = () => {
+    return shelvePositions.filter(
+      (shelveId) => shelveId !== activeShelveId && shelveId !== "貨架代號"
+    );
+  };
+
+  const handleTargetSelect = (shelveId) => {
+    dispatch(
+      setTargetShelve({
+        station: currentStationSafe,
+        targetShelve: shelveId,
+      })
+    );
+    setIsDropdownOpen(false);
+  };
+
+  // =====按下確定後轉移項目=====
+  const confirmCheck = () => {
+    const hasSelectedItems = selectedItems?.[activeShelveId]?.length > 0;
+    const hasTargetShelve = targetShelve !== "";
+    return hasSelectedItems && hasTargetShelve;
+  };
+
+  const handleConfirm = async () => {
+    if (!confirmCheck()) {
+      Alert({ title: "請確認已選擇的貨架" });
+      return;
+    }
+    if (!operator) {
+      Alert({ title: "無法取得操作人員資訊，請重新登入" });
+      return;
+    }
+    try {
+      const selectedItemsIds = selectedItems[activeShelveId] || [];
+      const sourceData = shelveData[activeShelveId] || [];
+
+      const itemsToMove = sourceData.filter((item) =>
+        selectedItemsIds.includes(item.id)
+      );
+
+      let res;
+
+      if (mode === "shelf") {
+        // 貨架調整
+        res = await transferItems({
+          items: itemsToMove,
+          sourceShelveId: activeShelveId,
+          targetShelveId: targetShelve,
+          operator,
+        });
+      } else {
+        // 訂單理貨
+        res = await updateTransferItems({
+          items: itemsToMove,
+          sourceShelveId: activeShelveId,
+          targetShelveId: targetShelve,
+          operator,
+          saleNo: orderCode,
+        });
+      }
+
+      if (res.data.success) {
+        dispatch(
+          updateShelveData({
+            station: currentStationSafe,
+            sourceShelve: activeShelveId,
+            targetShelve: targetShelve,
+            itemIds: selectedItemsIds,
+          })
+        );
+      } else {
+        Alert(res.data.message || "轉移失敗");
+      }
+    } catch (error) {
+      console.warn("handleConfirm:", error);
+    }
+  };
+
+  // ===== 處理護角/封膜/打包 checkbox =====
+  const CHECK_VALUES = {
+    CORNER: 1, // 護角
+    SEAL: 2, // 封膜
+    PACK: 4, // 打包
+  };
+  // 檢查是否打勾
+  const hasCheck = (value, bit) => (value & bit) !== 0;
+
+  const handleShelveCheck = async (shelveId, bitValue) => {
+    if (!operator) {
+      Alert({ title: "無法取得操作人員資訊，請重新登入" });
+      return;
+    }
+    try {
+      const res = await updateShelveCheck({
+        shelveId,
+        bitValue,
+        operator,
+      });
+
+      if (res.data.success) {
+        dispatch(
+          setShelveCheck({
             station: currentStationSafe,
             shelveId,
-            itemId: item.id,
-        }));
-    };
-
-    // =====處理下拉式選單的內容=====
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const getAvailableTargetShelves = () => {
-        return shelvePositions.filter(
-            shelveId => shelveId !== activeShelveId && shelveId !== "貨架代號"
+            value: res.data.data.newValue,
+          })
         );
+      } else {
+        Alert({ title: "更新失敗" });
+      }
+    } catch (error) {
+      console.warn("updateShelveCheck: ", error);
+    }
+  };
+
+  // ===== 接收實體按鈕訊號 =====
+  useEffect(() => {
+    if (!pushButton || !selectedShelves || selectedShelves.length === 0) return;
+
+    const handlePushButton = async () => {
+      // 根據按鈕的 STATION 找到對應的貨架
+      const stationIndex = stations.indexOf(pushButton.STATION);
+      if (stationIndex === -1) {
+        console.warn("找不到對應的站點:", pushButton.STATION);
+        dispatch(clearPushButton({ station: currentStationSafe }));
+        return;
+      }
+
+      const shelveId = selectedShelves[stationIndex];
+      if (!shelveId || shelveId === "貨架代號") {
+        console.warn("該站點沒有貨架:", pushButton.STATION);
+        dispatch(clearPushButton({ station: currentStationSafe }));
+        return;
+      }
+
+      await handleReturnShelve(shelveId);
+      dispatch(clearPushButton({ station: currentStationSafe }));
     };
 
-    const handleTargetSelect = (shelveId) => {
-        dispatch(setTargetShelve({
-            station: currentStationSafe,
-            targetShelve: shelveId,
-        }));
-        setIsDropdownOpen(false);
+    handlePushButton();
+  }, [pushButton]);
+
+  // ===== 退回貨架 =====
+  const handleReturnShelve = async (shelveId) => {
+    if (!shelveId) {
+      Alert({ title: "抓不到貨架編號" });
+      return;
     }
 
-    // =====按下確定後轉移項目=====
-    const confirmCheck = () => {
-        const hasSelectedItems = selectedItems?.[activeShelveId]?.length > 0;
-        const hasTargetShelve = targetShelve !== "";
-        return hasSelectedItems && hasTargetShelve;
+    // 檢查 selectedShelves 是否存在
+    if (!selectedShelves || selectedShelves.length === 0) {
+      Alert({ title: "找不到選中的貨架資料" });
+      return;
     }
 
-    const handleConfirm = async () => {
-        if (!confirmCheck()) {
-            Alert({ title: "請確認已選擇的貨架" });
-            return;
+    // 找出該貨架對應的站點
+    const shelveIndex = selectedShelves.indexOf(shelveId);
+
+    if (shelveIndex === -1) {
+      Alert({ title: "找不到對應的站點" });
+      return;
+    }
+
+    const stationId = stations[shelveIndex];
+
+    if (!stationId) {
+      Alert({ title: "站點 ID 無效" });
+      return;
+    }
+    // setLoading(true);
+    try {
+      const dataId = generateRandomNumber();
+      const data = {
+        action: "wcstask",
+        dataid: dataId,
+        command: "RETURN",
+        SHELVE_ID: shelveId,
+        FACE: 2,
+        STATION: stationId,
+        PURPOSE: 4,
+      };
+      const res = await sendToWMS(data);
+      if (res.data.success) {
+        console.log(stationId + " 退回成功");
+      } else {
+        console.log("退回失敗:", res.data);
+      }
+    } catch (err) {
+      console.warn("handleReturnShelf:", err);
+    } finally {
+      // console.log("handleReturnShelve 完成");
+    }
+  };
+
+  // ===== 標記異常狀態 =====
+  const [abnormalShelves, setAbnormalShelves] = useState([]);
+  useEffect(() => {
+    // 拿到有資料的貨架
+    const fetchAbnormalStatus = async () => {
+      const shelveIdsWithData = Object.keys(shelveData || {}).filter(
+        (id) => shelveData[id]?.length > 0
+      );
+
+      if (shelveIdsWithData.length === 0) {
+        setAbnormalShelves([]);
+        return;
+      }
+
+      try {
+        const res = await getAbnormalStatus(shelveIdsWithData);
+        if (res.data.success) {
+          const abnormalIds = res.data.data
+            .filter((item) => item.ABNORMAL === 1)
+            .map((item) => item.SHELVE_ID);
+
+          setAbnormalShelves(abnormalIds);
         }
-        if (!operator) {
-            Alert({ title: "無法取得操作人員資訊，請重新登入" });
-            return;
-        }
-        try {
-            const selectedItemsIds = selectedItems[activeShelveId] || [];
-            const sourceData = shelveData[activeShelveId] || [];
-
-            const itemsToMove = sourceData.filter(item =>
-                selectedItemsIds.includes(item.id)
-            );
-
-            let res;
-
-            if (mode === "shelf") {
-                // 貨架調整
-                res = await transferItems({
-                    items: itemsToMove,
-                    sourceShelveId: activeShelveId,
-                    targetShelveId: targetShelve,
-                    operator,
-                });
-            } else {
-                // 訂單理貨
-                res = await updateTransferItems({
-                    items: itemsToMove,
-                    sourceShelveId: activeShelveId,
-                    targetShelveId: targetShelve,
-                    operator,
-                    saleNo: orderCode
-                });
-            }
-
-            if (res.data.success) {
-                dispatch(updateShelveData({
-                    station: currentStationSafe,
-                    sourceShelve: activeShelveId,
-                    targetShelve: targetShelve,
-                    itemIds: selectedItemsIds,
-                }));
-            } else {
-                Alert(res.data.message || "轉移失敗");
-            }
-        } catch (error) {
-            console.warn("handleConfirm:", error);
-        }
+      } catch (error) {
+        console.warn("fetchAbnormalStatus:", error);
+      }
     };
+    fetchAbnormalStatus();
+  }, [shelveData]);
 
-    // ===== 處理護角/封膜/打包 checkbox =====
-    const CHECK_VALUES = {
-        CORNER: 1,  // 護角
-        SEAL: 2,    // 封膜
-        PACK: 4     // 打包
-    };
-    // 檢查是否打勾
-    const hasCheck = (value, bit) => (value & bit) !== 0;
-
-    const handleShelveCheck = async (shelveId, bitValue) => {
-        if (!operator) {
-            Alert({ title: "無法取得操作人員資訊，請重新登入" });
-            return;
-        }
+  const handleMarkAbnormal = async (data) => {
+    if (!data.operator) {
+      Alert({ title: "無法取得操作人員資訊，請重新登入" });
+      return;
+    }
+    await Alert({
+      title: "標記異常",
+      html: `確定要將貨架 ${data.shelveId} 標記為異常嗎？`,
+      showCancel: true,
+      confirmButtonText: "確定",
+      cancelButtonText: "取消",
+      onConfirm: async () => {
         try {
-            const res = await updateShelveCheck({
-                shelveId,
-                bitValue,
-                operator
+          const res = await updateAbnormal(data);
+
+          if (res.data.success) {
+            setAbnormalShelves((prev) => [...prev, data.shelveId]);
+            Alert({
+              title: "已標記異常",
+              html: `貨架 ${data.shelveId} 已標記為異常`,
+              timer: 1500,
             });
-
-            if (res.data.success) {
-                dispatch(setShelveCheck({
-                    station: currentStationSafe,
-                    shelveId,
-                    value: res.data.data.newValue
-                }));
-            } else {
-                Alert({ title: "更新失敗" });
-            }
+          } else {
+            Alert({ title: "標記失敗", html: res.data.message || "標記失敗" });
+          }
         } catch (error) {
-            console.warn("updateShelveCheck: ", error);
+          console.warn("markAbnormal:", error);
         }
-    };
+      },
+    });
+  };
 
-    
-    // ===== 接收實體按鈕訊號 =====
-    useEffect(() => {
-        if (!pushButton || !selectedShelves || selectedShelves.length === 0) return;
-
-        const handlePushButton = async () => {
-            // 根據按鈕的 STATION 找到對應的貨架
-            const stationIndex = stations.indexOf(pushButton.STATION);
-            if (stationIndex === -1) {
-                console.warn("找不到對應的站點:", pushButton.STATION);
-                dispatch(clearPushButton({ station: currentStationSafe }));
-                return;
-            }
-
-            const shelveId = selectedShelves[stationIndex];
-            if (!shelveId || shelveId === "貨架代號") {
-                console.warn("該站點沒有貨架:", pushButton.STATION);
-                dispatch(clearPushButton({ station: currentStationSafe }));
-                return;
-            }
-
-            await handleReturnShelve(shelveId);
-            dispatch(clearPushButton({ station: currentStationSafe }));
-        };
-
-        handlePushButton();
-    }, [pushButton]);
-
-    // ===== 退回貨架 =====
-    const handleReturnShelve = async (shelveId) => {
-        if (!shelveId) {
-            Alert({ title: "抓不到貨架編號" });
-            return;
-        }
-
-        // 檢查 selectedShelves 是否存在
-        if (!selectedShelves || selectedShelves.length === 0) {
-            Alert({ title: "找不到選中的貨架資料" });
-            return;
-        }
-
-        // 找出該貨架對應的站點
-        const shelveIndex = selectedShelves.indexOf(shelveId);
-
-        if (shelveIndex === -1) {
-            Alert({ title: "找不到對應的站點" });
-            return;
-        }
-
-        const stationId = stations[shelveIndex];
-
-        if (!stationId) {
-            Alert({ title: "站點 ID 無效" });
-            return;
-        }
-        // setLoading(true);
-        try {
-            const dataId = generateRandomNumber();
-            const data = {
-                action: "wcstask",
-                dataid: dataId,
-                command: "RETURN",
-                SHELVE_ID: shelveId,
-                FACE: 2,
-                STATION: stationId,
-                PURPOSE: 4
-            };
-            const res = await sendToWMS(data);
-            if (res.data.success) {
-                console.log(stationId + " 退回成功");
-            } else {
-                console.log("退回失敗:", res.data);
-            }
-        } catch (err) {
-            console.warn("handleReturnShelf:", err);
-        } finally {
-            // console.log("handleReturnShelve 完成");
-        }
-    };
-
-    // ===== 標記異常狀態 =====
-    const [abnormalShelves, setAbnormalShelves] = useState([]);
-    useEffect(() => {
-        // 拿到有資料的貨架
-        const fetchAbnormalStatus = async () => {
-            const shelveIdsWithData = Object.keys(shelveData || {}).filter(
-                id => shelveData[id]?.length > 0
-            );
-
-            if (shelveIdsWithData.length === 0) {
-                setAbnormalShelves([]);
-                return;
-            }
-
-            try {
-                const res = await getAbnormalStatus(shelveIdsWithData);
-                if (res.data.success) {
-                    const abnormalIds = res.data.data
-                        .filter(item => item.ABNORMAL === 1)
-                        .map(item => item.SHELVE_ID);
-
-                    setAbnormalShelves(abnormalIds);
-                }
-            } catch (error) {
-                console.warn("fetchAbnormalStatus:", error);
-            }
-        };
-        fetchAbnormalStatus();
-    }, [shelveData]);
-
-    const handleMarkAbnormal = async (data) => {
-        if (!data.operator) {
-            Alert({ title: "無法取得操作人員資訊，請重新登入" });
-            return;
-        }
-        await Alert({
-            title: "標記異常",
-            html: `確定要將貨架 ${data.shelveId} 標記為異常嗎？`,
-            showCancel: true,
-            confirmButtonText: "確定",
-            cancelButtonText: "取消",
-            onConfirm: async () => {
-                try {
-                    const res = await updateAbnormal(data);
-
-                    if (res.data.success) {
-                        setAbnormalShelves(prev => [...prev, data.shelveId]);
-                        Alert({ 
-                            title: "已標記異常", 
-                            html: `貨架 ${data.shelveId} 已標記為異常`,
-                            timer: 1500 
-                        });
-                    } else {
-                        Alert({ title: "標記失敗", html: res.data.message || "標記失敗" });
-                    }
-                } catch (error) {
-                    console.warn("markAbnormal:", error);
-                }
-            }
-        });
-    };
-
-
-    return (
-        <>
-            <div className="flex flex-col h-screen p-4 bg-gray-100">
-                <div className="bg-white rounded-lg shadow-md p-4 mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="text-4xl font-bold">理貨工作站{stations[0]}-{stations[stations.length - 1]}</div>
-                        <div className="text-2xl flex justify-center flex-1 text-black font-bold">
-                            請在一個貨架編號下方選擇理貨的貨物,再選擇要移動到的目的貨架編號點擊確定按鈕
-                        </div>
-                    </div>
-                    <div className="text-xl text-black font-bold mb-3">
-                        {mode === "order" ? "訂單單號：" + orderCode : "入庫倉別：" + orderCode}
-                    </div>
-                    {/* 下拉選貨架、確定按鈕 */}
-                    <div className="flex gap-4 justify-center">
-                        {/* 下拉式選單 */}
-                        <div className="relative">
-                            <button
-                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                disabled={!activeShelveId}
-                                className={`px-4 py-2 rounded-lg text-3xl font-medium flex items-center gap-2 transition-colors ${
-                                    activeShelveId
-                                        ? "bg-gray-500 text-white hover:bg-gray-500"
-                                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                }`}
-                            >
-                                {targetShelve ? `目的貨架: ${targetShelve}` : "下拉選擇目的貨架"}
-                                <span className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}>
-                                    ▼
-                                </span>
-                            </button>
-                            {/* 下拉式選單內容 */}
-                            {isDropdownOpen && activeShelveId && (
-                                <div className="absolute top-full left-0 mt-2 bg-white border-2 border-gray-300 rounded-lg shadow-lg z-50 min-w-[200px]">
-                                    {getAvailableTargetShelves().map((shelveId, index) => (
-                                        <button
-                                            key={index}
-                                            onClick={() => handleTargetSelect(shelveId)}
-                                            className={`w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
-                                                index !== 0 ? 'border-t border-gray-200' : ''
-                                            } ${
-                                                targetShelve === shelveId ? 'bg-blue-50 text-blue-600 font-semibold' : ''
-                                            }`}
-                                        >
-                                            {shelveId}
-                                            {/* {targetShelve === shelveId && (
+  return (
+    <>
+      <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-4xl font-bold">
+            理貨工作站{stations[0]}-{stations[stations.length - 1]}
+          </div>
+          <div className="text-2xl flex justify-center flex-1 text-black font-bold">
+            請在一個貨架編號下方選擇理貨的貨物,再選擇要移動到的目的貨架編號點擊確定按鈕
+          </div>
+        </div>
+        <div className="text-xl text-black font-bold mb-3">
+          {mode === "order"
+            ? "訂單單號：" + orderCode
+            : "入庫倉別：" + orderCode}
+        </div>
+        {/* 下拉選貨架、確定按鈕 */}
+        <div className="flex gap-4 justify-center">
+          {/* 下拉式選單 */}
+          <div className="relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              disabled={!activeShelveId}
+              className={`px-4 py-2 rounded-lg text-3xl font-medium flex items-center gap-2 transition-colors ${
+                activeShelveId
+                  ? "bg-gray-500 text-white hover:bg-gray-500"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}>
+              {targetShelve ? `目的貨架: ${targetShelve}` : "下拉選擇目的貨架"}
+              <span
+                className={`transition-transform ${
+                  isDropdownOpen ? "rotate-180" : ""
+                }`}>
+                ▼
+              </span>
+            </button>
+            {/* 下拉式選單內容 */}
+            {isDropdownOpen && activeShelveId && (
+              <div className="absolute top-full left-0 mt-2 bg-white border-2 border-gray-300 rounded-lg shadow-lg z-50 min-w-[200px]">
+                {getAvailableTargetShelves().map((shelveId, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleTargetSelect(shelveId)}
+                    className={`w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
+                      index !== 0 ? "border-t border-gray-200" : ""
+                    } ${
+                      targetShelve === shelveId
+                        ? "bg-blue-50 text-blue-600 font-semibold"
+                        : ""
+                    }`}>
+                    {shelveId}
+                    {/* {targetShelve === shelveId && (
                                                 <span className="ml-2">✓</span>
                                             )} */}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        <ActionBtn
-                            icon={"icon-check"} 
-                            text={"確定"}
-                            variant={"gray"}
-                            onClick={handleConfirm}
-                            disabled={!confirmCheck()}
-                        />
-                    </div>
-                </div>
-                {/* 貨架Table(固定五個) */}
-                <div className="flex-1 flex flex-col min-h-0">
-                    <div className="flex gap-2 mb-3 flex-1 min-h-0">
-                        {shelvePositions.map((shelveId, index) => {
-                            // 判斷是不是空白欄位貨架
-                            const isEmptySlot = shelveId === "貨架代號";
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <ActionBtn
+            icon={"icon-check"}
+            text={"確定"}
+            variant={"gray"}
+            onClick={handleConfirm}
+            disabled={!confirmCheck()}
+          />
+        </div>
+      </div>
+      {/* 貨架Table(固定五個) */}
+      <div className="flex gap-4 mb-3 flex-1 min-h-0 bg-gray-100 rounded-lg">
+        {shelvePositions.map((shelveId, index) => {
+          // 判斷是不是空白欄位貨架
+          const isEmptySlot = shelveId === "貨架代號";
 
-                            {/* 取貨架資料 */}
-                            const isLastOne = shelveId === "貨架代號";
-                            const status = !isEmptySlot ? shelveStatus?.[shelveId] : undefined;
-                            const isReturned = status === "returned";
-                            const data = !isEmptySlot ? (shelveData?.[shelveId] || []) : [];
-                            const hasData = data.length > 0;
+          {
+            /* 取貨架資料 */
+          }
+          const isLastOne = shelveId === "貨架代號";
+          const status = !isEmptySlot ? shelveStatus?.[shelveId] : undefined;
+          const isReturned = status === "returned";
+          const data = !isEmptySlot ? shelveData?.[shelveId] || [] : [];
+          const hasData = data.length > 0;
 
-                            // 拿到那個貨架的陣列
-                            const checkedItems = selectedItems?.[shelveId] || [];
+          // 拿到那個貨架的陣列
+          const checkedItems = selectedItems?.[shelveId] || [];
 
-                            // 如果不是當前的貨架就鎖起來
-                            const isDisabled = activeShelveId && activeShelveId !== shelveId;
+          // 如果不是當前的貨架就鎖起來
+          const isDisabled = activeShelveId && activeShelveId !== shelveId;
 
-                            // 判斷這個貨架是不是被勾選的貨架
-                            const isActive = activeShelveId === shelveId;
+          // 判斷這個貨架是不是被勾選的貨架
+          const isActive = activeShelveId === shelveId;
 
-                            // 護角 / 封膜 / 打包 checkbox 判斷
-                            const checkValue = shelveChecks[shelveId] || 0;
+          // 護角 / 封膜 / 打包 checkbox 判斷
+          const checkValue = shelveChecks[shelveId] || 0;
 
-                            return (
-                                <div
-                                    key={index}
-                                    className={`
+          return (
+            <div
+              key={index}
+              className={`
                                         flex-1 min-h-0 bg-white rounded-lg shadow-md p-4 flex flex-col transition-all ${
-                                            isDisabled ? 'opacity-50' : ''
+                                          isDisabled ? "opacity-50" : ""
                                         } ${
-                                            isActive ? 'ring-4 ring-green-500' : ''
-                                        } ${
-                                            targetShelve === shelveId ? 'ring-4 ring-blue-500' : ''
-                                        }
-                                    `}
-                                >
-                                    {/* 貨架編號 */}
-                                    <div className={`flex justify-between text-xl font-bold text-center mb-2 pb-2 border-b-2 border-gray-300 ${
-                                        isLastOne ? 'text-gray-400' : ''
-                                    } ${
-                                        isActive ? 'text-green-600' : ''
-                                    } ${
-                                        targetShelve === shelveId ? 'text-blue-600' : ''
-                                    }`}>
-                                        <div className="w-10"></div>
-                                        <span className={`text-3xl font-bold transition-colors ${
-                                            abnormalShelves.includes(shelveId)
-                                                        ? "text-red-600"
-                                                        : "text-black"
-                                        }`}>{shelveId}</span>
-                                        {!isEmptySlot && hasData && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleMarkAbnormal({
-                                                        shelveId,
-                                                        operator
-                                                    });
-                                                }}
-                                                disabled={abnormalShelves.includes(shelveId)}
-                                                className={`w-10 p-1 rounded transition-colors ${
-                                                    abnormalShelves.includes(shelveId)
-                                                        ? "cursor-not-allowed"
-                                                        : "hover:bg-gray-200"
-                                                }`}
-                                                title={abnormalShelves.includes(shelveId) ? "已標記異常" : "標記異常"}
-                                            >
-                                                <AlertTriangle 
-                                                    className={`w-8 h-8 mx-auto transition-colors ${
-                                                        abnormalShelves.includes(shelveId)
-                                                            ? "text-red-500"
-                                                            : "text-gray-400"
-                                                    }`}
-                                                />
-                                            </button>
-                                        )}
-                                        {!hasData && (
-                                            <div className="w-10"></div>
-                                        )}
-                                    </div>
-                                    {isEmptySlot ? (
-                                        <div className="flex-1 flex items-center justify-center text-gray-300"></div>
-                                    ) : isReturned ? (
-                                        <div className="flex-1 flex items-center justify-center text-gray-300">
-                                            已退回
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div
-                                                className={`flex-1 min-h-0 mb-3 custom-scrollbar ${
-                                                    isDisabled ? 'pointer-events-none' : ''
-                                                }`}
-                                                style={{ '--scrollbar-thumb-color': 'var(--green-vivid)' }}
-                                            >
-                                                {hasData ? (
-                                                    <div className="space-y-1">
-                                                        {data.map((item) => {
-                                                            const isChecked = checkedItems.includes(item.id);
-                                                            return (
-                                                                <label
-                                                                    key={item.id}
-                                                                    className={`
+                isActive ? "ring-4 ring-green-500" : ""
+              } ${targetShelve === shelveId ? "ring-4 ring-blue-500" : ""}
+                                    `}>
+              {/* 貨架編號 */}
+              <div
+                className={`flex justify-between text-xl font-bold text-center mb-2 pb-2 border-b-2 border-gray-300 ${
+                  isLastOne ? "text-gray-400" : ""
+                } ${isActive ? "text-green-600" : ""} ${
+                  targetShelve === shelveId ? "text-blue-600" : ""
+                }`}>
+                <div className="w-10"></div>
+                <span
+                  className={`text-3xl font-bold transition-colors ${
+                    abnormalShelves.includes(shelveId)
+                      ? "text-red-600"
+                      : "text-black"
+                  }`}>
+                  {shelveId}
+                </span>
+                {!isEmptySlot && hasData && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMarkAbnormal({
+                        shelveId,
+                        operator,
+                      });
+                    }}
+                    disabled={abnormalShelves.includes(shelveId)}
+                    className={`w-10 p-1 rounded transition-colors ${
+                      abnormalShelves.includes(shelveId)
+                        ? "cursor-not-allowed"
+                        : "hover:bg-gray-200"
+                    }`}
+                    title={
+                      abnormalShelves.includes(shelveId)
+                        ? "已標記異常"
+                        : "標記異常"
+                    }>
+                    <AlertTriangle
+                      className={`w-8 h-8 mx-auto transition-colors ${
+                        abnormalShelves.includes(shelveId)
+                          ? "text-red-500"
+                          : "text-gray-400"
+                      }`}
+                    />
+                  </button>
+                )}
+                {!hasData && <div className="w-10"></div>}
+              </div>
+              {isEmptySlot ? (
+                <div className="flex-1 flex items-center justify-center text-gray-300"></div>
+              ) : isReturned ? (
+                <div className="flex-1 flex items-center justify-center text-gray-300">
+                  已退回
+                </div>
+              ) : (
+                <>
+                  <div
+                    className={`flex-1 min-h-0 mb-3 custom-scrollbar ${
+                      isDisabled ? "pointer-events-none" : ""
+                    }`}
+                    style={{
+                      "--scrollbar-thumb-color": "var(--green-vivid)",
+                    }}>
+                    {hasData ? (
+                      <div className="space-y-1">
+                        {data.map((item) => {
+                          const isChecked = checkedItems.includes(item.id);
+                          return (
+                            <label
+                              key={item.id}
+                              className={`
                                                                         flex items-center gap-2 px-2 py-1 cursor-pointer
                                                                         border border-gray-300 rounded
                                                                         hover:bg-gray-50 transition-colors
-                                                                    `}
-                                                                >
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={isChecked}
-                                                                        onChange={() => handleItemChange(shelveId, item)}
-                                                                        className="w-4 h-4 accent-green-600"
-                                                                    />
-                                                                    <span className="text-xl truncate">
-                                                                        {item.PRT_NO}
-                                                                    </span>
-                                                                </label>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex-1 flex items-center justify-center text-gray-300 h-full">
-                                                        無資料
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {/* 護角 / 封膜 / 打包 checkbox */}
-                                            {hasData && (
-                                                <div className="flex gap-4 mb-3 justify-between">
-                                                    <label className={`flex items-center gap-2 cursor-pointer border rounded-md text-white transition-colors ${
-                                                        hasCheck(checkValue, CHECK_VALUES.CORNER) ? 'bg-green-600' : 'bg-gray-500'
-                                                    }`}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={hasCheck(checkValue, CHECK_VALUES.CORNER)}
-                                                            onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.CORNER)}
-                                                            disabled={isDisabled}
-                                                            className="w-5 h-5 m-2 accent-white"
-                                                        />
-                                                        <span className="text-2xl mx-4 my-2">護角</span>
-                                                    </label>
-                                                    <label className={`flex items-center gap-2 cursor-pointer border rounded-md text-white transition-colors ${
-                                                        hasCheck(checkValue, CHECK_VALUES.SEAL) ? 'bg-green-600' : 'bg-gray-500'
-                                                    }`}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={hasCheck(checkValue, CHECK_VALUES.SEAL)}
-                                                            onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.SEAL)}
-                                                            disabled={isDisabled}
-                                                            className="w-5 h-5 m-2 accent-white"
-                                                        />
-                                                        <span className="text-2xl mx-4 my-2">封膜</span>
-                                                    </label>
-                                                    <label className={`flex items-center gap-2 cursor-pointer border rounded-md text-white transition-colors ${
-                                                        hasCheck(checkValue, CHECK_VALUES.PACK) ? 'bg-green-600' : 'bg-gray-500'
-                                                    }`}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={hasCheck(checkValue, CHECK_VALUES.PACK)}
-                                                            onChange={() => handleShelveCheck(shelveId, CHECK_VALUES.PACK)}
-                                                            disabled={isDisabled}
-                                                            className="w-5 h-5 m-2 accent-white"
-                                                        />
-                                                        <span className="text-2xl mx-4 my-2">打包</span>
-                                                    </label>
-                                                </div>
-                                            )}
-                                            {/* 退回貨架 */}
-                                            <ActionBtn 
-                                                className={"flex justify-center"}
-                                                icon="icon-returnShelf"
-                                                text={"退回貨架"}
-                                                variant={"orange"}
-                                                disabled={isDisabled}
-                                                onClick={() => handleReturnShelve(shelveId)}
-                                            />
-                                        </>
-                                    )}
-                                </div>
-                            );
+                                                                    `}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() =>
+                                  handleItemChange(shelveId, item)
+                                }
+                                className="w-4 h-4 accent-green-600"
+                              />
+                              <span className="text-xl truncate">
+                                {item.PRT_NO}
+                              </span>
+                            </label>
+                          );
                         })}
+                      </div>
+                    ) : (
+                      <div className="flex-1 flex items-center justify-center text-gray-300 h-full">
+                        無資料
+                      </div>
+                    )}
+                  </div>
+                  {/* 護角 / 封膜 / 打包 checkbox */}
+                  {hasData && (
+                    <div className="flex mb-3 justify-between">
+                      <label
+                        className={`flex items-center gap-1 cursor-pointer border rounded-md text-white transition-colors ${
+                          hasCheck(checkValue, CHECK_VALUES.CORNER)
+                            ? "bg-green-600"
+                            : "bg-gray-500"
+                        }`}>
+                        <input
+                          type="checkbox"
+                          checked={hasCheck(checkValue, CHECK_VALUES.CORNER)}
+                          onChange={() =>
+                            handleShelveCheck(shelveId, CHECK_VALUES.CORNER)
+                          }
+                          disabled={isDisabled}
+                          className="w-5 h-5 m-2 accent-white"
+                        />
+                        <span className="text-(length:--font-size-2xl) pe-2">
+                          護角
+                        </span>
+                      </label>
+                      <label
+                        className={`flex items-center gap-1 cursor-pointer border rounded-md text-white transition-colors ${
+                          hasCheck(checkValue, CHECK_VALUES.SEAL)
+                            ? "bg-green-600"
+                            : "bg-gray-500"
+                        }`}>
+                        <input
+                          type="checkbox"
+                          checked={hasCheck(checkValue, CHECK_VALUES.SEAL)}
+                          onChange={() =>
+                            handleShelveCheck(shelveId, CHECK_VALUES.SEAL)
+                          }
+                          disabled={isDisabled}
+                          className="w-5 h-5 m-2 accent-white"
+                        />
+                        <span className="text-(length:--font-size-2xl) pe-2">
+                          封膜
+                        </span>
+                      </label>
+                      <label
+                        className={`flex items-center gap-1 cursor-pointer border rounded-md text-white transition-colors ${
+                          hasCheck(checkValue, CHECK_VALUES.PACK)
+                            ? "bg-green-600"
+                            : "bg-gray-500"
+                        }`}>
+                        <input
+                          type="checkbox"
+                          checked={hasCheck(checkValue, CHECK_VALUES.PACK)}
+                          onChange={() =>
+                            handleShelveCheck(shelveId, CHECK_VALUES.PACK)
+                          }
+                          disabled={isDisabled}
+                          className="w-5 h-5 m-2 accent-white"
+                        />
+                        <span className="text-(length:--font-size-2xl) pe-2">
+                          打包
+                        </span>
+                      </label>
                     </div>
-                    {/* 站點 */}
-                    <div className="flex gap-2">
-                        {stations.map((station, i) => {
-                            const shelveId = shelvePositions[i];
-                            const isEmptySlot = shelveId === "貨架代號";
-                            const status = shelveStatus?.[shelveId];
-                            const hasData = shelveData?.[shelveId]?.length > 0;
-                            const variant = isEmptySlot
-                                ? "green"
-                                : hasData
-                                ? "blue"
-                                : status === "loading"
-                                ? "yellow"
-                                : "green";
-
-                            return (
-                                <ActionBtn
-                                    key={i}
-                                    text={station}
-                                    variant={variant}
-                                    disabled={false}
-                                    className="w-full flex flex-1 justify-center"
-                                />
-                            );
-                        })}
-                    </div>
-                </div>
+                  )}
+                  {/* 退回貨架 */}
+                  <ActionBtn
+                    className={"flex justify-center"}
+                    icon="icon-returnShelf"
+                    text={"退回貨架"}
+                    variant={"orange"}
+                    disabled={isDisabled}
+                    onClick={() => handleReturnShelve(shelveId)}
+                  />
+                </>
+              )}
             </div>
-        </>
-    )
+          );
+        })}
+      </div>
+      {/* 站點 */}
+      <div className="w-full flex justify-between gap-4 z-20">
+        {stations.map((station, i) => {
+          const shelveId = shelvePositions[i];
+          const isEmptySlot = shelveId === "貨架代號";
+          const status = shelveStatus?.[shelveId];
+          const hasData = shelveData?.[shelveId]?.length > 0;
+          const variant = isEmptySlot
+            ? "green"
+            : hasData
+            ? "blue"
+            : status === "loading"
+            ? "yellow"
+            : "green";
+
+          return (
+            <ActionBtn
+              key={i}
+              text={station}
+              variant={variant}
+              disabled={false}
+              className="flex-1"
+            />
+          );
+        })}
+      </div>
+    </>
+  );
 }
