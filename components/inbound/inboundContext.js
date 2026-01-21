@@ -9,7 +9,7 @@ import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
 import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in } from "./inboundFunction";
-import { checkNodePos } from "@/pages/api";
+import { checkNodePos, checkOrder, checkOrderDetail } from "@/pages/api";
 
 export default function InboundContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
@@ -147,7 +147,47 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       dispatch(updateShelfItem({ station: currentStation, items: newShelf }));
       setTableData2((prev) => prev.filter((row) => !selected.some((v) => v.INSTOCK_NO === row.INSTOCK_NO)));
     } else {
-      Alert({ title: res?.error?.message });
+      if (res?.code === "ECONNABORTED") {
+        try {
+          const existingItems = await checkOrderDetail({ W_ID: order.W_ID, PRT_NO: order.PRT_NO, status: 2 });
+          const existingNos = existingItems?.data?.data?.map((v) => v.INSTOCK_NO);
+          const remainingData = tableData2.filter((item) => existingNos.includes(item.INSTOCK_NO));
+
+          if (remainingData.length > 0) {
+            let newShelf = (shelfItem || []).map((s) => ({ ...s }));
+            selected.forEach((v) => {
+              const index = newShelf.findIndex((s) => s.PRT_NO === v.PRT_NO);
+              const mergeUnique = (oldStr, newStr) => {
+                const combined = [...new Set([...(oldStr || "").split(","), ...(newStr || "").split(",")])];
+                return combined.filter(Boolean).join(",");
+              };
+
+              if (index !== -1) {
+                newShelf[index] = {
+                  ...newShelf[index],
+                  PP_NO: (Number(newShelf[index].PP_NO) || 0) + (Number(v.PP_NO) || 0),
+                  BOX_NO: (Number(newShelf[index].BOX_NO) || 0) + (Number(v.BOX_NO) || 0),
+                  INSTOCK_NO: mergeUnique(newShelf[index].INSTOCK_NO, v.INSTOCK_NO),
+                  MAKE_NO: mergeUnique(newShelf[index].MAKE_NO, v.MAKE_NO),
+                  SHELVE_ID: shelf.SHELVE_ID,
+                };
+              } else {
+                newShelf.push({ ...v });
+              }
+            });
+            dispatch(updateShelfItem({ station: currentStation, items: newShelf }));
+            setTableData2((prev) => prev.filter((row) => !selected.some((v) => v.INSTOCK_NO === row.INSTOCK_NO)));
+            return Alert({ title: "連線逾時但已新增成功" });
+          } else {
+            return Alert({ title: "上架失敗，請重新再試" });
+          }
+        } catch (checkErr) {
+          return Alert({ title: checkErr?.message });
+        }
+      }
+      if (res?.error?.message) {
+        Alert({ title: res?.error?.message });
+      }
     }
   };
   const handleAddShelf = async () => {
@@ -156,7 +196,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       return;
     }
     const res = await addShelf_in(setLoading, setAddModal, shelf, order);
-    if (!res?.success) {
+    if (!res?.success && res?.error?.message) {
       Alert({ title: res?.error?.message });
     }
   };
@@ -172,7 +212,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     }
 
     const res = await checkCar(waveNo);
-    if (res?.data?.success && !res?.data?.data) {
+    if (res?.success && !res?.data?.data) {
       Alert({
         title: "入倉單未完成",
         html: `此入倉單未完成且只剩下一台車在工作站<br>如果退回將返回選單列表<br>( ※退回後將清空動作 )`,
@@ -202,8 +242,24 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     if (res?.success) {
       dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res?.data?.data }));
       Alert({ title: "此單已完成" });
-      const check = await checkNodePos();
+      const check = await checkNodePos({ STATION: currentStation });
       if (check?.data?.data?.length <= 0) await deleteTask_in(stations);
+    } else {
+      if (res?.code === "ECONNABORTED") {
+        try {
+          const checkRes = await checkOrder({ W_ID: order.W_ID });
+          if (checkRes?.data?.data?.STATUS === 2 || checkRes?.data?.data.length == 0) {
+            dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: order.W_ID }));
+            const check = await checkNodePos();
+            if (check?.data?.data?.length <= 0) await deleteTask_in(stations);
+            Alert({ title: "連線逾時但訂單已完成" });
+          } else {
+            Alert({ title: "完成失敗，請重新再試" });
+          }
+        } catch (checkErr) {
+          return Alert({ title: checkErr?.message });
+        }
+      }
     }
   };
 

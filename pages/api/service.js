@@ -64,6 +64,7 @@ api.interceptors.response.use(
   },
 
   async (error) => {
+    console.log(error,'error')
     const status = error.response?.status;
     const code = error.response?.data?.code;
     const message = error.response?.data?.message || error.message || "Unknown error";
@@ -81,6 +82,10 @@ api.interceptors.response.use(
     if (status === 401) {
       handleUnauthorized();
       return new Promise(() => {});
+    }
+
+    if(error?.code === 'ECONNABORTED'){
+       return Promise.reject(error);
     }
 
     handleApiError(error);

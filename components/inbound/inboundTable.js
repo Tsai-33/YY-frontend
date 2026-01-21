@@ -75,8 +75,8 @@ export default function InboundTable({ data, data2, setData2 }) {
   useEffect(() => {
     if (!selectAllRef.current) return;
 
-    // 本頁可選取的資料（排除 shortage）
-    const validData = data2.filter((item) => !item.shortage);
+    // 本頁可選取的資料
+    const validData = data2.filter((item) => item.W_ID == waveNo);
 
     // 是否真的「全部都在 selected 裡」
     const allSelected = validData.length > 0 && validData.every((v) => selected.some((s) => s.INSTOCK_NO === v.INSTOCK_NO));
