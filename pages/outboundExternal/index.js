@@ -252,7 +252,7 @@ export default function OutboundExternal() {
               PRT_NO: matchedItem.PRT_NO,
               MAKE_NO: decryptedBarcode,
               outBoxNo: matchedItem.BOX_NO,
-              outPpNo: matchedItem.BOX_PACK
+              outPpNo: matchedItem.PP_NO
             }]
           }));
           Alert({ title: `已掃描: ${decryptedBarcode}`, icon: "success", timer: 1000 });
@@ -289,60 +289,60 @@ export default function OutboundExternal() {
     }
 
     // TODO: 暫時註解掉檢查，等流程跑完再打開
-    // // 檢查庫區是否為 F01
-    // console.log("orderDetail: ", orderDetail)
-    // const invalidStockArea = orderDetail?.find(item => item.STOCK_AREA !== "F01");
-    // if (invalidStockArea) {
-    //   Alert({ title: `庫區錯誤：貨架 ${invalidStockArea.SHELVE_ID} 的庫區為 ${invalidStockArea.STOCK_AREA}，非 F01` });
-    //   return;
-    // }
+    // 檢查庫區是否為 F01
+    console.log("orderDetail: ", orderDetail)
+    const invalidStockArea = orderDetail?.find(item => item.STOCK_AREA !== "F01");
+    if (invalidStockArea) {
+      Alert({ title: `庫區錯誤：貨架 ${invalidStockArea.SHELVE_ID} 的庫區為 ${invalidStockArea.STOCK_AREA}，非 F01` });
+      return;
+    }
 
-    // // 檢查庫存是否足夠
-    // try {
-    //   const detailRes = await getOutBoundExternalOrderDetailByWID(order.W_ID);
-    //   if (detailRes.data.success) {
-    //     const demandData = detailRes.data.data || [];
+    // 檢查庫存是否足夠
+    try {
+      const detailRes = await getOutBoundExternalOrderDetailByWID(order.W_ID);
+      if (detailRes.data.success) {
+        const demandData = detailRes.data.data || [];
 
-    //     // 將需求按 PRT_NO 分組加總
-    //     const demandByPrtNo = {};
-    //     demandData.forEach(item => {
-    //       const prtNo = item.PRT_NO;
-    //       if (!demandByPrtNo[prtNo]) {
-    //         demandByPrtNo[prtNo] = { PP_NO: 0, BOX_NO: 0 };
-    //       }
-    //       demandByPrtNo[prtNo].PP_NO += item.PP_NO || 0;
-    //       demandByPrtNo[prtNo].BOX_NO += item.BOX_NO || 0;
-    //     });
+        // 將需求按 PRT_NO 分組加總
+        const demandByPrtNo = {};
+        demandData.forEach(item => {
+          const prtNo = item.PRT_NO;
+          if (!demandByPrtNo[prtNo]) {
+            demandByPrtNo[prtNo] = { PP_NO: 0, BOX_NO: 0 };
+          }
+          demandByPrtNo[prtNo].PP_NO += item.PP_NO || 0;
+          demandByPrtNo[prtNo].BOX_NO += item.BOX_NO || 0;
+        });
 
-    //     // 將 WMS 庫存按 PRT_NO 分組加總
-    //     const stockByPrtNo = {};
-    //     orderDetail?.forEach(item => {
-    //       const prtNo = item.PRT_NO;
-    //       if (!stockByPrtNo[prtNo]) {
-    //         stockByPrtNo[prtNo] = { PP_NO: 0, BOX_NO: 0 };
-    //       }
-    //       stockByPrtNo[prtNo].PP_NO += item.PP_NO || 0;
-    //       stockByPrtNo[prtNo].BOX_NO += item.BOX_NO || 0;
-    //     });
+        // 將 WMS 庫存按 PRT_NO 分組加總
+        const stockByPrtNo = {};
+        orderDetail?.forEach(item => {
+          const prtNo = item.PRT_NO;
+          if (!stockByPrtNo[prtNo]) {
+            stockByPrtNo[prtNo] = { PP_NO: 0, BOX_NO: 0 };
+          }
+          stockByPrtNo[prtNo].PP_NO += item.PP_NO || 0;
+          stockByPrtNo[prtNo].BOX_NO += item.BOX_NO || 0;
+        });
 
-    //     // 比較每個 PRT_NO 的庫存是否足夠
-    //     for (const prtNo of Object.keys(demandByPrtNo)) {
-    //       const demand = demandByPrtNo[prtNo];
-    //       const stock = stockByPrtNo[prtNo] || { PP_NO: 0, BOX_NO: 0 };
-    //       if (stock.PP_NO < demand.PP_NO || stock.BOX_NO < demand.BOX_NO) {
-    //         Alert({
-    //           title: `庫存不足：產品 ${prtNo}`,
-    //           text: `需求: ${demand.BOX_NO} 箱 ${demand.PP_NO} 包\n庫存: ${stock.BOX_NO} 箱 ${stock.PP_NO} 包`
-    //         });
-    //         return;
-    //       }
-    //     }
-    //   }
-    // } catch (error) {
-    //   console.warn("檢查庫存失敗:", error);
-    //   Alert({ title: "檢查庫存失敗" });
-    //   return;
-    // }
+        // 比較每個 PRT_NO 的庫存是否足夠
+        for (const prtNo of Object.keys(demandByPrtNo)) {
+          const demand = demandByPrtNo[prtNo];
+          const stock = stockByPrtNo[prtNo] || { PP_NO: 0, BOX_NO: 0 };
+          if (stock.PP_NO < demand.PP_NO || stock.BOX_NO < demand.BOX_NO) {
+            Alert({
+              title: `庫存不足：產品 ${prtNo}`,
+              text: `需求: ${demand.BOX_NO} 箱 ${demand.PP_NO} 包\n庫存: ${stock.BOX_NO} 箱 ${stock.PP_NO} 包`
+            });
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.warn("檢查庫存失敗:", error);
+      Alert({ title: "檢查庫存失敗" });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -444,7 +444,7 @@ export default function OutboundExternal() {
           PRT_NO: item.PRT_NO,
           MAKE_NO: item.MAKE_NO,
           outBoxNo: item.BOX_NO,
-          outPpNo: item.BOX_PACK
+          outPpNo: item.PP_NO
         })) || [];
       }
 
@@ -656,7 +656,7 @@ export default function OutboundExternal() {
                         <div className="text-3xl">品名: {item?.PRT_NAME}</div>
                         <div className="flex justify-between text-3xl">
                           <div>箱數: {item?.BOX_NO} 箱</div>
-                          <div>包數: {item?.BOX_PACK} 包</div>
+                          <div>包數: {item?.PP_NO} 包</div>
                         </div>
                       </div>
                     ))}

@@ -337,7 +337,7 @@ export default function ShelfTransferTable() {
                                                                         箱數：{item.BOX_NO} 箱
                                                                     </div>
                                                                     <div className="text-2xl font-bold">
-                                                                        包數：{item.BOX_PACK} 包
+                                                                        包數：{item.PP_NO} 包
                                                                     </div>
                                                                 </div>
                                                             </div>

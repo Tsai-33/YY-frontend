@@ -36,7 +36,7 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
                         PRT_NO: value.PRT_NO,
                         MAKE_NO: valueId,
                         outBoxNo: value.BOX_NO,
-                        outPpNo: value.BOX_PACK
+                        outPpNo: value.PP_NO
                     }];
                 }
             });
@@ -56,7 +56,7 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
     const detailHeaders = [
         { label: "", key: "checkbox", width: "10%" },
         { label: "產品品號", key: "PRT_NO", width: "60%" },
-        { label: "總包數", key: "BOX_PACK", width: "30%" },
+        { label: "總包數", key: "PP_NO", width: "30%" },
     ]
 
     // ============= 根據波次拿訂單的細節 =============
@@ -88,7 +88,7 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
                 PRT_NO: item.PRT_NO,
                 MAKE_NO: item.MAKE_NO,
                 outBoxNo: item.BOX_NO,
-                outPpNo: item.BOX_PACK 
+                outPpNo: item.PP_NO
             }));
 
         setSelectedArray(fullBoxItems);
