@@ -222,7 +222,7 @@ export default function InventoryManage({ isOpen, onClose }) {
           </div>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0 overflow-hidden">
           {/* 左側：站點導覽 */}
           <div className="w-64 bg-slate-100/80 p-4 border-r border-slate-200 overflow-y-auto">
             <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4 block px-2">
@@ -248,7 +248,7 @@ export default function InventoryManage({ isOpen, onClose }) {
           </div>
 
           {/* 右側：主內容區 */}
-          <div className="flex-1 flex flex-col bg-white overflow-hidden">
+          <div className="flex-1 min-h-0 flex flex-col bg-white overflow-hidden">
             {/* 狀態儀表板 */}
             <div className="p-6 grid grid-cols-3 gap-6 bg-white border-b border-slate-100">
               <div className="space-y-1">
@@ -334,8 +334,8 @@ export default function InventoryManage({ isOpen, onClose }) {
                 <Package className="text-indigo-500" size={20} />
                 <h3 className="font-bold text-slate-700">貨架品項清單</h3>
               </div>
-              <div className="flex-1 border border-slate-100 rounded-2xl overflow-hidden shadow-sm flex flex-col bg-slate-50/30">
-                <div className="overflow-y-auto flex-1">
+              <div className="flex-1 min-h-0 border border-slate-100 rounded-2xl overflow-hidden shadow-sm flex flex-col bg-slate-50/30">
+                <div className="overflow-y-auto flex-1 min-h-0">
                   <table className="w-full text-left border-collapse">
                     <thead className="sticky top-0 bg-white border-b border-slate-100 shadow-sm z-10">
                       <tr>
