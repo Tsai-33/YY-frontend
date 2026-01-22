@@ -128,7 +128,9 @@ export default function OutboundInternal() {
       // orderInput 會由 useEffect 同步 orderCode
     } else if (orderCode && orderCode !== inputBarCode) {
       // 已選擇但條碼不匹配
-      Alert({ title: "條碼與選擇的領用單不符" });
+      setTimeout(() => {
+        Alert({ title: "查無此領用單號，請查明", setTimeout:2000 });
+      }, 100);
       setOrderInput(orderCode || "");
     } else {
       setAskingOrder(true);
@@ -255,7 +257,8 @@ export default function OutboundInternal() {
             PRT_NO: matchedItem.PRT_NO,
             MAKE_NO: decryptedBarcode,
             outBoxNo: matchedItem.BOX_NO,
-            outPpNo: matchedItem.PP_NO
+            outPpNo: matchedItem.PP_NO,
+            ABNORMAL: matchedItem.ABNORMAL || 0
           }];
         });
         Alert({ title: `已掃描: ${decryptedBarcode}`, icon: "success", timer: 1000 });
@@ -447,7 +450,8 @@ export default function OutboundInternal() {
           PRT_NO: item.PRT_NO,
           MAKE_NO: item.MAKE_NO,
           outBoxNo: item.BOX_NO,
-          outPpNo: item.PP_NO
+          outPpNo: item.PP_NO,
+          ABNORMAL: item.ABNORMAL || 0
         })) || [];
       }
 
