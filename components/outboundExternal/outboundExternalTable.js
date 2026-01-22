@@ -12,10 +12,8 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
     const { orderCode, step, waveNo, shelfItem, selected } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
 
     // =============== 畫面一 ====================
-    // TODO: 測試用 SALE_NO
     const headers = [
-        { label: "銷貨單號", key: "SALE_NO", width: "60%" },
-        // { label: "銷貨單號", key: "OUTSTOCK_NO", width: "60%" },
+        { label: "銷貨單號", key: "OUTSTOCK_NO", width: "60%" },
         { label: "出庫日期", key: "WORK_TIME", width: "30%" },
     ];
 
@@ -60,13 +58,11 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
             //     }
             // });
         } else if (name === "radio") {
-            // TODO: 測試用 SALE_NO
             dispatch(
                 setOutboundExternal({
                     station: currentStationSafe,
                     order: value,
-                    orderCode: value?.SALE_NO,
-                    // orderCode: value?.OUTSTOCK_NO,
+                    orderCode: value?.OUTSTOCK_NO,
                     waveNo: value?.W_ID
                 }));
         }
@@ -183,7 +179,6 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
 
     return (
         <>
-            {/* TODO: 測試用 SALE_NO */}
         {step <= 2 &&
                 <NoCheckBoxTable
                     headers={headers}
@@ -191,8 +186,7 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
                     type="radio"
                     name="outboundExternal"
                     variants="green"
-                    idKey="SALE_NO"
-                    // idKey="OUTSTOCK_NO"
+                    idKey="OUTSTOCK_NO"
                     checked={orderCode}
                     onChange={handleSelectedOption}
                 />}

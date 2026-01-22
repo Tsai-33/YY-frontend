@@ -113,8 +113,8 @@ export default function OutboundExternal() {
     }
 
     // 檢查清單中是否配對到
-    const result = tableData.some((item) => item.SALE_NO === inputBarCode);
-    const [value] = tableData.filter((item) => item.SALE_NO === inputBarCode);
+    const result = tableData.some((item) => item.OUTSTOCK_NO === inputBarCode);
+    const [value] = tableData.filter((item) => item.OUTSTOCK_NO === inputBarCode);
     if (result) {
       dispatch(setOutboundExternal({ station: currentStationSafe, order: value, orderCode: inputBarCode, waveNo: value.W_ID, step: 2 }));
     } else if (orderCode && orderCode !== inputBarCode) {
@@ -140,9 +140,8 @@ export default function OutboundExternal() {
             const newData = tableRes.data.data.filter((v) => !orderList.includes(v.OUTSTOCK_NO));
             setTableData(newData);
 
-            // 再配對一次（TODO: 測試用 SALE_NO）
-            const newMatchedOrder = newData.find((item) => item.SALE_NO === inputBarCode);
-            // const newMatchedOrder = newData.find((item) => item.OUTSTOCK_NO === inputBarCode);
+            // 再配對一次
+            const newMatchedOrder = newData.find((item) => item.OUTSTOCK_NO === inputBarCode);
             if (newMatchedOrder) {
               dispatch(setOutboundExternal({
                 station: currentStationSafe,

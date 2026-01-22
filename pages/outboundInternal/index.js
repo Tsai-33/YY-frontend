@@ -114,9 +114,8 @@ export default function OutboundInternal() {
     const inputBarCode = e.target.value.trim();
     if (!inputBarCode) return;
 
-    // 檢查清單中是否配對到（TODO: 測試用 SALE_NO）
-    const matchedOrder = tableData.find((item) => item.SALE_NO === inputBarCode);
-    // const matchedOrder = tableData.find((item) => item.OUTSTOCK_NO === inputBarCode);
+    // 檢查清單中是否配對到
+    const matchedOrder = tableData.find((item) => item.OUTSTOCK_NO === inputBarCode);
 
     if (matchedOrder) {
       // 配對到就選擇訂單
@@ -141,9 +140,8 @@ export default function OutboundInternal() {
             const newData = tableRes.data.data.filter((v) => !orderList.includes(v.OUTSTOCK_NO));
             setTableData(newData);
 
-            // 再配對一次(TODO: 測試用 SALE_NO)
-            const newMatchedOrder = newData.find((item) => item.SALE_NO === inputBarCode);
-            // const newMatchedOrder = newData.find((item) => item.OUTSTOCK_NO === inputBarCode);
+            // 再配對一次
+            const newMatchedOrder = newData.find((item) => item.OUTSTOCK_NO === inputBarCode);
             if (newMatchedOrder) {
               dispatch(setOutboundInternal({
                 station: currentStationSafe,
