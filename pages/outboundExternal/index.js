@@ -59,12 +59,12 @@ export default function OutboundExternal() {
 
   // =====根據銷貨單取得細節=====
   useEffect(() => {
-    if (orderCode) {
-      fetchOrderDetail(orderCode);
+    if (order?.SALE_NO) {
+      fetchOrderDetail(order.SALE_NO);
     } else {
       setOrderDetail([]);
     }
-  }, [orderCode]);
+  }, [order?.SALE_NO]);
 
   // 同步 orderCode 到 orderInput
   useEffect(() => {
@@ -114,26 +114,16 @@ export default function OutboundExternal() {
     const inputBarCode = e.target.value.trim();
     if (!inputBarCode) return;
 
-    // 如果已經點擊選擇會檢查掃的條碼是否匹配
-    if (orderCode && orderCode === inputBarCode) {
-      dispatch(setOutboundExternal({ station: currentStationSafe, step: 2 }));
-      return;
-    }
+    // 檢查清單中是否配對到（TODO: 測試用 SALE_NO）
+    const matchedOrder = tableData.find((item) => item.SALE_NO === inputBarCode);
+    // const matchedOrder = tableData.find((item) => item.OUTSTOCK_NO === inputBarCode);
 
-    // 檢查清單中是否配對到
-    const result = tableData.some((item) => item.SALE_NO === inputBarCode);
-    const [value] = tableData.filter((item) => item.SALE_NO === inputBarCode);
-    if (result) {
-      dispatch(setOutboundExternal({ station: currentStationSafe, order: value, orderCode: inputBarCode, waveNo: value.W_ID, step: 2 }));
-
-    } else if (orderCode && orderCode !== inputBarCode) {
-      // 已選擇但條碼不匹配
-      setTimeout(() => {
-        Alert({ title: "查無此銷貨單號，請查明", setTimeout:2000 });
-      }, 100);
-      setOrderInput(orderCode || "");
+    if (matchedOrder) {
+      // 配對到後選擇訂單
+      dispatch(setOutboundExternal({ station: currentStationSafe, order: matchedOrder, orderCode: inputBarCode, waveNo: matchedOrder.W_ID, step: 2 }));
+      orderBarCodeRef.current.value = "";
     } else {
-      console.log("22222222")
+      // 配對不到就發出 ask_order 請WMS詢問ERP
       setAskingOrder(true);
       try {
         const dataId = generateRandomNumber();
@@ -145,34 +135,37 @@ export default function OutboundExternal() {
         const res = await sendToWMS(data);
 
         if (res.data.success && res.data.data?.result?.toUpperCase() === "OK") {
-          // 重取訂單
           const tableRes = await getOutboundExternal();
           if (tableRes.data.success) {
             const newData = tableRes.data.data.filter((v) => !orderList.includes(v.OUTSTOCK_NO));
             setTableData(newData);
-          
-            // 再配對一次
+
+            // 再配對一次（TODO: 測試用 SALE_NO）
             const newMatchedOrder = newData.find((item) => item.SALE_NO === inputBarCode);
+            // const newMatchedOrder = newData.find((item) => item.OUTSTOCK_NO === inputBarCode);
             if (newMatchedOrder) {
               dispatch(setOutboundExternal({
                 station: currentStationSafe,
                 order: newMatchedOrder,
                 orderCode: inputBarCode,
+                waveNo: newMatchedOrder.W_ID,
                 step: 2
               }));
             } else {
               Alert({ title: "單號已更新但清單中找不到該筆資料，請稍後再試" });
             }
           }
-        } else if (result === "NG") {
+        } else if (res.data.data?.result?.toUpperCase() === "NG") {
           Alert({ title: res.data.data?.message || "無此單號" });
         } else {
           Alert({ title: "查詢單號失敗" });
         }
       } catch (error) {
         console.warn("ask_order 錯誤:", error);
+        Alert({ title: "查詢單號失敗" });
       } finally {
         setAskingOrder(false);
+        orderBarCodeRef.current.value = "";
       }
     }
   }
@@ -292,14 +285,12 @@ export default function OutboundExternal() {
       return;
     }
 
-    // TODO: 暫時註解掉檢查，等流程跑完再打開
-    // 檢查庫區是否為 F01
-    console.log("orderDetail: ", orderDetail)
-    const invalidStockArea = orderDetail?.find(item => item.STOCK_AREA !== "F01");
-    if (invalidStockArea) {
-      Alert({ title: `庫區錯誤：貨架 ${invalidStockArea.SHELVE_ID} 的庫區為 ${invalidStockArea.STOCK_AREA}，非 F01` });
-      return;
-    }
+    // 檢查庫區是否為 F02
+    // const invalidStockArea = orderDetail?.find(item => item.STOCK_AREA !== "F02");
+    // if (invalidStockArea) {
+    //   Alert({ title: `庫區錯誤：貨架 ${invalidStockArea.SHELVE_ID} 的庫區為 ${invalidStockArea.STOCK_AREA}，非 F02` });
+    //   return;
+    // }
 
     // 檢查庫存是否足夠
     try {
