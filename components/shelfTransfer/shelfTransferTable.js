@@ -228,31 +228,32 @@ export default function ShelfTransferTable() {
   // 檢查是否可以按確定(至少2個最多站點數量)
   const canConfirm = selectedShelve.length >= 2 && selectedShelve.length <= stations.length;
 
-
   return (
     <>
-      <div className="flex flex-col h-screen">
-        {/* 標題 */}
-        <div className="flex items-center justify-between">
-          <div className="text-(length:--font-size-6xl) font-bold text-(--green-deep)">訂單理貨</div>
-          <PageTitle title="請輸入訂單單號" />
-          <Link href="/shelfTransfer">
-            <ActionBtn icon="icon-goback" text="返回" variant="darkBlue" />
-          </Link>
+      {/* 標題 */}
+      <div className="flex items-center justify-between">
+        <div className="text-(length:--font-size-6xl) font-bold text-(--green-deep)">訂單理貨</div>
+        <PageTitle title="請輸入訂單單號" />
+        <Link href="/shelfTransfer">
+          <ActionBtn icon="icon-goback" text="返回" variant="darkBlue" />
+        </Link>
+      </div>
+      {/* input */}
+      <div className="flex gap-4 py-2 items-stretch h-[72vh]">
+        {/* Table */}
+        <div className="w-[47%] flex flex-col">
+          <Table variant="green" type="checkbox" name="shelfTransferList" headers={headers} data={tableData} needInput={true} idKey="SALE_NO" checked={selectedOrder} onChange={handleRowClick} />
         </div>
-        {/* input */}
-        <div className="flex-1 flex gap-4 py-2 items-stretch">
-          {/* Table */}
-          <div className="w-[47%]">
-            <Table variant="green" type="checkbox" name="shelfTransferList" headers={headers} data={tableData} needInput={true} idKey="SALE_NO" height="76vh" checked={selectedOrder} onChange={handleRowClick} />
-          </div>
-          {/* 右邊畫面 */}
-          <div className="w-[53%] flex flex-col gap-5">
-            <div className="w-[50%] flex items-center text-(length:--font-size-2xl)">
+        {/* 右邊畫面 */}
+        <div className="w-[53%] flex flex-col overflow-hidden">
+          <div className="flex space-x-4">
+            <div className="flex items-center p-4">
               <label className="font-medium whitespace-nowrap">訂單單號：</label>
-              <InputFrame type="text" name="orderNo" className="border-2 rounded px-4 py-2 w-[250px]" value={orderInput} onChange={handleInputChange} onKeyDown={handleInputKeyDown} placeholder="請輸入訂單單號" />
+              <InputFrame type="text" name="orderNo" value={orderInput} onChange={handleInputChange} onKeyDown={handleInputKeyDown} placeholder="請輸入訂單單號" />
             </div>
-            <div className="bg-gray-50 rounded-lg p-5 flex-1 flex flex-col justify-between min-h-0">
+          </div>
+          <div className="flex flex-col bg-white p-8 pb-4 h-full justify-between overflow-hidden">
+            <div className="custom-scrollbar " style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
               {selectedOrder && groupedShelveData.length > 0 ? (
                 <>
                   <div className="flex-1 overflow-auto space-y-6 mb-6">
@@ -308,19 +309,19 @@ export default function ShelfTransferTable() {
               ) : (
                 <div className="flex-1 flex items-center justify-center text-gray-400 text-2xl">請選擇左側訂單查看詳細資訊</div>
               )}
-              {/* 確定按鈕 */}
-              <div className="mt-auto flex items-center justify-center">
-                <ActionBtn icon="icon-check" text="確定" variant="orange" disabled={!canConfirm} onClick={handleConfirm} />
-              </div>
+            </div>
+            {/* 確定按鈕 */}
+            <div className="flex flex-1 flex-col justify-end items-center p-4">
+              <ActionBtn icon="icon-check" text="確定" variant="orange" disabled={!canConfirm} onClick={handleConfirm} />
             </div>
           </div>
         </div>
-        {/* 站點 */}
-        <div className="w-full flex justify-between gap-4 z-20">
-          {stations.map((station) => (
-            <ActionBtn text={station} variant="green" className="flex-1" disabled={false} />
-          ))}
-        </div>
+      </div>
+      {/* 站點 */}
+      <div className="w-full flex justify-between gap-4 z-20">
+        {stations.map((station) => (
+          <ActionBtn text={station} variant="green" className="flex-1" disabled={false} />
+        ))}
       </div>
     </>
   );

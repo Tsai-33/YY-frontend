@@ -25,22 +25,22 @@ export default function Table({
     return String(checked) === String(row[idKey]);
   };
 
-  const containerHeight = height || "65vh";
+  const containerHeight = height || "72vh";
   const innerHeight = height
     ? `calc(${height} - 1vh)` // 如果有傳，動態計算
-    : "65vh"; // 沒傳就用原本的
+    : "72vh"; // 沒傳就用原本的
 
   return (
     <div
-      className="w-full bg-[var(--white)] border border-white rounded-md text-center overflow-y-auto custom-scrollbar"
+      className="w-full h-full bg-[var(--white)] border border-white rounded-md text-center overflow-y-auto custom-scrollbar"
       style={{
         height: containerHeight,
         "--scrollbar-thumb-color": `var(--green-vivid)`,
         "--scrollbar-thumb-hover-color": `var(--green-vivid)`,
       }}>
-      <table className="table-auto w-full font-bold text-black">
-        <thead className="sticky top-0 bg-white z-5">
-          <tr className={`bg-(--gray-light)`}>
+      <table className="table-fixed w-full">
+        <thead>
+          <tr className={`sticky top-0 z-5 bg-(--gray-light)`}>
             {headers.map((header, idx) => (
               <th
                 key={idx}
@@ -56,11 +56,11 @@ export default function Table({
             ))}
           </tr>
         </thead>
-        <tbody className="overflow-y-scroll scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200 ">
+        <tbody>
           {data.map((row, idx) => (
             <tr
               key={idx}
-              className={`px-4 py-2 text-center border-b border-(--green-vivid)`}
+              className={`border-b border-(--green-vivid)`}
               style={{ width: headers[0].width }}>
               <td>
                 <label className="relative cursor-pointer flex items-center justify-center">
