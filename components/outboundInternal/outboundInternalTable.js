@@ -41,14 +41,23 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
                 }
             });
         } else if (name === "radio") {
-            // 點擊只選擇 掃條碼才進 step 2
-            dispatch(
-                setOutboundInternal({
-                    station: currentStationSafe,
-                    order: value,
-                    orderCode: value?.OUTSTOCK_NO,
-                    waveNo: value?.W_ID
-                }));
+            if (orderCode === valueId) {
+                dispatch(
+                    setOutboundInternal({
+                        station: currentStationSafe,
+                        order: {},
+                        orderCode: "",
+                        waveNo: null
+                    }));
+            } else {
+                dispatch(
+                    setOutboundInternal({
+                        station: currentStationSafe,
+                        order: value,
+                        orderCode: value?.OUTSTOCK_NO,
+                        waveNo: value?.W_ID
+                    }));
+            }
         }
     };
 
