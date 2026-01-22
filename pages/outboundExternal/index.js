@@ -4,7 +4,7 @@ import OutboundExternalTable from "@/components/outboundExternal/outboundExterna
 import { setCurrentStation, setCurrentJob, updateLackStation } from "@/redux/reducer/reducerWorkStations";
 import { setOutboundExternal, clearPushButton, updateLackStation as updateOutboundLackStation, updateOrderList } from "@/redux/reducer/reducerOutboundExternal";
 import { resetoutboundInternal } from "@/redux/reducer/reducerOutboundInternal";
-import { getOutboundExternal, getOutBoundExternalOrderDetailBySaleNo, sendToWMS, shiftOutOnReturn, updateStatusForOutboundCallCar, decryptBarcode } from "@/pages/api";
+import { getOutboundExternal, getOutBoundExternalOrderDetailBySaleNo, sendToWMS, shiftOutOnReturn, updateStatusForOutboundCallCar, decryptBarcode, getOrder } from "@/pages/api";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import Loading from "@/components/common/loading/loading";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
@@ -120,11 +120,10 @@ export default function OutboundExternal() {
     } else if (orderCode && orderCode !== inputBarCode) {
       // 已選擇但條碼不匹配
       setTimeout(() => {
-        Alert({ title: "查無此銷貨單號，請查明", setTimeout:2000 });
+        Alert({ title: "查無此銷貨單號，請查明", setTimeout: 2000 });
       }, 100);
       setOrderInput(orderCode || "");
     } else {
-      console.log("22222222")
       setAskingOrder(true);
       try {
         const dataId = generateRandomNumber();
@@ -234,16 +233,21 @@ export default function OutboundExternal() {
         if (alreadyScanned) {
           Alert({ title: `已掃描過: ${decryptedBarcode}`, icon: "warning", timer: 1000 });
         } else {
-          dispatch(setOutboundExternal({
-            station: currentStationSafe,
-            selected: [...(selected || []), {
-              PRT_NO: matchedItem.PRT_NO,
-              MAKE_NO: decryptedBarcode,
-              outBoxNo: matchedItem.BOX_NO,
-              outPpNo: matchedItem.PP_NO,
-              ABNORMAL: matchedItem.ABNORMAL || 0
-            }]
-          }));
+          dispatch(
+            setOutboundExternal({
+              station: currentStationSafe,
+              selected: [
+                ...(selected || []),
+                {
+                  PRT_NO: matchedItem.PRT_NO,
+                  MAKE_NO: decryptedBarcode,
+                  outBoxNo: matchedItem.BOX_NO,
+                  outPpNo: matchedItem.PP_NO,
+                  ABNORMAL: matchedItem.ABNORMAL || 0,
+                },
+              ],
+            }),
+          );
           Alert({ title: `已掃描: ${decryptedBarcode}`, icon: "success", timer: 1000 });
         }
       } else {
@@ -431,13 +435,14 @@ export default function OutboundExternal() {
         itemsToShift = selected;
       } else {
         // 整板出貨
-        itemsToShift = shelfItem?.map(item => ({
-          PRT_NO: item.PRT_NO,
-          MAKE_NO: item.MAKE_NO,
-          outBoxNo: item.BOX_NO,
-          outPpNo: item.PP_NO,
-          ABNORMAL: item.ABNORMAL || 0
-        })) || [];
+        itemsToShift =
+          shelfItem?.map((item) => ({
+            PRT_NO: item.PRT_NO,
+            MAKE_NO: item.MAKE_NO,
+            outBoxNo: item.BOX_NO,
+            outPpNo: item.PP_NO,
+            ABNORMAL: item.ABNORMAL || 0,
+          })) || [];
       }
 
       if (itemsToShift.length === 0) {
@@ -552,8 +557,46 @@ export default function OutboundExternal() {
       console.warn(`getOutboundExternalTable:`, error);
     }
   };
+
+  // ============================
+  // ⭐ 產生隨機訂單號 (後續需刪除)
+  // ============================
+  const handleTest = async () => {
+    // 先去抓入庫訂單有SALE_NO的
+    try {
+      const res = await getOrder({ cmd: "I" });
+      if (res?.success) {
+        const allSales = res.data.data.filter((v) => v.SALE_NO !== "").map((v) => v.SALE_NO);
+        const uniqueSaleNoList = [...new Set(allSales)];
+        const availableSales = uniqueSaleNoList.filter((saleNo) => {
+          // 檢查 tableData 裡面有沒有任何一筆的 SALE_NO 等於目前這個單號
+          return !tableData.some((row) => row.SALE_NO === saleNo);
+        });
+
+        // 3. 判斷是否有可用的單號，並隨機選取
+        if (availableSales.length > 0) {
+          // 隨機產生一個索引 (0 ~ availableSales.length - 1)
+          const randomIndex = Math.floor(Math.random() * availableSales.length);
+          const pickedSaleNo = availableSales[randomIndex];
+
+          // 4. 塞入 Ref
+          if (orderBarCodeRef.current) {
+            orderBarCodeRef.current.value = pickedSaleNo;
+            console.log(`隨機選中了未重複單號: ${pickedSaleNo}`);
+          }
+        } else {
+          await Alert({ html: "所有單號都已經在列表中，沒有可用的新出庫單" });
+          // 這裡可以處理如果單號用完的情況，例如清空輸入框或報錯
+        }
+      }
+    } catch (err) {
+      console.log("錯誤訊息:", err);
+    }
+  };
   return (
     <>
+      {/* 測試按鈕 */}
+      {step <= 2 && <ActionBtn text="測試用-產生單據" className="absolute top-0 right-50 z-25" variant="yellow" onClick={handleTest} />}
       {/* 頂部區域 */}
       {step === 1 && <PageHeader title={`請點擊清單銷貨單號、銷貨單條碼`} backTo="/workspace" />}
       {orderCode && step === 2 && <PageHeader title={`檢視完出庫資訊確認沒問題，請點擊確定按鈕`} />}
