@@ -68,10 +68,17 @@ const shelfTransferSlice = createSlice({
                     const stationData = state[stationId];
                     // 檢查這個貨架是否在selectedShelves裡面確保是理貨的車
                     if (stationData.selectedShelves?.includes(shelveId)) {
-                        const itemsWithId = shelfItem.map(item => ({
-                            ...item,
-                            id: item.MAKE_NO
-                        }));
+                        // MAKE_NO 拆成多筆
+                        const itemsWithId = shelfItem.flatMap(item => {
+                            const makeNos = item.MAKE_NO
+                                ? item.MAKE_NO.split(',').map(m => m.trim())
+                                : [item.MAKE_NO];
+                            return makeNos.map(makeNo => ({
+                                ...item,
+                                id: makeNo,
+                                MAKE_NO: makeNo
+                            }));
+                        });
 
                         stationData.shelveData[shelveId] = itemsWithId;
                         stationData.shelveStatus[shelveId] = "ready";
