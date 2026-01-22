@@ -129,7 +129,7 @@ export default function OutboundExternal() {
         const dataId = generateRandomNumber();
         const data = {
           action: "ask_order",
-          no: inputBarCode,
+          NO: inputBarCode,
           dataid: dataId,
         };
         const res = await sendToWMS(data);
@@ -561,37 +561,23 @@ export default function OutboundExternal() {
   // ============================
   // ⭐ 產生隨機訂單號 (後續需刪除)
   // ============================
-  const handleTest = async () => {
-    // 先去抓入庫訂單有SALE_NO的
-    try {
-      const res = await getOrder({ cmd: "I" });
-      if (res?.success) {
-        const allSales = res.data.data.filter((v) => v.SALE_NO !== "").map((v) => v.SALE_NO);
-        const uniqueSaleNoList = [...new Set(allSales)];
-        const availableSales = uniqueSaleNoList.filter((saleNo) => {
-          // 檢查 tableData 裡面有沒有任何一筆的 SALE_NO 等於目前這個單號
-          return !tableData.some((row) => row.SALE_NO === saleNo);
-        });
+  const handleTest = () => {
+    // ===== 前綴隨機 =====
+    const prefixes = ["M561"];
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
 
-        // 3. 判斷是否有可用的單號，並隨機選取
-        if (availableSales.length > 0) {
-          // 隨機產生一個索引 (0 ~ availableSales.length - 1)
-          const randomIndex = Math.floor(Math.random() * availableSales.length);
-          const pickedSaleNo = availableSales[randomIndex];
+    // ===== 民國年月日 =====
+    const date = new Date();
+    const year = date.getFullYear() - 1911;
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
 
-          // 4. 塞入 Ref
-          if (orderBarCodeRef.current) {
-            orderBarCodeRef.current.value = pickedSaleNo;
-            console.log(`隨機選中了未重複單號: ${pickedSaleNo}`);
-          }
-        } else {
-          await Alert({ html: "所有單號都已經在列表中，沒有可用的新出庫單" });
-          // 這裡可以處理如果單號用完的情況，例如清空輸入框或報錯
-        }
-      }
-    } catch (err) {
-      console.log("錯誤訊息:", err);
-    }
+    // ===== 3 碼序號 =====
+    const seq = String(Math.floor(Math.random() * 999) + 1).padStart(3, "0");
+
+    const passSN = `${prefix}-${year}${month}${day}${seq}`;
+
+    orderBarCodeRef.current.value = passSN;
   };
   return (
     <>
@@ -637,7 +623,7 @@ export default function OutboundExternal() {
           </div>
         </div>
         {/* 右側 */}
-        <div className="w-[53%] flex flex-col">
+        <div className="w-[53%] flex flex-col overflow-hidden">
           {/* 條碼 */}
           <div className="flex space-x-4">
             {/* 銷貨單條碼 */}
@@ -662,67 +648,73 @@ export default function OutboundExternal() {
             )}
           </div>
           {/* 資料 */}
-          <div className="flex flex-col flex-1 min-h-0 bg-white p-8 pb-4">
-            {/* 內容區 */}
-            {step <= 2 ? (
-              orderCode &&
-              groupedOrderDetail?.map((shelveGroup, index) => (
-                <SchematicDiagramList key={shelveGroup.SHELVE_ID}>
-                  {/* 貨架編號、庫別 */}
-                  <div className="flex justify-between items-center mb-4 text-3xl">
-                    <div>貨架編號:{shelveGroup.SHELVE_ID}</div>
-                    <div>出庫庫別:{shelveGroup.STOCK_AREA}</div>
+          <div className="flex flex-col bg-white p-8 pb-4 h-full justify-between overflow-hidden">
+            <div className="custom-scrollbar " style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
+              {/* 內容區 */}
+              {step <= 2 ? (
+                orderCode &&
+                groupedOrderDetail?.map((shelveGroup, index) => (
+                  <div className="pb-4">
+                    <SchematicDiagramList key={shelveGroup.SHELVE_ID}>
+                      {/* 貨架編號、庫別 */}
+                      <div className="flex justify-between items-center">
+                        <div>貨架編號:{shelveGroup.SHELVE_ID}</div>
+                        <div>出庫庫別:{shelveGroup.STOCK_AREA}</div>
+                      </div>
+                      {/* 該貨架的所有產品 */}
+                      {shelveGroup.items.map((item, itemIndex) => (
+                        <div key={itemIndex} className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0">
+                          <div className="flex flex-col">
+                            <div className="flex justify-between">
+                              <div>產品品號:{item?.PRT_NO}</div>
+                              <div>棧板規格:{item?.type}</div>
+                            </div>
+                          </div>
+                          <div>品名: {item?.PRT_NAME}</div>
+                          <div className="flex gap-16">
+                            <div>箱數: {item?.BOX_NO} 箱</div>
+                            <div>包數: {item?.PP_NO} 包</div>
+                          </div>
+                        </div>
+                      ))}
+                      {/* 進度 */}
+                      <div className="text-right">
+                        {index + 1}/{groupedOrderDetail?.length}
+                      </div>
+                    </SchematicDiagramList>
                   </div>
-                  {/* 該貨架的所有產品 */}
-                  {shelveGroup.items.map((item, itemIndex) => (
-                    <div key={itemIndex} className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0">
+                ))
+              ) : (
+                <SchematicDiagram>
+                  <div className="flex flex-col text-3xl">
+                    <div className="flex justify-between">
+                      <div>貨架編號:{shelf?.SHELVE_ID}</div>
+                      <div>出庫庫別:{shelf?.area}</div>
+                    </div>
+                  </div>
+                  {shelfItem?.map((item, index) => (
+                    <div key={index}>
                       <div className="flex justify-between text-3xl">
                         <div>產品品號:{item?.PRT_NO}</div>
                         <div>棧板規格:{item?.type}</div>
                       </div>
-                      <div className="text-3xl">品名: {item?.PRT_NAME}</div>
-                      <div className="flex justify-between text-3xl">
-                        <div>箱數: {item?.BOX_NO} 箱</div>
-                        <div>包數: {item?.PP_NO} 包</div>
-                      </div>
-                    </div>
-                  ))}
-                  {/* 進度 */}
-                  <div className="text-3xl text-right mt-4">
-                    {index + 1}/{groupedOrderDetail?.length}
-                  </div>
-                </SchematicDiagramList>
-              ))
-            ) : (
-              <SchematicDiagram>
-                <div className="flex flex-col text-3xl">
-                  <div className="flex justify-between">
-                    <div>貨架編號:{shelf?.SHELVE_ID}</div>
-                    <div>出庫庫別:{shelf?.area}</div>
-                  </div>
-                </div>
-                {shelfItem?.map((item, index) => (
-                  <div key={index}>
-                    <div className="flex justify-between text-3xl">
-                      <div>產品品號:{item?.PRT_NO}</div>
-                      <div>棧板規格:{item?.type}</div>
-                    </div>
-                    <div className="text-3xl">
-                      <div>品名: {item?.PRT_NAME}</div>
-                      <div className="flex justify-between">
-                        <div>箱數: {item?.BOX_NO} 箱</div>
-                        <div>包數: {item?.PP_NO} 包</div>
-                        <div>
-                          {index + 1}/{shelfItem?.length}
+                      <div className="text-3xl">
+                        <div>品名: {item?.PRT_NAME}</div>
+                        <div className="flex justify-between">
+                          <div>箱數: {item?.BOX_NO} 箱</div>
+                          <div>包數: {item?.PP_NO} 包</div>
+                          <div>
+                            {index + 1}/{shelfItem?.length}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </SchematicDiagram>
-            )}
+                  ))}
+                </SchematicDiagram>
+              )}
+            </div>
             {/* 按鈕區 */}
-            <div className="flex flex-1 flex-col justify-end items-center  p-4">
+            <div className="flex flex-1 flex-col justify-end items-center p-4">
               {step <= 2 && <ActionBtn text="確定" variant="orange" onClick={() => setConfirmModal(true)} disabled={!waveNo} />}
               {step > 2 && <ActionBtn icon="" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />}
             </div>

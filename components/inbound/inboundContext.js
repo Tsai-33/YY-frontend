@@ -287,6 +287,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
               <span>入倉單單號: {order?.INSTOCK_NO}</span>
               <span>入庫庫別: {order?.STOCK_AREA}</span>
             </div>
+            <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
             <div>產品品號: {order?.PRT_NO}</div>
             <div>品名: {order?.PRT_NAME}</div>
             <div className="flex gap-16">
@@ -427,8 +428,12 @@ export default function InboundContext({ barCodeRef, setLoading }) {
             </label>
             <OrderTitle />
           </div>
-          <div className="flex flex-col flex-1 min-h-0 bg-white p-8 pb-4">
-            {orderCode && <ActionOrderList />}
+          <div className="flex flex-col flex-1 min-h-0 justify-between bg-white p-8 pb-4 h-full overflow-hidden">
+            {orderCode && (
+              <div className="custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
+                <ActionOrderList />
+              </div>
+            )}
             <div className="flex flex-col justify-end items-center p-4">{orderCode && <ActionButtons />}</div>
           </div>
         </div>
