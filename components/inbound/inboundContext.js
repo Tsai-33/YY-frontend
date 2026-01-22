@@ -69,7 +69,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       return;
     }
 
-    const matchedOrder = tableData.find((item) => item?.INSTOCK_NO === inputBarCode);
+    const matchedOrder = tableData.some((item) => item?.INSTOCK_NO === inputBarCode);
 
     if (matchedOrder) {
       const value = tableData.find((item) => item?.INSTOCK_NO === inputBarCode);
