@@ -12,8 +12,10 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
     const { orderCode, step, waveNo, shelfItem, selected } = useSelector((s) => s.outboundInternal[currentStationSafe] || {});
 
     // =============== 畫面一 ====================
+    // TODO: 測試用 SALE_NO
     const headers = [
         { label: "領用單號", key: "SALE_NO", width: "60%" },
+        // { label: "領用單號", key: "OUTSTOCK_NO", width: "60%" },
         { label: "出庫日期", key: "WORK_TIME", width: "30%" },
     ];
 
@@ -42,11 +44,13 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
             });
         } else if (name === "radio") {
             // 點擊只選擇 掃條碼才進 step 2
+            // TODO: 測試用 SALE_NO
             dispatch(
                 setOutboundInternal({
                     station: currentStationSafe,
                     order: value,
                     orderCode: value?.SALE_NO,
+                    // orderCode: value?.OUTSTOCK_NO,
                     waveNo: value?.W_ID
                 }));
         }
@@ -98,16 +102,18 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
 
     return (
         <>
-            {step <= 2 && 
-                <NoCheckBoxTable 
-                    headers={headers} 
-                    data={data} 
-                    type="radio" 
-                    name="outboundInternal" 
-                    variants="green" 
-                    idKey="SALE_NO" 
-                    checked={orderCode} 
-                    onChange={handleSelectedOption} 
+            {/* TODO: 測試用 SALE_NO */}
+        {step <= 2 &&
+                <NoCheckBoxTable
+                    headers={headers}
+                    data={data}
+                    type="radio"
+                    name="outboundInternal"
+                    variants="green"
+                    idKey="SALE_NO"
+                    // idKey="OUTSTOCK_NO"
+                    checked={orderCode}
+                    onChange={handleSelectedOption}
                 />}
             {step > 2 && 
                 <Table 
