@@ -58,13 +58,23 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
             //     }
             // });
         } else if (name === "radio") {
-            dispatch(
-                setOutboundExternal({
-                    station: currentStationSafe,
-                    order: value,
-                    orderCode: value?.OUTSTOCK_NO,
-                    waveNo: value?.W_ID
-                }));
+            if (orderCode === valueId) {
+                dispatch(
+                    setOutboundExternal({
+                        station: currentStationSafe,
+                        order: {},
+                        orderCode: "",
+                        waveNo: null
+                    }));
+            } else {
+                dispatch(
+                    setOutboundExternal({
+                        station: currentStationSafe,
+                        order: value,
+                        orderCode: value?.OUTSTOCK_NO,
+                        waveNo: value?.W_ID
+                    }));
+            }
         }
     };
 
