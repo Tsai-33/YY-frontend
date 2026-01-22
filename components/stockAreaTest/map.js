@@ -1,3 +1,5 @@
+"use client";
+import dynamic from 'next/dynamic';
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/router";
 import { Stage, Layer, Rect, Text, Group } from "react-konva";
@@ -36,6 +38,7 @@ export default function Map({
     y2: 0,
     visible: false,
   });
+  
 
   // 1. 監聽視窗大小，讓畫布自適應 div
   useEffect(() => {
@@ -76,12 +79,8 @@ export default function Map({
         offsetY: 0,
       };
 
-    const xs = shelvesData
-      .map((n) => parseFloat(n.DOCK_X))
-      .filter((x) => !isNaN(x));
-    const ys = shelvesData
-      .map((n) => parseFloat(n.DOCK_Y))
-      .filter((y) => !isNaN(y));
+    const xs = shelvesData.map((n) => parseFloat(n.DOCK_X)).filter((x) => !isNaN(x));
+    const ys = shelvesData.map((n) => parseFloat(n.DOCK_Y)).filter((y) => !isNaN(y));
     const minX = Math.min(...xs);
     const maxX = Math.max(...xs);
     const minY = Math.min(...ys);
@@ -93,10 +92,7 @@ export default function Map({
 
     // 1. 計算縮放比例 (留出 10% 的空白邊距)
     const margin = 0.95;
-    const scale = Math.min(
-      (size.width * margin) / dataW,
-      (size.height * margin) / dataH
-    );
+    const scale = Math.min((size.width * margin) / dataW, (size.height * margin) / dataH);
 
     // 2. 計算「讓地圖居中」的位移量
     // 畫布寬度的一半 - (地圖寬度 * 縮放 / 2)
@@ -143,10 +139,8 @@ export default function Map({
     setNodeAssignments((prev) => {
       const next = { ...prev };
       shelvesData.forEach((node) => {
-        const cx =
-          (parseFloat(node.DOCK_X) - mapMetrics.minX) * mapMetrics.scale;
-        const cy =
-          (mapMetrics.maxY - parseFloat(node.DOCK_Y)) * mapMetrics.scale;
+        const cx = (parseFloat(node.DOCK_X) - mapMetrics.minX) * mapMetrics.scale;
+        const cy = (mapMetrics.maxY - parseFloat(node.DOCK_Y)) * mapMetrics.scale;
 
         if (cx >= xMin && cx <= xMax && cy >= yMin && cy <= yMax) {
           if (isEraserMode) {
@@ -194,46 +188,28 @@ export default function Map({
       {/* 頂部控制欄 */}
       <div className="p-2 bg-gray-100 border-b flex gap-4 items-center">
         <div className="p-1 bg-white border rounded flex shadow-sm text-[18px]">
-          <button
-            onClick={() => setMode("pan")}
-            className={`px-4 py-1 rounded ${
-              mode === "pan" ? "bg-blue-500 text-white" : "text-gray-600"
-            }`}>
+          <button onClick={() => setMode("pan")} className={`px-4 py-1 rounded ${mode === "pan" ? "bg-blue-500 text-white" : "text-gray-600"}`}>
             ✋ 拖拽
           </button>
           <button
             disabled={!activeWh} // 安全性：不點左邊不能框選
             onClick={() => setMode("select")}
-            className={`px-4 py-1 rounded transition-colors ${
-              mode === "select"
-                ? "bg-blue-500 text-white"
-                : activeWh
-                ? "text-gray-600"
-                : "text-gray-300"
-            }`}>
+            className={`px-4 py-1 rounded transition-colors ${mode === "select" ? "bg-blue-500 text-white" : activeWh ? "text-gray-600" : "text-gray-300"}`}
+          >
             ⬛ 框選 {!activeWh && "(請先選倉別)"}
           </button>
         </div>
         <span className="text-sm font-medium">
           {activeWh ? `${activeWh} 倉` : "未選倉別"} | 已選：
-          {
-            Object.values(nodeAssignments).filter((v) => v === activeWh).length
-          }{" "}
-          個位置
+          {Object.values(nodeAssignments).filter((v) => v === activeWh).length} 個位置
         </span>
-        <button
-          onClick={() => setShowLabels(!showLabels)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium shadow">
+        <button onClick={() => setShowLabels(!showLabels)} className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium shadow">
           {showLabels ? "隱藏" : "顯示"}地圖碼點編碼
         </button>
-        <button
-          className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium shadow transition-colors"
-          onClick={handleConfirm}>
+        <button className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium shadow transition-colors" onClick={handleConfirm}>
           更新倉別資料
         </button>
-        <button
-          className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium shadow transition-colors"
-          onClick={() => router.push("/stockAreaTest/uploadMap")}>
+        <button className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium shadow transition-colors" onClick={() => router.push("/stockAreaTest/uploadMap")}>
           上傳地圖資料
         </button>
       </div>
@@ -245,68 +221,26 @@ export default function Map({
           {activeWh && (
             <>
               <div className="flex items-center gap-2 bg-white/90 px-3 py-1 rounded-full border shadow-sm">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: warehouseColors[activeWh] }}
-                />
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: warehouseColors[activeWh] }} />
                 <span className="text-xs font-bold">正在操作: {activeWh}</span>
               </div>
-              {isEraserMode && (
-                <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse shadow-sm">
-                  橡皮擦模式：僅刪除 {activeWh}
-                </div>
-              )}
+              {isEraserMode && <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse shadow-sm">橡皮擦模式：僅刪除 {activeWh}</div>}
             </>
           )}
         </div>
 
-        <Stage
-          ref={stageRef}
-          width={size.width}
-          height={size.height}
-          x={mapMetrics.offsetX}
-          y={mapMetrics.offsetY}
-          draggable={mode === "pan"}
-          onWheel={handleWheel}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}>
+        <Stage ref={stageRef} width={size.width} height={size.height} x={mapMetrics.offsetX} y={mapMetrics.offsetY} draggable={mode === "pan"} onWheel={handleWheel} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
           <Layer>
             {shelvesData.map((node) => {
               const assignedWh = nodeAssignments[node.NODE_CODE];
               const isSelectedWh = assignedWh === activeWh;
-              const canvasX =
-                (parseFloat(node.DOCK_X) - mapMetrics.minX) * mapMetrics.scale;
-              const canvasY =
-                (mapMetrics.maxY - parseFloat(node.DOCK_Y)) * mapMetrics.scale;
+              const canvasX = (parseFloat(node.DOCK_X) - mapMetrics.minX) * mapMetrics.scale;
+              const canvasY = (mapMetrics.maxY - parseFloat(node.DOCK_Y)) * mapMetrics.scale;
 
               return (
                 <Group key={node.NODE_CODE} x={canvasX} y={canvasY}>
-                  <Rect
-                    width={10}
-                    height={10}
-                    fill={assignedWh ? warehouseColors[assignedWh] : "#E2E8F0"}
-                    stroke={
-                      isEraserMode && isSelectedWh ? "#EF4444" : "#94A3B8"
-                    }
-                    strokeWidth={isSelectedWh ? 1 : 0.5}
-                    cornerRadius={1}
-                    opacity={
-                      activeWh && assignedWh && assignedWh !== activeWh
-                        ? 0.3
-                        : 1
-                    }
-                  />
-                  {showLabels && (
-                    <Text
-                      text={node.NODE_CODE}
-                      fontSize={4}
-                      y={12}
-                      fill="#64748B"
-                      align="center"
-                      width={10}
-                    />
-                  )}
+                  <Rect width={10} height={10} fill={assignedWh ? warehouseColors[assignedWh] : "#E2E8F0"} stroke={isEraserMode && isSelectedWh ? "#EF4444" : "#94A3B8"} strokeWidth={isSelectedWh ? 1 : 0.5} cornerRadius={1} opacity={activeWh && assignedWh && assignedWh !== activeWh ? 0.3 : 1} />
+                  {showLabels && <Text text={node.NODE_CODE} fontSize={4} y={12} fill="#64748B" align="center" width={10} />}
                 </Group>
               );
             })}
@@ -317,11 +251,7 @@ export default function Map({
                 y={Math.min(selection.y1, selection.y2)}
                 width={Math.abs(selection.x2 - selection.x1)}
                 height={Math.abs(selection.y2 - selection.y1)}
-                fill={
-                  isEraserMode
-                    ? "rgba(239, 68, 68, 0.2)"
-                    : "rgba(59, 130, 246, 0.2)"
-                }
+                fill={isEraserMode ? "rgba(239, 68, 68, 0.2)" : "rgba(59, 130, 246, 0.2)"}
                 stroke={isEraserMode ? "#EF4444" : "#3B82F6"}
                 strokeWidth={1}
                 dash={[5, 5]}
