@@ -22,24 +22,14 @@ export default function ShelfTransfer() {
   return (
     <>
       <div className="absolute top-0 right-0">
-        <ActionBtn
-          icon="icon-goback"
-          text="返回"
-          variant="darkBlue"
-          onClick={() => router.push("/workspace")}
-        />
+        <ActionBtn icon="icon-goback" text="返回" variant="darkBlue" onClick={() => router.push("/workspace")} />
       </div>
       <div className="flex-1 flex justify-center items-center gap-40">
         {menuItems.map((item) => (
-          <CategoryBtn
-            key={item.key}
-            svgPath={item.svgPath}
-            text={item.text}
-            variant="darkGreen"
-            onClick={() => router.push(item.path)}
-          />
+          <CategoryBtn key={item.key} svgPath={item.svgPath} text={item.text} variant="darkGreen" onClick={() => router.push(item.path)} />
         ))}
       </div>
-    </>
+
+   </>
   );
 }

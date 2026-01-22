@@ -114,6 +114,8 @@ export default function OutboundInternal() {
     const inputBarCode = e.target.value.trim();
     if (!inputBarCode) return;
 
+    console.log(inputBarCode,'inputBarCode')
+
     // 如果已經點擊選擇會檢查掃的條碼是否匹配
     if (orderCode && orderCode === inputBarCode) {
       dispatch(setOutboundInternal({ station: currentStationSafe, step: 2 }));
@@ -140,6 +142,7 @@ export default function OutboundInternal() {
           dataid: dataId
         }
         const res = await sendToWMS(data);
+        console.log(data,res.data,'有收到嗎')
 
         if (res.data.success && res.data.data?.result?.toUpperCase() === "OK") {
           // 重取訂單
@@ -587,7 +590,7 @@ export default function OutboundInternal() {
         </button>
       )}*/}
       {/* 主要內容區域 */}
-      <div className="flex flex-1 gap-4 px-2 py-8 items-stretch">
+      <div className="flex gap-4 py-2 items-stretch h-[72vh]">
         {/* 左側 */}
         <div className="w-3/7">
           <OutboundInternalTable 
@@ -707,7 +710,7 @@ export default function OutboundInternal() {
         </div>
       </div>
       {/* 站點 */}
-      <div className="w-full flex justify-between z-15">
+      <div className="w-full flex justify-between gap-4 z-20">
         {stations.map((station, i) => (
             <ActionBtn 
               key={i} 
