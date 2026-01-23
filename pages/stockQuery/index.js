@@ -30,7 +30,7 @@ export default function StockQuery() {
     {
       label: "入倉單號",
       key: "INSTOCK_NO",
-      width: 265,
+      width: 300,
       hideInMain: true,
       renderDetail: (d) => d.INSTOCK_NO || "---",
     },
