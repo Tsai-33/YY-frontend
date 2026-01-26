@@ -17,7 +17,7 @@ import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
 import { initWorkstation } from "@/redux/reducer/reducerWorkStations";
 import { getOutboundInternalOrderDetailByWID } from "@/pages/api";
-import { checkTask_out, addTask_out, deleteTask_out } from "@/components/outboundInternal/outboundInternalFunction";
+import { checkTask_out, addTask_out, deleteTask_out, confrimList_out } from "@/components/outboundInternal/outboundInternalFunction";
 
 export default function OutboundInternal() {
   const dispatch = useDispatch();
@@ -308,14 +308,36 @@ export default function OutboundInternal() {
         });
 
         // 比較每個 PRT_NO 的庫存是否足夠
+        const insufficientItems = [];
         for (const prtNo of Object.keys(demandByPrtNo)) {
           const demand = demandByPrtNo[prtNo];
           const stock = stockByPrtNo[prtNo] || { PP_NO: 0, BOX_NO: 0 };
           if (stock.PP_NO < demand.PP_NO || stock.BOX_NO < demand.BOX_NO) {
-            Alert({
-              title: `庫存不足：產品 ${prtNo}`,
-              text: `需求: ${demand.BOX_NO} 箱 ${demand.PP_NO} 包\n庫存: ${stock.BOX_NO} 箱 ${stock.PP_NO} 包`,
+            insufficientItems.push({
+              prtNo,
+              demandBox: demand.BOX_NO,
+              demandPp: demand.PP_NO,
+              stockBox: stock.BOX_NO,
+              stockPp: stock.PP_NO,
             });
+          }
+        }
+
+        // 如果有庫存不足的產品
+        if (insufficientItems.length > 0) {
+          const insufficientText = insufficientItems
+            .map((item) => `產品 ${item.prtNo}: 需求 ${item.demandBox}箱${item.demandPp}包 / 庫存 ${item.stockBox}箱${item.stockPp}包`)
+            .join("\n");
+
+          const result = await Alert({
+            title: "庫存不足提醒",
+            text: `以下產品庫存不足：\n${insufficientText}\n\n是否仍要繼續出庫？`,
+            showCancel: true,
+            confirmButtonText: "繼續出庫",
+            cancelButtonText: "取消",
+          });
+
+          if (!result.isConfirmed) {
             return;
           }
         }
@@ -326,71 +348,51 @@ export default function OutboundInternal() {
       return;
     }
 
-    setLoading(true);
-    try {
-      const dataId = generateRandomNumber();
-      const stationNo = currentStation?.charAt(0);
-      const data = {
-        action: "ask_wave",
-        dataid: dataId,
-        wave_no: String(order.W_ID),
-        station_no: stationNo,
-      };
-      console.log("data: ", data);
-      const res = await sendToWMS(data);
-      console.log("res: ", res);
-      const resiveData = res.data.data;
+    const stationNo = currentStation?.charAt(0);
+    const resiveData = await confrimList_out(setLoading, order, stationNo);
 
-      // 檢查 LabVIEW 回傳結果
-      if (resiveData?.result === "NG") {
-        Alert({ title: `${resiveData?.message}` });
-      } else if (resiveData?.message2?.length > 0) {
-        // 清空該站的資料
-        if (res.data.success) {
-          dispatch(setOutboundInternal({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
-        }
-        if (res.data.success) {
-          await updateStatusForOutboundCallCarInternal({ W_ID: order.W_ID });
-          // 存被占用的站點
-          let lack_station = res.data.data.message2;
-          if (!Array.isArray(lack_station)) {
-            try {
-              // 把單引號換成雙引號後解析
-              lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
-            } catch (error) {
-              console.error("lack_station 格式錯誤:", lack_station, error);
-              lack_station = [];
-            }
-          }
-          // 把每個被占用的站點設成loading狀態
-          if (lack_station.length > 0) {
-            lack_station.map((station) => {
-              dispatch(
-                setOutboundInternal({
-                  station: station,
-                  screen: "loading",
-                  orderCode: orderCode,
-                  waveNo: order.W_ID,
-                  order: order,
-                  orderList: orderCode,
-                  lackStation: station,
-                }),
-              );
-            });
-          }
-          // 拿掉已選的訂單
-          setTableData((prev) => prev.filter((v) => v.OUTSTOCK_NO !== orderCode && v.STATUS === 0));
+    // 檢查 LabVIEW 回傳結果
+    if (resiveData?.result === "NG") {
+      Alert({ title: `${resiveData?.message}` });
+    } else if (resiveData?.message2?.length > 0) {
+      // 清空該站的資料
+      dispatch(setOutboundInternal({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
 
-          // 寫入任務紀錄
-          await addTask_out(stations);
-        } else {
-          Alert({ title: "伺服器有問題，請稍後再試。" });
+      await updateStatusForOutboundCallCarInternal({ W_ID: order.W_ID });
+      // 存被占用的站點
+      let lack_station = resiveData.message2;
+      if (!Array.isArray(lack_station)) {
+        try {
+          // 把單引號換成雙引號後解析
+          lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
+        } catch (error) {
+          console.warn("lack_station 格式錯誤:", lack_station, error);
+          lack_station = [];
         }
       }
-    } catch (error) {
-      console.warn("出庫確認 :", error);
-    } finally {
-      setLoading(false);
+      // 把每個被占用的站點設成loading狀態
+      if (lack_station.length > 0) {
+        lack_station.map((station) => {
+          dispatch(
+            setOutboundInternal({
+              station: station,
+              screen: "loading",
+              orderCode: orderCode,
+              waveNo: order.W_ID,
+              order: order,
+              orderList: orderCode,
+              lackStation: station,
+            }),
+          );
+        });
+      }
+      // 拿掉已選的訂單
+      setTableData((prev) => prev.filter((v) => v.OUTSTOCK_NO !== orderCode && v.STATUS === 0));
+
+      // 寫入任務紀錄
+      await addTask_out(stations);
+    } else {
+      Alert({ title: "伺服器有問題，請稍後再試。" });
     }
   };
 
