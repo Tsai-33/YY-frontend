@@ -52,5 +52,6 @@ export default function Alert({ title, text,html = ``, showConfirm = true, confi
   }).then((result) => {
     if (result.isConfirmed && onConfirm) onConfirm();
     if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel && onCancel) onCancel();
+    return result;
   });
 }

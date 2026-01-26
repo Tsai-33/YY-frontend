@@ -1,5 +1,27 @@
-import { checkTask, updateTask, deleteTask } from "@/pages/api";
+import { checkTask, updateTask, deleteTask, sendToWMS } from "@/pages/api";
 import { selectTask } from "../taskFunction";
+import { generateRandomNumber } from "@/utils/random";
+
+// 確認出庫單 - 呼叫 WMS
+export const confrimList_out = async (setLoading, order, stationNo) => {
+  try {
+    setLoading(true);
+    const dataId = generateRandomNumber();
+    const data = {
+      action: "ask_wave",
+      dataid: dataId,
+      wave_no: String(order.W_ID),
+      station_no: stationNo,
+    };
+    const res = await sendToWMS(data);
+    return res?.data?.data;
+  } catch (err) {
+    console.warn("confrimList_out:", err);
+    return { result: "NG", message: err?.message || "出庫確認失敗" };
+  } finally {
+    setLoading(false);
+  }
+};
 
 // 檢查是否有其他任務正在執行
 export const checkTask_out = async (stations) => {

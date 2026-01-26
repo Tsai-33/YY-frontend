@@ -43,7 +43,21 @@ export default function ShelfTransferTable() {
       const res = await getShelfTransfer();
       if (res.data.success) {
         const detail = res.data.data;
-        setTableData(detail);
+        // 根據 SALE_NO 分組合併，避免重複顯示
+        const grouped = {};
+        detail.forEach((item) => {
+          const saleNo = item.SALE_NO;
+          if (!grouped[saleNo]) {
+            grouped[saleNo] = {
+              ...item,
+              SHELVE_COUNT: 0,
+              BOX_NO_SUM: 0,
+            };
+          }
+          grouped[saleNo].SHELVE_COUNT += item.SHELVE_COUNT || 0;
+          grouped[saleNo].BOX_NO_SUM += item.BOX_NO_SUM || 0;
+        });
+        setTableData(Object.values(grouped));
       }
     } catch (error) {
       console.warn("getShelfTransfer: ", error);
