@@ -143,13 +143,15 @@ export default function OutboundExternal() {
             // 再配對一次
             const newMatchedOrder = newData.find((item) => item.OUTSTOCK_NO === inputBarCode);
             if (newMatchedOrder) {
-              dispatch(setOutboundExternal({
-                station: currentStationSafe,
-                order: newMatchedOrder,
-                orderCode: inputBarCode,
-                waveNo: newMatchedOrder.W_ID,
-                step: 2
-              }));
+              dispatch(
+                setOutboundExternal({
+                  station: currentStationSafe,
+                  order: newMatchedOrder,
+                  orderCode: inputBarCode,
+                  waveNo: newMatchedOrder.W_ID,
+                  step: 2,
+                }),
+              );
             } else {
               Alert({ title: "單號已更新但清單中找不到該筆資料，請稍後再試" });
             }
@@ -684,30 +686,32 @@ export default function OutboundExternal() {
                 ))
               ) : (
                 <SchematicDiagram>
-                  <div className="flex flex-col text-3xl">
+                  <div className="flex flex-col">
                     <div className="flex justify-between">
                       <div>貨架編號:{shelf?.SHELVE_ID}</div>
                       <div>出庫庫別:{shelf?.area}</div>
                     </div>
                   </div>
-                  {shelfItem?.map((item, index) => (
-                    <div key={index}>
-                      <div className="flex justify-between text-3xl">
-                        <div>產品品號:{item?.PRT_NO}</div>
-                        <div>棧板規格:{item?.type}</div>
-                      </div>
-                      <div className="text-3xl">
-                        <div>品名: {item?.PRT_NAME}</div>
-                        <div className="flex justify-between">
-                          <div>箱數: {item?.BOX_NO} 箱</div>
-                          <div>包數: {item?.PP_NO} 包</div>
-                          <div>
-                            {index + 1}/{shelfItem?.length}
+                  <div className="flex flex-col gap-16">
+                    {shelfItem?.map((item, index) => (
+                      <div key={index} className="flex flex-col">
+                        <div className="flex justify-between text-3xl">
+                          <div>產品品號:{item?.PRT_NO}</div>
+                          <div>棧板規格:{item?.type}</div>
+                        </div>
+                        <div className="text-3xl">
+                          <div>品名: {item?.PRT_NAME}</div>
+                          <div className="flex justify-between">
+                            <div>箱數: {item?.BOX_NO} 箱</div>
+                            <div>包數: {item?.PP_NO} 包</div>
+                            <div>
+                              {index + 1}/{shelfItem?.length}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </SchematicDiagram>
               )}
             </div>

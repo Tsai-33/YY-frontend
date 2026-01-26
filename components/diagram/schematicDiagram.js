@@ -5,7 +5,7 @@ export default function SchematicDiagram({ children, isSelected = false }) {
     <>
       {/* 貨架 */}
       <div
-        className={`flex-1 min-h-0 flex flex-col gap-0.5 text-(length:--font-size-3xl) custom-scrollbar pr-2
+        className={`flex-1 min-h-0 flex flex-col gap-0.5 text-(length:--font-size-4xl) custom-scrollbar pr-2
              transition-all ${
                isSelected
                  ? "border-8 border-green-500"
