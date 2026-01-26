@@ -138,7 +138,7 @@ export default function ShelfTransferStation() {
         });
       }
 
-      if (res.data.success) {
+      if (res?.data?.success) {
         dispatch(
           updateShelveData({
             station: currentStationSafe,
@@ -148,7 +148,7 @@ export default function ShelfTransferStation() {
           })
         );
       } else {
-        Alert(res.data.message || "轉移失敗");
+        Alert({ title: res?.data?.message || "轉移失敗" });
       }
     } catch (error) {
       console.warn("handleConfirm:", error);
@@ -502,11 +502,11 @@ export default function ShelfTransferStation() {
                     }}>
                     {hasData ? (
                       <div className="space-y-1">
-                        {data.map((item) => {
+                        {data.map((item, itemIndex) => {
                           const isChecked = checkedItems.includes(item.id);
                           return (
                             <label
-                              key={item.id}
+                              key={`${item.id}-${itemIndex}`}
                               className={`
                                                                         flex items-center gap-2 px-2 py-1 cursor-pointer
                                                                         border border-gray-300 rounded
