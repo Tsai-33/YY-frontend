@@ -319,6 +319,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     </SchematicDiagram>
   );
   const ShelfItemRow = ({ item, isLast, shelfCars, index }) => {
+    console.log(item,'item')
     const isNew = item?.isNew || (item?.selectedBox > 0 && (item?.BOX_NO || 0) === 0);
     return (
       <div className={`flex flex-col ${isNew ? "text-red-500" : ""}`}>
@@ -330,7 +331,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
           {index === 0 && (
             <div className="flex gap-x-2">
               <div>棧板規格:</div>
-              <div>{item?.error || "美規"}</div>
+              <div>{item?.SALE_NO && "美規"}</div>
             </div>
           )}
         </div>
@@ -434,7 +435,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
                 <ActionOrderList />
               </div>
             )}
-            <div className="flex flex-col justify-end items-center p-4">{orderCode && <ActionButtons />}</div>
+            <div className="flex flex-col justify-end items-center p-4">
+            {orderCode && <ActionButtons />}</div>
           </div>
         </div>
       </div>

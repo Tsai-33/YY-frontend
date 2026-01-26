@@ -34,7 +34,6 @@ export default function Table({
     <div
       className="w-full h-full bg-[var(--white)] border border-white rounded-md text-center overflow-y-auto custom-scrollbar"
       style={{
-        height: containerHeight,
         "--scrollbar-thumb-color": `var(--green-vivid)`,
         "--scrollbar-thumb-hover-color": `var(--green-vivid)`,
       }}>
