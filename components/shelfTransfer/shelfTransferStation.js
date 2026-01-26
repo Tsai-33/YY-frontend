@@ -261,13 +261,21 @@ export default function ShelfTransferStation() {
       const res = await sendToWMS(data);
       if (res.data.success) {
         console.log(stationId + " 退回成功");
+        // 標記該貨架為退回中的狀態
+        dispatch(
+          setShelfTransfer({
+            station: currentStationSafe,
+            shelveStatus: {
+              ...shelveStatus,
+              [shelveId]: "returning",
+            },
+          })
+        );
       } else {
         console.log("退回失敗:", res.data);
       }
     } catch (err) {
       console.warn("handleReturnShelf:", err);
-    } finally {
-      // console.log("handleReturnShelve 完成");
     }
   };
 
@@ -401,18 +409,17 @@ export default function ShelfTransferStation() {
           />
         </div>
       </div>
-      {/* 貨架Table(固定五個) */}
+      {/* 貨架Table */}
       <div className="flex gap-4 mb-3 flex-1 min-h-0 bg-gray-100 rounded-lg">
         {shelvePositions.map((shelveId, index) => {
           // 判斷是不是空白欄位貨架
           const isEmptySlot = shelveId === "貨架代號";
 
-          {
-            /* 取貨架資料 */
-          }
+          {/* 取貨架資料 */}
           const isLastOne = shelveId === "貨架代號";
           const status = !isEmptySlot ? shelveStatus?.[shelveId] : undefined;
           const isReturned = status === "returned";
+          const isReturning = status === "returning";
           const data = !isEmptySlot ? shelveData?.[shelveId] || [] : [];
           const hasData = data.length > 0;
 
@@ -463,9 +470,9 @@ export default function ShelfTransferStation() {
                         operator,
                       });
                     }}
-                    disabled={abnormalShelves.includes(shelveId)}
+                    disabled={abnormalShelves.includes(shelveId) || isReturning}
                     className={`w-10 p-1 rounded transition-colors ${
-                      abnormalShelves.includes(shelveId)
+                      abnormalShelves.includes(shelveId) || isReturning
                         ? "cursor-not-allowed"
                         : "hover:bg-gray-200"
                     }`}
@@ -495,8 +502,8 @@ export default function ShelfTransferStation() {
                 <>
                   <div
                     className={`flex-1 min-h-0 mb-3 custom-scrollbar ${
-                      isDisabled ? "pointer-events-none" : ""
-                    }`}
+                      isDisabled || isReturning ? "pointer-events-none" : ""
+                    } ${isReturning ? "opacity-50" : ""}`}
                     style={{
                       "--scrollbar-thumb-color": "var(--green-vivid)",
                     }}>
@@ -541,14 +548,14 @@ export default function ShelfTransferStation() {
                           hasCheck(checkValue, CHECK_VALUES.CORNER)
                             ? "bg-green-600"
                             : "bg-gray-500"
-                        }`}>
+                        } ${isReturning ? "opacity-50 cursor-not-allowed" : ""}`}>
                         <input
                           type="checkbox"
                           checked={hasCheck(checkValue, CHECK_VALUES.CORNER)}
                           onChange={() =>
                             handleShelveCheck(shelveId, CHECK_VALUES.CORNER)
                           }
-                          disabled={isDisabled}
+                          disabled={isDisabled || isReturning}
                           className="w-5 h-5 m-2 accent-white"
                         />
                         <span className="text-(length:--font-size-2xl) pe-2">
@@ -560,14 +567,14 @@ export default function ShelfTransferStation() {
                           hasCheck(checkValue, CHECK_VALUES.SEAL)
                             ? "bg-green-600"
                             : "bg-gray-500"
-                        }`}>
+                        } ${isReturning ? "opacity-50 cursor-not-allowed" : ""}`}>
                         <input
                           type="checkbox"
                           checked={hasCheck(checkValue, CHECK_VALUES.SEAL)}
                           onChange={() =>
                             handleShelveCheck(shelveId, CHECK_VALUES.SEAL)
                           }
-                          disabled={isDisabled}
+                          disabled={isDisabled || isReturning}
                           className="w-5 h-5 m-2 accent-white"
                         />
                         <span className="text-(length:--font-size-2xl) pe-2">
@@ -579,14 +586,14 @@ export default function ShelfTransferStation() {
                           hasCheck(checkValue, CHECK_VALUES.PACK)
                             ? "bg-green-600"
                             : "bg-gray-500"
-                        }`}>
+                        } ${isReturning ? "opacity-50 cursor-not-allowed" : ""}`}>
                         <input
                           type="checkbox"
                           checked={hasCheck(checkValue, CHECK_VALUES.PACK)}
                           onChange={() =>
                             handleShelveCheck(shelveId, CHECK_VALUES.PACK)
                           }
-                          disabled={isDisabled}
+                          disabled={isDisabled || isReturning}
                           className="w-5 h-5 m-2 accent-white"
                         />
                         <span className="text-(length:--font-size-2xl) pe-2">
@@ -599,9 +606,9 @@ export default function ShelfTransferStation() {
                   <ActionBtn
                     className={"flex justify-center"}
                     icon="icon-returnShelf"
-                    text={"退回貨架"}
-                    variant={"orange"}
-                    disabled={isDisabled}
+                    text={isReturning ? "退回中..." : "退回貨架"}
+                    variant={isReturning ? "gray" : "orange"}
+                    disabled={isDisabled || isReturning}
                     onClick={() => handleReturnShelve(shelveId)}
                   />
                 </>
