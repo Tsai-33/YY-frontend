@@ -619,8 +619,8 @@ function UserManage() {
                         onClick={() => handleEditUser(user)}
                         className="hover:text-(--orange-vivid) transition-colors">
                         <span className="text-2xl">
-                          {/* <i className="icon-edit"></i> */}
-                          編輯
+                          <i className="icon-edit"></i>
+                          {/* 編輯 */}
                         </span>
                       </button>
                     </td>
@@ -632,8 +632,8 @@ function UserManage() {
                         }}
                         className="hover:text-(--red-vivid) transition-colors">
                         <span className="text-2xl">
-                          {/* <i className="icon-download"></i> */}
-                          下載
+                          <i className="icon-download"></i>
+                          {/* 下載 */}
                         </span>
                       </button>
                     </td>
