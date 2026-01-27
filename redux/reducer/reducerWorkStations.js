@@ -1,6 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { workstationConfig } from "@/config/workstationConfig";
 
+const IP_D = process.env.NEXT_PUBLIC_IP_D;
+
 const initialState = {
   area: null,
   ip: null,
@@ -44,7 +46,7 @@ export const initWorkstation = (ip) => (dispatch) => {
         jobs: config.A.jobs,
         currentStation: null,
         currentJob: null,
-      })
+      }),
     );
 
     // ⬅️ 如果 currentStation 為 null，自動設定為 A01
@@ -55,15 +57,21 @@ export const initWorkstation = (ip) => (dispatch) => {
   if (config.B.computers.includes(ip)) {
     const stations = config.B.stations[ip];
 
+    // 2. 不是D站就過濾掉 "inbound"
+    let allowedJobs = "";
+    if (ip !== IP_D) {
+      allowedJobs = config.B.jobs.filter((job) => job.key !== "inbound");
+    }
+
     dispatch(
       setWorkstation({
         area: "B",
         ip,
-        stations: config.B.stations[ip], // 每台電腦管自己的 station
-        jobs: config.B.jobs,
+        stations: config.B.stations[ip], 
+        jobs: allowedJobs ? allowedJobs : config.B.jobs,
         currentStation: null,
         currentJob: null,
-      })
+      }),
     );
     // ⬅️ 自動設定成 B01 或 B06（依據 IP）
     dispatch(setCurrentStation(stations[0]));
@@ -74,11 +82,6 @@ export const initWorkstation = (ip) => (dispatch) => {
   return { success: false, message: "IP 未授權" };
 };
 
-export const {
-  setWorkstation,
-  setCurrentStation,
-  setCurrentJob,
-  resetWorkstation,
-} = workstationSlice.actions;
+export const { setWorkstation, setCurrentStation, setCurrentJob, resetWorkstation } = workstationSlice.actions;
 
 export default workstationSlice.reducer;
