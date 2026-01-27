@@ -412,15 +412,145 @@ export default function OutboundExternal() {
 
   // ====== 退回貨架 ======
   // 接收實體按鈕訊號
+  // 監聽所有站點的 pushButton
   useEffect(() => {
-    if (!pushButton || step !== 3) return;
-    const handlePushButton = async () => {
-      await handleReturnShelf();
-      // 清掉避免再觸發
-      dispatch(clearPushButton({ station: currentStationSafe }));
+    const handlePushButton = async (stationId) => {
+      const stationState = outboundExternalState[stationId];
+      if (!stationState?.pushButton || stationState?.step !== 3) return;
+
+      // 使用該站點的資料執行退回
+      await handleReturnShelfByStation(stationId);
+      dispatch(clearPushButton({ station: stationId }));
     };
-    handlePushButton();
-  }, [pushButton]);
+
+    // 檢查所有站點
+    stations.forEach((stationId) => {
+      const stationState = outboundExternalState[stationId];
+      if (stationState?.pushButton && stationState?.step === 3) {
+        handlePushButton(stationId);
+      }
+    });
+  }, [stations.map(s => outboundExternalState[s]?.pushButton).join(",")]);
+
+  // 根據指定站點執行退回貨架
+  const handleReturnShelfByStation = async (stationId) => {
+    const stationState = outboundExternalState[stationId];
+    const stationShelf = stationState?.shelf;
+    const stationShelfItem = stationState?.shelfItem;
+    const stationSelected = stationState?.selected;
+    const stationOrder = stationState?.order;
+    const stationOrderCode = stationState?.orderCode;
+
+    if (!stationId) {
+      Alert({ title: "抓不到站點位置" });
+      return;
+    }
+    if (!stationShelf?.SHELVE_ID) {
+      Alert({ title: "找不到貨架資訊" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 1.判斷是整板還是零散
+      let itemsToShift = [];
+
+      if ((stationSelected || []).length > 0) {
+        itemsToShift = stationSelected;
+      } else {
+        itemsToShift =
+          stationShelfItem?.map((item) => ({
+            PRT_NO: item.PRT_NO,
+            MAKE_NO: item.MAKE_NO,
+            outBoxNo: item.BOX_NO,
+            outPpNo: item.PP_NO,
+            ABNORMAL: item.ABNORMAL || 0,
+          })) || [];
+      }
+
+      if (itemsToShift.length === 0) {
+        Alert({ title: "沒有出庫的產品" });
+        setLoading(false);
+        return;
+      }
+
+      // 2. 扣庫存
+      const shiftRes = await shiftOutOnReturn({
+        items: itemsToShift,
+        waveNo: stationOrder.W_ID,
+        saleNo: stationOrderCode,
+        shelveId: stationShelf.SHELVE_ID,
+        isFullPallet: (stationSelected || []).length === 0,
+      });
+
+      if (!shiftRes.data.success) {
+        Alert({ title: shiftRes.data.message || "出庫失敗" });
+        setLoading(false);
+        return;
+      }
+
+      // 3. 退回貨架
+      const dataId = generateRandomNumber();
+      const data = {
+        action: "wcstask",
+        dataid: dataId,
+        command: "RETURN",
+        SHELVE_ID: stationShelf?.SHELVE_ID,
+        FACE: 2,
+        STATION: stationId,
+        PURPOSE: 0,
+      };
+      const res = await sendToWMS(data);
+      if (res.data.success) {
+        // 檢查其他站點是否還在工作
+        const otherWorkingStations = stations.filter((sid) => {
+          if (sid === stationId) return false;
+          const sState = outboundExternalState[sid];
+          return sState?.screen === "working" && sState?.step === 3;
+        });
+
+        if (otherWorkingStations.length > 0) {
+          dispatch(
+            setOutboundExternal({
+              station: stationId,
+              screen: "loading",
+              shelf: {},
+              shelfItem: [],
+              selected: [],
+            }),
+          );
+          Alert({ title: `還有 ${otherWorkingStations.length} 個工作站未完成退回貨架` });
+        } else {
+          // 所有工作站都完成了
+          stations.forEach((sid) => {
+            dispatch(
+              setOutboundExternal({
+                station: sid,
+                step: 1,
+                screen: "idle",
+                orderCode: "",
+                waveNo: null,
+                order: {},
+                shelf: {},
+                shelfItem: [],
+                selected: [],
+              }),
+            );
+          });
+          dispatch(updateOutboundLackStation({ type: "clear" }));
+          dispatch(updateOrderList({ order: stationOrderCode, type: "sub" }));
+          await deleteTask_out(stations);
+          dispatch(resetoutboundInternal());
+          await getOutboundExternalTable();
+          Alert({ title: "出庫完成" });
+        }
+      }
+    } catch (error) {
+      console.warn("handleReturnShelfByStation", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleReturnShelf = async () => {
     if (!currentStation) {
@@ -586,10 +716,39 @@ export default function OutboundExternal() {
 
     orderBarCodeRef.current.value = passSN;
   };
+
+  // ============================
+  // ⭐ 測試解密條碼
+  // ============================
+  const [testBarcode, setTestBarcode] = useState("");
+  const [decryptResult, setDecryptResult] = useState("");
+  const handleTestDecrypt = async () => {
+    if (!testBarcode.trim()) return;
+    try {
+      const res = await decryptBarcode({ text: testBarcode.trim() });
+      setDecryptResult(res.data.data || "無結果");
+    } catch (error) {
+      setDecryptResult("解密失敗: " + error.message);
+    }
+  };
+
   return (
     <>
       {/* 測試按鈕 */}
       {step <= 2 && <ActionBtn text="測試用-產生單據" className="absolute top-0 right-50 z-25" variant="yellow" onClick={handleTest} />}
+      {/* 測試解密條碼 */}
+      <div className="absolute top-0 right-100 z-25 flex gap-2 items-center bg-white p-2 rounded shadow">
+        <input
+          type="text"
+          placeholder="輸入條碼測試解密"
+          value={testBarcode}
+          onChange={(e) => setTestBarcode(e.target.value)}
+          className="border px-2 py-1 w-60"
+          onKeyDown={(e) => e.key === "Enter" && handleTestDecrypt()}
+        />
+        <button onClick={handleTestDecrypt} className="bg-blue-500 text-white px-3 py-1 rounded">解密</button>
+        {decryptResult && <span className="text-green-600 font-bold">{decryptResult}</span>}
+      </div>
       {/* 頂部區域 */}
       {step === 1 && <PageHeader title={`請點擊清單銷貨單號、銷貨單條碼`} backTo="/workspace" />}
       {orderCode && step === 2 && <PageHeader title={`檢視完出庫資訊確認沒問題，請點擊確定按鈕`} />}
