@@ -103,8 +103,14 @@ export default function OutboundExternal() {
     if (screen === "loading") return;
     if (e.key !== "Enter") return;
 
-    const inputBarCode = e.target.value.trim();
+    const inputBarCode = e.target.value.trim().toUpperCase();
     if (!inputBarCode) return;
+
+    // 檢查是否含有中文字或全形字 (Regex: /[^\x00-\xff]/ 匹配雙位元字元)
+    if (/[^\x00-\xff]/.test(inputBarCode)) {
+      Alert({ title: "偵測到非預期字元，請確保為英文輸入模式" });
+      return;
+    }
 
     // 如果已經點擊選擇會檢查掃的條碼是否匹配
     if (orderCode && orderCode === inputBarCode) {
