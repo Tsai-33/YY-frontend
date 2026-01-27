@@ -117,13 +117,8 @@ export default function OutboundExternal() {
     const [value] = tableData.filter((item) => item.OUTSTOCK_NO === inputBarCode);
     if (result) {
       dispatch(setOutboundExternal({ station: currentStationSafe, order: value, orderCode: inputBarCode, waveNo: value.W_ID, step: 2 }));
-    } else if (orderCode && orderCode !== inputBarCode) {
-      // 已選擇但條碼不匹配
-      setTimeout(() => {
-        Alert({ title: "查無此銷貨單號，請查明", setTimeout: 2000 });
-      }, 100);
-      setOrderInput(orderCode || "");
     } else {
+      // 本地沒找到 → 呼叫 WMS 查詢（不管有沒有已選訂單）
       setAskingOrder(true);
       try {
         const dataId = generateRandomNumber();
@@ -220,14 +215,8 @@ export default function OutboundExternal() {
       console.log("原始條碼：", barcode);
       console.log("解密後：", decryptedBarcode);
 
-      // 從orderDetail取數量
-      const detailItem = orderDetail?.find((item) => item.MAKE_NO === decryptedBarcode || item.MAKE_NO?.includes(decryptedBarcode));
-      // 找對應的產品
+      // 從 ORDER_DETAIL 找對應的產品 (有 MAKE_NO)
       const matchedItem = detailTableData?.find((item) => item.MAKE_NO === decryptedBarcode);
-
-      // const matchedItem = shelfItem?.find(item =>
-      //   item.MAKE_NO?.includes(decryptedBarcode)
-      // );
 
       if (matchedItem) {
         const alreadyScanned = (selected || []).some((p) => p.MAKE_NO === decryptedBarcode || p.MAKE_NO?.includes(decryptedBarcode));
@@ -360,50 +349,58 @@ export default function OutboundExternal() {
     }
 
     const stationNo = currentStation?.charAt(0);
-    const resiveData = await confrimList_out(setLoading, order, stationNo);
+    const res = await confrimList_out(setLoading, order, stationNo);
 
     // 檢查 LabVIEW 回傳結果
-    if (resiveData?.result === "NG") {
-      Alert({ title: `${resiveData?.message}` });
-    } else if (resiveData?.message2?.length > 0) {
-      // 清空該站的資料
-      dispatch(setOutboundExternal({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
+    if (res?.success) {
+      const resiveData = res?.data?.data;
+      if (resiveData?.result?.toUpperCase() === "OK") {
+        // 清空該站的資料
+        dispatch(setOutboundExternal({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
 
-      await updateStatusForOutboundCallCar({ W_ID: order.W_ID });
-      // 存被占用的站點
-      let lack_station = resiveData.message2;
-      if (!Array.isArray(lack_station)) {
-        try {
-          // 把單引號換成雙引號後解析
-          lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
-        } catch (error) {
-          console.warn("lack_station 格式錯誤:", lack_station, error);
-          lack_station = [];
+        await updateStatusForOutboundCallCar({ W_ID: order.W_ID });
+        // 存被占用的站點
+        let lack_station = resiveData.message2 || [];
+        if (!Array.isArray(lack_station)) {
+          try {
+            // 把單引號換成雙引號後解析
+            lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
+          } catch (error) {
+            console.warn("lack_station 格式錯誤:", lack_station, error);
+            lack_station = [];
+          }
         }
-      }
-      // 把每個被占用的站點設成loading狀態
-      if (lack_station.length > 0) {
-        lack_station.map((station) => {
-          dispatch(
-            setOutboundExternal({
-              station: station,
-              screen: "loading",
-              orderCode: orderCode,
-              waveNo: order.W_ID,
-              order: order,
-              orderList: orderCode,
-              lackStation: station,
-            }),
-          );
-        });
-      }
-      // 拿掉已選的訂單
-      setTableData((prev) => prev.filter((v) => v.OUTSTOCK_NO !== orderCode && v.STATUS === 0));
+        // 把每個被占用的站點設成loading狀態
+        if (lack_station.length > 0) {
+          lack_station.map((station) => {
+            dispatch(
+              setOutboundExternal({
+                station: station,
+                screen: "loading",
+                orderCode: orderCode,
+                waveNo: order.W_ID,
+                order: order,
+                orderList: orderCode,
+                lackStation: station,
+              }),
+            );
+          });
+        }
+        // 拿掉已選的訂單
+        setTableData((prev) => prev.filter((v) => v.OUTSTOCK_NO !== orderCode && v.STATUS === 0));
 
-      // 寫入任務紀錄
-      await addTask_out(stations);
+        // 寫入任務紀錄
+        await addTask_out(stations);
+      } else {
+        Alert({ title: resiveData?.message || "出庫確認失敗" });
+      }
     } else {
-      Alert({ title: "伺服器有問題，請稍後再試。" });
+      // 超時處理
+      if (res?.code === "ECONNABORTED") {
+        Alert({ title: "連線逾時，請稍後再試或確認 WMS 狀態" });
+      } else {
+        Alert({ title: res?.error?.message || "伺服器有問題，請稍後再試。" });
+      }
     }
   };
 

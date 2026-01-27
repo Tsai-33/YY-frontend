@@ -13,11 +13,26 @@ export const confrimList_out = async (setLoading, order, stationNo) => {
       wave_no: String(order.W_ID),
       station_no: stationNo,
     };
+    console.log("data: ", data)
     const res = await sendToWMS(data);
-    return res?.data?.data;
+
+    // 檢查 axios 攔截器返回的 success 狀態
+    if (!res?.success) {
+      return {
+        success: false,
+        error: { message: res?.error?.message || "WMS 回應錯誤" },
+        code: null
+      };
+    }
+
+    return { success: true, data: res?.data, code: null };
   } catch (err) {
     console.warn("confrimList_out:", err);
-    return { result: "NG", message: err?.message || "出庫確認失敗" };
+    return {
+      success: false,
+      error: { message: err?.message || "出庫確認失敗" },
+      code: err?.code || null
+    };
   } finally {
     setLoading(false);
   }
