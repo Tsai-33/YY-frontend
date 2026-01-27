@@ -319,9 +319,9 @@ export default function ShelfTransferShelf() {
                         <div className="text-2xl font-bold">
                           產品品號：{item.PRT_NO}
                         </div>
-                        <div className="text-2xl font-bold">
+                        {/* <div className="text-2xl font-bold">
                           棧板規格：{item.SHELVE_TYPE}
-                        </div>
+                        </div> */}
                       </div>
                       <div className="text-2xl font-bold mb-2">
                         品名：{item.PRT_NAME}

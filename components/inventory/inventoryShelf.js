@@ -303,7 +303,7 @@ export default function InventoryShelf() {
                     <div className="pb-8">
                       <div className="flex justify-between">
                         <div>產品品號:{item?.PRT_NO}</div>
-                        {index === 0 && (<div>棧板規格:美規</div>)}
+                        {/* {index === 0 && (<div>棧板規格:美規</div>)} */}
                       </div>
                       <div>品名:{item?.PRT_NAME}</div>
                       <div className="flex gap-16">

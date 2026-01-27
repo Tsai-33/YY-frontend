@@ -671,7 +671,7 @@ export default function OutboundExternal() {
                           <div className="flex flex-col">
                             <div className="flex justify-between">
                               <div>產品品號:{item?.PRT_NO}</div>
-                              <div>棧板規格:{item?.type}</div>
+                              {/* <div>棧板規格:{item?.type}</div> */}
                             </div>
                           </div>
                           <div>品名: {item?.PRT_NAME}</div>
@@ -701,7 +701,7 @@ export default function OutboundExternal() {
                       <div key={index} className="flex flex-col">
                         <div className="flex justify-between text-3xl">
                           <div>產品品號:{item?.PRT_NO}</div>
-                          <div>棧板規格:{item?.type}</div>
+                          {/* <div>棧板規格:{item?.type}</div> */}
                         </div>
                         <div className="text-3xl">
                           <div>品名: {item?.PRT_NAME}</div>

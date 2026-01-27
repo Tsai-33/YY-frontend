@@ -627,7 +627,7 @@ export default function OutboundInternal() {
                         <div key={itemIndex} className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0">
                           <div className="flex justify-between text-3xl">
                             <div>產品品號:{item?.PRT_NO}</div>
-                            <div>棧板規格:{item?.type}</div>
+                            {/* <div>棧板規格:{item?.type}</div> */}
                           </div>
                           <div className="text-3xl">品名: {item?.PRT_NAME}</div>
                           <div className="flex gap-16">
@@ -655,7 +655,7 @@ export default function OutboundInternal() {
                     <div key={index}>
                       <div className="flex justify-between text-3xl">
                         <div>產品品號:{item?.PRT_NO}</div>
-                        <div>棧板規格:{item?.type}</div>
+                        {/* <div>棧板規格:{item?.type}</div> */}
                       </div>
                       <div className="text-3xl">
                         <div>品名: {item?.PRT_NAME}</div>

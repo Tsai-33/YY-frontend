@@ -298,7 +298,7 @@ export default function ShelfTransferTable() {
                                 {/* 產品品號、棧板規格 */}
                                 <div className="flex justify-between items-center mb-2">
                                   <div className="text-2xl font-bold">產品品號：{item.PRT_NO}</div>
-                                  <div className="text-2xl font-bold">棧板規格：{item.SHELVE_TYPE}</div>
+                                  {/* <div className="text-2xl font-bold">棧板規格：{item.SHELVE_TYPE}</div> */}
                                 </div>
                                 {/* 品名 */}
                                 <div className="text-2xl font-bold mb-2">品名：{item.PRT_NAME}</div>

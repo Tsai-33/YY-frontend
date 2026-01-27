@@ -93,20 +93,24 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
     dispatch(setInbound({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
     const res = await confrimList_in(setLoading, order);
-    if (res?.success) {
-      let lack_station = res?.data?.data?.message2 || [];
-      if (typeof lack_station === "string") {
-        try {
-          lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
-        } catch (e) {
-          lack_station = [];
+    if (res?.success) { // nodejs 訊息
+      if (res.data.data.result === 'OK') { // labview 訊息
+        let lack_station = res?.data?.data?.message2 || [];
+        if (typeof lack_station === "string") {
+          try {
+            lack_station = JSON.parse(lack_station.replace(/'/g, '"'));
+          } catch (e) {
+            lack_station = [];
+          }
         }
+        lack_station.forEach((st) => {
+          dispatch(setInbound({ station: st, screen: "loading", orderCode, waveNo: order.W_ID, order, orderList: orderCode, lackStation: st }));
+        });
+        setTableData((prev) => prev.filter((v) => v.INSTOCK_NO !== orderCode && v.STATUS == 0));
+        await addTask_in(stations);
+      }else{
+         Alert({ title: `${res?.data?.data?.message}` });
       }
-      lack_station.forEach((st) => {
-        dispatch(setInbound({ station: st, screen: "loading", orderCode, waveNo: order.W_ID, order, orderList: orderCode, lackStation: st }));
-      });
-      setTableData((prev) => prev.filter((v) => v.INSTOCK_NO !== orderCode && v.STATUS == 0));
-      await addTask_in(stations);
     } else {
       Alert({ title: `${res?.error?.message}` });
     }
@@ -319,7 +323,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     </SchematicDiagram>
   );
   const ShelfItemRow = ({ item, isLast, shelfCars, index }) => {
-    console.log(item,'item')
+    console.log(item, "item");
     const isNew = item?.isNew || (item?.selectedBox > 0 && (item?.BOX_NO || 0) === 0);
     return (
       <div className={`flex flex-col ${isNew ? "text-red-500" : ""}`}>
@@ -328,12 +332,12 @@ export default function InboundContext({ barCodeRef, setLoading }) {
             <span>產品品號:</span>
             <span>{item?.PRT_NO}</span>
           </div>
-          {index === 0 && (
+          {/* {index === 0 && (
             <div className="flex gap-x-2">
               <div>棧板規格:</div>
               <div>{item?.SALE_NO && "美規"}</div>
             </div>
-          )}
+          )} */}
         </div>
         <div>產品品名: {item?.PRT_NAME}</div>
         <div className="flex gap-16 relative">
@@ -435,8 +439,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
                 <ActionOrderList />
               </div>
             )}
-            <div className="flex flex-col justify-end items-center p-4">
-            {orderCode && <ActionButtons />}</div>
+            <div className="flex flex-col justify-end items-center p-4">{orderCode && <ActionButtons />}</div>
           </div>
         </div>
       </div>
