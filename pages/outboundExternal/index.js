@@ -696,7 +696,7 @@ export default function OutboundExternal() {
                   <div className="flex flex-col">
                     <div className="flex justify-between">
                       <div>貨架編號:{shelf?.SHELVE_ID}</div>
-                      <div>出庫庫別:{shelf?.area}</div>
+                      <div>出庫庫別:{shelf?.area || orderDetail?.[0]?.STOCK_AREA}</div>
                     </div>
                   </div>
                   <div className="flex flex-col gap-16">
