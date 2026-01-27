@@ -490,6 +490,7 @@ export default function OutboundExternal() {
         waveNo: stationOrder.W_ID,
         saleNo: stationOrderCode,
         shelveId: stationShelf.SHELVE_ID,
+        station: stationId,
         isFullPallet: (stationSelected || []).length === 0,
       });
 
@@ -604,6 +605,7 @@ export default function OutboundExternal() {
         waveNo: order.W_ID,
         saleNo: orderCode,
         shelveId: shelf.SHELVE_ID,
+        station: currentStation,
         isFullPallet: (selected || []).length === 0,
       });
 

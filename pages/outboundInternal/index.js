@@ -468,6 +468,7 @@ export default function OutboundInternal() {
         waveNo: order.W_ID,
         saleNo: orderCode,
         shelveId: shelf.SHELVE_ID,
+        station: currentStation,
         isFullPallet: selectedArray.length === 0,
       });
 
