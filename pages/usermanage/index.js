@@ -619,7 +619,8 @@ function UserManage() {
                         onClick={() => handleEditUser(user)}
                         className="hover:text-(--orange-vivid) transition-colors">
                         <span className="text-2xl">
-                          <i className="icon-edit"></i>
+                          {/* <i className="icon-edit"></i> */}
+                          編輯
                         </span>
                       </button>
                     </td>
@@ -631,7 +632,8 @@ function UserManage() {
                         }}
                         className="hover:text-(--red-vivid) transition-colors">
                         <span className="text-2xl">
-                          <i className="icon-download"></i>
+                          {/* <i className="icon-download"></i> */}
+                          下載
                         </span>
                       </button>
                     </td>
@@ -880,7 +882,7 @@ function UserManage() {
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <label className="block text-(--green-deep) font-bold mb-2">
-                起始年/月/日時間：
+                起始時間：
               </label>
               <InputFrame
                 type="datetime-local"
@@ -901,7 +903,7 @@ function UserManage() {
 
             <div className="flex-1">
               <label className="block text-(--green-deep) font-bold mb-2">
-                結束年/月/日時間：
+                結束時間：
               </label>
               <InputFrame
                 type="datetime-local"
