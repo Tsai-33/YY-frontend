@@ -64,6 +64,7 @@ export const workstationConfig = {
       [IP_D]: ["D01", "D02", "D03", "D04"],
     },
     jobs: [
+      { key: "inbound", text: "入倉", path: "/inbound", icon: "icon-inbound" },
       {
         key: "outboundExternal",
         text: "銷貨",
