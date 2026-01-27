@@ -64,7 +64,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
           orderCode: value?.INSTOCK_NO,
           waveNo: value?.W_ID,
           step: 2,
-        })
+        }),
       );
 
       barCodeRef.current.value = "";
@@ -258,14 +258,14 @@ export default function TransferContext({ barCodeRef, setLoading }) {
 
     const tempMap = new Map();
 
-   // 處理現有項目
+    // 處理現有項目
     currentShelfItems.forEach((item) => {
       if (item?.PRT_NO) {
         tempMap.set(item.PRT_NO, { ...item, selectedBox: 0, selectedPP: 0, isNew: false });
       }
     });
 
-  // 疊加勾選項目：若為新項目則建立 row，若已存在則累加數量
+    // 疊加勾選項目：若為新項目則建立 row，若已存在則累加數量
     currentSelected.forEach((sel) => {
       if (!sel?.PRT_NO) return;
       if (tempMap.has(sel.PRT_NO)) {
@@ -425,8 +425,12 @@ export default function TransferContext({ barCodeRef, setLoading }) {
             </label>
             <OrderTitle />
           </div>
-          <div className="flex flex-col flex-1 min-h-0 bg-white p-8 pb-4">
-            {orderCode && <ActionOrderList />}
+          <div className="flex flex-col flex-1 min-h-0 justify-between bg-white p-8 pb-4 h-full overflow-hidden">
+            {orderCode && (
+              <div className="custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
+                <ActionOrderList />
+              </div>
+            )}
             <div className="flex flex-col justify-end items-center p-4">{orderCode && <ActionButtons />}</div>
           </div>
         </div>
