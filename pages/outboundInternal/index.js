@@ -217,15 +217,25 @@ export default function OutboundInternal() {
       console.log("原始條碼：", barcode);
       console.log("解密後：", decryptedBarcode);
 
+      // 如果解密後是 pipe 分隔格式，轉換成 MAKE_NO 格式
+      let makeNo = decryptedBarcode;
+      if (decryptedBarcode.includes("|")) {
+        const parts = decryptedBarcode.split("|");
+        if (parts.length >= 3) {
+          makeNo = `${parts[0]}-${parts[1]}-${parts[2]}`;
+        }
+      }
+      console.log("轉換後 MAKE_NO：", makeNo);
+
       // 從 ORDER_DETAIL 找對應的產品 (有 MAKE_NO)
-      const matchedItem = detailTableData?.find((item) => item.MAKE_NO === decryptedBarcode);
+      const matchedItem = detailTableData?.find((item) => item.MAKE_NO === makeNo);
 
       if (matchedItem) {
         setSelectedArray((prev) => {
-          const alreadyScanned = prev.some((p) => p.MAKE_NO === decryptedBarcode || p.MAKE_NO?.includes(decryptedBarcode));
+          const alreadyScanned = prev.some((p) => p.MAKE_NO === makeNo);
 
           if (alreadyScanned) {
-            Alert({ title: `已掃描過: ${decryptedBarcode}`, icon: "warning", timer: 1000 });
+            Alert({ title: `已掃描過: ${makeNo}`, icon: "warning", timer: 1000 });
             return prev;
           }
 
@@ -233,14 +243,14 @@ export default function OutboundInternal() {
             ...prev,
             {
               PRT_NO: matchedItem.PRT_NO,
-              MAKE_NO: decryptedBarcode,
+              MAKE_NO: makeNo,
               outBoxNo: matchedItem.BOX_NO,
               outPpNo: matchedItem.PP_NO,
               ABNORMAL: matchedItem.ABNORMAL || 0,
             },
           ];
         });
-        Alert({ title: `已掃描: ${decryptedBarcode}`, icon: "success", timer: 1000 });
+        Alert({ title: `已掃描: ${makeNo}`, icon: "success", timer: 1000 });
       } else {
         Alert({ title: "條碼不符合，找不到對應箱號" });
       }
@@ -458,6 +468,7 @@ export default function OutboundInternal() {
         waveNo: order.W_ID,
         saleNo: orderCode,
         shelveId: shelf.SHELVE_ID,
+        station: currentStation,
         isFullPallet: selectedArray.length === 0,
       });
 

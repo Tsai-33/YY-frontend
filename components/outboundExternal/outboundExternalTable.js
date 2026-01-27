@@ -21,16 +21,10 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
         const valueId = value[idKey];
         if (name === "checkbox") {
             setSelectedArray((prev) => {
-                const exists = prev.some(item =>
-                    item.MAKE_NO === valueId ||
-                    item.MAKE_NO?.includes(valueId)
-                );
+                const exists = prev.some(item => item.MAKE_NO === valueId);
 
                 if (exists) {
-                    return prev.filter(item =>
-                        item.MAKE_NO !== valueId &&
-                        !item.MAKE_NO?.includes(valueId)
-                    );
+                    return prev.filter(item => item.MAKE_NO !== valueId);
                 } else {
                     return [...prev, {
                         PRT_NO: value.PRT_NO,
