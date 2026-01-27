@@ -560,10 +560,10 @@ function UserManage() {
         {/* 用户列表表格 */}
         <div className="flex-1 px-4 overflow-auto">
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-(--green-vivid) text-white">
-                <tr>
-                  <th className="p-4 text-left">
+            <table className="w-full text-center">
+              <thead className="bg-(--gray-light) text-center border-3 border-(--white)">
+                <tr >
+                  <th className="p-4 text-left border-3 border-(--white)">
                     <input
                       type="checkbox"
                       checked={
@@ -580,19 +580,19 @@ function UserManage() {
                       className="w-5 h-5"
                     />
                   </th>
-                  <th className="p-4 text-left text-lg">用戶名稱</th>
-                  <th className="p-4 text-left text-lg">角色</th>
-                  <th className="p-4 text-left text-lg">信箱</th>
-                  <th className="p-4 text-left text-lg">帳號</th>
-                  <th className="p-4 text-center text-lg">編輯</th>
-                  <th className="p-4 text-center text-lg">下載紀錄</th>
+                  <th className="p-4 text-lg border-3 border-(--white)">用戶名稱</th>
+                  <th className="p-4 text-lg border-3 border-(--white)">角色</th>
+                  <th className="p-4 text-lg border-3 border-(--white)">信箱</th>
+                  <th className="p-4 text-lg border-3 border-(--white)">帳號</th>
+                  <th className="p-4 text-center text-lg border-3 border-(--white)">編輯</th>
+                  <th className="p-4 text-center text-lg border-3 border-(--white)">下載紀錄</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.map((user) => (
                   <tr
                     key={user.UserId}
-                    className="border-b hover:bg-gray-50 transition-colors">
+                    className="border-b hover:bg-gray-50 transition-colors"> 
                     <td className="p-4">
                       <input
                         type="checkbox"
