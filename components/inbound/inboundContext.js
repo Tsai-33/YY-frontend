@@ -92,7 +92,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     }
 
     dispatch(setInbound({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
-    const res = await confrimList_in(setLoading, order);
+    const res = await confrimList_in(setLoading, order,stations);
     if (res?.success) { // nodejs 訊息
       if (res.data.data.result === 'OK') { // labview 訊息
         let lack_station = res?.data?.data?.message2 || [];

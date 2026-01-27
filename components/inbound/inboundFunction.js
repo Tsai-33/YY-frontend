@@ -56,12 +56,12 @@ export const getList = async (waveNo, setTableData2) => {
 };
 
 // 確認訂單
-export const confrimList_in = async (setLoading, order) => {
+export const confrimList_in = async (setLoading, order,stations) => {
   setLoading(true);
   try {
     // 傳給WMS
     const random9 = generateRandomNumber();
-    const data = { action: "ask_wave", dataid: random9, wave_no: String(order.W_ID), station_no: "A" };
+    const data = { action: "ask_wave", dataid: random9, wave_no: String(order.W_ID), station_no: stations[0].charAt(0) };
     return await sendToWMS(data);
   } catch (err) {
     console.log("handleConfrimList :", err);
