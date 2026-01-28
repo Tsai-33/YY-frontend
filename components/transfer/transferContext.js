@@ -162,6 +162,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
               await handleCancel();
               await deleteTask_tr(stations);
               await restoreTransfer({ W_ID: waveNo });
+              getTable(setTableData, setTableTotalData2);
             },
           });
         } else if (tableData2.some((v) => v.STATUS === 2)) {
@@ -179,6 +180,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
               await handleCancel();
               await deleteTask_tr(stations);
               await restoreTransfer({ W_ID: order.W_ID });
+              getTable(setTableData, setTableTotalData2);
             },
           });
           return;
