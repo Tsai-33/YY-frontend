@@ -71,7 +71,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       barCodeRef.current.value = "";
     } else {
       await getEPR(setLoading, inputBarCode, setTableData, setTableTotalData2);
-      getTable(setTableData, setTableTotalData2)
+      getTable(setTableData, setTableTotalData2);
     }
   };
   const handleConfirmList = async () => {
@@ -186,6 +186,11 @@ export default function TransferContext({ barCodeRef, setLoading }) {
           });
           return;
         }
+      }
+    } else {
+      if (shelf.SHELVE_ID === "X001") {
+        dispatch(resetTransfer({ type: "one", station: currentStation, W_ID: waveNo }));
+        return;
       }
     }
 

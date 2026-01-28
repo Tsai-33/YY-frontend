@@ -51,7 +51,7 @@ const transferSlice = createSlice({
     updateShelfItem: (state, action) => {
       const { station, items, ppStation } = action.payload;
       if (!state[station]) return;
-
+      console.log(items,station,'A')
 
       // 來源扣除 (幽靈車不扣)
       if (items?.MEMO !== "X01") {
