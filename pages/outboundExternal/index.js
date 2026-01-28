@@ -47,6 +47,12 @@ export default function OutboundExternal() {
   // 避免同一張單被很多站使用
   const outboundExternalState = useSelector((s) => s.outboundExternal);
   const { orderList, lackStation } = outboundExternalState;
+
+  // 用 ref 追蹤最新的 outboundExternalState 避免全站點顯示資料被影響
+  const outboundExternalStateRef = useRef(outboundExternalState);
+  useEffect(() => {
+    outboundExternalStateRef.current = outboundExternalState;
+  }, [outboundExternalState]);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, pushButton } = outboundExternalState[currentStationSafe] || {};
 
   // =====根據銷貨單取得細節=====
@@ -514,9 +520,10 @@ export default function OutboundExternal() {
       const res = await sendToWMS(data);
       if (res.data.success) {
         // 檢查其他站點是否還在工作
+        const latestState = outboundExternalStateRef.current;
         const otherWorkingStations = stations.filter((sid) => {
           if (sid === stationId) return false;
-          const sState = outboundExternalState[sid];
+          const sState = latestState[sid];
           return sState?.screen === "working" && sState?.step === 3;
         });
 
@@ -630,10 +637,11 @@ export default function OutboundExternal() {
       if (res.data.success) {
         console.log("RETURN_RES: ", res);
 
-        // 檢查其他站點是否還在工作（screen === "working" 且 step === 3）
+        // 檢查其他站點是否還在工作
+        const latestState = outboundExternalStateRef.current;
         const otherWorkingStations = stations.filter((stationId) => {
           if (stationId === currentStation) return false;
-          const stationState = outboundExternalState[stationId];
+          const stationState = latestState[stationId];
           return stationState?.screen === "working" && stationState?.step === 3;
         });
 

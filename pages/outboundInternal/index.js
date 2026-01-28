@@ -49,6 +49,12 @@ export default function OutboundInternal() {
   // 避免同一張單被很多站使用
   const outboundInternalState = useSelector((s) => s.outboundInternal);
   const { orderList, lackStation } = outboundInternalState;
+
+  // 用 ref 追蹤最新的 outboundExternalState 避免全站點顯示資料被影響
+  const outboundInternalStateRef = useRef(outboundInternalState);
+  useEffect(() => {
+    outboundInternalStateRef.current = outboundInternalState;
+  }, [outboundInternalState]);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, pushButton } = outboundInternalState[currentStationSafe] || {};
 
   // =====根據領用單取得細節=====
@@ -507,9 +513,10 @@ export default function OutboundInternal() {
       const res = await sendToWMS(data);
       if (res.data.success) {
         // 檢查其他站點是否還在工作
+        const latestState = outboundInternalStateRef.current;
         const otherWorkingStations = stations.filter((sid) => {
           if (sid === stationId) return false;
-          const sState = outboundInternalState[sid];
+          const sState = latestState[sid];
           return sState?.screen === "working" && sState?.step === 3;
         });
 
@@ -542,10 +549,10 @@ export default function OutboundInternal() {
               }),
             );
           });
-          dispatch(updateOutboundInternalLackStation({ type: "clear" }));
-          dispatch(updateOrderListInternal({ order: stationOrderCode, type: "sub" }));
+          dispatch(updateOutboundLackStation({ type: "clear" }));
+          dispatch(updateOrderList({ order: stationOrderCode, type: "sub" }));
           await deleteTask_out(stations);
-          dispatch(resetoutboundExternal());
+          dispatch(resetOutboundExternal());
           setSelectedArray([]);
           await getOutboundInternalTable();
           Alert({ title: "出庫完成" });
@@ -624,10 +631,11 @@ export default function OutboundInternal() {
 
       const res = await sendToWMS(data);
       if (res.data.success) {
-        // 檢查其他站點是否還在工作（screen === "working" 且 step === 3）
+        // 檢查其他站點是否還在工作
+        const latestState = outboundInternalStateRef.current;
         const otherWorkingStations = stations.filter((stationId) => {
           if (stationId === currentStation) return false;
-          const stationState = outboundInternalState[stationId];
+          const stationState = latestState[stationId];
           return stationState?.screen === "working" && stationState?.step === 3;
         });
 
