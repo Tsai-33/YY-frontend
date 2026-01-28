@@ -440,7 +440,7 @@ export default function OutboundExternal() {
         handlePushButton(stationId);
       }
     });
-  }, [stations.map(s => outboundExternalState[s]?.pushButton).join(",")]);
+  }, [JSON.stringify(stations.map(s => outboundExternalState[s]?.pushButton))]);
 
   // 根據指定站點執行退回貨架
   const handleReturnShelfByStation = async (stationId) => {
