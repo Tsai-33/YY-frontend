@@ -29,7 +29,6 @@ const transferSlice = createSlice({
     setTransfer: (state, action) => {
       const { step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, job } = action.payload;
       if (!state[station]) return;
-
       if (step !== undefined) state.step = step;
       if (screen !== undefined) state[station].screen = screen;
       if (order !== undefined) state.order = order;
@@ -81,8 +80,9 @@ const transferSlice = createSlice({
       state[ppStation].shelfItem = currentDestItems;
 
       // JOB移除
-      const removeSet = new Set(items.map((i) => i.PRT_NO));
+      const removeSet = new Set(items.map((i) => i.PRT_NO));0
       state[station].job = state[station].job.filter((v) => !removeSet.has(v.PRT_NO));
+
     },
     // 控制面板
     managerTransfer: (state, action) => {

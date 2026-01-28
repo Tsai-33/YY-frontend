@@ -1,6 +1,18 @@
 import React from "react";
 import { X,Check } from "lucide-react";
-export default function PurposeTable({ headers = [], data = [] }) {
+export default function PurposeTable({ headers = [], data = [],detail=[] }) {
+
+  // 在 return 之前先處理好資料
+const mergedData = data.map(row => {
+  const match = detail.find(de => de.PRT_NO === row.PRT_NO && de.OUTSTOCK_NO?.split("-").slice(0, 2).join("-") === row.OUTSTOCK_NO);
+  return {
+    ...row,
+    STATUS: match?.STATUS
+  };
+});
+
+
+
   return (
     <div className="w-full h-full bg-[var(--white)] rounded-md text-center overflow-y-auto custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
       <table className="table-auto w-full">
@@ -35,8 +47,9 @@ export default function PurposeTable({ headers = [], data = [] }) {
           </tr>
         </thead>
         <tbody className="overflow-y-scroll scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200 ">
-          {data.map((row, idx) => {
+          {mergedData.map((row, idx) => {
             if (!row.OUTSTOCK_NO) return;
+
             return (
               <tr key={idx} className={`px-4 py-2 text-center border-b border-[var(--green-vivid)] text-center`}>
                 {headers.map((header, i) => {

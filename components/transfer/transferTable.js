@@ -75,7 +75,7 @@ export default function TransferTable({ data, data2, setAbnormal }) {
   return (
     <>
       {step <= 2 && <NoCheckBoxTable headers={tableHeader} data={data} type="radio" name="transfer" variants="green" idKey="INSTOCK_NO" checked={orderCode} onChange={handleSelectedOption} />}
-      {currentStation === stations[0] && step > 2 && <PurposeTable headers={tableHeader2} data={data2} name="transfer1" idKey="INSTOCK_NO" />}
+      {currentStation === stations[0] && step > 2 && <PurposeTable headers={tableHeader2} data={job} detail={data2} name="transfer1" idKey="INSTOCK_NO" />}
       {currentStation !== stations[0] && step > 2 && <SourceTable headers={tableHeader3} data={job} type="checkbox" name="transfer2" idKey="PRT_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} setAbnormal={setAbnormal} />}
     </>
   );
