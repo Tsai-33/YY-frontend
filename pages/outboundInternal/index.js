@@ -217,15 +217,25 @@ export default function OutboundInternal() {
       console.log("原始條碼：", barcode);
       console.log("解密後：", decryptedBarcode);
 
+      // 如果解密後是 pipe 分隔格式，轉換成 MAKE_NO 格式
+      let makeNo = decryptedBarcode;
+      if (decryptedBarcode.includes("|")) {
+        const parts = decryptedBarcode.split("|");
+        if (parts.length >= 3) {
+          makeNo = `${parts[0]}-${parts[1]}-${parts[2]}`;
+        }
+      }
+      console.log("轉換後 MAKE_NO：", makeNo);
+
       // 從 ORDER_DETAIL 找對應的產品 (有 MAKE_NO)
-      const matchedItem = detailTableData?.find((item) => item.MAKE_NO === decryptedBarcode);
+      const matchedItem = detailTableData?.find((item) => item.MAKE_NO === makeNo);
 
       if (matchedItem) {
         setSelectedArray((prev) => {
-          const alreadyScanned = prev.some((p) => p.MAKE_NO === decryptedBarcode || p.MAKE_NO?.includes(decryptedBarcode));
+          const alreadyScanned = prev.some((p) => p.MAKE_NO === makeNo);
 
           if (alreadyScanned) {
-            Alert({ title: `已掃描過: ${decryptedBarcode}`, icon: "warning", timer: 1000 });
+            Alert({ title: `已掃描過: ${makeNo}`, icon: "warning", timer: 1000 });
             return prev;
           }
 
@@ -233,14 +243,14 @@ export default function OutboundInternal() {
             ...prev,
             {
               PRT_NO: matchedItem.PRT_NO,
-              MAKE_NO: decryptedBarcode,
+              MAKE_NO: makeNo,
               outBoxNo: matchedItem.BOX_NO,
               outPpNo: matchedItem.PP_NO,
               ABNORMAL: matchedItem.ABNORMAL || 0,
             },
           ];
         });
-        Alert({ title: `已掃描: ${decryptedBarcode}`, icon: "success", timer: 1000 });
+        Alert({ title: `已掃描: ${makeNo}`, icon: "success", timer: 1000 });
       } else {
         Alert({ title: "條碼不符合，找不到對應箱號" });
       }
@@ -405,16 +415,148 @@ export default function OutboundInternal() {
   };
 
   // ====== 退回貨架 ======
-  // 接收實體按鈕訊號
+  // 監聽所有站點的 pushButton
   useEffect(() => {
-    if (!pushButton || step !== 3) return;
-    const handlePushButton = async () => {
-      await handleReturnShelf();
-      // 清掉避免再觸發
-      dispatch(clearPushButton({ station: currentStationSafe }));
+    const handlePushButton = async (stationId) => {
+      const stationState = outboundInternalState[stationId];
+      if (!stationState?.pushButton || stationState?.step !== 3) return;
+
+      // 使用該站點的資料執行退回
+      await handleReturnShelfByStation(stationId);
+      dispatch(clearPushButton({ station: stationId }));
     };
-    handlePushButton();
-  }, [pushButton]);
+
+    // 檢查所有站點
+    stations.forEach((stationId) => {
+      const stationState = outboundInternalState[stationId];
+      if (stationState?.pushButton && stationState?.step === 3) {
+        handlePushButton(stationId);
+      }
+    });
+  }, [JSON.stringify(stations.map(s => outboundInternalState[s]?.pushButton))]);
+
+  // 根據指定站點執行退回貨架
+  const handleReturnShelfByStation = async (stationId) => {
+    const stationState = outboundInternalState[stationId];
+    const stationShelf = stationState?.shelf;
+    const stationShelfItem = stationState?.shelfItem;
+    const stationSelected = stationState?.selected;
+    const stationOrder = stationState?.order;
+    const stationOrderCode = stationState?.orderCode;
+
+    if (!stationId) {
+      Alert({ title: "抓不到站點位置" });
+      return;
+    }
+    if (!stationShelf?.SHELVE_ID) {
+      Alert({ title: "找不到貨架資訊" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 1.判斷是整板還是零散
+      let itemsToShift = [];
+
+      if ((stationSelected || []).length > 0) {
+        itemsToShift = stationSelected;
+      } else {
+        itemsToShift =
+          stationShelfItem?.map((item) => ({
+            PRT_NO: item.PRT_NO,
+            MAKE_NO: item.MAKE_NO,
+            outBoxNo: item.BOX_NO,
+            outPpNo: item.PP_NO,
+            ABNORMAL: item.ABNORMAL || 0,
+          })) || [];
+      }
+
+      if (itemsToShift.length === 0) {
+        Alert({ title: "沒有出庫的產品" });
+        setLoading(false);
+        return;
+      }
+
+      // 2. 扣庫存
+      const shiftRes = await shiftOutOnReturnInternal({
+        items: itemsToShift,
+        waveNo: stationOrder.W_ID,
+        saleNo: stationOrderCode,
+        shelveId: stationShelf.SHELVE_ID,
+        station: stationId,
+        isFullPallet: (stationSelected || []).length === 0,
+      });
+
+      if (!shiftRes.data.success) {
+        Alert({ title: shiftRes.data.message || "出庫失敗" });
+        setLoading(false);
+        return;
+      }
+
+      // 3. 退回貨架
+      const dataId = generateRandomNumber();
+      const data = {
+        action: "wcstask",
+        dataid: dataId,
+        command: "RETURN",
+        SHELVE_ID: stationShelf?.SHELVE_ID,
+        FACE: 2,
+        STATION: stationId,
+        PURPOSE: 0,
+      };
+      const res = await sendToWMS(data);
+      if (res.data.success) {
+        // 檢查其他站點是否還在工作
+        const otherWorkingStations = stations.filter((sid) => {
+          if (sid === stationId) return false;
+          const sState = outboundInternalState[sid];
+          return sState?.screen === "working" && sState?.step === 3;
+        });
+
+        if (otherWorkingStations.length > 0) {
+          dispatch(
+            setOutboundInternal({
+              station: stationId,
+              screen: "loading",
+              shelf: {},
+              shelfItem: [],
+              selected: [],
+            }),
+          );
+          setSelectedArray([]);
+          Alert({ title: `還有 ${otherWorkingStations.length} 個工作站未完成退回貨架` });
+        } else {
+          // 所有工作站都完成了
+          stations.forEach((sid) => {
+            dispatch(
+              setOutboundInternal({
+                station: sid,
+                step: 1,
+                screen: "idle",
+                orderCode: "",
+                waveNo: null,
+                order: {},
+                shelf: {},
+                shelfItem: [],
+                selected: [],
+              }),
+            );
+          });
+          dispatch(updateOutboundInternalLackStation({ type: "clear" }));
+          dispatch(updateOrderListInternal({ order: stationOrderCode, type: "sub" }));
+          await deleteTask_out(stations);
+          dispatch(resetoutboundExternal());
+          setSelectedArray([]);
+          await getOutboundInternalTable();
+          Alert({ title: "出庫完成" });
+        }
+      }
+    } catch (error) {
+      console.warn("handleReturnShelfByStation", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleReturnShelf = async () => {
     if (!currentStation) {
@@ -458,6 +600,7 @@ export default function OutboundInternal() {
         waveNo: order.W_ID,
         saleNo: orderCode,
         shelveId: shelf.SHELVE_ID,
+        station: currentStation,
         isFullPallet: selectedArray.length === 0,
       });
 
