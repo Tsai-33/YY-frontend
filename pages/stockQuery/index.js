@@ -174,6 +174,7 @@ export default function StockQuery() {
               options={[
                 { label: "封膜OK", value: 1 },
                 { label: "護角OK", value: 2 },
+                { label: "打包OK", value: 4 },
               ]}
               onChange={(value) => handleChange("SEAL", value)}
               disabled={stockData.length > 0}

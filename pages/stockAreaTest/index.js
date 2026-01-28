@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import Map from "@/components/stockAreaTest/map";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
 import WarehouseList from "@/components/stockAreaTest/warehouseList";
+import Alert from "@/components/common/alert/alert";
 
 export default function StockAreaTest() {
   // 地圖貨架資料
@@ -56,10 +57,12 @@ export default function StockAreaTest() {
     try {
       setLoading(true);
 
-      const payloadData = Object.entries(nodeAssignments).map(([nodeCode, whId]) => ({
-        node_code: nodeCode,
-        warehouse_id: whId,
-      }));
+      const payloadData = Object.entries(nodeAssignments).map(
+        ([nodeCode, whId]) => ({
+          node_code: nodeCode,
+          warehouse_id: whId,
+        }),
+      );
 
       const payload = { map_id: "4", data: payloadData };
       // console.log("payload:", payload);
@@ -122,7 +125,14 @@ export default function StockAreaTest() {
         </div>
         {/* 右側 - 倉庫地圖 */}
         <div className="w-[70%] flex-1 flex flex-col gap-2 min-h-0">
-          <Map shelvesData={shelvesMapData} activeWh={activeWh} isEraserMode={isEraserMode} nodeAssignments={nodeAssignments} setNodeAssignments={setNodeAssignments} handleConfirm={handleConfirm} />
+          <Map
+            shelvesData={shelvesMapData}
+            activeWh={activeWh}
+            isEraserMode={isEraserMode}
+            nodeAssignments={nodeAssignments}
+            setNodeAssignments={setNodeAssignments}
+            handleConfirm={handleConfirm}
+          />
         </div>
       </div>
     </>
