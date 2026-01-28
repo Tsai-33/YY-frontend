@@ -52,14 +52,17 @@ const transferSlice = createSlice({
       const { station, items, ppStation } = action.payload;
       if (!state[station]) return;
 
-      // 來源扣除
-      state[station].shelfItem = state[station].shelfItem.map((v) => {
-        const matched = items.find((i) => i.PRT_NO === v.PRT_NO);
-        if (matched) {
-          return { ...v, PP_NO: v.PP_NO - matched.PP_NO, BOX_NO: v.BOX_NO - matched.BOX_NO };
-        }
-        return v;
-      });
+
+      // 來源扣除 (幽靈車不扣)
+      if (items?.MEMO !== "X01") {
+        state[station].shelfItem = state[station].shelfItem.map((v) => {
+          const matched = items.find((i) => i.PRT_NO === v.PRT_NO);
+          if (matched) {
+            return { ...v, PP_NO: v.PP_NO - matched.PP_NO, BOX_NO: v.BOX_NO - matched.BOX_NO };
+          }
+          return v;
+        });
+      }
 
       // 目的加入
       const currentDestItems = [...(state[ppStation].shelfItem || [])];
@@ -80,9 +83,9 @@ const transferSlice = createSlice({
       state[ppStation].shelfItem = currentDestItems;
 
       // JOB移除
-      const removeSet = new Set(items.map((i) => i.PRT_NO));0
+      const removeSet = new Set(items.map((i) => i.PRT_NO));
+      0;
       state[station].job = state[station].job.filter((v) => !removeSet.has(v.PRT_NO));
-
     },
     // 控制面板
     managerTransfer: (state, action) => {
@@ -109,7 +112,7 @@ const transferSlice = createSlice({
           nextState[s] = createStation(s);
         });
         return nextState;
-      } 
+      }
     },
   },
 });
