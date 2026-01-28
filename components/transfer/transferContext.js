@@ -9,6 +9,7 @@ import Modal from "@/components/common/modal/modal";
 import TransferTable from "@/components/transfer/transferTable";
 import { resetTransfer, setAllLoading, setTransfer, updateShelfItem } from "@/redux/reducer/reducerTransfer";
 import { addAbnormal_tr, addShelf_tr, addTask_tr, cancelShelf_tr, checkTask_tr, checkWCS_tr, confrimList_tr, deleteTask_tr, finishList_tr, getEPR, getList, getTable, restoreList_tr, returnShelf_tr, updateWMS_tr } from "@/components/transfer/transferFunction";
+import { restoreTransfer } from "@/pages/api";
 
 /**
  * 調撥系統核心上下文組件 (TransferContext)
@@ -112,7 +113,8 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     const res = await updateWMS_tr(setLoading, selected, shelf, order, transfer[stations[0]], setConfirmModal);
 
     if (res?.success) {
-      dispatch(updateShelfItem({ station: currentStation, items: selected, ppStation: stations[0] }));
+      const detail = selected.map((s) => tableData2.find((de) => de.PRT_NO === s.PRT_NO));
+      dispatch(updateShelfItem({ station: currentStation, items: detail, ppStation: stations[0] }));
       getList(waveNo, setTableData2);
     } else if (!res?.success) {
       Alert({ title: `${res?.error.message}` });
@@ -159,6 +161,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
             onConfirm: async () => {
               await handleCancel();
               await deleteTask_tr(stations);
+              await restoreTransfer({ W_ID: waveNo });
             },
           });
         } else if (tableData2.some((v) => v.STATUS === 2)) {
@@ -175,6 +178,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
             onConfirm: async () => {
               await handleCancel();
               await deleteTask_tr(stations);
+              await restoreTransfer({ W_ID: order.W_ID });
             },
           });
           return;
@@ -206,6 +210,23 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       } else if (!res?.success) {
         Alert({ title: `${res?.error?.message}` });
       }
+    } else {
+      setFinishModal(false);
+      Alert({
+        title: "有其他項目未完成",
+        html: "確認後結束訂單並把未完成項目註記異常",
+        showCancel: true,
+        onConfirm: async () => {
+          const res = await finishList_tr(setLoading, order, setFinishModal);
+          if (res?.data?.success) {
+            dispatch(resetTransfer({ type: "all", station: stations }));
+            Alert({ title: res?.data?.message });
+            await deleteTask_tr(stations);
+          } else if (!res?.success) {
+            Alert({ title: `${res?.error?.message}` });
+          }
+        },
+      });
     }
   };
   const setAbnormal = async (data) => {
@@ -239,8 +260,10 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       );
     } else {
       return (
-        <div className="w-full flex justify-center">
+        <div className="w-full flex justify-between">
+          <button className="w-50 opacity-0 pointer-events-none"></button>
           <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
+          <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />{" "}
         </div>
       );
     }
@@ -329,7 +352,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
                 <div className="flex gap-16">
                   <span>箱數: {v?.BOX_NO} 箱</span>
                   <span>
-                    數量: {order?.PP_NOS} {order?.UNIT}
+                    數量: {v?.PP_NO} {v?.UNIT}
                   </span>
                 </div>
               </div>

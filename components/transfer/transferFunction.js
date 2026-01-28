@@ -31,6 +31,7 @@ export const getTable = async (setTableData, setTableTotalData2) => {
       Alert({ title: `目前網路不穩定，請重新再試。` });
     }
 
+
     if (setTableTotalData2 && orderDetail.data.success) {
       setTableTotalData2(orderDetail.data.data);
     } else if (!orderDetail?.success) {
