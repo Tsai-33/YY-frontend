@@ -10,6 +10,7 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
     const { stations, currentStation } = useSelector((s) => s.workstation);
     const currentStationSafe = currentStation || stations?.[0] || "";
     const { orderCode, step, waveNo, shelfItem, selected } = useSelector((s) => s.outboundInternal[currentStationSafe] || {});
+    const hasInitializedRef = useRef(false); // 追蹤是否已做過初始勾選
 
     // =============== 畫面一 ====================
     const headers = [
@@ -81,7 +82,9 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
 
     // ============= 預設勾選整箱BOX_NO > 0 零散不勾 =============
     useEffect(() => {
-        if (step !== 3 || detailTableData.length === 0) return;
+        // 只有當 step 為 3、有資料、且尚未做過初始勾選時才設定預設值
+        if (step !== 3 || detailTableData.length === 0 || hasInitializedRef.current) return;
+
         const fullBoxItems = detailTableData
             .filter(item => {
                 const boxNo = Number(item.BOX_NO) || 0;
@@ -95,7 +98,15 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
             }));
 
         setSelectedArray(fullBoxItems);
+        hasInitializedRef.current = true; // 標記已初始化
     }, [step, detailTableData]);
+
+    // 當 step 變回 <= 2 時重置初始化狀態
+    useEffect(() => {
+        if (step <= 2) {
+            hasInitializedRef.current = false;
+        }
+    }, [step]);
 
     const checkedMakeNos = selectedArray.map(item => item.MAKE_NO);
 

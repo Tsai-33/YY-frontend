@@ -10,6 +10,7 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
     const { stations, currentStation } = useSelector((s) => s.workstation);
     const currentStationSafe = currentStation || stations?.[0] || "";
     const { orderCode, step, waveNo, shelfItem, selected } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
+    const hasInitializedRef = useRef(false); // 追蹤是否已做過初始勾選
 
     // =============== 畫面一 ====================
     const headers = [
@@ -146,8 +147,8 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
 
     // ============= 預設勾選整箱BOX_NO > 0 零散不勾 =============
     useEffect(() => {
-        // 只有當 step 為 3、有資料、且尚未選擇任何資料時才顯示預設值
-        if (step !== 3 || filteredDetailData.length === 0 || selectedArray.length > 0) return;
+        // 只有當 step 為 3、有資料、且尚未做過初始勾選時才設定預設值
+        if (step !== 3 || filteredDetailData.length === 0 || hasInitializedRef.current) return;
 
         const fullBoxItems = filteredDetailData
             .filter(item => {
@@ -162,20 +163,15 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
             }));
 
         setSelectedArray(fullBoxItems);
+        hasInitializedRef.current = true; // 標記已初始化
+    }, [step, filteredDetailData]);
 
-        // ===== Group By PRT_NO 版本=====
-        // const fullBoxItems = filteredDetailData
-        //     .filter(item => item.totalBOX_NO > 0)
-        //     .flatMap(item =>
-        //         item.MAKE_NOs.map(makeNo => ({
-        //             PRT_NO: item.PRT_NO,
-        //             MAKE_NO: makeNo,
-        //             outBoxNo: item.totalBOX_NO,
-        //             outPpNo: item.totalPP_NO
-        //         }))
-        //     );
-        // setSelectedArray(fullBoxItems);
-    }, [step, filteredDetailData, selectedArray.length]);
+    // 當 step 變回 <= 2 時重置初始化狀態
+    useEffect(() => {
+        if (step <= 2) {
+            hasInitializedRef.current = false;
+        }
+    }, [step]);
 
     const checkedMakeNos = selectedArray.map(item => item.MAKE_NO);
     // ===== Group By PRT_NO 版本=====
