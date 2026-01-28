@@ -219,6 +219,25 @@ export default function Login() {
     });
   };
 
+  const [isDebugVisible, setIsDebugVisible] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // 檢查是否同時按下 Alt 鍵和 F3 鍵
+      if (event.altKey && event.key === "F3") {
+        event.preventDefault(); // 防止觸發瀏覽器預設行為
+        setIsDebugVisible((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    // 組件卸載時移除監聽器，避免記憶體洩漏
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   return (
     <>
       {loading && <Loading />}
@@ -228,40 +247,7 @@ export default function Login() {
           {/* 登录表单 */}
           <div>
             {/* 标题 */}
-            <h2 className="mb-8 text-center">
-              登入 Login
-              {/* 暫時使用--- 上線後刪除 */}
-              <ActionBtn text="測帳密1" variant="yellow" className="absolute top-0 left-50" onClick={() => handleWriteIn("ADMIN001", "admin")} />
-              <ActionBtn text="測帳密2" variant="rose" className="absolute top-0 left-100" onClick={() => handleWriteIn("ADMIN002", "admin")} />
-              <ActionBtn text="測帳密3" variant="violet" className="absolute top-0 left-150" onClick={() => handleWriteIn("ADMIN003", "admin")} />
-              <div className="max-w-sm absolute top-0 left-200">
-                <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">
-                  選擇目前測試站點
-                </label>
-                <div class="relative">
-                  <select
-                    id="quantity"
-                    className="block w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-gray-700 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-gray-50"
-                    onChange={handleChangeStation}
-                  >
-                    <option value="" disabled hidden>
-                      請選擇
-                    </option>
-                    <option value={process.env.NEXT_PUBLIC_IP_A}>A01~A10</option>
-                    <option value={process.env.NEXT_PUBLIC_IP_B}>B01~B05</option>
-                    <option value={process.env.NEXT_PUBLIC_IP_C}>C01~C05</option>
-                    <option value={process.env.NEXT_PUBLIC_IP_D}>D01~D04</option>
-                  </select>
-
-                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              {/* 暫時使用--- 上線後刪除 */}
-            </h2>
+            <h2 className="mb-8 text-center">登入 Login</h2>
 
             <form onSubmit={handleLogin}>
               {/* 帳號输入 (支持帳號編號或郵箱) */}
@@ -327,6 +313,39 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      {/* 使用邏輯短路運算子，只有 isDebugVisible 為 true 時才渲染 */}
+      {isDebugVisible && (
+        <div className="fixed w-100 z-[9999] bg-white/80 p-4 rounded-lg shadow-xl border-2 border-dashed border-red-500 absolute">
+          <p className="text-red-500 font-bold mb-2">⚠️ 開發者測試模式</p>
+
+          <ActionBtn text="測帳密1" variant="yellow"  onClick={() => handleWriteIn("ADMIN001", "admin")} />
+          <ActionBtn text="測帳密2" variant="rose"  onClick={() => handleWriteIn("ADMIN002", "admin")} />
+          <ActionBtn text="測帳密3" variant="violet"  onClick={() => handleWriteIn("ADMIN003", "admin")} />
+
+          <div className="max-w-sm">
+            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+              選擇目前測試站點
+            </label>
+            <div className="relative">
+              <select
+                id="quantity"
+                className="block w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-gray-700 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-gray-50"
+                onChange={handleChangeStation}
+              >
+                <option value="" disabled hidden>
+                  請選擇
+                </option>
+                <option value={process.env.NEXT_PUBLIC_IP_A}>A01~A10</option>
+                <option value={process.env.NEXT_PUBLIC_IP_B}>B01~B05</option>
+                <option value={process.env.NEXT_PUBLIC_IP_C}>C01~C05</option>
+                <option value={process.env.NEXT_PUBLIC_IP_D}>D01~D04</option>
+              </select>
+              {/* ... SVG 略 ... */}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

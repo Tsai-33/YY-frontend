@@ -795,7 +795,7 @@ export default function OutboundExternal() {
   return (
     <>
       {/* 測試按鈕 */}
-      {step <= 2 && <ActionBtn text="測試用-產生單據" className="absolute top-0 right-50 z-25" variant="yellow" onClick={handleTest} />}
+      {/* {step <= 2 && <ActionBtn text="測試用-產生單據" className="absolute top-0 right-50 z-25" variant="yellow" onClick={handleTest} />} */}
       {/* 測試解密條碼 */}
       <div className="absolute top-0 right-100 z-25 flex gap-2 items-center bg-white p-2 rounded shadow">
         <input
