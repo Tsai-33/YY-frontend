@@ -512,16 +512,27 @@ export default function OutboundInternal() {
       };
       const res = await sendToWMS(data);
       if (res.data.success) {
-        // 檢查其他站點是否還有任務（step === 3，無論是 working 還是 loading）
+        // 先同步更新 ref，將當前站點標記為已退回（loading）
+        // 這樣並行執行的其他站點函數就能看到這個站點已經退回
+        const currentRefState = outboundInternalStateRef.current;
+        outboundInternalStateRef.current = {
+          ...currentRefState,
+          [stationId]: {
+            ...currentRefState[stationId],
+            screen: "loading",
+          }
+        };
+
+        // 檢查其他站點是否還有在工作（還沒退回）的
         const latestState = outboundInternalStateRef.current;
-        const otherActiveStations = stations.filter((sid) => {
+        const otherWorkingStations = stations.filter((sid) => {
           if (sid === stationId) return false;
           const sState = latestState[sid];
-          // 只要 step === 3 就表示還有任務（可能是 working 或已退回但在 loading）
-          return sState?.step === 3;
+          // 只有 screen === "working" 且 step === 3 的才是還沒退回的
+          return sState?.step === 3 && sState?.screen === "working";
         });
 
-        if (otherActiveStations.length > 0) {
+        if (otherWorkingStations.length > 0) {
           dispatch(
             setOutboundInternal({
               station: stationId,
@@ -532,11 +543,7 @@ export default function OutboundInternal() {
             }),
           );
           setSelectedArray([]);
-          // 計算還在 working 的站點數量（用於顯示訊息）
-          const stillWorkingCount = otherActiveStations.filter(sid => latestState[sid]?.screen === "working").length;
-          if (stillWorkingCount > 0) {
-            Alert({ title: `還有 ${stillWorkingCount} 個工作站未完成退回貨架` });
-          }
+          Alert({ title: `還有 ${otherWorkingStations.length} 個工作站未完成退回貨架` });
         } else {
           // 所有工作站都完成了
           stations.forEach((sid) => {
@@ -636,17 +643,28 @@ export default function OutboundInternal() {
 
       const res = await sendToWMS(data);
       if (res.data.success) {
-        // 檢查其他站點是否還有任務（step === 3，無論是 working 還是 loading）
+        // 先同步更新 ref，將當前站點標記為已退回（loading）
+        // 這樣並行執行的其他站點函數就能看到這個站點已經退回
+        const currentRefState = outboundInternalStateRef.current;
+        outboundInternalStateRef.current = {
+          ...currentRefState,
+          [currentStation]: {
+            ...currentRefState[currentStation],
+            screen: "loading",
+          }
+        };
+
+        // 檢查其他站點是否還有在工作（還沒退回）的
         const latestState = outboundInternalStateRef.current;
-        const otherActiveStations = stations.filter((stationId) => {
+        const otherWorkingStations = stations.filter((stationId) => {
           if (stationId === currentStation) return false;
           const stationState = latestState[stationId];
-          // 只要 step === 3 就表示還有任務（可能是 working 或已退回但在 loading）
-          return stationState?.step === 3;
+          // 只有 screen === "working" 且 step === 3 的才是還沒退回的
+          return stationState?.step === 3 && stationState?.screen === "working";
         });
 
-        if (otherActiveStations.length > 0) {
-          // 還有其他站點有任務，只把當前站點設為 loading
+        if (otherWorkingStations.length > 0) {
+          // 還有其他站點在工作，只把當前站點設為 loading
           dispatch(
             setOutboundInternal({
               station: currentStation,
@@ -657,11 +675,7 @@ export default function OutboundInternal() {
             }),
           );
           setSelectedArray([]);
-          // 計算還在 working 的站點數量（用於顯示訊息）
-          const stillWorkingCount = otherActiveStations.filter(sid => latestState[sid]?.screen === "working").length;
-          if (stillWorkingCount > 0) {
-            Alert({ title: `還有 ${stillWorkingCount} 個工作站未完成退回貨架` });
-          }
+          Alert({ title: `還有 ${otherWorkingStations.length} 個工作站未完成退回貨架` });
         } else {
           // 4. 所有工作站都完成了，清空所有站點的資料(出庫會佔滿所有站點)
           stations.forEach((stationId) => {
