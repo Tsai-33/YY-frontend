@@ -71,6 +71,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       barCodeRef.current.value = "";
     } else {
       await getEPR(setLoading, inputBarCode, setTableData, setTableTotalData2);
+      getTable(setTableData, setTableTotalData2)
     }
   };
   const handleConfirmList = async () => {
