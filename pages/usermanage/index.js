@@ -475,8 +475,27 @@ function UserManage() {
       return;
     }
 
+    // 如果當前用戶不是admin，則過濾掉admin用戶
+    if (userRole !== "admin") {
+      const usersToDelete = users.filter(
+        (u) => selectedUsers.includes(u.UserId) && u.Role !== "admin"
+      );
+      const adminCount = selectedUsers.length - usersToDelete.length;
+
+      if (adminCount > 0) {
+        Alert({
+          title: "錯誤",
+          html: "無法刪除系統管理員",
+          confirmButtonColor: "#b32627",
+        });
+        // 清除admin用戶的選擇
+        setSelectedUsers(usersToDelete.map((u) => u.UserId));
+        return;
+      }
+    }
+
     Alert({
-      title: "確認批量刪除",
+      title: "確認刪除",
       html: `確定要刪除選中的 ${selectedUsers.length} 個用戶嗎？`,
       showCancel: true,
       confirmButtonText: "確定",
@@ -505,7 +524,7 @@ function UserManage() {
           console.warn("批量刪除失敗:", error);
           Alert({
             title: "刪除失敗",
-           html: "批量刪除用戶失敗",
+           html: error.response?.data?.message || "刪除用戶失敗",
             confirmButtonColor: "#b32627",
           });
         } finally {
@@ -517,6 +536,11 @@ function UserManage() {
 
   // 切换用户选择
   const toggleUserSelection = (userId) => {
+    const user = users.find((u) => u.UserId === userId);
+    // 只有系統管理員才能選擇系統管理員
+    if (user && user.Role === "admin" && userRole !== "admin") {
+      return; // 非admin用戶不能選擇admin
+    }
     setSelectedUsers((prev) =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
@@ -525,12 +549,20 @@ function UserManage() {
   };
 
   // 过滤用户列表
-  const filteredUsers = users.filter(
-    (user) =>
-      user.Username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.Email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.AccountNumber?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users
+    .filter(
+      (user) =>
+        user.Username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.Email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.AccountNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      // 定義角色優先級順序: admin > manager > user
+      const roleOrder = { admin: 1, manager: 2, user: 3 };
+      const orderA = roleOrder[a.Role] || 999;
+      const orderB = roleOrder[b.Role] || 999;
+      return orderA - orderB;
+    });
 
   return (
     <>
@@ -558,21 +590,33 @@ function UserManage() {
         </div>
 
         {/* 用户列表表格 */}
-        <div className="flex-1 px-4 overflow-auto">
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="flex-1 px-4 overflow-auto bg-white">
+          <div className=" rounded-lg shadow-lg overflow-hidden">
             <table className="w-full text-center">
               <thead className="bg-(--gray-light) text-center border-3 border-(--white)">
-                <tr >
-                  <th className="p-4 text-left border-3 border-(--white)">
+                <tr className="">
+                  <th className="p-2 text-center border-3 border-(--white)">
                     <input
                       type="checkbox"
                       checked={
-                        selectedUsers.length === filteredUsers.length &&
-                        filteredUsers.length > 0
+                        // 如果當前用戶是admin，可以選擇所有用戶；否則只能選擇非admin用戶
+                        userRole === "admin"
+                          ? filteredUsers.length > 0 &&
+                            selectedUsers.length === filteredUsers.length
+                          : filteredUsers.filter((u) => u.Role !== "admin").length > 0 &&
+                            selectedUsers.length ===
+                              filteredUsers.filter((u) => u.Role !== "admin").length
                       }
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedUsers(filteredUsers.map((u) => u.UserId));
+                          // 如果當前用戶是admin，選擇所有用戶；否則只選擇非admin用戶
+                          setSelectedUsers(
+                            userRole === "admin"
+                              ? filteredUsers.map((u) => u.UserId)
+                              : filteredUsers
+                                  .filter((u) => u.Role !== "admin")
+                                  .map((u) => u.UserId)
+                          );
                         } else {
                           setSelectedUsers([]);
                         }
@@ -580,31 +624,34 @@ function UserManage() {
                       className="w-5 h-5"
                     />
                   </th>
-                  <th className="p-4 text-lg border-3 border-(--white)">用戶名稱</th>
-                  <th className="p-4 text-lg border-3 border-(--white)">角色</th>
-                  <th className="p-4 text-lg border-3 border-(--white)">信箱</th>
-                  <th className="p-4 text-lg border-3 border-(--white)">帳號</th>
-                  <th className="p-4 text-center text-lg border-3 border-(--white)">編輯</th>
-                  <th className="p-4 text-center text-lg border-3 border-(--white)">下載紀錄</th>
+                  <th className="p-2 text-lg border-3 border-(--white)">用戶名稱</th>
+                  <th className="p-2 text-lg border-3 border-(--white)">角色</th>
+                  <th className="p-2 text-lg border-3 border-(--white)">信箱</th>
+                  <th className="p-2 text-lg border-3 border-(--white)">帳號</th>
+                  <th className="p-2 text-center text-lg border-3 border-(--white)">編輯</th>
+                  <th className="p-2 text-center text-lg border-3 border-(--white)">下載紀錄</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.map((user) => (
                   <tr
                     key={user.UserId}
-                    className="border-b hover:bg-gray-50 transition-colors"> 
-                    <td className="p-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedUsers.includes(user.UserId)}
-                        onChange={() => toggleUserSelection(user.UserId)}
-                        className="w-5 h-5"
-                      />
+                    className="border-b-3 border-(--green-vivid) hover:bg-gray-50 transition-colors text-lg"> 
+                    <td className="p-2 text-lg">
+                      {/* 只有系統管理員才能看到並選擇系統管理員的checkbox */}
+                      {(user.Role !== "admin" || userRole === "admin") && (
+                        <input
+                          type="checkbox"
+                          checked={selectedUsers.includes(user.UserId)}
+                          onChange={() => toggleUserSelection(user.UserId)}
+                          className="w-5 h-5"
+                        />
+                      )}
                     </td>
-                    <td className="p-4 font-medium">{user.Username}</td>
-                    <td className="p-4">
+                    <td className="p-2 font-medium">{user.Username}</td>
+                    <td className="p-2">
                       <span
-                        className={`px-3 py-1 rounded-full text-sm font-bold $`}>
+                        className={`px-3 py-1 rounded-full font-bold $`}>
                         {user.Role === "admin"
                           ? "系統管理人員"
                           : user.Role === "manager"
@@ -612,9 +659,9 @@ function UserManage() {
                           : "使用者"}
                       </span>
                     </td>
-                    <td className="p-4">{user.Email}</td>
-                    <td className="p-4">{user.AccountNumber}</td>
-                    <td className="p-4 text-center">
+                    <td className="p-2">{user.Email}</td>
+                    <td className="p-2">{user.AccountNumber}</td>
+                    <td className="p-2 text-center">
                       <button
                         onClick={() => handleEditUser(user)}
                         className="hover:text-(--orange-vivid) transition-colors">
@@ -624,7 +671,7 @@ function UserManage() {
                         </span>
                       </button>
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="p-2 text-center">
                       <button
                         onClick={() => {
                           setDownloadUserId(user.UserId);
@@ -872,16 +919,16 @@ function UserManage() {
           setDownloadUserId(null);
         }}
         onConfirm={handleDownloadLogs}
-        width="40vw"
+        width="responsive"
         height="auto">
-        <div className="py-4">
-          <p className="text-center text-gray-700 mb-6">
+        <div className="py-2 sm:py-4">
+          <p className="text-center text-gray-700 mb-4 sm:mb-6 text-sm sm:text-base md:text-lg">
             請輸入下載紀錄時間區間
           </p>
 
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <label className="block text-(--green-deep) font-bold mb-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+            <div className="flex-1 w-full">
+              <label className="block text-(--green-deep) font-bold mb-2 text-xs sm:text-sm md:text-base">
                 起始時間：
               </label>
               <InputFrame
@@ -895,14 +942,16 @@ function UserManage() {
                   }))
                 }
                 borderColor="var(--green-vivid)"
-                className="w-full"
+                className="w-full text-xs sm:text-sm md:text-base"
               />
             </div>
 
-            <span className="text-2xl text-gray-400 mt-8">~</span>
+            <span className="text-lg sm:text-xl md:text-2xl text-gray-400 self-center sm:mt-8 hidden sm:block">
+              ~
+            </span>
 
-            <div className="flex-1">
-              <label className="block text-(--green-deep) font-bold mb-2">
+            <div className="flex-1 w-full">
+              <label className="block text-(--green-deep) font-bold mb-2 text-xs sm:text-sm md:text-base">
                 結束時間：
               </label>
               <InputFrame
@@ -916,7 +965,7 @@ function UserManage() {
                   }))
                 }
                 borderColor="var(--green-vivid)"
-                className="w-full"
+                className="w-full text-xs sm:text-sm md:text-base"
               />
             </div>
           </div>
