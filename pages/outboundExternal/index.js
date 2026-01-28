@@ -517,6 +517,7 @@ export default function OutboundExternal() {
         STATION: stationId,
         PURPOSE: 0,
       };
+      console.log("data1: ", data)
       const res = await sendToWMS(data);
       if (res.data.success) {
         // 先同步更新 ref，將當前站點標記為已退回（loading）
@@ -645,6 +646,7 @@ export default function OutboundExternal() {
         STATION: currentStation,
         PURPOSE: 0,
       };
+      console.log("data2: ", data)
       const res = await sendToWMS(data);
       if (res.data.success) {
         console.log("RETURN_RES: ", res);
