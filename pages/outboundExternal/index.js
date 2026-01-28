@@ -4,7 +4,7 @@ import OutboundExternalTable from "@/components/outboundExternal/outboundExterna
 import { setCurrentStation, setCurrentJob, updateLackStation } from "@/redux/reducer/reducerWorkStations";
 import { setOutboundExternal, clearPushButton, updateLackStation as updateOutboundLackStation, updateOrderList } from "@/redux/reducer/reducerOutboundExternal";
 import { resetoutboundInternal } from "@/redux/reducer/reducerOutboundInternal";
-import { getOutboundExternal, getOutBoundExternalOrderDetailBySaleNo, sendToWMS, shiftOutOnReturn, updateStatusForOutboundCallCar, decryptBarcode, getOrder } from "@/pages/api";
+import { getOutboundExternal, getOutBoundExternalOrderDetailBySaleNo, sendToWMS, shiftOutOnReturn, updateStatusForOutboundCallCar, decryptBarcode, getOrder, clearNodePosGGROUP } from "@/pages/api";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import Loading from "@/components/common/loading/loading";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
@@ -520,6 +520,13 @@ export default function OutboundExternal() {
       console.log("data1: ", data)
       const res = await sendToWMS(data);
       if (res.data.success) {
+        // RETURN 成功後清除 NODE_POS 的 GGROUP
+        try {
+          await clearNodePosGGROUP({ waveNo: stationOrder.W_ID });
+        } catch (err) {
+          console.warn("clearNodePosGGROUP error:", err);
+        }
+
         // 先同步更新 ref，將當前站點標記為已退回（loading）
         // 這樣並行執行的其他站點函數就能看到這個站點已經退回
         const currentRefState = outboundExternalStateRef.current;
@@ -650,6 +657,13 @@ export default function OutboundExternal() {
       const res = await sendToWMS(data);
       if (res.data.success) {
         console.log("RETURN_RES: ", res);
+
+        // RETURN 成功後清除 NODE_POS 的 GGROUP
+        try {
+          await clearNodePosGGROUP({ waveNo: order.W_ID });
+        } catch (err) {
+          console.warn("clearNodePosGGROUP error:", err);
+        }
 
         // 先同步更新 ref，將當前站點標記為已退回（loading）
         // 這樣並行執行的其他站點函數就能看到這個站點已經退回

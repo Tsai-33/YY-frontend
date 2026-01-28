@@ -4,7 +4,7 @@ import OutboundInternalTable from "@/components/outboundInternal/outboundInterna
 import { setCurrentStation, setCurrentJob, updateLackStation } from "@/redux/reducer/reducerWorkStations";
 import { setOutboundInternal, clearPushButton, updateLackStation as updateOutboundLackStation, updateOrderList } from "@/redux/reducer/reducerOutboundInternal";
 import { resetOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
-import { getOutboundInternal, getOutboundInternalOrderDetailBySaleNo, sendToWMS, shiftOutOnReturnInternal, updateStatusForOutboundCallCarInternal, decryptBarcode } from "@/pages/api";
+import { getOutboundInternal, getOutboundInternalOrderDetailBySaleNo, sendToWMS, shiftOutOnReturnInternal, updateStatusForOutboundCallCarInternal, decryptBarcode, clearNodePosGGROUPInternal } from "@/pages/api";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import Loading from "@/components/common/loading/loading";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
@@ -512,6 +512,13 @@ export default function OutboundInternal() {
       };
       const res = await sendToWMS(data);
       if (res.data.success) {
+        // RETURN 成功後清除 NODE_POS 的 GGROUP
+        try {
+          await clearNodePosGGROUPInternal({ waveNo: stationOrder.W_ID });
+        } catch (err) {
+          console.warn("clearNodePosGGROUPInternal error:", err);
+        }
+
         // 先同步更新 ref，將當前站點標記為已退回（loading）
         // 這樣並行執行的其他站點函數就能看到這個站點已經退回
         const currentRefState = outboundInternalStateRef.current;
@@ -643,6 +650,13 @@ export default function OutboundInternal() {
 
       const res = await sendToWMS(data);
       if (res.data.success) {
+        // RETURN 成功後清除 NODE_POS 的 GGROUP
+        try {
+          await clearNodePosGGROUPInternal({ waveNo: order.W_ID });
+        } catch (err) {
+          console.warn("clearNodePosGGROUPInternal error:", err);
+        }
+
         // 先同步更新 ref，將當前站點標記為已退回（loading）
         // 這樣並行執行的其他站點函數就能看到這個站點已經退回
         const currentRefState = outboundInternalStateRef.current;
