@@ -10,7 +10,7 @@ export default function CheckInput({
   return (
     <div className="flex items-center gap-1.5 ">
       <label
-        className={`checkbox text-[24px] font-bold text-black flex justify-center`}>
+        className={`checkbox text-[24px] font-bold text-black flex justify-center items-center`}>
         <input
           type={type}
           id="hasException"
