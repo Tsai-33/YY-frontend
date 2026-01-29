@@ -440,9 +440,14 @@ export default function OutboundInternal() {
       const stationState = outboundInternalState[stationId];
       if (!stationState?.pushButton || stationState?.step !== 3) return;
 
-      // 使用該站點的資料執行退回
-      await handleReturnShelfByStation(stationId);
-      dispatch(clearPushButton({ station: stationId }));
+      try {
+        // 使用該站點的資料執行退回
+        await handleReturnShelfByStation(stationId);
+      } catch (err) {
+        console.warn("handlePushButton error:", stationId, err);
+      } finally {
+        dispatch(clearPushButton({ station: stationId }));
+      }
     };
 
     // 檢查所有站點
