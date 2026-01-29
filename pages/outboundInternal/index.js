@@ -339,24 +339,37 @@ export default function OutboundInternal() {
           }
         }
 
-        // 如果有庫存不足的產品
+        // 如果有庫存不足的產品 - 直接阻止
         if (insufficientItems.length > 0) {
           const insufficientText = insufficientItems
             .map((item) => `產品 ${item.prtNo}: 需求 ${item.demandBox}箱${item.demandPp}包 / 庫存 ${item.stockBox}箱${item.stockPp}包`)
             .join("\n");
 
-          const result = await Alert({
-            title: "庫存不足提醒",
-            text: `以下產品庫存不足：\n${insufficientText}\n\n是否仍要繼續出庫？`,
-            showCancel: true,
-            confirmButtonText: "繼續出庫",
-            cancelButtonText: "取消",
+          Alert({
+            title: "庫存不足，無法出庫",
+            text: insufficientText,
           });
-
-          if (!result.isConfirmed) {
-            return;
-          }
+          return;
         }
+
+        // // 如果有庫存不足的產品 - 警告但可繼續
+        // if (insufficientItems.length > 0) {
+        //   const insufficientText = insufficientItems
+        //     .map((item) => `產品 ${item.prtNo}: 需求 ${item.demandBox}箱${item.demandPp}包 / 庫存 ${item.stockBox}箱${item.stockPp}包`)
+        //     .join("\n");
+        //
+        //   const result = await Alert({
+        //     title: "庫存不足提醒",
+        //     text: `以下產品庫存不足：\n${insufficientText}\n\n是否仍要繼續出庫？`,
+        //     showCancel: true,
+        //     confirmButtonText: "繼續出庫",
+        //     cancelButtonText: "取消",
+        //   });
+        //
+        //   if (!result.isConfirmed) {
+        //     return;
+        //   }
+        // }
       }
     } catch (error) {
       console.warn("檢查庫存失敗:", error);
