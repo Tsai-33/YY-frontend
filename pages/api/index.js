@@ -72,6 +72,8 @@ export const getWMSByAreaAndPrtNo = (area, prtNo) => api.get(`/shelfTransfer/get
 export const transferItems = (data) => api.post("/shelfTransfer/transferItems", data);
 export const updateAbnormal = (data) => api.post("/shelfTransfer/updateAbnormal", data);
 export const getAbnormalStatus = (shelveIds) => api.get("/shelfTransfer/getAbnormalStatus", { params: { shelveIds } });
+export const getRemarkByShelveIds = (shelveIds) => api.get("/shelfTransfer/getRemarkByShelveIds", { params: { shelveIds: shelveIds.join(",") } });
+export const updateRemark = (data) => api.post("/shelfTransfer/updateRemark", data);
 
 /* 盤點任務下發 */
 export const getInventoryItems = (payload) => api.post("/inventory/getInventoryItems", payload);

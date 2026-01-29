@@ -187,6 +187,7 @@ export default function ShelfTransferTable() {
         WAVENO: selectedOrder?.W_ID,
         GGROUP: "",
       }));
+      console.log("task: ", tasks)
 
       const res = await insertShelfTask({ tasks });
 

@@ -17,6 +17,8 @@ import {
   transferItems,
   updateAbnormal,
   getAbnormalStatus,
+  getRemarkByShelveIds,
+  updateRemark,
 } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
@@ -248,6 +250,12 @@ export default function ShelfTransferStation() {
     }
     // setLoading(true);
     try {
+      // 退回前先儲存備註
+      const memo = shelveMemos[shelveId];
+      if (memo !== undefined) {
+        await updateRemark({ shelveId, remark: memo });
+      }
+
       const dataId = generateRandomNumber();
       const data = {
         action: "wcstask",
@@ -278,6 +286,28 @@ export default function ShelfTransferStation() {
       console.warn("handleReturnShelf:", err);
     }
   };
+
+  // ===== 箱號備註 =====
+  const [shelveMemos, setShelveMemos] = useState({});
+  useEffect(() => {
+    if (!shelveData) return;
+    const shelveIdsWithData = Object.keys(shelveData).filter(
+      (id) => shelveData[id]?.length > 0
+    );
+    if (shelveIdsWithData.length === 0) return;
+
+    const fetchRemarks = async () => {
+      try {
+        const res = await getRemarkByShelveIds(shelveIdsWithData);
+        if (res.data.success) {
+          setShelveMemos((prev) => ({ ...res.data.data, ...prev }));
+        }
+      } catch (error) {
+        console.warn("fetchRemarks:", error);
+      }
+    };
+    fetchRemarks();
+  }, [shelveData]);
 
   // ===== 標記異常狀態 =====
   const [abnormalShelves, setAbnormalShelves] = useState([]);
@@ -492,6 +522,23 @@ export default function ShelfTransferStation() {
                 )}
                 {!hasData && <div className="w-10"></div>}
               </div>
+              {/* 備註輸入框 */}
+              {!isEmptySlot && (
+                <div className="mb-2">
+                  <input
+                    type="text"
+                    placeholder="箱號"
+                    value={shelveMemos[shelveId] || ""}
+                    onChange={(e) => {
+                      setShelveMemos((prev) => ({
+                        ...prev,
+                        [shelveId]: e.target.value,
+                      }));
+                    }}
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-lg"
+                  />
+                </div>
+              )}
               {isEmptySlot ? (
                 <div className="flex-1 flex items-center justify-center text-gray-300"></div>
               ) : isReturned ? (
