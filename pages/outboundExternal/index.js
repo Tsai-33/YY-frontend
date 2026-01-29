@@ -463,12 +463,15 @@ export default function OutboundExternal() {
 
   // 根據指定站點執行退回貨架
   const handleReturnShelfByStation = async (stationId) => {
-    const stationState = outboundExternalState[stationId];
+    // 使用 ref 取得最新的 state，避免 stale closure
+    const latestState = outboundExternalStateRef.current;
+    const stationState = latestState[stationId];
     const stationShelf = stationState?.shelf;
     const stationShelfItem = stationState?.shelfItem;
     const stationSelected = stationState?.selected;
     const stationOrder = stationState?.order;
     const stationOrderCode = stationState?.orderCode;
+    console.log("stationOrder: ", stationOrder)
 
     if (!stationId) {
       Alert({ title: "抓不到站點位置" });
@@ -476,6 +479,10 @@ export default function OutboundExternal() {
     }
     if (!stationShelf?.SHELVE_ID) {
       Alert({ title: "找不到貨架資訊" });
+      return;
+    }
+    if (!stationOrder?.W_ID) {
+      Alert({ title: "找不到訂單資訊" });
       return;
     }
 
