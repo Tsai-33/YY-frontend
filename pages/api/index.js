@@ -16,6 +16,7 @@ export const returnInboundWCS = (payload) => api.post("/inbound/return/wcs", pay
 export const updateInboundWMS = (payload) => api.post("/inbound/update/wms", payload);
 export const finishInboundOrder = (payload) => api.post("/inbound/finish/order", payload);
 export const restoreOrders = (payload) => api.post("/inbound/restore/orders", payload);
+export const searchInboundWMS = (payload)=> api.post("/inbound/search/wms", payload);
 
 /* 取得出庫單(銷貨) */
 export const getOutboundExternal = () => api.get("/outboundExternal/getOutBoundExternal");
@@ -89,6 +90,7 @@ export const getOrderDetailByWID = (payload) => api.get("/order/detail/wid", { p
 export const getEPRData = (payload) => api.post("/order/erp", payload);
 
 /* 讀取WCS */
+
 export const checkWCSLastCar = (payload) => api.post("/wcs/check/lastcar", payload);
 export const checkWCS = (payload) => api.post("/wcs/check", payload);
 export const addShelf = (payload) => api.post("/wcs/add", payload);

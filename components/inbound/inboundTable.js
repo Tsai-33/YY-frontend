@@ -42,10 +42,12 @@ export default function InboundTable({ data, data2, setData2 }) {
           orderCode: value?.INSTOCK_NO,
           waveNo: value?.W_ID,
           step: 2,
-        })
+        }),
       );
     }
   };
+
+  // 搜尋 WMS 相關資料
 
   // =============== 畫面二 ====================
   // checkbox table
