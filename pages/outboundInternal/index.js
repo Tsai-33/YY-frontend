@@ -456,7 +456,9 @@ export default function OutboundInternal() {
 
   // 根據指定站點執行退回貨架
   const handleReturnShelfByStation = async (stationId) => {
-    const stationState = outboundInternalState[stationId];
+    // 使用 ref 取得最新的 state，避免 stale closure
+    const latestState = outboundInternalStateRef.current;
+    const stationState = latestState[stationId];
     const stationShelf = stationState?.shelf;
     const stationShelfItem = stationState?.shelfItem;
     const stationSelected = stationState?.selected;
