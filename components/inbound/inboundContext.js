@@ -2,14 +2,15 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import InputFrame from "@/components/common/input/inputFrame";
-import { resetInbound, setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
+import { resetInbound, selectShelf, setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
 import SchematicDiagram from "../../components/diagram/schematicDiagram";
 import InboundTable from "@/components/inbound/inboundTable";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
-import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in } from "./inboundFunction";
+import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in, searchWMS_in } from "./inboundFunction";
 import { checkNodePos, checkOrder, checkOrderDetail } from "@/pages/api";
+import LoadingText from "../common/loading/loading-text";
 
 export default function InboundContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
@@ -18,9 +19,10 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const [addModal, setAddModal] = useState(false);
   const [returnModal, setReturnModal] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
+  const [wmsData, setWMSData] = useState([]);
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { orderList } = useSelector((s) => s.inbound);
+  const { orderList, shelves } = useSelector((s) => s.inbound);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo } = useSelector((s) => s.inbound[currentStationSafe] || {});
 
   // ============================
@@ -92,9 +94,11 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     }
 
     dispatch(setInbound({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
-    const res = await confrimList_in(setLoading, order,stations);
-    if (res?.success) { // nodejs 訊息
-      if (res.data.data.result === 'OK') { // labview 訊息
+    const res = await confrimList_in(setLoading, order, stations, shelves);
+    if (res?.success) {
+      // nodejs 訊息
+      if (res.data.data.result === "OK") {
+        // labview 訊息
         let lack_station = res?.data?.data?.message2 || [];
         if (typeof lack_station === "string") {
           try {
@@ -108,8 +112,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         });
         setTableData((prev) => prev.filter((v) => v.INSTOCK_NO !== orderCode && v.STATUS == 0));
         await addTask_in(stations);
-      }else{
-         Alert({ title: `${res?.data?.data?.message}` });
+      } else {
+        Alert({ title: `${res?.data?.data?.message}` });
       }
     } else {
       Alert({ title: `${res?.error?.message}` });
@@ -266,7 +270,9 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       }
     }
   };
-
+  const handleShelveClick = (shelve) => {
+    dispatch(selectShelf({ shelf: shelve }));
+  };
   // ============================
   // ⭐ 撈ERP資料 / 顯示入庫單號
   // ============================
@@ -285,23 +291,62 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const ActionOrderList = () => {
     if (step <= 2)
       return (
-        <SchematicDiagramList>
-          <div className="flex flex-col">
-            <div className="flex justify-between">
-              <span>入倉單單號: {order?.INSTOCK_NO}</span>
-              <span>入庫庫別: {order?.STOCK_AREA}</span>
+        <>
+          <SchematicDiagramList>
+            <div className="flex flex-col">
+              <div className="flex justify-between">
+                <span>入倉單單號: {order?.INSTOCK_NO}</span>
+                <span>入庫庫別: {order?.STOCK_AREA}</span>
+              </div>
+              <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
+              <div>產品品號: {order?.PRT_NO}</div>
+              <div>品名: {order?.PRT_NAME}</div>
+              <div className="flex gap-16">
+                <span>箱數: {order?.BOX_NOS} 箱</span>
+                <span>
+                  數量: {order?.PP_NOS} {order?.UNIT}
+                </span>
+              </div>
             </div>
-            <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
-            <div>產品品號: {order?.PRT_NO}</div>
-            <div>品名: {order?.PRT_NAME}</div>
-            <div className="flex gap-16">
-              <span>箱數: {order?.BOX_NOS} 箱</span>
-              <span>
-                數量: {order?.PP_NOS} {order?.UNIT}
-              </span>
-            </div>
-          </div>
-        </SchematicDiagramList>
+          </SchematicDiagramList>
+          {wmsData ? (
+            wmsData.length > 0 ? (
+              <>
+                <div className="h-px bg-gradient-to-r from-transparent via-slate-400 to-transparent opacity-50 my-8"></div>
+                {wmsData?.map((shelveWMS, index) => {
+                  const isSelected = shelves.some((item) => item?.SHELVE_ID === shelveWMS.SHELVE_ID);
+                  return (
+                    <div key={index} onClick={() => handleShelveClick(shelveWMS)} className="cursor-pointer transition-all hover:shadow-lg py-1">
+                      <SchematicDiagram isSelected={isSelected}>
+                        {/* 貨架、庫別 */}
+                        <div className="flex flex-col">
+                          <div className="flex items-center">
+                            <div>貨架編號：{shelveWMS.SHELVE_ID}</div>
+                            {/* 打勾 */}
+                            {isSelected && (
+                              <div className="bg-green-500 rounded-full w-8 h-8 flex items-center justify-center">
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-16">
+                            <ShelfItemRow key={`${shelveWMS.PRT_NO}-${index}`} item={shelveWMS} index={index} />
+                          </div>
+                        </div>
+                      </SchematicDiagram>
+                    </div>
+                  );
+                })}
+              </>
+            ) : (
+              <div className="w-full h-25 flex items-center justify-center">查無資料，隨機配置貨架</div>
+            )
+          ) : (
+            <LoadingText />
+          )}
+        </>
       );
     else return <ShelfData />;
   };
@@ -323,7 +368,6 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     </SchematicDiagram>
   );
   const ShelfItemRow = ({ item, isLast, shelfCars, index }) => {
-    console.log(item, "item");
     const isNew = item?.isNew || (item?.selectedBox > 0 && (item?.BOX_NO || 0) === 0);
     return (
       <div className={`flex flex-col ${isNew ? "text-red-500" : ""}`}>
@@ -388,6 +432,13 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       </div>
     );
   };
+  // ============================
+  // ⭐ 搜尋 WMS新資料
+  // ============================
+  const searchWMS = async (data) => {
+    const res = await searchWMS_in(data.SALE_NO, data.PRT_NO);
+    setWMSData(res?.data?.data);
+  };
 
   // ============================
   // ⭐ 副作用
@@ -398,6 +449,11 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   useEffect(() => {
     if (waveNo) getList(waveNo, setTableData2);
   }, [shelfItem, waveNo]);
+  useEffect(() => {
+    if (!order) return;
+    // 2026-1-28 現場討論，告知必須抓出相符條件
+    searchWMS(order);
+  }, [order]);
 
   return (
     <>
@@ -435,7 +491,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
           </div>
           <div className="flex flex-col flex-1 min-h-0 justify-between bg-white p-8 pb-4 h-full overflow-hidden">
             {orderCode && (
-              <div className="custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
+              <div className="h-full custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
                 <ActionOrderList />
               </div>
             )}

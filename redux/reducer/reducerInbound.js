@@ -14,6 +14,7 @@ const createStation = (station) => ({
 
 const initialState = {
   orderList: [],
+  shelves: [],
   lackStation: [],
 };
 
@@ -31,7 +32,6 @@ const inboundSlice = createSlice({
     setInbound: (state, action) => {
       const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation } = action.payload;
       if (!state[station]) return;
-
       if (step !== undefined) state[station].step = step;
       if (screen !== undefined) state[station].screen = screen;
       if (order !== undefined) state[station].order = order;
@@ -42,6 +42,18 @@ const inboundSlice = createSlice({
       if (selected !== undefined) state[station].selected = selected;
       if (orderList !== undefined) state.orderList = [...new Set([...state.orderList, orderList])];
       if (lackStation !== undefined) state.lackStation = [...new Set([...state.lackStation, lackStation])];
+    },
+    selectShelf: (state, action) => {
+      const { shelf } = action.payload;
+      if (!shelf?.SHELVE_ID) return; // 安全檢查
+
+      const isExisted = state.shelves.find((item) => item.SHELVE_ID === shelf.SHELVE_ID);
+
+      if (isExisted) {
+        state.shelves = state.shelves.filter((item) => item.SHELVE_ID !== shelf.SHELVE_ID);
+      } else {
+        state.shelves.push(shelf);
+      }
     },
     updateLackStation: (state, action) => {
       const { lackStation, type } = action.payload;
@@ -128,5 +140,5 @@ const inboundSlice = createSlice({
   },
 });
 
-export const { initStation, setInbound, updateLackStation, updateOrderList, updateShelfItem, managerInbound, resetInbound } = inboundSlice.actions;
+export const { initStation, setInbound, updateLackStation, updateOrderList, updateShelfItem, managerInbound, resetInbound, selectShelf } = inboundSlice.actions;
 export default inboundSlice.reducer;

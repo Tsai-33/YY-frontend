@@ -1,4 +1,4 @@
-import { addInboundWCS,  restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderDetailByWID, checkWCS, updateTask, deleteTask, getEPRData, returnInboundWCS, checkWCSLastCar } from "@/pages/api";
+import { addInboundWCS, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderDetailByWID, checkWCS, updateTask, deleteTask, getEPRData, returnInboundWCS, checkWCSLastCar, getWMS, searchInboundWMS } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
@@ -56,12 +56,17 @@ export const getList = async (waveNo, setTableData2) => {
 };
 
 // 確認訂單
-export const confrimList_in = async (setLoading, order,stations) => {
+export const confrimList_in = async (setLoading, order, stations, shelves) => {
+  let newShelf = [];
+  if (shelves.length > 0) {
+    newShelf = shelves.map((v) => v.SHELVE_ID);
+  }
+
   setLoading(true);
   try {
     // 傳給WMS
     const random9 = generateRandomNumber();
-    const data = { action: "ask_wave", dataid: random9, wave_no: String(order.W_ID), station_no: stations[0].charAt(0) };
+    const data = { action: "ask_wave", dataid: random9, wave_no: String(order.W_ID), station_no: stations[0].charAt(0), SHELVES: newShelf };
     return await sendToWMS(data);
   } catch (err) {
     console.log("handleConfrimList :", err);
@@ -193,5 +198,13 @@ export const deleteTask_in = async (stations) => {
     return await deleteTask({ stations: stations[0] });
   } catch (err) {
     console.log(`handleConfrimList:`, err);
+  }
+};
+
+export const searchWMS_in = async (SALE_NO, PRT_NO) => {
+  try {
+    return await searchInboundWMS({ SALE_NO: SALE_NO, PRT_NO: PRT_NO });
+  } catch (err) {
+    console.log(`searchWMS:`, err);
   }
 };

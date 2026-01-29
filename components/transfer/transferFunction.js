@@ -31,7 +31,6 @@ export const getTable = async (setTableData, setTableTotalData2) => {
       Alert({ title: `目前網路不穩定，請重新再試。` });
     }
 
-
     if (setTableTotalData2 && orderDetail.data.success) {
       setTableTotalData2(orderDetail.data.data);
     } else if (!orderDetail?.success) {
@@ -64,7 +63,7 @@ export const confrimList_tr = async (setLoading, order) => {
     setLoading(true);
     // 傳給WMS
     const random9 = generateRandomNumber();
-    const data = { action: "ask_wave", dataid: random9, wave_no: String(order.W_ID), station_no: "A" };
+    const data = { action: "ask_wave", dataid: random9, wave_no: String(order.W_ID), station_no: "A", SHELVES: [] };
     const res = await sendToWMS(data);
     return res?.data?.data;
   } catch (err) {
@@ -94,7 +93,7 @@ export const addShelf_tr = async (setLoading, setAddModal, shelf, order, station
         return Alert({ title: checkErr?.message });
       }
     } else {
-      console.log(err,'其他錯誤')
+      console.log(err, "其他錯誤");
       // Alert({ title: "" });
     }
   } finally {
