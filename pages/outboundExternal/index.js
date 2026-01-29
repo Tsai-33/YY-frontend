@@ -54,6 +54,8 @@ export default function OutboundExternal() {
     outboundExternalStateRef.current = outboundExternalState;
   }, [outboundExternalState]);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, pushButton } = outboundExternalState[currentStationSafe] || {};
+  // eslint-disable-next-line no-console
+  console.log("[W_ID-1] 解構 order.W_ID:", order?.W_ID, "waveNo:", waveNo, "station:", currentStationSafe);
 
   // =====根據銷貨單取得細節=====
   useEffect(() => {
@@ -391,9 +393,11 @@ export default function OutboundExternal() {
       const resiveData = res?.data?.data;
       if (resiveData?.result?.toUpperCase() === "OK") {
         // 清空該站的資料
+        // eslint-disable-next-line no-console
+        console.log("[W_ID-2] 確認出庫前 order.W_ID:", order.W_ID);
         dispatch(setOutboundExternal({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
 
-        await updateStatusForOutboundCallCar({ W_ID: order.W_ID });
+        await updateStatusForOutboundCallCar({ W_ID: order.W_ID, OUTSTOCK_NO: order.OUTSTOCK_NO });
         // 存被占用的站點
         let lack_station = resiveData.message2 || [];
         if (!Array.isArray(lack_station)) {
@@ -408,6 +412,8 @@ export default function OutboundExternal() {
         // 把每個被占用的站點設成loading狀態
         if (lack_station.length > 0) {
           lack_station.map((station) => {
+            // eslint-disable-next-line no-console
+            console.log("[W_ID-3] lack_station設定", station, "order.W_ID:", order.W_ID);
             dispatch(
               setOutboundExternal({
                 station: station,
@@ -652,6 +658,8 @@ export default function OutboundExternal() {
       }
 
       // 2. 扣庫存
+      // eslint-disable-next-line no-console
+      console.log("[W_ID-4] handleReturnShelf order.W_ID:", order?.W_ID, "waveNo:", waveNo);
       const shiftRes = await shiftOutOnReturn({
         items: itemsToShift,
         waveNo: order.W_ID,
