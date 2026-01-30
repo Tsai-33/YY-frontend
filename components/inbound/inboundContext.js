@@ -275,6 +275,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     dispatch(selectShelf({ station: currentStation, shelf: shelve }));
   };
   const handleChangeREMARK = (e) => {
+    console.log(e.target.value, "123");
     dispatch(setInbound({ station: currentStation, remark: e.target.value }));
   };
   // ============================
@@ -453,6 +454,19 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
         wmsData.length > 0 ? (
           <>
             <div className="h-px bg-gradient-to-r from-transparent via-slate-400 to-transparent opacity-50 my-8"></div>
+            <div>
+              {(() => {
+                const caseMap = {
+                  1: "以下為匹配「同訂單號」與「同產品號」貨架",
+                  2: "以下為匹配「同訂單號」貨架",
+                  3: "以下為匹配「同產品號」且「同庫區」貨架",
+                  4: "以下為匹配「同產品號」貨架",
+                  5: "以下為匹配「無訂單號」貨架",
+                };
+                // 取得對應文字，如果都沒有匹配則顯示空字串
+                return <div className="text-lg w-full text-center">{caseMap[wmsData[0]?.case] || ""}</div>;
+              })()}
+            </div>
             {wmsData?.map((shelveWMS, index) => {
               const isSelected = shelves?.some((item) => item?.SHELVE_ID === shelveWMS.SHELVE_ID);
               return (
@@ -499,8 +513,8 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
 };
 const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems }) => {
   const handleKeyDown = (e) => {
-    e.preventDefault();
     if (e.key === "Enter") {
+      e.preventDefault();
       e.target.blur();
       Alert({ title: "寫入成功!" });
     }
