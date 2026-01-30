@@ -60,11 +60,7 @@ export default function SocketManager() {
         console.log("socket接收到的資料 :", eventData);
 
         const command = eventData?.command?.toUpperCase(); // 忽略大小寫
-        if (
-          eventData?.action === "taskdone" &&
-          command !== "RETURN" &&
-          command !== "CANCEL"
-        ) {
+        if (eventData?.action === "taskdone" && command !== "RETURN" && command !== "CANCEL") {
           if (eventData?.PURPOSE === 0) {
             // 出庫
             dispatch(
@@ -74,7 +70,7 @@ export default function SocketManager() {
                 shelf: eventData,
                 shelfItem: eventData?.ITEMS,
                 step: 3,
-              })
+              }),
             );
             dispatch(
               setOutboundInternal({
@@ -83,7 +79,7 @@ export default function SocketManager() {
                 shelf: eventData,
                 shelfItem: eventData?.ITEMS,
                 step: 3,
-              })
+              }),
             );
           } else if (eventData?.PURPOSE === 1) {
             // 入庫
@@ -94,7 +90,8 @@ export default function SocketManager() {
                 shelfItem: eventData?.ITEMS,
                 screen: "working",
                 step: 3,
-              })
+                remark: eventData?.ITEMS[0]?.REMARK,
+              }),
             );
           } else if (eventData?.PURPOSE === 2) {
             // 盤點
@@ -108,7 +105,7 @@ export default function SocketManager() {
                   },
                   shelfItem: eventData?.ITEMS,
                 },
-              })
+              }),
             );
           } else if (eventData?.PURPOSE === 3) {
             // 調撥
@@ -120,7 +117,8 @@ export default function SocketManager() {
                 shelfItem: eventData?.ITEMS,
                 job: eventData?.Job,
                 step: 3,
-              })
+                remark: eventData?.ITEMS[0]?.REMARK,
+              }),
             );
           } else if (eventData?.PURPOSE === 4) {
             // 理貨
@@ -131,23 +129,29 @@ export default function SocketManager() {
                 shelf: eventData,
                 shelfItem: eventData?.ITEMS,
                 step: 3,
-              })
+              }),
             );
           }
         }
         if (eventData?.action === "push_button") {
-          dispatch(setOutboundExternal({
-            station: eventData.STATION,
-            pushButton: eventData
-          }));
-          dispatch(setOutboundInternal({
-            station: eventData.STATION,
-            pushButton: eventData
-          }));
-          dispatch(setShelfTransfer({
-            station: eventData.STATION,
-            pushButton: eventData
-          }));
+          dispatch(
+            setOutboundExternal({
+              station: eventData.STATION,
+              pushButton: eventData,
+            }),
+          );
+          dispatch(
+            setOutboundInternal({
+              station: eventData.STATION,
+              pushButton: eventData,
+            }),
+          );
+          dispatch(
+            setShelfTransfer({
+              station: eventData.STATION,
+              pushButton: eventData,
+            }),
+          );
         }
         if (eventData?.action === "show_msg") {
         }

@@ -11,6 +11,7 @@ const createStation = (station) => ({
   shelfItem: [], // 目前貨架上的物品
   selected: [], // 目前選擇
   shelves: [], // 多選的車
+  remark: "", // 共用備註
 });
 
 const initialState = {
@@ -30,12 +31,13 @@ const inboundSlice = createSlice({
       }
     },
     setInbound: (state, action) => {
-      const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation } = action.payload;
+      const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation,remark } = action.payload;
       if (!state[station]) return;
       if (step !== undefined) state[station].step = step;
       if (screen !== undefined) state[station].screen = screen;
       if (order !== undefined) state[station].order = order;
       if (orderCode !== undefined) state[station].orderCode = orderCode;
+      if (remark !== undefined) state[station].remark = remark;
       if (waveNo !== undefined) state[station].waveNo = waveNo;
       if (shelf !== undefined) state[station].shelf = shelf;
       if (shelfItem !== undefined) state[station].shelfItem = shelfItem;
@@ -148,5 +150,5 @@ const inboundSlice = createSlice({
   },
 });
 
-export const { initStation, setInbound, updateLackStation, updateOrderList, updateShelfItem, managerInbound, resetInbound, selectShelf,clearAllShelves } = inboundSlice.actions;
+export const { initStation, setInbound, updateLackStation, updateOrderList, updateShelfItem, managerInbound, resetInbound, selectShelf, clearAllShelves } = inboundSlice.actions;
 export default inboundSlice.reducer;

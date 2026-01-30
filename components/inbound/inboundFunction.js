@@ -77,10 +77,10 @@ export const confrimList_in = async (setLoading, order, stations, shelves) => {
 };
 
 // 確認上架
-export const onToShelf_in = async (setLoading, selected, shelf, order, dispatch, setInbound, currentStation, setConfirmModal, tableData2) => {
+export const onToShelf_in = async (setLoading, selected, shelf, order, dispatch, setInbound, currentStation, setConfirmModal,remark) => {
   try {
     setLoading(true);
-    const data = { itemArray: selected, area: shelf.area, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO };
+    const data = { itemArray: selected, area: shelf.area, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO,REMARK:remark };
     return await updateInboundWMS(data);
   } catch (err) {
     console.log("handleConfrimShelf :", err);

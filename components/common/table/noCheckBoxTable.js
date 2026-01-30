@@ -4,9 +4,12 @@ import LoadingText from "../loading/loading-text";
 export default function NoCheckBoxTable({ headers = [], data = [], onChange, checked, idKey }) {
   return (
     <div className="w-full h-full bg-white border border-white text-center overflow-y-auto custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
-      {data.length <= 0 ? (
+      {!data ?
         <LoadingText />
-      ) : (
+        :
+        data.length <= 0 ?
+        <div className="h-full flex items-center justify-center">沒有資料</div>
+        :
         <table className="table-fixed w-full">
           <thead>
             <tr className={`sticky top-0 z-5 bg-(--gray-light)`}>
@@ -43,7 +46,7 @@ export default function NoCheckBoxTable({ headers = [], data = [], onChange, che
             ))}
           </tbody>
         </table>
-      )}
+      }
     </div>
   );
 }
