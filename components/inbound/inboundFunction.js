@@ -1,4 +1,4 @@
-import { addInboundWCS, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderDetailByWID, checkWCS, updateTask, deleteTask, getEPRData, returnInboundWCS, checkWCSLastCar, getWMS, searchInboundWMS } from "@/pages/api";
+import { addInboundWCS, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderDetailByWID, checkWCS, updateTask, deleteTask, getEPRData, returnInboundWCS, checkWCSLastCar, getWMS, searchInboundWMS, updateInboundWMSREMARK } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
@@ -204,6 +204,14 @@ export const deleteTask_in = async (stations) => {
 export const searchWMS_in = async (SALE_NO, PRT_NO) => {
   try {
     return await searchInboundWMS({ SALE_NO: SALE_NO, PRT_NO: PRT_NO });
+  } catch (err) {
+    console.log(`searchWMS:`, err);
+  }
+};
+
+export const updateWMS_in = async (SHELVE_ID, PRT_NO, REMARK) => {
+  try {
+    return await updateInboundWMSREMARK({ REMARK: REMARK, PRT_NO: PRT_NO, SHELVE_ID: SHELVE_ID });
   } catch (err) {
     console.log(`searchWMS:`, err);
   }
