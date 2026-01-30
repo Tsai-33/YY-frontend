@@ -521,7 +521,16 @@ export default function OutboundExternal() {
         return;
       }
 
-      // 2. 扣庫存
+      // 2. 判斷是否為最後一台（決定後端要不要更新ORDER狀態）
+      const preCheckState = outboundExternalStateRef.current;
+      const preCheckOthers = stations.filter((sid) => {
+        if (sid === stationId) return false;
+        const sState = preCheckState[sid];
+        return sState?.step === 3 && sState?.screen === "working";
+      });
+      const isLastStation = preCheckOthers.length === 0;
+
+      // 3. 扣庫存
       const shiftRes = await shiftOutOnReturn({
         items: itemsToShift,
         waveNo: stationOrder.W_ID,
@@ -529,6 +538,7 @@ export default function OutboundExternal() {
         shelveId: stationShelf.SHELVE_ID,
         station: stationId,
         isFullPallet: (stationSelected || []).length === 0,
+        isLastStation,
       });
 
       if (!shiftRes.data.success) {
@@ -537,7 +547,7 @@ export default function OutboundExternal() {
         return;
       }
 
-      // 3. 退回貨架
+      // 4. 退回貨架
       const dataId = generateRandomNumber();
       const data = {
         action: "wcstask",
@@ -551,11 +561,13 @@ export default function OutboundExternal() {
       console.log("data1: ", data)
       const res = await sendToWMS(data);
       if (res.data.success) {
-        // RETURN 成功後清除 NODE_POS 的 GGROUP
-        try {
-          await clearNodePosGGROUP({ waveNo: stationOrder.W_ID });
-        } catch (err) {
-          console.warn("clearNodePosGGROUP error:", err);
+        // RETURN 成功後清除 NODE_POS 的 GGROUP（只有最後一台才清）
+        if (isLastStation) {
+          try {
+            await clearNodePosGGROUP({ waveNo: stationOrder.W_ID });
+          } catch (err) {
+            console.warn("clearNodePosGGROUP error:", err);
+          }
         }
 
         // 先同步更新 ref，將當前站點標記為已退回（loading）
@@ -657,9 +669,18 @@ export default function OutboundExternal() {
         return;
       }
 
-      // 2. 扣庫存
+      // 2. 判斷是否為最後一台（決定後端要不要更新ORDER狀態）
+      const preCheckState2 = outboundExternalStateRef.current;
+      const preCheckOthers2 = stations.filter((sid) => {
+        if (sid === currentStation) return false;
+        const sState = preCheckState2[sid];
+        return sState?.step === 3 && sState?.screen === "working";
+      });
+      const isLastStation2 = preCheckOthers2.length === 0;
+
+      // 3. 扣庫存
       // eslint-disable-next-line no-console
-      console.log("[W_ID-4] handleReturnShelf order.W_ID:", order?.W_ID, "waveNo:", waveNo);
+      console.log("[W_ID-4] handleReturnShelf order.W_ID:", order?.W_ID, "waveNo:", waveNo, "isLastStation:", isLastStation2);
       const shiftRes = await shiftOutOnReturn({
         items: itemsToShift,
         waveNo: order.W_ID,
@@ -667,6 +688,7 @@ export default function OutboundExternal() {
         shelveId: shelf.SHELVE_ID,
         station: currentStation,
         isFullPallet: (selected || []).length === 0,
+        isLastStation: isLastStation2,
       });
 
       if (!shiftRes.data.success) {
@@ -675,7 +697,7 @@ export default function OutboundExternal() {
         return;
       }
 
-      // 3. 退回貨架
+      // 4. 退回貨架
       const dataId = generateRandomNumber();
       const data = {
         action: "wcstask",
@@ -691,11 +713,13 @@ export default function OutboundExternal() {
       if (res.data.success) {
         console.log("RETURN_RES: ", res);
 
-        // RETURN 成功後清除 NODE_POS 的 GGROUP
-        try {
-          await clearNodePosGGROUP({ waveNo: order.W_ID });
-        } catch (err) {
-          console.warn("clearNodePosGGROUP error:", err);
+        // RETURN 成功後清除 NODE_POS 的 GGROUP（只有最後一台才清）
+        if (isLastStation2) {
+          try {
+            await clearNodePosGGROUP({ waveNo: order.W_ID });
+          } catch (err) {
+            console.warn("clearNodePosGGROUP error:", err);
+          }
         }
 
         // 先同步更新 ref，將當前站點標記為已退回（loading）
