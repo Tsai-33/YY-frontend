@@ -14,6 +14,7 @@ export const restoreTransfer = (payload) => api.post("/transfer/restore/orders",
 export const addInboundWCS = (payload) => api.post("/inbound/add/wcs", payload);
 export const returnInboundWCS = (payload) => api.post("/inbound/return/wcs", payload);
 export const updateInboundWMS = (payload) => api.post("/inbound/update/wms", payload);
+export const updateInboundWMSREMARK = (payload) => api.post("/inbound/update/wms/remark", payload);
 export const finishInboundOrder = (payload) => api.post("/inbound/finish/order", payload);
 export const restoreOrders = (payload) => api.post("/inbound/restore/orders", payload);
 export const searchInboundWMS = (payload)=> api.post("/inbound/search/wms", payload);

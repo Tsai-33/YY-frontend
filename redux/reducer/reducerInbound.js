@@ -10,11 +10,11 @@ const createStation = (station) => ({
   shelf: {}, // default ITEMS 這裡取
   shelfItem: [], // 目前貨架上的物品
   selected: [], // 目前選擇
+  shelves: [], // 多選的車
 });
 
 const initialState = {
   orderList: [],
-  shelves: [],
   lackStation: [],
 };
 
@@ -44,16 +44,23 @@ const inboundSlice = createSlice({
       if (lackStation !== undefined) state.lackStation = [...new Set([...state.lackStation, lackStation])];
     },
     selectShelf: (state, action) => {
-      const { shelf } = action.payload;
+      const { shelf, station } = action.payload;
       if (!shelf?.SHELVE_ID) return; // 安全檢查
 
-      const isExisted = state.shelves.find((item) => item.SHELVE_ID === shelf.SHELVE_ID);
+      const isExisted = state[station].shelves.find((item) => item.SHELVE_ID === shelf.SHELVE_ID);
 
       if (isExisted) {
-        state.shelves = state.shelves.filter((item) => item.SHELVE_ID !== shelf.SHELVE_ID);
+        state[station].shelves = state[station].shelves.filter((item) => item.SHELVE_ID !== shelf.SHELVE_ID);
       } else {
-        state.shelves.push(shelf);
+        state[station].shelves.push(shelf);
       }
+    },
+    clearAllShelves: (state) => {
+      Object.keys(state).forEach((key) => {
+        if (state[key] && Array.isArray(state[key].shelves)) {
+          state[key].shelves = [];
+        }
+      });
     },
     updateLackStation: (state, action) => {
       const { lackStation, type } = action.payload;
@@ -81,6 +88,7 @@ const inboundSlice = createSlice({
     },
     updateShelfItem: (state, action) => {
       const { station, items } = action.payload;
+      console.log(station, items);
       state[station].shelfItem = items;
     },
 
@@ -140,5 +148,5 @@ const inboundSlice = createSlice({
   },
 });
 
-export const { initStation, setInbound, updateLackStation, updateOrderList, updateShelfItem, managerInbound, resetInbound, selectShelf } = inboundSlice.actions;
+export const { initStation, setInbound, updateLackStation, updateOrderList, updateShelfItem, managerInbound, resetInbound, selectShelf,clearAllShelves } = inboundSlice.actions;
 export default inboundSlice.reducer;

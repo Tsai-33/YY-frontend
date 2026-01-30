@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import InputFrame from "@/components/common/input/inputFrame";
-import { resetInbound, selectShelf, setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
+import { clearAllShelves, resetInbound, selectShelf, setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
 import SchematicDiagram from "../../components/diagram/schematicDiagram";
 import InboundTable from "@/components/inbound/inboundTable";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
-import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in, searchWMS_in } from "./inboundFunction";
+import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in, searchWMS_in, updateWMS_in } from "./inboundFunction";
 import { checkNodePos, checkOrder, checkOrderDetail } from "@/pages/api";
 import LoadingText from "../common/loading/loading-text";
 
@@ -20,10 +20,11 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const [returnModal, setReturnModal] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
   const [wmsData, setWMSData] = useState([]);
+
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { orderList, shelves } = useSelector((s) => s.inbound);
-  const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo } = useSelector((s) => s.inbound[currentStationSafe] || {});
+  const { orderList } = useSelector((s) => s.inbound);
+  const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, shelves } = useSelector((s) => s.inbound[currentStationSafe] || {});
 
   // ============================
   // ⭐ 貨架顯示用的資料
@@ -31,7 +32,6 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const displayItems = useMemo(() => {
     const shelfList = Array.isArray(shelfItem) ? shelfItem : [];
     const selectedList = Array.isArray(selected) ? selected : [];
-
     const tempMap = new Map(shelfList.map((item) => [item?.PRT_NO, { ...item, selectedBox: 0, selectedPP: 0, isNew: false }]));
 
     selectedList.forEach((sel) => {
@@ -40,6 +40,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         const exist = tempMap.get(sel.PRT_NO);
         exist.selectedBox += Number(sel.BOX_NO) || 0;
         exist.selectedPP += Number(sel.PP_NO) || 0;
+        exist.REMARK = sel.REMARK;
       } else {
         tempMap.set(sel.PRT_NO, {
           ...sel,
@@ -48,6 +49,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
           selectedBox: Number(sel.BOX_NO) || 0,
           selectedPP: Number(sel.PP_NO) || 0,
           isNew: true,
+          REMARK: sel.REMARK,
         });
       }
     });
@@ -271,7 +273,12 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     }
   };
   const handleShelveClick = (shelve) => {
-    dispatch(selectShelf({ shelf: shelve }));
+    dispatch(selectShelf({ station: currentStation, shelf: shelve }));
+  };
+  const handleAddREMARK = (e, item) => {
+    const newItem = item;
+    newItem.REMARK = e.target.value;
+    dispatch(updateShelfItem(currentStation, newItem));
   };
   // ============================
   // ⭐ 撈ERP資料 / 顯示入庫單號
@@ -332,7 +339,11 @@ export default function InboundContext({ barCodeRef, setLoading }) {
                             )}
                           </div>
                           <div className="flex flex-col gap-16">
-                            <ShelfItemRow key={`${shelveWMS.PRT_NO}-${index}`} item={shelveWMS} index={index} />
+                            <ShelfItemRow key={`${shelveWMS.PRT_NO}-${index}`} item={shelveWMS} step={step} />
+                          </div>
+                          <div className="flex items-center">
+                            <span>備註:</span>
+                            <span>{shelveWMS.REMARK}</span>
                           </div>
                         </div>
                       </SchematicDiagram>
@@ -350,56 +361,41 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       );
     else return <ShelfData />;
   };
-  const ShelfData = () => (
-    <SchematicDiagram>
-      <div className="flex flex-col">
-        <div className="flex justify-between">
-          <div>貨架編號: {shelf?.SHELVE_ID}</div>
-          <div>入庫庫別: {shelf?.area}</div>
-        </div>
-        <div className="flex flex-col gap-16">
-          {displayItems.length === 0 ? (
-            <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
-          ) : (
-            displayItems.map((item, index) => <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} isLast={index === displayItems.length - 1} shelfCars={shelf?.CARS} index={index} />)
-          )}
-        </div>
-      </div>
-    </SchematicDiagram>
-  );
-  const ShelfItemRow = ({ item, isLast, shelfCars, index }) => {
-    const isNew = item?.isNew || (item?.selectedBox > 0 && (item?.BOX_NO || 0) === 0);
+  const ShelfData = () => {
     return (
-      <div className={`flex flex-col ${isNew ? "text-red-500" : ""}`}>
-        <div className="flex justify-between">
-          <div className="flex gap-x-2">
-            <span>產品品號:</span>
-            <span>{item?.PRT_NO}</span>
-          </div>
-          {/* {index === 0 && (
-            <div className="flex gap-x-2">
-              <div>棧板規格:</div>
-              <div>{item?.SALE_NO && "美規"}</div>
+      <SchematicDiagram>
+        <div className="flex flex-col">
+          <div className="flex justify-between">
+            <div className="flex gap-12">
+              <div>貨架編號: {shelf?.SHELVE_ID}</div>
+              <div>備註:{shelfItem[0]?.REMARK}</div>
             </div>
-          )} */}
-        </div>
-        <div>產品品名: {item?.PRT_NAME}</div>
-        <div className="flex gap-16 relative">
-          <div className="flex gap-x-2">
-            <span>箱數:</span>
-            <span>{item?.BOX_NO}</span>
-            <span>箱</span>
-            {item?.selectedBox > 0 && <span className="text-red-500">{`(+${item?.selectedBox})`}</span>}
+            <div>入庫庫別: {shelf?.area}</div>
           </div>
-          <div className="flex gap-x-2">
-            <span>數量:</span>
-            <span>{item?.PP_NO}</span>
-            <span>{item?.UNIT}</span>
-            {item?.selectedPP > 0 && <span className="text-red-500">{`(+${item?.selectedPP})`}</span>}
+          <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
+
+          <div>
+            {displayItems.length === 0 ? (
+              <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
+            ) : (
+              <table className="w-full border-collapse text-left border-collapse">
+                <thead className="bg-gray-300 rounded-lg">
+                  <th className="rounded-tl-xl p-2">產品品號</th>
+                  <th>品名</th>
+                  <th>總箱數</th>
+                  <th>總包數</th>
+                  <th className="rounded-tr-xl p-2">單位</th>
+                </thead>
+                <tbody className="bg-gray-100 rounded-lg">
+                  {displayItems.map((item, index) => (
+                    <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} isLast={index === displayItems.length - 1} shelfCars={shelf?.CARS} index={index} handleAddREMARK={handleAddREMARK} />
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
-          <div className="absolute bottom-0 right-0">{isLast && shelfCars && <span className="text-black">{shelfCars}</span>}</div>
         </div>
-      </div>
+      </SchematicDiagram>
     );
   };
 
@@ -445,6 +441,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ============================
   useEffect(() => {
     getTable(setTableData, orderList);
+    dispatch(clearAllShelves());
   }, [orderList]);
   useEffect(() => {
     if (waveNo) getList(waveNo, setTableData2);
@@ -453,6 +450,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     if (!order) return;
     // 2026-1-28 現場討論，告知必須抓出相符條件
     searchWMS(order);
+     dispatch(clearAllShelves());
   }, [order]);
 
   return (
@@ -530,3 +528,25 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     </>
   );
 }
+
+const ShelfItemRow = ({ item, isLast, shelfCars }) => {
+  const isNew = item?.isNew || (item?.selectedBox > 0 && (item?.BOX_NO || 0) === 0);
+  return (
+    <tr className={`${isNew ? "text-red-500" : ""}`}>
+      <td className={`p-2 ${isLast ? "rounded-bl-lg" : ""}`}>{item?.PRT_NO}</td>
+      <td>{item?.PRT_NAME}</td>
+      <td>
+        {item?.BOX_NO}
+        {item?.selectedBox > 0 && <span className="text-red-500">{`(+${item?.selectedBox})`}</span>}
+      </td>
+      <td>
+        {item?.PP_NO} {item?.selectedPP > 0 && <span className="text-red-500">{`(+${item?.selectedPP})`}</span>}
+      </td>
+      <td className={`p-2 ${isLast ? "rounded-br-lg" : ""}`}>{item?.UNIT}</td>
+
+      <td className="absolute right-0 bottom-0">
+        <span>{isLast && shelfCars && <span className="text-black">{shelfCars}</span>}</span>
+      </td>
+    </tr>
+  );
+};
