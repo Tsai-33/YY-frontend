@@ -535,7 +535,8 @@ export default function ShelfTransferStation() {
                         [shelveId]: e.target.value,
                       }));
                     }}
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-lg"
+                    disabled={isReturned || isReturning}
+                    className={`w-full px-2 py-1 border border-gray-300 rounded text-lg ${isReturned || isReturning ? "bg-gray-100 text-gray-400" : ""}`}
                   />
                 </div>
               )}
