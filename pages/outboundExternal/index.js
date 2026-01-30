@@ -878,8 +878,12 @@ export default function OutboundExternal() {
               station: currentStationSafe,
               pushButton: {
                 action: "push_button",
+                dataid: 22844,
                 STATION: currentStationSafe,
-                PURPOSE: 0
+                QTY: 0,
+                WALLPOS: 5,
+                pageno: "",
+                finish: "ON"
               }
             }));
           }}
