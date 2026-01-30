@@ -87,11 +87,7 @@ export default function Inbound() {
       {loading && <Loading />}
 
       {/* 測試按鈕 */}
-<<<<<<< HEAD
-      {step <= 2 && <ActionBtn text="測試用-產生單據" className="absolute top-0 right-50" variant="yellow" onClick={handleTest} />}
-=======
       {isDebugVisible && step <= 2 && <ActionBtn text="測試用-產生單據" className="absolute top-0 right-50" variant="yellow" onClick={handleTest} />}
->>>>>>> main
     </>
   );
 }
