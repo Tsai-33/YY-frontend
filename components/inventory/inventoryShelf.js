@@ -18,11 +18,13 @@ export default function InventoryShelf() {
   const stationState = useSelector((s) => s.inventory[currentStation]);
   const rowState = stationState?.rowState || [];
   const SHELVE_ID = stationState?.shelf?.SHELVE_ID;
+  const CARS = stationState?.shelf?.CARS
   const shelfItem = stationState?.shelfItem;
   const currentSTOCKAREA = stationState?.filter?.stockArea;
   const currentCUSNO = stationState?.filter?.cusNo;
   const currentSALENO = stationState?.filter?.saleNo;
   const currentPRTNO = stationState?.filter?.prtNo;
+  const currentREMARK = stationState?.shelfItem[0]?.REMARK;
 
   // 目前選擇的工作站
   const handleSwitchStation = (station) => {
@@ -294,28 +296,44 @@ export default function InventoryShelf() {
             <div className="custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
               <SchematicDiagram>
                 <div className="flex flex-col GAP">
-                  <div className="flex justify-between">
-                    <div>貨架編號:{SHELVE_ID}</div>
+                  <div className="flex items-center justify-between gap-4 w-full">
+                    <div className="whitespace-nowrap">貨架編號:{SHELVE_ID}</div>
+                    <div className="flex-1 flex items-center gap-2">備註:{currentREMARK}</div>
                     <div>庫別:{currentSTOCKAREA}</div>
                   </div>
                   <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
-                  {shelfItem.map((item, index) => (
-                    <div className="pb-8">
-                      <div className="flex justify-between">
-                        <div>產品品號:{item?.PRT_NO}</div>
-                        {/* {index === 0 && (<div>棧板規格:美規</div>)} */}
-                      </div>
-                      <div>品名:{item?.PRT_NAME}</div>
-                      <div className="flex gap-16">
-                        <div>總箱數:{item?.BOX_NO}<span>箱</span></div>
-                        <div>總包數:{item?.PP_NO}   <span>{item?.UNIT}</span></div>
-                      </div>
-                    </div>
-                  ))}
+
+                  <table className="table-fixed w-full text-left border-collapse">
+                    <thead className="bg-gray-300 rounded-lg">
+                      <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
+                      <th className="p-2">品名</th>
+                      <th className="p-2 w-[12%]">總箱數</th>
+                      <th className="p-2 w-[18%]">總包數</th>
+                      <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
+                    </thead>
+                    <tbody>
+                      {shelfItem.map((item, index) => (
+                        <tr className="bg-gray-100 rounded-lg">
+                          <td className={`p-2 ${index === shelfItem.length - 1 ? "rounded-bl-lg" : ""} truncate max-w-0`} title={item?.PRT_NO}>
+                            {item?.PRT_NO}
+                            {/* {index === 0 && (<div>棧板規格:美規</div>)} */}
+                          </td>
+                          <td className="p-2 truncate max-w-0" title={item?.PRT_NAME}>
+                            {item?.PRT_NAME}
+                          </td>
+                          <td className="p-2 truncate max-w-0" title={item?.BOX_NO}>
+                            {item?.BOX_NO}
+                          </td>
+                          <td className="p-2 truncate max-w-0" title={item?.PP_NO}>{item?.PP_NO}</td>
+                          <td className={`p-2 truncate max-w-0 ${index === shelfItem.length - 1 ? "rounded-br-lg" : ""}`} title={item?.UNIT}>{item?.UNIT}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </SchematicDiagram>
             </div>
-             <div className="relative flex flex-col justify-end items-center p-4">
+            <div className="relative flex flex-col justify-end items-center p-4">
               <ActionBtn text="確定" icon="icon-check" variant="orange" disabled={!canSubmitToERP} onClick={submitToBackend} />
               <div className="absolute right-0">
                 <ActionBtn text="下線" variant="orange" onClick={submitToOffline} />

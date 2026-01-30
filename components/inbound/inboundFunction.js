@@ -77,10 +77,10 @@ export const confrimList_in = async (setLoading, order, stations, shelves) => {
 };
 
 // 確認上架
-export const onToShelf_in = async (setLoading, selected, shelf, order, dispatch, setInbound, currentStation, setConfirmModal,remark) => {
+export const onToShelf_in = async (setLoading, selected, shelf, order, dispatch, setInbound, currentStation, setConfirmModal, remark) => {
   try {
     setLoading(true);
-    const data = { itemArray: selected, area: shelf.area, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO,REMARK:remark };
+    const data = { itemArray: selected, area: shelf.area, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO, REMARK: remark };
     return await updateInboundWMS(data);
   } catch (err) {
     console.log("handleConfrimShelf :", err);
@@ -156,10 +156,25 @@ export const restoreList_in = async (setLoading, waveNo) => {
 };
 
 // 完成
-export const finishList_in = async (setLoading, order) => {
+export const finishList_in = async (setLoading, order, inbound) => {
+  // 整理REMARK
+  const remarks =
+    inbound?.lackStation?.flatMap((v) => {
+      const shelfId = inbound[v]?.shelf?.SHELVE_ID;
+      if (shelfId) {
+        return [
+          {
+            SHELVE_ID: shelfId,
+            REMARK: inbound[v].remark,
+          },
+        ];
+      }
+      return []; // 回傳空陣列，最終結果就不會包含這一筆
+    }) || [];
+
   setLoading(true);
   try {
-    return await finishInboundOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME });
+    return await finishInboundOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, REMARK: remarks });
   } catch (err) {
     console.log(`handleFinish:`, err);
     return err;

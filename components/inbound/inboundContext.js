@@ -23,6 +23,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
+  const inbound = useSelector((s) => s.inbound);
   const { orderList } = useSelector((s) => s.inbound);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, shelves, remark } = useSelector((s) => s.inbound[currentStationSafe] || {});
 
@@ -246,7 +247,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     if (res?.success) dispatch(resetInbound({ type: "one", station: currentStation, W_ID: waveNo }));
   };
   const handleFinish = async () => {
-    const res = await finishList_in(setLoading, order);
+    const res = await finishList_in(setLoading, order, inbound);
     if (res?.success) {
       dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res?.data?.data }));
       Alert({ title: "此單已完成" });
@@ -320,24 +321,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ⭐ 搜尋 WMS新資料
   // ============================
   const searchWMS = async (data) => {
-    const res = await searchWMS_in(data.SALE_NO, data.PRT_NO);
-    // 同樣貨架組合再一起
-    const groupedData = res?.data?.data?.reduce((acc, current) => {
-      const shelf = acc.find((item) => item.SHELVE_ID === current.SHELVE_ID);
-
-      if (shelf) {
-        shelf.items.push(current);
-      } else {
-        acc.push({
-          SHELVE_ID: current.SHELVE_ID,
-          REMARK: current.REMARK,
-          STOCK_AREA: current.STOCK_AREA,
-          items: [current],
-        });
-      }
-      return acc;
-    }, []);
-    setWMSData(groupedData);
+    const res = await searchWMS_in(data.SALE_NO, data.PRT_NO, data.STOCK_AREA);
+    setWMSData(res.data.data);
   };
 
   // ============================
@@ -404,14 +389,15 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
       {/* Modals */}
       <Modal showModal={confirmModal} title="確認上架" onClose={() => setConfirmModal(false)} onConfirm={handleConfirmShelf} width="39vw" height="40vh">
-        <div>請確定是否上架以下品項</div>
-        {modalGroupedItems.map((v) => (
-          <div key={v.PRT_NO} className="flex justify-between items-center gap-x-6">
-            <span className="font-medium text-gray-700">{v.PRT_NO}</span>
-            <span className="font-medium text-gray-700">{v.PP_NO}</span>
-            <span className="font-medium text-gray-700">{v.UNIT}</span>
-          </div>
-        ))}
+        <div className="flex flex-col items-center px-16 max-h-35 overflow-y-auto custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
+          {modalGroupedItems.map((v) => (
+            <div key={v.PRT_NO} className="flex justify-between items-center gap-x-6">
+              <span className="font-medium text-gray-700">{v.PRT_NO}</span>
+              <span className="font-medium text-gray-700">{v.PP_NO}</span>
+              <span className="font-medium text-gray-700">{v.UNIT}</span>
+            </div>
+          ))}
+        </div>
       </Modal>
       <Modal
         showModal={addModal}
@@ -468,7 +454,7 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
           <>
             <div className="h-px bg-gradient-to-r from-transparent via-slate-400 to-transparent opacity-50 my-8"></div>
             {wmsData?.map((shelveWMS, index) => {
-              const isSelected = shelves.some((item) => item?.SHELVE_ID === shelveWMS.SHELVE_ID);
+              const isSelected = shelves?.some((item) => item?.SHELVE_ID === shelveWMS.SHELVE_ID);
               return (
                 <div key={index} onClick={() => handleShelveClick(shelveWMS)} className="cursor-pointer transition-all hover:shadow-lg py-1">
                   <SchematicDiagram isSelected={isSelected}>
@@ -491,7 +477,7 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
                           <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
                         </thead>
                         <tbody className="bg-gray-100 rounded-lg">
-                          {shelveWMS.items.map((item, ii) => (
+                          {shelveWMS?.items?.map((item, ii) => (
                             <ShelfItemRow key={`${item.PRT_NO}-${index}`} isLast={ii === shelveWMS.items.length - 1} item={item} />
                           ))}
                         </tbody>
@@ -513,8 +499,10 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
 };
 const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems }) => {
   const handleKeyDown = (e) => {
+    e.preventDefault();
     if (e.key === "Enter") {
       e.target.blur();
+      Alert({ title: "寫入成功!" });
     }
   };
   return (
@@ -578,7 +566,9 @@ const ShelfItemRow = ({ item, isLast }) => {
       <td className="p-2 truncate max-w-0" title={item?.PP_NO}>
         {item?.PP_NO} <span className="inline-block text-red-500">{item?.selectedPP > 0 && `(+${item?.selectedPP})`}</span>
       </td>
-      <td className={`p-2 truncate max-w-0 ${isLast ? "rounded-br-lg" : ""}`} title={item?.UNIT}>{item?.UNIT}</td>
+      <td className={`p-2 truncate max-w-0 ${isLast ? "rounded-br-lg" : ""}`} title={item?.UNIT}>
+        {item?.UNIT}
+      </td>
     </tr>
   );
 };

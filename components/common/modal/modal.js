@@ -48,7 +48,7 @@ export default function Modal({
           </div>
 
           {/* middlezone */}
-          <div className="flex flex-col gap-5 font-normal text-(length:--font-size-4xl)">{children}</div>
+          <div className="flex flex-col gap-5 font-normal text-(length:--font-size-2xl)">{children}</div>
 
           {/* bottomZone */}
           <div className="cursor-pointer" onClick={onConfirm}>
