@@ -516,7 +516,6 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems }) => {
     if (e.key === "Enter") {
       e.preventDefault();
       e.target.blur();
-      Alert({ title: "寫入成功!" });
     }
   };
   return (
