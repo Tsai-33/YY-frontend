@@ -8,44 +8,22 @@ export const workstationConfig = {
   A: {
     computers: [IP_A, IP_A1, "localhost"],
     stations: {
-      [IP_A]: [
-        "A01",
-        "A02",
-        "A03",
-        "A04",
-        "A05",
-        "A06",
-        "A07",
-        "A08",
-        "A09",
-        "A10",
-      ],
-      [IP_A1]: [
-        "A01",
-        "A02",
-        "A03",
-        "A04",
-        "A05",
-        "A06",
-        "A07",
-        "A08",
-        "A09",
-        "A10",
-      ],
+      [IP_A]: ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"],
+      [IP_A1]: ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"],
     },
     jobs: [
       { key: "inbound", text: "入倉", path: "/inbound", icon: "icon-inbound" },
-      {
-        key: "stockQuery",
-        text: "庫存查詢",
-        path: "/stockQuery",
-        icon: "icon-stockQuery",
-      },
       {
         key: "transfer",
         text: "調撥",
         path: "/transfer",
         icon: "icon-transfer",
+      },
+      {
+        key: "stockQuery",
+        text: "庫存查詢",
+        path: "/stockQuery",
+        icon: "icon-stockQuery",
       },
       {
         key: "inventory",
