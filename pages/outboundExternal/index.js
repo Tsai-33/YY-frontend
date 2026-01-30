@@ -854,7 +854,7 @@ export default function OutboundExternal() {
       {/* 測試按鈕 */}
       {/* {step <= 2 && <ActionBtn text="測試用-產生單據" className="absolute top-0 right-50 z-25" variant="yellow" onClick={handleTest} />} */}
       {/* 測試解密條碼 */}
-      <div className="absolute top-0 right-100 z-25 flex gap-2 items-center bg-white p-2 rounded shadow">
+      {/* <div className="absolute top-0 right-100 z-25 flex gap-2 items-center bg-white p-2 rounded shadow">
         <input
           type="text"
           placeholder="輸入條碼測試解密"
@@ -865,7 +865,7 @@ export default function OutboundExternal() {
         />
         <button onClick={handleTestDecrypt} className="bg-blue-500 text-white px-3 py-1 rounded">解密</button>
         {decryptResult && <span className="text-green-600 font-bold">{decryptResult}</span>}
-      </div>
+      </div> */}
       {/* 頂部區域 */}
       {step === 1 && <PageHeader title={`請點擊清單銷貨單號、銷貨單條碼`} backTo="/workspace" />}
       {orderCode && step === 2 && <PageHeader title={`檢視完出庫資訊確認沒問題，請點擊確定按鈕`} />}
