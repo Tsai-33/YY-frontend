@@ -57,18 +57,12 @@ export const initWorkstation = (ip) => (dispatch) => {
   if (config.B.computers.includes(ip)) {
     const stations = config.B.stations[ip];
 
-    // 2. 不是D站就過濾掉 "inbound"
-    let allowedJobs = "";
-    if (ip !== IP_D) {
-      allowedJobs = config.B.jobs.filter((job) => job.key !== "inbound");
-    }
-
     dispatch(
       setWorkstation({
         area: "B",
         ip,
         stations: config.B.stations[ip], 
-        jobs: allowedJobs ? allowedJobs : config.B.jobs,
+        jobs: config.B.jobs,
         currentStation: null,
         currentJob: null,
       }),

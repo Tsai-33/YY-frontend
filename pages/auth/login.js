@@ -110,7 +110,6 @@ export default function Login() {
     try {
       // 调用登录API
       const response = await loginAPI(formData.email, formData.password);
-      console.log(response, "user");
       if (response.success) {
         const { user, accessToken, refreshToken } = response.data;
 
