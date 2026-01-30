@@ -51,6 +51,25 @@ export default function Inbound() {
 
     barCodeRef.current.value = passSN;
   };
+
+  // 此處到時候要刪除
+  const [isDebugVisible, setIsDebugVisible] = useState(false);
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // 檢查是否同時按下 Alt 鍵和 F3 鍵
+      if (event.altKey && event.key === "F3") {
+        event.preventDefault(); // 防止觸發瀏覽器預設行為
+        setIsDebugVisible((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    // 組件卸載時移除監聽器，避免記憶體洩漏
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
   return (
     <>
       {/* 頂部區域 */}
@@ -68,7 +87,11 @@ export default function Inbound() {
       {loading && <Loading />}
 
       {/* 測試按鈕 */}
+<<<<<<< HEAD
       {step <= 2 && <ActionBtn text="測試用-產生單據" className="absolute top-0 right-50" variant="yellow" onClick={handleTest} />}
+=======
+      {isDebugVisible && step <= 2 && <ActionBtn text="測試用-產生單據" className="absolute top-0 right-50" variant="yellow" onClick={handleTest} />}
+>>>>>>> main
     </>
   );
 }

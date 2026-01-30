@@ -218,8 +218,9 @@ export default function Login() {
     });
   };
 
-  const [isDebugVisible, setIsDebugVisible] = useState(false);
 
+  // 此處到時候要刪除
+  const [isDebugVisible, setIsDebugVisible] = useState(false);
   useEffect(() => {
     const handleKeyDown = (event) => {
       // 檢查是否同時按下 Alt 鍵和 F3 鍵
