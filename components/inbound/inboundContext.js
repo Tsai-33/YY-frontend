@@ -210,6 +210,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     const res = await addShelf_in(setLoading, setAddModal, shelf, order);
     if (!res?.success && res?.error?.message) {
       Alert({ title: res?.error?.message });
+    }else{
+       Alert({ title: '新增成功' });
     }
   };
   const handleReturnShelf = async () => {
