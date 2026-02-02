@@ -8,6 +8,7 @@ import { setOutboundInternal } from "@/redux/reducer/reducerOutboundInternal";
 import { setShelfTransfer } from "@/redux/reducer/reducerShelfTransfer";
 import { setInventory } from "@/redux/reducer/reducerInventory";
 import { setOutboundExternalNew } from "@/redux/reducer/reducerOutboundExternalNew";
+import { setOutboundInternalNew } from "@/redux/reducer/reducerOutboundInternalNew";
 
 export default function SocketManager() {
   const dispatch = useDispatch();
@@ -91,6 +92,15 @@ export default function SocketManager() {
                 step: 3,
               }),
             );
+            dispatch(
+              setOutboundInternalNew({
+                station: eventData.STATION,
+                screen: "working",
+                shelf: eventData,
+                shelfItem: eventData?.ITEMS,
+                step: 3,
+              }),
+            );
           } else if (eventData?.PURPOSE === 1) {
             // 入庫
             dispatch(
@@ -164,6 +174,12 @@ export default function SocketManager() {
           );
           dispatch(
             setOutboundExternalNew({
+              station: eventData.STATION,
+              pushButton: eventData,
+            }),
+          );
+          dispatch(
+            setOutboundInternalNew({
               station: eventData.STATION,
               pushButton: eventData,
             }),

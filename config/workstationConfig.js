@@ -62,6 +62,12 @@ export const workstationConfig = {
         icon: "icon-outboundInternal",
       },
       {
+        key: "outboundInternalNew",
+        text: "領用(新)",
+        path: "/outboundInternalNew",
+        icon: "icon-outboundInternal",
+      },
+      {
         key: "shelfTransfer",
         text: "理貨",
         path: "/shelfTransfer",

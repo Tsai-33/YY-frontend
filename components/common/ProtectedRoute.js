@@ -24,6 +24,7 @@ const AUTHENTICATED_ROUTES = [
 const PERMISSION_ROUTES = {
   "/outboundExternal": "outboundExternal",
   "/outboundExternalNew": "outboundExternal",
+  "/outboundInternalNew": "outboundInternal",
   "/outboundInternal": "outboundInternal",
   "/shelfTransfer": "shelfTransfer",
   "/inbound": "inbound",
