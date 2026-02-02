@@ -1,7 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
-import { setPage, setBatchNo, setInventory, setInitialRowState, updateRowState, resetRowState, clearRowState } from "@/redux/reducer/reducerInventory";
+import {
+  setPage,
+  setBatchNo,
+  setInventory,
+  setInitialRowState,
+  updateRowState,
+  resetRowState,
+  clearRowState,
+} from "@/redux/reducer/reducerInventory";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
 import CheckTable from "@/components/common/table/checkTable";
@@ -41,7 +49,9 @@ export default function InventoryShelf() {
   // ⭐ 篩選指定產品品號
   // ============================
   const displayItems = useMemo(() => {
-    return currentPRTNO ? rowState.filter((r) => r.PRT_NO === currentPRTNO) : rowState;
+    return currentPRTNO
+      ? rowState.filter((r) => r.PRT_NO === currentPRTNO)
+      : rowState;
   }, [currentPRTNO, rowState]);
 
   // ============================
@@ -103,12 +113,15 @@ export default function InventoryShelf() {
   // checked items for CheckTable (checkbox 顯示來源)：
   // 我們把已確認或被標記異常的列視為「已盤完」，因此自動打勾
   // ============================
-  const checkedItems = rowState.filter((r) => r.confirmed || r.error).map((r) => r.PRT_NO);
+  const checkedItems = rowState
+    .filter((r) => r.confirmed || r.error)
+    .map((r) => r.PRT_NO);
 
   // ============================
   // 判斷是否可以送出 ERP：所有顯示列都必須 confirmed = true 代表已盤
   // ============================
-  const canSubmitToERP = displayItems.length > 0 && displayItems.every((r) => r.confirmed === true);
+  const canSubmitToERP =
+    displayItems.length > 0 && displayItems.every((r) => r.confirmed === true);
 
   // ============================
   // ⭐ 左側 table 欄位
@@ -126,7 +139,15 @@ export default function InventoryShelf() {
       label: "盤點包數",
       key: "actualQty",
       width: "20%",
-      render: (row) => <input type="number" className="w-full text-center border rounded" disabled={!!row.confirmed} value={row.actualQty ?? ""} onChange={(e) => handleQtyChange(row, e.target.value)} />,
+      render: (row) => (
+        <input
+          type="number"
+          className="w-full text-center border rounded"
+          disabled={!!row.confirmed}
+          value={row.actualQty ?? ""}
+          onChange={(e) => handleQtyChange(row, e.target.value)}
+        />
+      ),
     },
     {
       label: "動作",
@@ -135,7 +156,9 @@ export default function InventoryShelf() {
       render: (row) => {
         if (row.confirmed) {
           return (
-            <button className={`px-3 py-1 rounded-md font-bold text-white ${row.error ? "bg-rose-500" : "bg-green-500"}`} onClick={() => handleResetRow(row.PRT_NO)}>
+            <button
+              className={`px-3 py-1 rounded-md font-bold text-white ${row.error ? "bg-rose-500" : "bg-green-500"}`}
+              onClick={() => handleResetRow(row.PRT_NO)}>
               {row.error ? "重新修改" : "已確認"}
             </button>
           );
@@ -145,10 +168,16 @@ export default function InventoryShelf() {
 
         return (
           <div className="flex gap-2">
-            <button className={`px-2 py-1 rounded-md font-bold cursor-pointer ${isCorrect ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"}`} disabled={!isCorrect} onClick={() => handleConfirm(row)}>
+            <button
+              className={`px-2 py-1 rounded-md font-bold cursor-pointer ${isCorrect ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"}`}
+              disabled={!isCorrect}
+              onClick={() => handleConfirm(row)}>
               正確
             </button>
-            <button className={`px-2 py-1 rounded-md font-bold cursor-pointer ${!isCorrect ? "bg-rose-500 text-white" : "bg-gray-200 text-gray-500"}`} disabled={isCorrect} onClick={() => handleMarkErrorAndConfirm(row)}>
+            <button
+              className={`px-2 py-1 rounded-md font-bold cursor-pointer ${!isCorrect ? "bg-rose-500 text-white" : "bg-gray-200 text-gray-500"}`}
+              disabled={isCorrect}
+              onClick={() => handleMarkErrorAndConfirm(row)}>
               異常
             </button>
           </div>
@@ -282,7 +311,17 @@ export default function InventoryShelf() {
       <div className="flex gap-4 py-2 items-stretch h-[72vh]">
         {/* 左側 */}
         <div className="w-[47%] flex flex-col">
-          <CheckTable headers={tableHeader} data={displayItems} type="checkbox" name="inventory" variants="green" idKey="PRT_NO" checked={checkedItems} onChange={() => {}} height="74vh" />
+          <CheckTable
+            headers={tableHeader}
+            data={displayItems}
+            type="checkbox"
+            name="inventory"
+            variants="green"
+            idKey="PRT_NO"
+            checked={checkedItems}
+            onChange={() => {}}
+            height="74vh"
+          />
         </div>
         {/* 右側 */}
         <div className="w-[53%] flex flex-col">
@@ -291,11 +330,20 @@ export default function InventoryShelf() {
             <div>{filterLabel}</div>
           </div>
           <div className="flex flex-col flex-1 min-h-0 justify-between bg-white p-8 pb-4 h-full overflow-hidden">
-            <div className="custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
+            <div
+              className="custom-scrollbar"
+              style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
               <SchematicDiagram>
                 <div className="flex flex-col GAP">
-                  <div className="flex justify-between">
-                    <div>貨架編號:{SHELVE_ID}</div>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="whitespace-nowrap">
+                      貨架編號:{SHELVE_ID}
+                    </div>
+                    <div
+                      className="flex-1 flex items-center gap-2 truncate"
+                      title={shelfItem?.REMARK}>
+                      備註:{shelfItem?.REMARK}
+                    </div>
                     <div>庫別:{currentSTOCKAREA}</div>
                   </div>
                   <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
@@ -307,18 +355,33 @@ export default function InventoryShelf() {
                       </div>
                       <div>品名:{item?.PRT_NAME}</div>
                       <div className="flex gap-16">
-                        <div>總箱數:{item?.BOX_NO}<span>箱</span></div>
-                        <div>總包數:{item?.PP_NO}   <span>{item?.UNIT}</span></div>
+                        <div>
+                          總箱數:{item?.BOX_NO}
+                          <span>箱</span>
+                        </div>
+                        <div>
+                          總包數:{item?.PP_NO} <span>{item?.UNIT}</span>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               </SchematicDiagram>
             </div>
-             <div className="relative flex flex-col justify-end items-center p-4">
-              <ActionBtn text="確定" icon="icon-check" variant="orange" disabled={!canSubmitToERP} onClick={submitToBackend} />
+            <div className="relative flex flex-col justify-end items-center p-4">
+              <ActionBtn
+                text="確定"
+                icon="icon-check"
+                variant="orange"
+                disabled={!canSubmitToERP}
+                onClick={submitToBackend}
+              />
               <div className="absolute right-0">
-                <ActionBtn text="下線" variant="orange" onClick={submitToOffline} />
+                <ActionBtn
+                  text="下線"
+                  variant="orange"
+                  onClick={submitToOffline}
+                />
               </div>
             </div>
           </div>
@@ -327,7 +390,13 @@ export default function InventoryShelf() {
       {/* 底部按鈕區域 */}
       <div className="w-full flex justify-between gap-4 z-20">
         {stations.map((station) => (
-          <ActionBtn text={station} variant="green" className="flex-1" disabled={currentStation === station ? true : false} onClick={() => handleSwitchStation(station)} />
+          <ActionBtn
+            text={station}
+            variant="green"
+            className="flex-1"
+            disabled={currentStation === station ? true : false}
+            onClick={() => handleSwitchStation(station)}
+          />
         ))}
       </div>
     </>
