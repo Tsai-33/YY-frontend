@@ -4,12 +4,12 @@ import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
 
 // 取得ERP資料
-export const getERP = async (setLoading, inputBarCode, setTableData, orderList) => {
+export const getERP = async (setLoading, inputBarCode, setTableData, orderList, setOriginalData) => {
   setLoading(true);
   try {
     const res = await getEPRData({ barCode: inputBarCode });
     if (res?.success) {
-      getTable(setTableData, orderList);
+      getTable(setTableData, setOriginalData, orderList);
     } else if (!res?.success && res?.error) {
       Alert({ title: "目前無法取得ERP資料" });
     }
@@ -21,7 +21,7 @@ export const getERP = async (setLoading, inputBarCode, setTableData, orderList) 
 };
 
 // 取得全訂單
-export const getTable = async (setTableData, orderList = null) => {
+export const getTable = async (setTableData, setOriginalData, orderList = null) => {
   try {
     const res = await getOrder({ cmd: "I", status: 0 });
     if (res?.success) {
@@ -31,6 +31,7 @@ export const getTable = async (setTableData, orderList = null) => {
         newData = res?.data?.data?.filter((v) => !orderList.includes(v.INSTOCK_NO));
       }
       setTableData(newData);
+      setOriginalData(newData);
     } else if (!res?.success) {
       Alert({ title: `目前網路不穩定，請重新再試。` });
     }

@@ -11,9 +11,11 @@ import Modal from "@/components/common/modal/modal";
 import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in, searchWMS_in, updateWMS_in } from "./inboundFunction";
 import { checkNodePos, checkOrder, checkOrderDetail } from "@/pages/api";
 import LoadingText from "../common/loading/loading-text";
+import { FaSearch, FaTrashAlt } from "react-icons/fa";
 
 export default function InboundContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
+  const [originalData, setOriginalData] = useState([]); //原始抓到的入庫資料
   const [tableData, setTableData] = useState([]); // 入庫單資訊
   const [tableData2, setTableData2] = useState([]); // 入庫單上的明細
   const [addModal, setAddModal] = useState(false);
@@ -80,7 +82,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       dispatch(setInbound({ station: currentStation, order: value, orderCode: value?.INSTOCK_NO, waveNo: value?.W_ID, step: 2 }));
       barCodeRef.current.value = "";
     } else {
-      await getERP(setLoading, inputBarCode, setTableData, orderList);
+      await getERP(setLoading, inputBarCode, setTableData, orderList, setOriginalData);
     }
   };
   const handleConfirmList = async () => {
@@ -275,8 +277,44 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     dispatch(selectShelf({ station: currentStation, shelf: shelve }));
   };
   const handleChangeREMARK = (e) => {
-    console.log(e.target.value, "123");
     dispatch(setInbound({ station: currentStation, remark: e.target.value }));
+  };
+
+  // ============================
+  // ⭐ 搜尋框
+  // ============================
+  let searchTimer; // 用來存放計時器
+  const [searchTerm, setSearchTerm] = useState("");
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+
+    clearTimeout(searchTimer);
+
+    // 2. 設定一個新的計時器
+    // 10000 毫秒 = 10 秒
+    searchTimer = setTimeout(() => {
+      executeSearch(); // 真正執行搜尋的函式
+    }, 3000);
+  };
+
+  const executeSearch = () => {
+    dispatch(resetInbound({ type: "search", station: currentStation, W_ID: waveNo }));
+    const keyword = document.getElementById("searchInput").value.trim().toUpperCase();
+    const filtered = originalData.filter((item) => item.INSTOCK_NO.toUpperCase().includes(keyword) || item.SALE_NO.toUpperCase().includes(keyword));
+    setTableData(filtered);
+  };
+  const handleSearchKeyDown = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    if (e.key === "Enter") {
+      executeSearch();
+    }
+  };
+  const handleDeleteInput = () => {
+    setSearchTerm("");
+    dispatch(resetInbound({ type: "search", station: currentStation, W_ID: waveNo }));
+    setTableData(originalData);
   };
   // ============================
   // ⭐ 撈ERP資料 / 顯示入庫單號
@@ -330,7 +368,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ⭐ 副作用
   // ============================
   useEffect(() => {
-    getTable(setTableData, orderList);
+    getTable(setTableData, setOriginalData, orderList);
     dispatch(clearAllShelves());
   }, [orderList]);
   useEffect(() => {
@@ -348,6 +386,24 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       <div className="flex gap-4 py-2 items-stretch h-[72vh]">
         {/* 左側表格 */}
         <div className="w-[47%] flex flex-col">
+          {step <= 2 && (
+            <div className="flex p-2 items-center justify-between">
+              <div className="w-full relative">
+                <input
+                  type="text"
+                  id="searchInput"
+                  value={searchTerm}
+                  placeholder="搜尋 IN_STOCKNO 或 SALE_NO..."
+                  className="w-full bg-white py-2 pl-4 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  onChange={handleSearch}
+                  onKeyDown={handleSearchKeyDown}
+                />
+                <div className="absolute inset-y-0 right-5 flex items-center " onClick={handleDeleteInput}>
+                  <FaTrashAlt />
+                </div>
+              </div>
+            </div>
+          )}
           {step > 2 && (
             <div className="flex p-2 items-center justify-between">
               <div className="flex-1">
@@ -431,21 +487,21 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
         <div className="flex flex-col">
           <div className="flex justify-between">
             <span className="truncate" title={order?.INSTOCK_NO}>
-              入倉單單號: {order?.INSTOCK_NO}
+              入倉單單號: {order?.INSTOCK_NO || ""}
             </span>
-            <span>入庫庫別: {order?.STOCK_AREA}</span>
+            <span>入庫庫別: {order?.STOCK_AREA || ""}</span>
           </div>
           <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
           <div className="truncate" title={order?.PRT_NO}>
-            產品品號: {order?.PRT_NO}
+            產品品號: {order?.PRT_NO || ""}
           </div>
           <div className="truncate" title={order?.PRT_NAME}>
-            品名: {order?.PRT_NAME}
+            品名: {order?.PRT_NAME || ""}
           </div>
           <div className="flex gap-16">
-            <span>箱數: {order?.BOX_NOS} 箱</span>
+            <span>箱數: {order?.BOX_NOS || ""} 箱</span>
             <span>
-              數量: {order?.PP_NOS} {order?.UNIT}
+              數量: {order?.PP_NOS || ""} {order?.UNIT || ""}
             </span>
           </div>
         </div>

@@ -31,7 +31,7 @@ const inboundSlice = createSlice({
       }
     },
     setInbound: (state, action) => {
-      const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation,remark } = action.payload;
+      const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation, remark } = action.payload;
       if (!state[station]) return;
       if (step !== undefined) state[station].step = step;
       if (screen !== undefined) state[station].screen = screen;
@@ -139,6 +139,13 @@ const inboundSlice = createSlice({
 
         // 3️⃣ 再重置 waveNo === W_ID 的 station
         // 沒寫成功，只清除了一個
+        Object.keys(state).forEach((key) => {
+          const s = state[key];
+          if (s && typeof s === "object" && "waveNo" in s && s.waveNo === W_ID) {
+            state[key] = createStation();
+          }
+        });
+      } else if (type === "search") {
         Object.keys(state).forEach((key) => {
           const s = state[key];
           if (s && typeof s === "object" && "waveNo" in s && s.waveNo === W_ID) {
