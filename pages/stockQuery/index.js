@@ -5,6 +5,7 @@ import SelectInput from "@/components/common/input/selectInput";
 import OnlyReadTable from "@/components/common/table/onlyReadTable";
 import { searchStock, stockDownload } from "../api";
 import Alert from "@/components/common/alert/alert";
+import CheckInput from "@/components/common/input/checkInput";
 
 export default function StockQuery() {
   const tableHeader = [
@@ -47,6 +48,12 @@ export default function StockQuery() {
     { label: "貨架號碼", key: "SHELVE_ID", width: 200 },
   ];
 
+  const SEAL_OPTIONS = [
+    { label: "封膜", value: 1 },
+    { label: "護角", value: 2 },
+    { label: "打包", value: 4 },
+  ];
+
   const [filters, setFilters] = useState({
     SALE_NO: "",
     PRT_NO: "",
@@ -55,7 +62,7 @@ export default function StockQuery() {
     STOCK_AREA: "",
     BILL_TIME: "",
     WORK_TIME: "",
-    SEAL: "",
+    SEAL: 0,
     CUS_NO: "",
   });
 
@@ -168,17 +175,23 @@ export default function StockQuery() {
               onChange={(e) => handleChange("BILL_TIME", e.target.value)}
               disabled={stockData.length > 0}
             />
-            <SelectInput
-              label="備註:"
-              value={filters.SEAL}
-              options={[
-                { label: "封膜OK", value: 1 },
-                { label: "護角OK", value: 2 },
-                { label: "打包OK", value: 4 },
-              ]}
-              onChange={(value) => handleChange("SEAL", value)}
-              disabled={stockData.length > 0}
-            />
+            <div className="flex items-center gap-2">
+              <span className="text-[24px] font-bold">備註:</span>
+              {SEAL_OPTIONS.map((opt) => (
+                <CheckInput
+                  key={opt.value}
+                  label={opt.label}
+                  // 使用位元與運算 (&) 檢查該位元是否為 1
+                  checked={(filters.SEAL & opt.value) === opt.value}
+                  onChange={() => {
+                    // 切換邏輯：如果原本已勾選就扣除(XOR)，沒勾選就加上(OR)
+                    const newValue = filters.SEAL ^ opt.value;
+                    handleChange("SEAL", newValue);
+                  }}
+                  disabled={stockData.length > 0}
+                />
+              ))}
+            </div>
           </div>
           <div className="grid grid-cols-5 gap-6 items-end">
             <TextInput
@@ -227,7 +240,7 @@ export default function StockQuery() {
                     STOCK_AREA: "",
                     BILL_TIME: "",
                     WORK_TIME: "",
-                    SEAL: "",
+                    SEAL: 0,
                     CUS_NO: "",
                   });
                   setStockData([]);
