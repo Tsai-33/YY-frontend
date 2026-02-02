@@ -323,7 +323,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ============================
   const searchWMS = async (data) => {
     const res = await searchWMS_in(data.SALE_NO, data.PRT_NO, data.STOCK_AREA);
-    setWMSData(res.data.data);
+    setWMSData(res?.data?.data);
   };
 
   // ============================
