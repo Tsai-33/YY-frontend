@@ -10,7 +10,7 @@ export default function InboundManager({ isOpen, onClose }) {
   const dispatch = useDispatch();
   const { stations } = useSelector((s) => s.workstation);
   const inbound = useSelector((state) => state.inbound);
-console.log(inbound,'inbound')
+  console.log(inbound, "inbound");
   const [station, setStation] = useState("A01");
   const [o, setO] = useState("");
   const [allOrderList, setAllOrderList] = useState([]);
@@ -44,6 +44,13 @@ console.log(inbound,'inbound')
         setInbound({
           station,
           orderCode: value,
+        }),
+      );
+    } else if (name === "screen") {
+      dispatch(
+        setInbound({
+          station,
+          screen: value,
         }),
       );
     }
@@ -146,7 +153,7 @@ console.log(inbound,'inbound')
                 <h3 className="flex items-center gap-2 text-slate-700">
                   <Filter size={18} /> 顯示訂單
                 </h3>
-                <div className="text-sm">{inbound?.orderList?.map(v => v).join(",")}</div>
+                <div className="text-sm">{inbound?.orderList?.map((v) => v).join(",")}</div>
                 <div className="flex items-center justify-between gap-3 p-3 bg-slate-50 rounded-lg border">
                   <span className="text-sm text-slate-600">排除項目</span>
                   <div className="relative flex-1">
