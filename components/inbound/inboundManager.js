@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { managerInbound, resetInbound, updateOrderList } from "@/redux/reducer/reducerInbound";
+import { managerInbound, resetInbound, setInbound, updateOrderList } from "@/redux/reducer/reducerInbound";
 import Alert from "../common/alert/alert";
 import { useEffect, useState } from "react";
 import { getTable } from "./inboundFunction";
@@ -10,8 +10,7 @@ export default function InboundManager({ isOpen, onClose }) {
   const dispatch = useDispatch();
   const { stations } = useSelector((s) => s.workstation);
   const inbound = useSelector((state) => state.inbound);
-
-
+console.log(inbound,'inbound')
   const [station, setStation] = useState("A01");
   const [o, setO] = useState("");
   const [allOrderList, setAllOrderList] = useState([]);
@@ -25,13 +24,29 @@ export default function InboundManager({ isOpen, onClose }) {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    dispatch(
-      managerInbound({
-        station,
-        name,
-        value: type === "checkbox" ? checked : value,
-      })
-    );
+    if (name === "step") {
+      dispatch(
+        managerInbound({
+          station,
+          name,
+          value: type === "checkbox" ? checked : value,
+        }),
+      );
+    } else if (name === "waveNo") {
+      dispatch(
+        setInbound({
+          station,
+          waveNo: value,
+        }),
+      );
+    } else if (name === "order") {
+      dispatch(
+        setInbound({
+          station,
+          orderCode: value,
+        }),
+      );
+    }
   };
 
   const handleClear = (type, targetStation) => {
@@ -117,11 +132,11 @@ export default function InboundManager({ isOpen, onClose }) {
               </div>
               <div className="p-4 bg-white rounded-xl border shadow-sm">
                 <p className="text-slate-400 text-xs mb-1">任務單號 (WID)</p>
-                <div className="text-2xl text-slate-700">{waveNo || "無"}</div>
+                <div className="text-2xl text-slate-700">{waveNo ? <input type="text" name="waveNo" className="text-2xl text-slate-700 bg-transparent w-full outline-none focus:ring-2 focus:ring-slate-200 rounded px-1" value={waveNo || ""} onChange={handleChange} /> : "無"}</div>
               </div>
               <div className="p-4 bg-white rounded-xl border shadow-sm flex flex-col justify-center">
                 <p className="text-slate-400 text-xs mb-1">入庫單號 (order)</p>
-                <div className="text-xl text-slate-700">{orderCode || "無"}</div>
+                <div className="text-xl text-slate-700">{orderCode ? <input type="text" name="order" className="text-2xl text-slate-700 bg-transparent w-full outline-none focus:ring-2 focus:ring-slate-200 rounded px-1" value={orderCode || "無"} onChange={handleChange} /> : "無"}</div>
               </div>
             </div>
 
@@ -131,6 +146,7 @@ export default function InboundManager({ isOpen, onClose }) {
                 <h3 className="flex items-center gap-2 text-slate-700">
                   <Filter size={18} /> 顯示訂單
                 </h3>
+                <div className="text-sm">{inbound?.orderList?.map(v => v).join(",")}</div>
                 <div className="flex items-center justify-between gap-3 p-3 bg-slate-50 rounded-lg border">
                   <span className="text-sm text-slate-600">排除項目</span>
                   <div className="relative flex-1">

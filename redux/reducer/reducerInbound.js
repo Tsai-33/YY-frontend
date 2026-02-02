@@ -33,6 +33,7 @@ const inboundSlice = createSlice({
     setInbound: (state, action) => {
       const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation, remark } = action.payload;
       if (!state[station]) return;
+
       if (step !== undefined) state[station].step = step;
       if (screen !== undefined) state[station].screen = screen;
       if (order !== undefined) state[station].order = order;
