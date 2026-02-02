@@ -8,10 +8,11 @@ import InboundTable from "@/components/inbound/inboundTable";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
-import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in, searchWMS_in, updateWMS_in } from "./inboundFunction";
+import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in, searchWMS_in, updateWMS_in, searchWMSBynoSALE_in } from "./inboundFunction";
 import { checkNodePos, checkOrder, checkOrderDetail } from "@/pages/api";
 import LoadingText from "../common/loading/loading-text";
 import { FaTrashAlt } from "react-icons/fa";
+import { MdShelves } from "react-icons/md";
 
 export default function InboundContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
@@ -367,9 +368,13 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ⭐ 搜尋 WMS新資料
   // ============================
   const searchWMS = async (data) => {
-    const res = await searchWMS_in(data.SALE_NO, data.PRT_NO, data.STOCK_AREA);
+    const res = await searchWMS_in(data.SALE_NO, data.PRT_NO, data.STOCK_AREA, data.SHELVE_ID);
     setWMSData(res?.data?.data);
   };
+  const handleOtherShelve = async()=>{
+    const res = await searchWMSBynoSALE_in();
+    setWMSData(res?.data?.data);
+  }
 
   // ============================
   // ⭐ 副作用
@@ -384,6 +389,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   useEffect(() => {
     if (!order) return;
     // 2026-1-28 現場討論，告知必須抓出相符條件
+    // 假設訂單內有SHELVE_ID的陣列
     searchWMS(order);
     dispatch(clearAllShelves());
   }, [order]);
@@ -443,7 +449,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
           <div className="flex flex-col flex-1 min-h-0 justify-between bg-white p-8 pb-4 h-full overflow-hidden">
             {orderCode && (
               <div className="h-full custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
-                {step <= 2 ? <ActionOrderList order={order} wmsData={wmsData} shelves={shelves} handleShelveClick={handleShelveClick} /> : <ShelfData shelf={shelf} remark={remark} displayItems={displayItems} handleChangeREMARK={handleChangeREMARK} />}
+                {step <= 2 ? <ActionOrderList order={order} wmsData={wmsData} shelves={shelves} handleShelveClick={handleShelveClick} handleOtherShelve={handleOtherShelve} /> : <ShelfData shelf={shelf} remark={remark} displayItems={displayItems} handleChangeREMARK={handleChangeREMARK} />}
               </div>
             )}
             <div className="flex flex-col justify-end items-center p-4">{orderCode && <ActionButtons />}</div>
@@ -487,7 +493,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 // ⭐ 貨架上資訊
 // ============================
 
-const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
+const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick ,handleOtherShelve}) => {
   return (
     <>
       <SchematicDiagramList>
@@ -542,6 +548,7 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
                         <div className="flex-1 flex items-center gap-2 truncate" title={shelveWMS?.REMARK}>
                           備註:{shelveWMS?.REMARK}
                         </div>
+                        <div>總材積: {Number(shelveWMS?.VOLUMNS || 0).toFixed(3)}</div>
                         <div>入庫庫別: {shelveWMS?.STOCK_AREA}</div>
                       </div>
                       <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
@@ -568,7 +575,13 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
             })}
           </>
         ) : (
-          <div className="w-full h-25 flex items-center justify-center">查無資料，隨機配置貨架</div>
+          <div className="w-full h-25 flex flex-col items-center justify-center">
+            <span>查無資料，確定後隨機配置空貨架</span>
+            <button className="text-sm text-gray-400 hover:text-blue-500 hover:underline transition-colors flex items-center gap-1 cursor-pointer" onClick={handleOtherShelve}>
+              <MdShelves />
+              選擇其他貨架
+            </button>
+          </div>
         )
       ) : (
         <LoadingText />

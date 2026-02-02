@@ -1,4 +1,4 @@
-import { addInboundWCS, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderDetailByWID, checkWCS, updateTask, deleteTask, getEPRData, returnInboundWCS, checkWCSLastCar, getWMS, searchInboundWMS, updateInboundWMSREMARK } from "@/pages/api";
+import { addInboundWCS, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderDetailByWID, checkWCS, updateTask, deleteTask, getEPRData, returnInboundWCS, checkWCSLastCar, getWMS, searchInboundWMS, updateInboundWMSREMARK, searchInboundWMSBynoSALE } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
@@ -217,11 +217,19 @@ export const deleteTask_in = async (stations) => {
   }
 };
 
-export const searchWMS_in = async (SALE_NO, PRT_NO) => {
+export const searchWMS_in = async (SALE_NO, PRT_NO, STOCK_AREA, SHELVE_ID = []) => {
   try {
-    return await searchInboundWMS({ SALE_NO: SALE_NO, PRT_NO: PRT_NO });
+    return await searchInboundWMS({ SALE_NO: SALE_NO, PRT_NO: PRT_NO, STOCK_AREA: STOCK_AREA, SHELVE_IDs: SHELVE_ID });
   } catch (err) {
     console.log(`searchWMS:`, err);
+  }
+};
+
+export const searchWMSBynoSALE_in = async () => {
+  try {
+    return await searchInboundWMSBynoSALE();
+  } catch (err) {
+    console.log(`handleOtherShelve:`, err);
   }
 };
 
