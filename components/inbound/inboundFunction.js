@@ -1,15 +1,15 @@
-import { addInboundWCS, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderDetailByWID, checkWCS, updateTask, deleteTask, getEPRData, returnInboundWCS, checkWCSLastCar, getWMS, searchInboundWMS, updateInboundWMSREMARK } from "@/pages/api";
+import { addInboundWCS, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderDetailByWID, checkWCS, updateTask, deleteTask, getEPRData, returnInboundWCS, checkWCSLastCar, getWMS, searchInboundWMS, updateInboundWMSREMARK, searchInboundWMSBynoSALE } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
 
 // 取得ERP資料
-export const getERP = async (setLoading, inputBarCode, setTableData, orderList) => {
+export const getERP = async (setLoading, inputBarCode, setTableData, orderList, setOriginalData) => {
   setLoading(true);
   try {
     const res = await getEPRData({ barCode: inputBarCode });
     if (res?.success) {
-      getTable(setTableData, orderList);
+      getTable(setTableData, setOriginalData, orderList);
     } else if (!res?.success && res?.error) {
       Alert({ title: "目前無法取得ERP資料" });
     }
@@ -21,7 +21,7 @@ export const getERP = async (setLoading, inputBarCode, setTableData, orderList) 
 };
 
 // 取得全訂單
-export const getTable = async (setTableData, orderList = null) => {
+export const getTable = async (setTableData, setOriginalData, orderList = null) => {
   try {
     const res = await getOrder({ cmd: "I", status: 0 });
     if (res?.success) {
@@ -31,6 +31,7 @@ export const getTable = async (setTableData, orderList = null) => {
         newData = res?.data?.data?.filter((v) => !orderList.includes(v.INSTOCK_NO));
       }
       setTableData(newData);
+      setOriginalData(newData);
     } else if (!res?.success) {
       Alert({ title: `目前網路不穩定，請重新再試。` });
     }
@@ -77,10 +78,10 @@ export const confrimList_in = async (setLoading, order, stations, shelves) => {
 };
 
 // 確認上架
-export const onToShelf_in = async (setLoading, selected, shelf, order, dispatch, setInbound, currentStation, setConfirmModal,remark) => {
+export const onToShelf_in = async (setLoading, selected, shelf, order, dispatch, setInbound, currentStation, setConfirmModal, remark) => {
   try {
     setLoading(true);
-    const data = { itemArray: selected, area: shelf.area, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO,REMARK:remark };
+    const data = { itemArray: selected, area: shelf.area, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO, REMARK: remark };
     return await updateInboundWMS(data);
   } catch (err) {
     console.log("handleConfrimShelf :", err);
@@ -156,10 +157,25 @@ export const restoreList_in = async (setLoading, waveNo) => {
 };
 
 // 完成
-export const finishList_in = async (setLoading, order) => {
+export const finishList_in = async (setLoading, order, inbound) => {
+  // 整理REMARK
+  const remarks =
+    inbound?.lackStation?.flatMap((v) => {
+      const shelfId = inbound[v]?.shelf?.SHELVE_ID;
+      if (shelfId) {
+        return [
+          {
+            SHELVE_ID: shelfId,
+            REMARK: inbound[v].remark,
+          },
+        ];
+      }
+      return []; // 回傳空陣列，最終結果就不會包含這一筆
+    }) || [];
+
   setLoading(true);
   try {
-    return await finishInboundOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME });
+    return await finishInboundOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, REMARK: remarks });
   } catch (err) {
     console.log(`handleFinish:`, err);
     return err;
@@ -201,11 +217,19 @@ export const deleteTask_in = async (stations) => {
   }
 };
 
-export const searchWMS_in = async (SALE_NO, PRT_NO) => {
+export const searchWMS_in = async (SALE_NO, PRT_NO, STOCK_AREA, SHELVE_ID = []) => {
   try {
-    return await searchInboundWMS({ SALE_NO: SALE_NO, PRT_NO: PRT_NO });
+    return await searchInboundWMS({ SALE_NO: SALE_NO, PRT_NO: PRT_NO, STOCK_AREA: STOCK_AREA, SHELVE_IDs: SHELVE_ID });
   } catch (err) {
     console.log(`searchWMS:`, err);
+  }
+};
+
+export const searchWMSBynoSALE_in = async () => {
+  try {
+    return await searchInboundWMSBynoSALE();
+  } catch (err) {
+    console.log(`handleOtherShelve:`, err);
   }
 };
 

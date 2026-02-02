@@ -15,8 +15,9 @@ export default function TransferTable({ data, data2, setAbnormal }) {
   // =============== 畫面一 ====================
   // radio table (左)
   const tableHeader = [
-    { label: "調撥單號", key: "INSTOCK_NO", width: `50%` },
-    { label: "調撥備註", key: "REMARK", width: `50%` },
+    { label: "調撥單號", key: "INSTOCK_NO", width: `35%` },
+    { label: "訂單單號", key: "SALE_NO", width: `35%` },
+    { label: "調撥備註", key: "REMARK", width: `30%` },
   ];
   const handleSelectedOption = (name, value, idKey) => {
     const valueId = value[idKey];

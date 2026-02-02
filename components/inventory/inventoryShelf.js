@@ -26,11 +26,13 @@ export default function InventoryShelf() {
   const stationState = useSelector((s) => s.inventory[currentStation]);
   const rowState = stationState?.rowState || [];
   const SHELVE_ID = stationState?.shelf?.SHELVE_ID;
+  const CARS = stationState?.shelf?.CARS;
   const shelfItem = stationState?.shelfItem;
   const currentSTOCKAREA = stationState?.filter?.stockArea;
   const currentCUSNO = stationState?.filter?.cusNo;
   const currentSALENO = stationState?.filter?.saleNo;
   const currentPRTNO = stationState?.filter?.prtNo;
+  const currentREMARK = stationState?.shelfItem[0]?.REMARK;
 
   // 目前選擇的工作站
   const handleSwitchStation = (station) => {

@@ -8,12 +8,15 @@ import InboundTable from "@/components/inbound/inboundTable";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
-import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in, searchWMS_in, updateWMS_in } from "./inboundFunction";
+import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in, searchWMS_in, updateWMS_in, searchWMSBynoSALE_in } from "./inboundFunction";
 import { checkNodePos, checkOrder, checkOrderDetail } from "@/pages/api";
 import LoadingText from "../common/loading/loading-text";
+import { FaTrashAlt } from "react-icons/fa";
+import { MdShelves } from "react-icons/md";
 
 export default function InboundContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
+  const [originalData, setOriginalData] = useState([]); //原始抓到的入庫資料
   const [tableData, setTableData] = useState([]); // 入庫單資訊
   const [tableData2, setTableData2] = useState([]); // 入庫單上的明細
   const [addModal, setAddModal] = useState(false);
@@ -23,6 +26,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
+  const inbound = useSelector((s) => s.inbound);
   const { orderList } = useSelector((s) => s.inbound);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, shelves, remark } = useSelector((s) => s.inbound[currentStationSafe] || {});
 
@@ -79,7 +83,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       dispatch(setInbound({ station: currentStation, order: value, orderCode: value?.INSTOCK_NO, waveNo: value?.W_ID, step: 2 }));
       barCodeRef.current.value = "";
     } else {
-      await getERP(setLoading, inputBarCode, setTableData, orderList);
+      await getERP(setLoading, inputBarCode, setTableData, orderList, setOriginalData);
     }
   };
   const handleConfirmList = async () => {
@@ -246,7 +250,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     if (res?.success) dispatch(resetInbound({ type: "one", station: currentStation, W_ID: waveNo }));
   };
   const handleFinish = async () => {
-    const res = await finishList_in(setLoading, order);
+    const res = await finishList_in(setLoading, order, inbound);
     if (res?.success) {
       dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res?.data?.data }));
       Alert({ title: "此單已完成" });
@@ -275,6 +279,50 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   };
   const handleChangeREMARK = (e) => {
     dispatch(setInbound({ station: currentStation, remark: e.target.value }));
+  };
+
+  // ============================
+  // ⭐ 搜尋框
+  // ============================
+  const timerRef = useRef(null); // 用來存放計時器
+  const [searchTerm, setSearchTerm] = useState("");
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+
+    // 1. 關鍵：清除「上一次」的計時器（確保只有最後一次會執行）
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    // 2. 如果使用者把內容砍光了，立刻重置，不要等 3 秒
+    if (value.trim() === "") {
+      executeSearch("");
+      return;
+    }
+
+    // 3. 設定新的計時器
+    timerRef.current = setTimeout(() => {
+      executeSearch(value);
+      timerRef.current = null;
+    }, 3000);
+  };
+  const executeSearch = () => {
+    dispatch(resetInbound({ type: "search", station: currentStation, W_ID: waveNo }));
+    const keyword = document.getElementById("searchInput").value.trim().toUpperCase();
+    const filtered = originalData.filter((item) => item.INSTOCK_NO.toUpperCase().includes(keyword) || item?.SALE_NO?.toUpperCase().includes(keyword) || String(item.BILL_TIME || "").includes(keyword));
+    setTableData(filtered);
+  };
+  const handleSearchKeyDown = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    if (e.key === "Enter") {
+      executeSearch();
+    }
+  };
+  const handleDeleteInput = () => {
+    setSearchTerm("");
+    dispatch(resetInbound({ type: "search", station: currentStation, W_ID: waveNo }));
+    setTableData(originalData);
   };
   // ============================
   // ⭐ 撈ERP資料 / 顯示入庫單號
@@ -320,31 +368,19 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ⭐ 搜尋 WMS新資料
   // ============================
   const searchWMS = async (data) => {
-    const res = await searchWMS_in(data.SALE_NO, data.PRT_NO);
-    // 同樣貨架組合再一起
-    const groupedData = res?.data?.data?.reduce((acc, current) => {
-      const shelf = acc.find((item) => item.SHELVE_ID === current.SHELVE_ID);
-
-      if (shelf) {
-        shelf.items.push(current);
-      } else {
-        acc.push({
-          SHELVE_ID: current.SHELVE_ID,
-          REMARK: current.REMARK,
-          STOCK_AREA: current.STOCK_AREA,
-          items: [current],
-        });
-      }
-      return acc;
-    }, []);
-    setWMSData(groupedData);
+    const res = await searchWMS_in(data.SALE_NO, data.PRT_NO, data.STOCK_AREA, data.SHELVE_ID);
+    setWMSData(res?.data?.data);
   };
+  const handleOtherShelve = async()=>{
+    const res = await searchWMSBynoSALE_in();
+    setWMSData(res?.data?.data);
+  }
 
   // ============================
   // ⭐ 副作用
   // ============================
   useEffect(() => {
-    getTable(setTableData, orderList);
+    getTable(setTableData, setOriginalData, orderList);
     dispatch(clearAllShelves());
   }, [orderList]);
   useEffect(() => {
@@ -353,6 +389,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   useEffect(() => {
     if (!order) return;
     // 2026-1-28 現場討論，告知必須抓出相符條件
+    // 假設訂單內有SHELVE_ID的陣列
     searchWMS(order);
     dispatch(clearAllShelves());
   }, [order]);
@@ -362,6 +399,24 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       <div className="flex gap-4 py-2 items-stretch h-[72vh]">
         {/* 左側表格 */}
         <div className="w-[47%] flex flex-col">
+          {step <= 2 && (
+            <div className="flex p-2 items-center justify-between">
+              <div className="w-full relative">
+                <input
+                  type="text"
+                  id="searchInput"
+                  value={searchTerm}
+                  placeholder="搜尋 入倉單號 或 訂單單號 ..."
+                  className="w-full bg-white py-2 pl-4 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  onChange={handleSearch}
+                  onKeyDown={handleSearchKeyDown}
+                />
+                <div className="absolute inset-y-0 right-5 flex items-center " onClick={handleDeleteInput}>
+                  <FaTrashAlt />
+                </div>
+              </div>
+            </div>
+          )}
           {step > 2 && (
             <div className="flex p-2 items-center justify-between">
               <div className="flex-1">
@@ -394,7 +449,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
           <div className="flex flex-col flex-1 min-h-0 justify-between bg-white p-8 pb-4 h-full overflow-hidden">
             {orderCode && (
               <div className="h-full custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
-                {step <= 2 ? <ActionOrderList order={order} wmsData={wmsData} shelves={shelves} handleShelveClick={handleShelveClick} /> : <ShelfData shelf={shelf} remark={remark} displayItems={displayItems} handleChangeREMARK={handleChangeREMARK} />}
+                {step <= 2 ? <ActionOrderList order={order} wmsData={wmsData} shelves={shelves} handleShelveClick={handleShelveClick} handleOtherShelve={handleOtherShelve} /> : <ShelfData shelf={shelf} remark={remark} displayItems={displayItems} handleChangeREMARK={handleChangeREMARK} />}
               </div>
             )}
             <div className="flex flex-col justify-end items-center p-4">{orderCode && <ActionButtons />}</div>
@@ -404,14 +459,15 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
       {/* Modals */}
       <Modal showModal={confirmModal} title="確認上架" onClose={() => setConfirmModal(false)} onConfirm={handleConfirmShelf} width="39vw" height="40vh">
-        <div>請確定是否上架以下品項</div>
-        {modalGroupedItems.map((v) => (
-          <div key={v.PRT_NO} className="flex justify-between items-center gap-x-6">
-            <span className="font-medium text-gray-700">{v.PRT_NO}</span>
-            <span className="font-medium text-gray-700">{v.PP_NO}</span>
-            <span className="font-medium text-gray-700">{v.UNIT}</span>
-          </div>
-        ))}
+        <div className="flex flex-col items-center px-16 max-h-35 overflow-y-auto custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
+          {modalGroupedItems.map((v) => (
+            <div key={v.PRT_NO} className="flex justify-between items-center gap-x-6">
+              <span className="font-medium text-gray-700">{v.PRT_NO}</span>
+              <span className="font-medium text-gray-700">{v.PP_NO}</span>
+              <span className="font-medium text-gray-700">{v.UNIT}</span>
+            </div>
+          ))}
+        </div>
       </Modal>
       <Modal
         showModal={addModal}
@@ -437,28 +493,28 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 // ⭐ 貨架上資訊
 // ============================
 
-const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
+const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick ,handleOtherShelve}) => {
   return (
     <>
       <SchematicDiagramList>
         <div className="flex flex-col">
           <div className="flex justify-between">
             <span className="truncate" title={order?.INSTOCK_NO}>
-              入倉單單號: {order?.INSTOCK_NO}
+              入倉單單號: {order?.INSTOCK_NO || ""}
             </span>
-            <span>入庫庫別: {order?.STOCK_AREA}</span>
+            <span>入庫庫別: {order?.STOCK_AREA || ""}</span>
           </div>
           <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
           <div className="truncate" title={order?.PRT_NO}>
-            產品品號: {order?.PRT_NO}
+            產品品號: {order?.PRT_NO || ""}
           </div>
           <div className="truncate" title={order?.PRT_NAME}>
-            品名: {order?.PRT_NAME}
+            品名: {order?.PRT_NAME || ""}
           </div>
           <div className="flex gap-16">
-            <span>箱數: {order?.BOX_NOS} 箱</span>
+            <span>箱數: {order?.BOX_NOS || ""} 箱</span>
             <span>
-              數量: {order?.PP_NOS} {order?.UNIT}
+              數量: {order?.PP_NOS || ""} {order?.UNIT || ""}
             </span>
           </div>
         </div>
@@ -467,8 +523,21 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
         wmsData.length > 0 ? (
           <>
             <div className="h-px bg-gradient-to-r from-transparent via-slate-400 to-transparent opacity-50 my-8"></div>
+            <div>
+              {(() => {
+                const caseMap = {
+                  1: "以下為匹配「同訂單號」與「同產品號」貨架",
+                  2: "以下為匹配「同訂單號」貨架",
+                  3: "以下為匹配「同產品號」且「同庫區」貨架",
+                  4: "以下為匹配「同產品號」貨架",
+                  5: "以下為匹配「無訂單號」貨架",
+                };
+                // 取得對應文字，如果都沒有匹配則顯示空字串
+                return <div className="text-lg w-full text-center">{caseMap[wmsData[0]?.case] || ""}</div>;
+              })()}
+            </div>
             {wmsData?.map((shelveWMS, index) => {
-              const isSelected = shelves.some((item) => item?.SHELVE_ID === shelveWMS.SHELVE_ID);
+              const isSelected = shelves?.some((item) => item?.SHELVE_ID === shelveWMS.SHELVE_ID);
               return (
                 <div key={index} onClick={() => handleShelveClick(shelveWMS)} className="cursor-pointer transition-all hover:shadow-lg py-1">
                   <SchematicDiagram isSelected={isSelected}>
@@ -479,19 +548,22 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
                         <div className="flex-1 flex items-center gap-2 truncate" title={shelveWMS?.REMARK}>
                           備註:{shelveWMS?.REMARK}
                         </div>
+                        <div>總材積: {Number(shelveWMS?.VOLUMNS || 0).toFixed(3)}</div>
                         <div>入庫庫別: {shelveWMS?.STOCK_AREA}</div>
                       </div>
                       <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
                       <table className="w-full border-collapse text-left border-collapse">
                         <thead className="bg-gray-300 rounded-lg">
-                          <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
-                          <th className="p-2">品名</th>
-                          <th className="p-2 w-[12%]">總箱數</th>
-                          <th className="p-2 w-[18%]">總包數</th>
-                          <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
+                          <tr>
+                            <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
+                            <th className="p-2">品名</th>
+                            <th className="p-2 w-[12%]">總箱數</th>
+                            <th className="p-2 w-[18%]">總包數</th>
+                            <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
+                          </tr>
                         </thead>
                         <tbody className="bg-gray-100 rounded-lg">
-                          {shelveWMS.items.map((item, ii) => (
+                          {shelveWMS?.items?.map((item, ii) => (
                             <ShelfItemRow key={`${item.PRT_NO}-${index}`} isLast={ii === shelveWMS.items.length - 1} item={item} />
                           ))}
                         </tbody>
@@ -503,7 +575,13 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
             })}
           </>
         ) : (
-          <div className="w-full h-25 flex items-center justify-center">查無資料，隨機配置貨架</div>
+          <div className="w-full h-25 flex flex-col items-center justify-center">
+            <span>查無資料，確定後隨機配置空貨架</span>
+            <button className="text-sm text-gray-400 hover:text-blue-500 hover:underline transition-colors flex items-center gap-1 cursor-pointer" onClick={handleOtherShelve}>
+              <MdShelves />
+              選擇其他貨架
+            </button>
+          </div>
         )
       ) : (
         <LoadingText />
@@ -514,6 +592,7 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
 const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems }) => {
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
+      e.preventDefault();
       e.target.blur();
     }
   };
@@ -536,11 +615,13 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems }) => {
           ) : (
             <table className="table-fixed w-full text-left border-collapse">
               <thead className="bg-gray-300 rounded-lg">
-                <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
-                <th className="p-2">品名</th>
-                <th className="p-2 w-[12%]">總箱數</th>
-                <th className="p-2 w-[18%]">總包數</th>
-                <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
+                <tr>
+                  <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
+                  <th className="p-2">品名</th>
+                  <th className="p-2 w-[12%]">總箱數</th>
+                  <th className="p-2 w-[18%]">總包數</th>
+                  <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
+                </tr>
               </thead>
               <tbody>
                 {displayItems.map((item, index) => (
@@ -578,7 +659,9 @@ const ShelfItemRow = ({ item, isLast }) => {
       <td className="p-2 truncate max-w-0" title={item?.PP_NO}>
         {item?.PP_NO} <span className="inline-block text-red-500">{item?.selectedPP > 0 && `(+${item?.selectedPP})`}</span>
       </td>
-      <td className={`p-2 truncate max-w-0 ${isLast ? "rounded-br-lg" : ""}`} title={item?.UNIT}>{item?.UNIT}</td>
+      <td className={`p-2 truncate max-w-0 ${isLast ? "rounded-br-lg" : ""}`} title={item?.UNIT}>
+        {item?.UNIT}
+      </td>
     </tr>
   );
 };

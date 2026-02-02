@@ -23,7 +23,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   // 測試選站 上市後刪掉)
-  const [thisStation, setThisStation] = useState("");
+  const [thisStation, setThisStation] = useState(process.env.NEXT_PUBLIC_IP_A);
   const handleChangeStation = (e) => {
     setThisStation(e.target.value);
   };
@@ -339,7 +339,8 @@ export default function Login() {
                 <option value={process.env.NEXT_PUBLIC_IP_A}>A01~A10</option>
                 <option value={process.env.NEXT_PUBLIC_IP_B}>B01~B05</option>
                 <option value={process.env.NEXT_PUBLIC_IP_C}>C01~C05</option>
-                <option value={process.env.NEXT_PUBLIC_IP_D}>D01~D04</option>
+                <option value={process.env.NEXT_PUBLIC_IP_D}>D01~D05</option>
+                <option value={process.env.NEXT_PUBLIC_IP_E}>E01~E04</option>
               </select>
               {/* ... SVG 略 ... */}
             </div>

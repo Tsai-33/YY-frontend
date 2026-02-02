@@ -4,31 +4,34 @@ import LoadingText from "../loading/loading-text";
 export default function NoCheckBoxTable({ headers = [], data = [], onChange, checked, idKey }) {
   return (
     <div className="w-full h-full bg-white border border-white text-center overflow-y-auto custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
-      {!data ?
-        <LoadingText />
-        :
-        data.length <= 0 ?
-        <div className="h-full flex items-center justify-center">沒有資料</div>
-        :
-        <table className="table-fixed w-full">
-          <thead>
-            <tr className={`sticky top-0 z-5 bg-(--gray-light)`}>
-              {headers.map((header, idx) => (
-                <th
-                  key={idx}
-                  className="px-4 py-2"
-                  style={{
-                    width: `${header.width}`,
-                    boxShadow: "inset 0 0 0 1px #ffffff",
-                  }}
-                >
-                  {header.renderHeader ? header.renderHeader(header) : header.label}
-                </th>
-              ))}
+      <table className="table-fixed w-full">
+        <thead>
+          <tr className={`sticky top-0 z-5 bg-(--gray-light)`}>
+            {headers.map((header, idx) => (
+              <th
+                key={idx}
+                className="px-4 py-2"
+                style={{
+                  width: `${header.width}`,
+                  boxShadow: "inset 0 0 0 1px #ffffff",
+                }}
+              >
+                {header.renderHeader ? header.renderHeader(header) : header.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {!data ? (
+            <LoadingText />
+          ) : data.length <= 0 ? (
+            <tr>
+              <td colSpan="100%" className="h-40">
+                <div className="flex items-center justify-center text-gray-500 text-lg">沒有資料</div>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {data.map((row, ridx) => (
+          ) : (
+            data.map((row, ridx) => (
               <tr
                 key={ridx}
                 className={`hover:bg-(--green-pale) cursor-pointer ${checked === row[idKey] ? "bg-[var(--green-vivid-50)] text-white" : ""}`}
@@ -43,10 +46,10 @@ export default function NoCheckBoxTable({ headers = [], data = [], onChange, che
                   </td>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      }
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }

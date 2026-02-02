@@ -18,6 +18,8 @@ export const updateInboundWMSREMARK = (payload) => api.post("/inbound/update/wms
 export const finishInboundOrder = (payload) => api.post("/inbound/finish/order", payload);
 export const restoreOrders = (payload) => api.post("/inbound/restore/orders", payload);
 export const searchInboundWMS = (payload)=> api.post("/inbound/search/wms", payload);
+export const searchInboundWMSBynoSALE = ()=> api.get("/inbound/search/wms/no/saleno");
+
 
 /* 取得出庫單(銷貨) */
 export const getOutboundExternal = () => api.get("/outboundExternal/getOutBoundExternal");

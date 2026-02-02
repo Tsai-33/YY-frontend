@@ -53,7 +53,7 @@ export const initWorkstation = (ip) => (dispatch) => {
     dispatch(setCurrentStation(stations[0]));
     return { success: true };
   }
-  // --- B 區 (兩台電腦，各管 5 個站)
+  // --- B 區 
   if (config.B.computers.includes(ip)) {
     const stations = config.B.stations[ip];
 
@@ -61,13 +61,32 @@ export const initWorkstation = (ip) => (dispatch) => {
       setWorkstation({
         area: "B",
         ip,
-        stations: config.B.stations[ip], 
+        stations: config.B.stations[ip],
         jobs: config.B.jobs,
         currentStation: null,
         currentJob: null,
       }),
     );
     // ⬅️ 自動設定成 B01 或 B06（依據 IP）
+    dispatch(setCurrentStation(stations[0]));
+    return { success: true };
+  }
+
+  // --- C 區
+  if (config.C.computers.includes(ip)) {
+    const stations = config.C.stations[ip];
+
+    dispatch(
+      setWorkstation({
+        area: "C",
+        ip,
+        stations: config.C.stations[ip],
+        jobs: config.C.jobs,
+        currentStation: null,
+        currentJob: null,
+      }),
+    );
+    // ⬅️ 自動設定成 D01 或 D05（依據 IP）
     dispatch(setCurrentStation(stations[0]));
     return { success: true };
   }
