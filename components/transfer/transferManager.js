@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { managerTransfer, resetTransfer } from "@/redux/reducer/reducerTransfer";
+import { managerTransfer, resetTransfer, setTransfer } from "@/redux/reducer/reducerTransfer";
 import Alert from "../common/alert/alert";
 import { useEffect, useState } from "react";
 import { getTable } from "./transferFunction";
@@ -24,14 +24,38 @@ export default function TransferManager({ isOpen, onClose }) {
 
   const handleChange = (e, index) => {
     const { name, value, type, checked } = e.target;
-    dispatch(
-      managerTransfer({
-        station,
-        name,
-        value: type === "checkbox" ? checked : value,
-        index,
-      })
-    );
+
+    if (name === "step") {
+      dispatch(
+        managerTransfer({
+          station,
+          name,
+          value: type === "checkbox" ? checked : value,
+          index,
+        }),
+      );
+    } else if (name === "waveNo") {
+      dispatch(
+        setTransfer({
+          station,
+          waveNo: value,
+        }),
+      );
+    } else if (name === "order") {
+      dispatch(
+        setTransfer({
+          station,
+          orderCode: value,
+        }),
+      );
+    } else if (name === "screen") {
+      dispatch(
+        setTransfer({
+          station,
+          screen: value,
+        }),
+      );
+    } 
   };
 
   const handleClear = (type) => {
@@ -116,11 +140,15 @@ export default function TransferManager({ isOpen, onClose }) {
               </div>
               <div className="p-4 bg-white rounded-xl border shadow-sm">
                 <p className="text-slate-400 text-xs mb-1">任務單號 (WID)</p>
-                <div className="text-2xl text-slate-700">{transfer.waveNo || "無"}</div>
+                <div className="text-2xl text-slate-700">
+                  <input type="text" name="waveNo" className="text-2xl text-slate-700 bg-transparent w-full outline-none focus:ring-2 focus:ring-slate-200 rounded px-1" value={transfer.waveNo || "無"} onChange={handleChange} />
+                </div>
               </div>
               <div className="p-4 bg-white rounded-xl border shadow-sm flex flex-col justify-center">
                 <p className="text-slate-400 text-xs mb-1">調撥單號 (order)</p>
-                <div className="text-xl text-slate-700">{transfer.orderCode || "無"}</div>
+                <div className="text-xl text-slate-700">
+                  <input type="text" name="order" className="text-2xl text-slate-700 bg-transparent w-full outline-none focus:ring-2 focus:ring-slate-200 rounded px-1" value={transfer.orderCode || "無"} onChange={handleChange} />
+                </div>
               </div>
             </div>
 

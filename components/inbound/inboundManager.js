@@ -139,11 +139,15 @@ export default function InboundManager({ isOpen, onClose }) {
               </div>
               <div className="p-4 bg-white rounded-xl border shadow-sm">
                 <p className="text-slate-400 text-xs mb-1">任務單號 (WID)</p>
-                <div className="text-2xl text-slate-700">{waveNo ? <input type="text" name="waveNo" className="text-2xl text-slate-700 bg-transparent w-full outline-none focus:ring-2 focus:ring-slate-200 rounded px-1" value={waveNo || ""} onChange={handleChange} /> : "無"}</div>
+                <div className="text-2xl text-slate-700">
+                  <input type="text" name="waveNo" className="text-2xl text-slate-700 bg-transparent w-full outline-none focus:ring-2 focus:ring-slate-200 rounded px-1" value={waveNo || "無"} onChange={handleChange} />
+                </div>
               </div>
               <div className="p-4 bg-white rounded-xl border shadow-sm flex flex-col justify-center">
                 <p className="text-slate-400 text-xs mb-1">入庫單號 (order)</p>
-                <div className="text-xl text-slate-700">{orderCode ? <input type="text" name="order" className="text-2xl text-slate-700 bg-transparent w-full outline-none focus:ring-2 focus:ring-slate-200 rounded px-1" value={orderCode || "無"} onChange={handleChange} /> : "無"}</div>
+                <div className="text-xl text-slate-700">
+                  <input type="text" name="order" className="text-2xl text-slate-700 bg-transparent w-full outline-none focus:ring-2 focus:ring-slate-200 rounded px-1" value={orderCode || "無"} onChange={handleChange} />
+                </div>
               </div>
             </div>
 
