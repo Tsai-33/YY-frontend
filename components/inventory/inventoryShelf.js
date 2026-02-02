@@ -18,7 +18,7 @@ export default function InventoryShelf() {
   const stationState = useSelector((s) => s.inventory[currentStation]);
   const rowState = stationState?.rowState || [];
   const SHELVE_ID = stationState?.shelf?.SHELVE_ID;
-  const CARS = stationState?.shelf?.CARS
+  const CARS = stationState?.shelf?.CARS;
   const shelfItem = stationState?.shelfItem;
   const currentSTOCKAREA = stationState?.filter?.stockArea;
   const currentCUSNO = stationState?.filter?.cusNo;
@@ -305,11 +305,13 @@ export default function InventoryShelf() {
 
                   <table className="table-fixed w-full text-left border-collapse">
                     <thead className="bg-gray-300 rounded-lg">
-                      <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
-                      <th className="p-2">品名</th>
-                      <th className="p-2 w-[12%]">總箱數</th>
-                      <th className="p-2 w-[18%]">總包數</th>
-                      <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
+                      <tr>
+                        <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
+                        <th className="p-2">品名</th>
+                        <th className="p-2 w-[12%]">總箱數</th>
+                        <th className="p-2 w-[18%]">總包數</th>
+                        <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
+                      </tr>
                     </thead>
                     <tbody>
                       {shelfItem.map((item, index) => (
@@ -324,8 +326,12 @@ export default function InventoryShelf() {
                           <td className="p-2 truncate max-w-0" title={item?.BOX_NO}>
                             {item?.BOX_NO}
                           </td>
-                          <td className="p-2 truncate max-w-0" title={item?.PP_NO}>{item?.PP_NO}</td>
-                          <td className={`p-2 truncate max-w-0 ${index === shelfItem.length - 1 ? "rounded-br-lg" : ""}`} title={item?.UNIT}>{item?.UNIT}</td>
+                          <td className="p-2 truncate max-w-0" title={item?.PP_NO}>
+                            {item?.PP_NO}
+                          </td>
+                          <td className={`p-2 truncate max-w-0 ${index === shelfItem.length - 1 ? "rounded-br-lg" : ""}`} title={item?.UNIT}>
+                            {item?.UNIT}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

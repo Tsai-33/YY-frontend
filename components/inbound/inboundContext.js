@@ -11,7 +11,7 @@ import Modal from "@/components/common/modal/modal";
 import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in, searchWMS_in, updateWMS_in } from "./inboundFunction";
 import { checkNodePos, checkOrder, checkOrderDetail } from "@/pages/api";
 import LoadingText from "../common/loading/loading-text";
-import { FaSearch, FaTrashAlt } from "react-icons/fa";
+import { FaTrashAlt } from "react-icons/fa";
 
 export default function InboundContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
@@ -283,25 +283,32 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ============================
   // ⭐ 搜尋框
   // ============================
-  let searchTimer; // 用來存放計時器
+  const timerRef = useRef(null); // 用來存放計時器
   const [searchTerm, setSearchTerm] = useState("");
   const handleSearch = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
 
-    clearTimeout(searchTimer);
+    // 1. 關鍵：清除「上一次」的計時器（確保只有最後一次會執行）
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    // 2. 如果使用者把內容砍光了，立刻重置，不要等 3 秒
+    if (value.trim() === "") {
+      executeSearch("");
+      return;
+    }
 
-    // 2. 設定一個新的計時器
-    // 10000 毫秒 = 10 秒
-    searchTimer = setTimeout(() => {
-      executeSearch(); // 真正執行搜尋的函式
+    // 3. 設定新的計時器
+    timerRef.current = setTimeout(() => {
+      executeSearch(value);
+      timerRef.current = null;
     }, 3000);
   };
-
   const executeSearch = () => {
     dispatch(resetInbound({ type: "search", station: currentStation, W_ID: waveNo }));
     const keyword = document.getElementById("searchInput").value.trim().toUpperCase();
-    const filtered = originalData.filter((item) => item.INSTOCK_NO.toUpperCase().includes(keyword) || item.SALE_NO.toUpperCase().includes(keyword));
+    const filtered = originalData.filter((item) => item.INSTOCK_NO.toUpperCase().includes(keyword) || item?.SALE_NO?.toUpperCase().includes(keyword) || String(item.BILL_TIME || "").includes(keyword));
     setTableData(filtered);
   };
   const handleSearchKeyDown = (e) => {
@@ -393,7 +400,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
                   type="text"
                   id="searchInput"
                   value={searchTerm}
-                  placeholder="搜尋 IN_STOCKNO 或 SALE_NO..."
+                  placeholder="搜尋 入倉單號 或 訂單單號 ..."
                   className="w-full bg-white py-2 pl-4 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                   onChange={handleSearch}
                   onKeyDown={handleSearchKeyDown}
@@ -540,11 +547,13 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick }) => {
                       <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
                       <table className="w-full border-collapse text-left border-collapse">
                         <thead className="bg-gray-300 rounded-lg">
-                          <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
-                          <th className="p-2">品名</th>
-                          <th className="p-2 w-[12%]">總箱數</th>
-                          <th className="p-2 w-[18%]">總包數</th>
-                          <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
+                          <tr>
+                            <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
+                            <th className="p-2">品名</th>
+                            <th className="p-2 w-[12%]">總箱數</th>
+                            <th className="p-2 w-[18%]">總包數</th>
+                            <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
+                          </tr>
                         </thead>
                         <tbody className="bg-gray-100 rounded-lg">
                           {shelveWMS?.items?.map((item, ii) => (
@@ -593,11 +602,13 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems }) => {
           ) : (
             <table className="table-fixed w-full text-left border-collapse">
               <thead className="bg-gray-300 rounded-lg">
-                <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
-                <th className="p-2">品名</th>
-                <th className="p-2 w-[12%]">總箱數</th>
-                <th className="p-2 w-[18%]">總包數</th>
-                <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
+                <tr>
+                  <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
+                  <th className="p-2">品名</th>
+                  <th className="p-2 w-[12%]">總箱數</th>
+                  <th className="p-2 w-[18%]">總包數</th>
+                  <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
+                </tr>
               </thead>
               <tbody>
                 {displayItems.map((item, index) => (

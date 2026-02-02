@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import InputFrame from "@/components/common/input/inputFrame";
@@ -10,6 +10,7 @@ import TransferTable from "@/components/transfer/transferTable";
 import { resetTransfer, setAllLoading, setTransfer, updateShelfItem } from "@/redux/reducer/reducerTransfer";
 import { addAbnormal_tr, addShelf_tr, addTask_tr, cancelShelf_tr, checkTask_tr, checkWCS_tr, confrimList_tr, deleteTask_tr, finishList_tr, getEPR, getList, getTable, restoreList_tr, returnShelf_tr, updateWMS_tr } from "@/components/transfer/transferFunction";
 import { restoreTransfer } from "@/pages/api";
+import { FaTrashAlt } from "react-icons/fa";
 
 /**
  * 調撥系統核心上下文組件 (TransferContext)
@@ -21,6 +22,7 @@ import { restoreTransfer } from "@/pages/api";
 
 export default function TransferContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
+  const [originalData, setOriginalData] = useState([]); //原始抓到的資料
   const [tableData, setTableData] = useState([]); // 調撥單資訊
   const [tableDataTotal2, setTableTotalData2] = useState([]); // 調撥單上的所有明細
   const [tableData2, setTableData2] = useState([]); // 調撥單上的明細
@@ -70,8 +72,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
 
       barCodeRef.current.value = "";
     } else {
-      await getEPR(setLoading, inputBarCode, setTableData, setTableTotalData2);
-      getTable(setTableData, setTableTotalData2);
+      await getEPR(setLoading, inputBarCode, setTableData, setTableTotalData2, setOriginalData);
     }
   };
   const handleConfirmList = async () => {
@@ -163,7 +164,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
               await handleCancel();
               await deleteTask_tr(stations);
               await restoreTransfer({ W_ID: waveNo });
-              getTable(setTableData, setTableTotalData2);
+              getTable(setTableData, setTableTotalData2, setOriginalData);
             },
           });
         } else if (tableData2.some((v) => v.STATUS === 2)) {
@@ -181,7 +182,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
               await handleCancel();
               await deleteTask_tr(stations);
               await restoreTransfer({ W_ID: order.W_ID });
-              getTable(setTableData, setTableTotalData2);
+              getTable(setTableData, setTableTotalData2, setOriginalData);
             },
           });
           return;
@@ -277,6 +278,48 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     }
   };
 
+  // ============================
+  // ⭐ 搜尋框
+  // ============================
+  const timerRef = useRef(null); // 使用 Ref 來保存計時器
+  const [searchTerm, setSearchTerm] = useState("");
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+
+    // 1. 關鍵：清除「上一次」的計時器（確保只有最後一次會執行）
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    // 2. 如果使用者把內容砍光了，立刻重置，不要等 3 秒
+    if (value.trim() === "") {
+      executeSearch("");
+      return;
+    }
+
+    // 3. 設定新的計時器
+    timerRef.current = setTimeout(() => {
+      executeSearch(value);
+      timerRef.current = null;
+    }, 3000);
+  };
+  const executeSearch = (keyword) => {
+    dispatch(resetTransfer({ type: "search", station: currentStation }));
+    const filtered = originalData.filter((item) => item.INSTOCK_NO.toUpperCase().includes(keyword) || item.SALE_NO.toUpperCase().includes(keyword) || item.REMARK.includes(keyword));
+    setTableData(filtered);
+  };
+  const handleSearchKeyDown = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    if (e.key === "Enter") {
+      executeSearch(value);
+    }
+  };
+  const handleDeleteInput = () => {
+    setSearchTerm("");
+    dispatch(resetTransfer({ type: "search", station: currentStation }));
+    setTableData(originalData);
+  };
   /**
    * 核心邏輯：計算貨架顯示資訊
    * 透過 Map 合併「現有貨架項目 (shelfItem)」與「本次勾選待處理項目 (selected)」
@@ -431,7 +474,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
 
   // -------------------------------*
   useEffect(() => {
-    getTable(setTableData, setTableTotalData2);
+    getTable(setTableData, setTableTotalData2, setOriginalData);
   }, [waveNo]);
   useEffect(() => {
     if (!waveNo) return;
@@ -444,7 +487,25 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       <div className="flex gap-4 py-2 items-stretch h-[72vh]">
         {/* 左側 */}
         <div className="w-[47%] flex flex-col">
-          <div className="flex-1 h-0">
+          {step <= 2 && (
+            <div className="flex p-2 items-center justify-between">
+              <div className="w-full relative">
+                <input
+                  type="text"
+                  id="searchInput"
+                  value={searchTerm}
+                  placeholder="搜尋 調撥單號 或 訂單單號 ..."
+                  className="w-full bg-white py-2 pl-4 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  onChange={handleSearch}
+                  onKeyDown={handleSearchKeyDown}
+                />
+                <div className="absolute inset-y-0 right-5 flex items-center " onClick={handleDeleteInput}>
+                  <FaTrashAlt />
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex-1 min-h-0">
             <TransferTable data={tableData} data2={tableData2} setAbnormal={setAbnormal} />
           </div>
         </div>

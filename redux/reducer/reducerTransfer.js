@@ -51,7 +51,7 @@ const transferSlice = createSlice({
     updateShelfItem: (state, action) => {
       const { station, items, ppStation } = action.payload;
       if (!state[station]) return;
-      console.log(items,station,'A')
+      console.log(items, station, "A");
 
       // 來源扣除 (幽靈車不扣)
       if (items?.MEMO !== "X01") {
@@ -101,9 +101,6 @@ const transferSlice = createSlice({
     // 重置
     resetTransfer: (state, action) => {
       const { type, station, W_ID } = action.payload;
-
-      console.log(type, station, W_ID, "station");
-
       if (type === "one") {
         state[station].screen = "loading";
       } else if (type === "all") {
@@ -112,6 +109,11 @@ const transferSlice = createSlice({
           nextState[s] = createStation(s);
         });
         return nextState;
+      } else if (type === "search") {
+        if (state[station]) {
+          Object.assign(state, initialState);
+          state[station] = createStation();
+        }
       }
     },
   },
