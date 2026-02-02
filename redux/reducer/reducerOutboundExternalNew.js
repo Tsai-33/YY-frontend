@@ -12,7 +12,8 @@ const createStation = () => ({
   shelfItem: [],
   selected: [],
   selectedShelves: [], // 使用者選擇的貨架
-  pushButton: null
+  pushButton: null,
+  remark: ""
 });
 
 const initialState = stationList.reduce(
@@ -28,7 +29,7 @@ const outboundExternalNewSlice = createSlice({
   initialState,
   reducers: {
     setOutboundExternalNew: (state, action) => {
-      const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, selectedShelves, station, lackStation, pushButton } = action.payload;
+      const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, selectedShelves, station, lackStation, pushButton, remark } = action.payload;
       if (!state[station]) return;
 
       if (step !== undefined) state[station].step = step;
@@ -41,6 +42,7 @@ const outboundExternalNewSlice = createSlice({
       if (selected !== undefined) state[station].selected = selected;
       if (selectedShelves !== undefined) state[station].selectedShelves = selectedShelves;
       if (pushButton !== undefined) state[station].pushButton = pushButton;
+      if (remark !== undefined) state[station].remark = remark;
       if (orderList !== undefined) state.orderList = [...new Set([...state.orderList, orderList])];
       if (lackStation !== undefined) state.lackStation = [...new Set([...state.lackStation, lackStation])];
     },

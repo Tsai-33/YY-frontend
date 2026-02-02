@@ -4,7 +4,7 @@ import OutboundExternalNewTable from "@/components/outboundExternalNew/outboundE
 import { setCurrentStation, setCurrentJob, updateLackStation } from "@/redux/reducer/reducerWorkStations";
 import { setOutboundExternalNew, selectShelf, clearSelectedShelves, clearPushButton, updateLackStation as updateOutboundLackStation, updateOrderList } from "@/redux/reducer/reducerOutboundExternalNew";
 import { resetOutboundExternalNew } from "@/redux/reducer/reducerOutboundExternalNew";
-import { getOutboundExternal, getOutBoundExternalOrderDetailBySaleNo, sendToWMS, shiftOutOnReturn, updateStatusForOutboundCallCar, decryptBarcode, clearNodePosGGROUP } from "@/pages/api";
+import { getOutboundExternal, getOutBoundExternalOrderDetailBySaleNo, sendToWMS, shiftOutOnReturn, updateStatusForOutboundCallCar, decryptBarcode, clearNodePosGGROUP, getRemarkByShelveIds, updateRemark } from "@/pages/api";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import Loading from "@/components/common/loading/loading";
 import PageHeader from "@/components/common/pageHeader/pageHeader";
@@ -14,6 +14,7 @@ import SchematicDiagram from "@/components/diagram/schematicDiagram";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "@/components/common/alert/alert";
+import { FaTrashAlt } from "react-icons/fa";
 import Modal from "@/components/common/modal/modal";
 import { getOutBoundExternalOrderDetailByWID } from "@/pages/api";
 import { checkTask_out, addTask_out, deleteTask_out, confrimList_out } from "@/components/outboundExternalNew/outboundExternalNewFunction";
@@ -23,6 +24,7 @@ export default function OutboundExternalNew() {
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const [loading, setLoading] = useState(false);
   const [tableData, setTableData] = useState([]);
+  const [originalData, setOriginalData] = useState([]);
   const [orderDetail, setOrderDetail] = useState([]);
   const [confirmModal, setConfirmModal] = useState(false);
   const [returnModal, setReturnModal] = useState(false);
@@ -44,7 +46,7 @@ export default function OutboundExternalNew() {
   useEffect(() => {
     outboundExternalNewStateRef.current = outboundExternalNewState;
   }, [outboundExternalNewState]);
-  const { step, screen, orderCode, order, shelf, shelfItem, selected, selectedShelves, waveNo, pushButton } = outboundExternalNewState[currentStationSafe] || {};
+  const { step, screen, orderCode, order, shelf, shelfItem, selected, selectedShelves, waveNo, pushButton, remark } = outboundExternalNewState[currentStationSafe] || {};
 
   // =====根據銷貨單取得細節=====
   useEffect(() => {
@@ -58,6 +60,23 @@ export default function OutboundExternalNew() {
   useEffect(() => {
     setOrderInput(orderCode || "");
   }, [orderCode]);
+
+  // =====進入step3時 從WMS表抓對應貨架的REMARK作為預設值 =====
+  useEffect(() => {
+    if (step === 3 && shelf?.SHELVE_ID) {
+      const fetchRemark = async () => {
+        try {
+          const res = await getRemarkByShelveIds([shelf.SHELVE_ID]);
+          if (res.data.success && res.data.data?.[shelf.SHELVE_ID]) {
+            dispatch(setOutboundExternalNew({ station: currentStationSafe, remark: res.data.data[shelf.SHELVE_ID] }));
+          }
+        } catch (error) {
+          console.warn("fetchRemark:", error);
+        }
+      };
+      fetchRemark();
+    }
+  }, [step, shelf?.SHELVE_ID]);
 
   const fetchOrderDetail = async (saleNo) => {
     try {
@@ -81,6 +100,7 @@ export default function OutboundExternalNew() {
           SHELVE_ID: id,
           STOCK_AREA: item.STOCK_AREA,
           SHELVE_TYPE: item.type,
+          REMARK: item.REMARK,
           items: [],
         };
       }
@@ -89,6 +109,58 @@ export default function OutboundExternalNew() {
     return Object.values(grouped);
   }, [orderDetail]);
 
+  // =====從WMS表抓貨架REMARK=====
+  const [shelveRemarks, setShelveRemarks] = useState({});
+  useEffect(() => {
+    if (groupedOrderDetail.length === 0) return;
+    const shelveIds = groupedOrderDetail.map((g) => g.SHELVE_ID);
+    const fetchRemarks = async () => {
+      try {
+        const res = await getRemarkByShelveIds(shelveIds);
+        if (res.data.success) {
+          setShelveRemarks(res.data.data || {});
+        }
+      } catch (error) {
+        console.warn("fetchRemarks:", error);
+      }
+    };
+    fetchRemarks();
+  }, [groupedOrderDetail]);
+
+  // =====搜尋框=====
+  let searchTimer;
+  const [searchTerm, setSearchTerm] = useState("");
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      executeSearch();
+    }, 3000);
+  };
+  const executeSearch = () => {
+    dispatch(setOutboundExternalNew({ station: currentStationSafe, order: {}, orderCode: "", waveNo: null, selectedShelves: [] }));
+    const keyword = document.getElementById("searchInput").value.trim().toUpperCase();
+    const filtered = originalData.filter((item) => item.OUTSTOCK_NO?.toUpperCase().includes(keyword) || item.SALE_NO?.toUpperCase().includes(keyword));
+    setTableData(filtered);
+    // 搜到一筆時自動選取並進入 step 2
+    if (filtered.length === 1) {
+      const value = filtered[0];
+      dispatch(setOutboundExternalNew({ station: currentStationSafe, order: value, orderCode: value.OUTSTOCK_NO, waveNo: value.W_ID, step: 2, selectedShelves: [] }));
+    }
+  };
+  const handleSearchKeyDown = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    if (e.key === "Enter") {
+      executeSearch();
+    }
+  };
+  const handleDeleteInput = () => {
+    setSearchTerm("");
+    dispatch(setOutboundExternalNew({ station: currentStationSafe, order: {}, orderCode: "", waveNo: null, selectedShelves: [] }));
+    setTableData(originalData);
+  };
 
   // =====掃銷貨單條碼=====
   const orderBarCodeRef = useRef(null);
@@ -472,6 +544,12 @@ export default function OutboundExternalNew() {
       });
       const isLastStation = preCheckOthers.length === 0;
 
+      // 退回前先儲存備註
+      const stationRemark = outboundExternalNewStateRef.current[stationId]?.remark;
+      if (stationRemark !== undefined) {
+        await updateRemark({ shelveId: stationShelf.SHELVE_ID, remark: stationRemark });
+      }
+
       const shiftRes = await shiftOutOnReturn({
         items: itemsToShift,
         waveNo: stationOrder.W_ID,
@@ -607,6 +685,11 @@ export default function OutboundExternalNew() {
       });
       const isLastStation = preCheckOthers.length === 0;
 
+      // 退回前先儲存備註
+      if (remark !== undefined) {
+        await updateRemark({ shelveId: shelf.SHELVE_ID, remark });
+      }
+
       const shiftRes = await shiftOutOnReturn({
         items: itemsToShift,
         waveNo: order.W_ID,
@@ -711,6 +794,7 @@ export default function OutboundExternalNew() {
       if (res.data.success) {
         const newData = res.data.data.filter((v) => !orderList.includes(v.OUTSTOCK_NO));
         setTableData(newData);
+        setOriginalData(newData);
         orderBarCodeRef?.current?.focus();
       }
     } catch (error) {
@@ -728,6 +812,24 @@ export default function OutboundExternalNew() {
       <div className="flex gap-4 py-2 items-stretch h-[72vh]">
         {/* 左側 */}
         <div className="w-[47%] flex flex-col">
+          {step <= 2 && (
+            <div className="flex p-2 items-center justify-between">
+              <div className="w-full relative">
+                <input
+                  type="text"
+                  id="searchInput"
+                  value={searchTerm}
+                  placeholder="搜尋 OUTSTOCK_NO 或 SALE_NO..."
+                  className="w-full bg-white py-2 pl-4 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  onChange={handleSearch}
+                  onKeyDown={handleSearchKeyDown}
+                />
+                <div className="absolute inset-y-0 right-5 flex items-center cursor-pointer" onClick={handleDeleteInput}>
+                  <FaTrashAlt />
+                </div>
+              </div>
+            </div>
+          )}
           <div className="flex-1 min-h-0">
             <OutboundExternalNewTable
               data={tableData}
@@ -754,7 +856,17 @@ export default function OutboundExternalNew() {
                 {askingOrder && <span className="text-orange-500">查詢中...</span>}
               </div>
             </div>
-{step === 3 && (
+            {step === 2 && orderCode && groupedOrderDetail.length > 0 && (
+              <div className="flex items-center p-4">
+                <button
+                  onClick={handleSelectAllShelves}
+                  className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600 transition-colors"
+                >
+                  {(selectedShelves || []).length === groupedOrderDetail.length ? "取消全選" : "全選貨架"}
+                </button>
+              </div>
+            )}
+            {step === 3 && (
               <div className="flex flex-1 items-center">
                 <label className="font-bold text-black">外箱條碼:</label>
                 <div className="w-50 flex items-center gap-2">
@@ -767,49 +879,44 @@ export default function OutboundExternalNew() {
           {/* 資料 */}
           <div className="flex flex-col bg-white p-8 pb-4 h-full justify-between overflow-hidden">
             <div className="custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
-              {/* Step 2: 可點擊的貨架卡片（跟 inbound 一樣） */}
+              {/* Step 2: 可點擊的貨架卡片 */}
               {step <= 2 ? (
                 orderCode && (
                   <>
-                    {/* 全選按鈕 */}
-                    {groupedOrderDetail.length > 0 && (
-                      <div className="flex justify-end mb-2">
-                        <button
-                          onClick={handleSelectAllShelves}
-                          className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600 transition-colors"
-                        >
-                          {(selectedShelves || []).length === groupedOrderDetail.length ? "取消全選" : "全選貨架"}
-                        </button>
-                      </div>
-                    )}
                     {groupedOrderDetail?.map((shelveGroup, index) => {
                       const isSelected = (selectedShelves || []).some((s) => s.SHELVE_ID === shelveGroup.SHELVE_ID);
                       return (
-                        <div key={shelveGroup.SHELVE_ID} className="pb-4 cursor-pointer transition-all hover:shadow-lg" onClick={() => handleShelveClick(shelveGroup)}>
+                        <div key={shelveGroup.SHELVE_ID} className="py-1 cursor-pointer transition-all hover:shadow-lg" onClick={() => handleShelveClick(shelveGroup)}>
                           <SchematicDiagram isSelected={isSelected}>
-                            {/* 貨架編號、庫別 */}
-                            <div className="flex justify-between items-center">
-                              <div>貨架編號:{shelveGroup.SHELVE_ID}</div>
-                              <div>出庫庫別:{shelveGroup.STOCK_AREA}</div>
-                            </div>
-                            {/* 該貨架的所有產品 */}
-                            {shelveGroup.items.map((item, itemIndex) => (
-                              <div key={itemIndex} className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0">
-                                <div className="flex flex-col">
-                                  <div className="flex justify-between">
-                                    <div>產品品號:{item?.PRT_NO}</div>
-                                  </div>
+                            <div className="flex flex-col">
+                              <div className="flex items-center justify-between gap-4 w-full">
+                                <div className="whitespace-nowrap">貨架編號: {shelveGroup.SHELVE_ID}</div>
+                                <div className="flex-1 flex items-center gap-2 truncate" title={shelveRemarks[shelveGroup.SHELVE_ID] || ""}>
+                                  備註:{shelveRemarks[shelveGroup.SHELVE_ID]}
                                 </div>
-                                <div>品名: {item?.PRT_NAME}</div>
-                                <div className="flex gap-16">
-                                  <div>箱數: {item?.BOX_NO} 箱</div>
-                                  <div>包數: {item?.PP_NO} 包</div>
-                                </div>
+                                <div>出庫庫別: {shelveGroup.STOCK_AREA}</div>
                               </div>
-                            ))}
-                            {/* 進度 */}
-                            <div className="text-right">
-                              {index + 1}/{groupedOrderDetail?.length}
+                              <div className="border-t border-[#c4a57b] pt-3 mt-3"></div>
+                              <table className="w-full border-collapse text-left">
+                                <thead className="bg-gray-300 rounded-lg">
+                                  <tr>
+                                    <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
+                                    <th className="p-2">品名</th>
+                                    <th className="p-2 w-[12%]">總箱數</th>
+                                    <th className="rounded-tr-xl p-2 w-[12%]">總包數</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="bg-gray-100 rounded-lg">
+                                  {shelveGroup.items.map((item, itemIndex) => (
+                                    <tr key={itemIndex} className={itemIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                                      <td className={`p-2 ${itemIndex === shelveGroup.items.length - 1 ? "rounded-bl-xl" : ""}`}>{item?.PRT_NO}</td>
+                                      <td className="p-2">{item?.PRT_NAME}</td>
+                                      <td className="p-2">{item?.BOX_NO}</td>
+                                      <td className={`p-2 ${itemIndex === shelveGroup.items.length - 1 ? "rounded-br-xl" : ""}`}>{item?.PP_NO}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
                             </div>
                           </SchematicDiagram>
                         </div>
@@ -820,29 +927,41 @@ export default function OutboundExternalNew() {
               ) : (
                 <SchematicDiagram>
                   <div className="flex flex-col">
-                    <div className="flex justify-between">
-                      <div>貨架編號:{shelf?.SHELVE_ID}</div>
-                      <div>出庫庫別:{shelf?.area || orderDetail?.[0]?.STOCK_AREA}</div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-16">
-                    {shelfItem?.map((item, index) => (
-                      <div key={index} className="flex flex-col">
-                        <div className="flex justify-between text-3xl">
-                          <div>產品品號:{item?.PRT_NO}</div>
-                        </div>
-                        <div className="text-3xl">
-                          <div>品名: {item?.PRT_NAME}</div>
-                          <div className="flex justify-between">
-                            <div>箱數: {item?.BOX_NO} 箱</div>
-                            <div>包數: {item?.PP_NO} 包</div>
-                            <div>
-                              {index + 1}/{shelfItem?.length}
-                            </div>
-                          </div>
-                        </div>
+                    <div className="flex items-center justify-between gap-4 w-full">
+                      <div className="whitespace-nowrap">貨架編號: {shelf?.SHELVE_ID}</div>
+                      <div className="flex-1 flex items-center gap-2">
+                        <span>備註:</span>
+                        <input type="text" value={remark || ""} placeholder="點擊輸入備註..." className="flex-1 px-2 py-1 outline-none rounded bg-transparent focus:bg-white transition-colors duration-200" onChange={(e) => dispatch(setOutboundExternalNew({ station: currentStationSafe, remark: e.target.value }))} onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }} />
                       </div>
-                    ))}
+                      <div>出庫庫別: {shelf?.area || orderDetail?.[0]?.STOCK_AREA}</div>
+                    </div>
+                    <div className="border-t border-[#c4a57b] pt-3 mt-3"></div>
+                    <div>
+                      {shelfItem?.length === 0 ? (
+                        <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
+                      ) : (
+                        <table className="table-fixed w-full text-left border-collapse">
+                          <thead className="bg-gray-300 rounded-lg">
+                            <tr>
+                              <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
+                              <th className="p-2">品名</th>
+                              <th className="p-2 w-[12%]">總箱數</th>
+                              <th className="rounded-tr-xl p-2 w-[12%]">總包數</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {shelfItem?.map((item, index) => (
+                              <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                                <td className="p-2">{item?.PRT_NO}</td>
+                                <td className="p-2">{item?.PRT_NAME}</td>
+                                <td className="p-2">{item?.BOX_NO}</td>
+                                <td className="p-2">{item?.PP_NO}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
                   </div>
                 </SchematicDiagram>
               )}
