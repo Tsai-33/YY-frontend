@@ -7,15 +7,15 @@ export default function SchematicDiagram({ children, isSelected = false }) {
       <div
         className={`flex-1 min-h-0 flex flex-col gap-0.5 text-(length:--font-size-lg) custom-scrollbar
               ${
-               isSelected
-                 ? "border-8 border-green-500"
-                 : "border-8 border-transparent"
-             }`}
+                isSelected
+                  ? "border-8 border-green-500"
+                  : "border-8 border-transparent"
+              }`}
         style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
-        <div className="w-full bg-(--shelf-color) rounded-3xl p-8">
+        <div className="w-full bg-(--shelf-color) rounded-xl p-4">
           {children}
         </div>
-        <div className="w-full h-25 border-black border-x-30 border-t-30 shrink-0"></div>
+        <div className="w-full h-20 border-black border-x-25 border-t-25 shrink-0"></div>
       </div>
     </>
   );
