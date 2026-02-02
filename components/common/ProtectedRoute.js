@@ -23,6 +23,7 @@ const AUTHENTICATED_ROUTES = [
 // 需要特定权限的路由配置 (使用英文權限名稱)
 const PERMISSION_ROUTES = {
   "/outboundExternal": "outboundExternal",
+  "/outboundExternalNew": "outboundExternal",
   "/outboundInternal": "outboundInternal",
   "/shelfTransfer": "shelfTransfer",
   "/inbound": "inbound",

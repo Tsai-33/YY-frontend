@@ -50,6 +50,12 @@ export const workstationConfig = {
         icon: "icon-outboundExternal",
       },
       {
+        key: "outboundExternalNew",
+        text: "銷貨(新)",
+        path: "/outboundExternalNew",
+        icon: "icon-outboundExternal",
+      },
+      {
         key: "outboundInternal",
         text: "領用",
         path: "/outboundInternal",
