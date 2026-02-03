@@ -454,7 +454,7 @@ export default function OutboundExternalNew() {
             );
           });
         }
-        setTableData((prev) => prev.filter((v) => v.OUTSTOCK_NO !== orderCode && v.STATUS === 0));
+        setTableData((prev) => prev.filter((v) => v.OUTSTOCK_NO !== orderCode && (v.STATUS === 0 || v.STATUS === 4)));
         await addTask_out(stations);
       } else {
         Alert({ title: resiveData?.message || "出庫確認失敗" });

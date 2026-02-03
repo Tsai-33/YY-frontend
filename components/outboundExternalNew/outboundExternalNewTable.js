@@ -14,7 +14,8 @@ export default function OutboundExternalNewTable({ data, selectedArray, setSelec
 
     // =============== 畫面一 ====================
     const headers = [
-        { label: "銷貨單號", key: "OUTSTOCK_NO", width: "60%" },
+        { label: "銷貨單號", key: "OUTSTOCK_NO", width: "50%" },
+        { label: "狀態", key: "STATUS", width: "15%", render: (row) => row.STATUS === 4 ? "部分出庫" : "" },
         { label: "出庫日期", key: "WORK_TIME", width: "30%" },
     ];
 
