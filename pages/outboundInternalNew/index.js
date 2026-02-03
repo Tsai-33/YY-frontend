@@ -141,7 +141,7 @@ export default function OutboundInternalNew() {
   const executeSearch = () => {
     dispatch(setOutboundInternalNew({ station: currentStationSafe, order: {}, orderCode: "", waveNo: null, selectedShelves: [] }));
     const keyword = document.getElementById("searchInput").value.trim().toUpperCase();
-    const filtered = originalData.filter((item) => item.OUTSTOCK_NO?.toUpperCase().includes(keyword) || item.SALE_NO?.toUpperCase().includes(keyword));
+    const filtered = originalData.filter((item) => item.OUTSTOCK_NO?.toUpperCase().includes(keyword) || item.PRT_NOS?.toUpperCase().includes(keyword));
     setTableData(filtered);
     if (filtered.length === 1) {
       const value = filtered[0];
@@ -816,7 +816,7 @@ export default function OutboundInternalNew() {
                   type="text"
                   id="searchInput"
                   value={searchTerm}
-                  placeholder="搜尋 OUTSTOCK_NO..."
+                  placeholder="搜尋 OUTSTOCK_NO 或 PRT_NO..."
                   className="w-full bg-white py-2 pl-4 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                   onChange={handleSearch}
                   onKeyDown={handleSearchKeyDown}

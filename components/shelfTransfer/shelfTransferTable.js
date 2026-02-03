@@ -169,8 +169,8 @@ export default function ShelfTransferTable() {
 
   // 確定按鈕叫車
   const handleConfirm = async () => {
-    if (selectedShelve.length < 2 || selectedShelve.length > stations.length) {
-      Alert({ title: `請選擇2~${stations.length}個貨架` });
+    if (selectedShelve.length < 1 || selectedShelve.length > stations.length) {
+      Alert({ title: `請選擇1~${stations.length}個貨架` });
       return;
     }
     try {
@@ -240,8 +240,8 @@ export default function ShelfTransferTable() {
     }
   };
 
-  // 檢查是否可以按確定(至少2個最多站點數量)
-  const canConfirm = selectedShelve.length >= 2 && selectedShelve.length <= stations.length;
+  // 檢查是否可以按確定(至少1個最多站點數量)
+  const canConfirm = selectedShelve.length >= 1 && selectedShelve.length <= stations.length;
 
   return (
     <>

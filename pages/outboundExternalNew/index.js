@@ -553,7 +553,7 @@ export default function OutboundExternalNew() {
       const shiftRes = await shiftOutOnReturn({
         items: itemsToShift,
         waveNo: stationOrder.W_ID,
-        saleNo: stationOrderCode,
+        saleNo: stationOrder.SALE_NO,
         shelveId: stationShelf.SHELVE_ID,
         station: stationId,
         isFullPallet: (stationSelected || []).length === 0,
@@ -693,7 +693,7 @@ export default function OutboundExternalNew() {
       const shiftRes = await shiftOutOnReturn({
         items: itemsToShift,
         waveNo: order.W_ID,
-        saleNo: orderCode,
+        saleNo: order.SALE_NO,
         shelveId: shelf.SHELVE_ID,
         station: currentStation,
         isFullPallet: (selected || []).length === 0,
