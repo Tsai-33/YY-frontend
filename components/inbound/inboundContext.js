@@ -549,6 +549,7 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOth
                     <div className="flex flex-col">
                       <div className="flex items-center justify-between gap-4 w-full">
                         <div className="whitespace-nowrap">貨架編號: {shelveWMS?.SHELVE_ID}</div>
+                        {shelveWMS?.CUS_NO && <div className="whitespace-nowrap">客戶: {shelveWMS?.CUS_NO}</div>}
                         <div className="flex-1 flex items-center gap-2 truncate" title={shelveWMS?.REMARK}>
                           備註:{shelveWMS?.REMARK}
                         </div>
