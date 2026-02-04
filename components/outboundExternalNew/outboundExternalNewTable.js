@@ -52,6 +52,7 @@ export default function OutboundExternalNewTable({ data, selectedArray, setSelec
                         order: value,
                         orderCode: value?.OUTSTOCK_NO,
                         waveNo: value?.W_ID,
+                        step: 2,
                         selectedShelves: [],
                     }));
             }
