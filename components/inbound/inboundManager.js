@@ -81,10 +81,14 @@ export default function InboundManager({ isOpen, onClose }) {
   };
 
   const handleTaskdone = async () => {
-    if(step <= 2) return;
+    if (step <= 2) return;
     const random = generateRandomNumber();
     const data = { action: "ask_done", STATION: station, dataid: random };
-    await sendToWMS(data);
+    const res = await sendToWMS(data);
+    if (res?.data?.data?.result === ok) {
+      dispatch(setInbound({ step: 3 ,screen:'working'}));
+    }
+    console.log(res.data, "data");
   };
 
   const handleOrder = (type) => {
