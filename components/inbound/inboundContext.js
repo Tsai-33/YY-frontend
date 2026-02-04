@@ -501,7 +501,7 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOth
   return (
     <>
       <SchematicDiagramList>
-        <div className="flex flex-col">
+        <div className="flex flex-col text-lg">
           <div className="flex justify-between">
             <span className="truncate" title={order?.INSTOCK_NO}>
               入倉單單號: {order?.INSTOCK_NO || ""}
