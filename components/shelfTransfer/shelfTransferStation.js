@@ -287,7 +287,6 @@ export default function ShelfTransferStation() {
           setShelfTransfer({
             station: currentStationSafe,
             shelveStatus: {
-              ...shelveStatus,
               [shelveId]: "returning",
             },
           })

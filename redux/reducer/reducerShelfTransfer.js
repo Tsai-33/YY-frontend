@@ -120,7 +120,7 @@ const shelfTransferSlice = createSlice({
             if (order !== undefined) state[station].order = order;
             if (selectedShelves !== undefined) state[station].selectedShelves = selectedShelves;
             if (shelveData !== undefined) state[station].shelveData = shelveData;
-            if (shelveStatus !== undefined) state[station].shelveStatus = shelveStatus;
+            if (shelveStatus !== undefined) state[station].shelveStatus = { ...state[station].shelveStatus, ...shelveStatus };
             if (targetShelve !== undefined) state[station].targetShelve = targetShelve;
             if (selectedItems !== undefined) state[station].selectedItems = selectedItems;
             if (orderList !== undefined) state.orderList = [...new Set([...state.orderList, orderList])];
