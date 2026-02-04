@@ -382,6 +382,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ⭐ 副作用
   // ============================
   useEffect(() => {
+    console.log('這裡要怎判斷')
     getTable(setTableData, setOriginalData, orderList);
     dispatch(clearAllShelves());
   }, []);
