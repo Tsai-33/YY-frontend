@@ -382,10 +382,9 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ⭐ 副作用
   // ============================
   useEffect(() => {
-    if (!orderList) return
     getTable(setTableData, setOriginalData, orderList);
     dispatch(clearAllShelves());
-  }, [orderList]);
+  }, []);
   useEffect(() => {
     if (waveNo) {
       getList(waveNo, setTableData2);
