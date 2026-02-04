@@ -19,7 +19,7 @@ export default function InboundManager({ isOpen, onClose }) {
   const { step, screen, waveNo, shelf, shelfItem, orderCode } = stationData;
 
   useEffect(() => {
-    getTable(setAllOrderList);
+    getTable(setAllOrderList,setAllOrderList);
   }, []);
 
   const handleChange = (e) => {
