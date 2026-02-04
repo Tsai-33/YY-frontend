@@ -38,6 +38,13 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   const { step, orderCode, order, waveNo } = useSelector((s) => s.transfer);
   const { screen, shelf, shelfItem, selected } = useSelector((s) => s.transfer[currentStationSafe] || {});
 
+  const filteredItems = useMemo(() => {
+    return tableData2.filter((v) => {
+      const prefix = v?.OUTSTOCK_NO?.split("-").slice(0, 2).join("-");
+      return prefix == orderCode;
+    });
+  }, [tableData2, orderCode]);
+
   /**
    * 處理條碼輸入 (Enter 鍵觸發)
    * 包含防呆檢查（全形字元偵測）與單據自動匹配
@@ -305,6 +312,13 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   };
   const executeSearch = (keyword) => {
     dispatch(resetTransfer({ type: "search", station: currentStation }));
+
+    // 增加防呆：如果 originalData 還沒回來，先不執行搜尋
+    if (!originalData || originalData.length === 0) {
+      console.warn("原始資料尚未載入");
+      return;
+    }
+
     const filtered = originalData.filter((item) => item.INSTOCK_NO.toUpperCase().includes(keyword) || item.SALE_NO.toUpperCase().includes(keyword) || item.REMARK.includes(keyword));
     setTableData(filtered);
   };
@@ -377,15 +391,8 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   // ============================
   // ⭐ 貨架上資訊
   // ============================
-  const ActionOrderList = () => {
+  const ActionOrderList = ({ filteredItems }) => {
     if (step <= 2) {
-      const filteredItems = useMemo(() => {
-        return tableDataTotal2.filter((v) => {
-          const prefix = v?.OUTSTOCK_NO?.split("-").slice(0, 2).join("-");
-          return prefix === orderCode;
-        });
-      }, [tableDataTotal2, orderCode]);
-
       if (Object.values(order).length === 0) return null;
       return (
         <SchematicDiagramList>
@@ -473,7 +480,9 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   };
 
   // -------------------------------*
+
   useEffect(() => {
+    if (!waveNo) return;
     getTable(setTableData, setTableTotalData2, setOriginalData);
   }, [waveNo]);
   useEffect(() => {
@@ -520,7 +529,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
           <div className="flex flex-col flex-1 min-h-0 justify-between bg-white p-8 pb-4 h-full overflow-hidden">
             {orderCode && (
               <div className="custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
-                <ActionOrderList />
+                <ActionOrderList filteredItems={filteredItems} />
               </div>
             )}
             <div className="flex flex-col justify-end items-center p-4">{orderCode && <ActionButtons />}</div>

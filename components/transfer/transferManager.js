@@ -18,9 +18,6 @@ export default function TransferManager({ isOpen, onClose }) {
   const stationData = transfer[station] || {};
   const { screen, shelf, shelfItem } = stationData;
 
-  useEffect(() => {
-    getTable(setAllOrderList);
-  }, []);
 
   const handleChange = (e, index) => {
     const { name, value, type, checked } = e.target;

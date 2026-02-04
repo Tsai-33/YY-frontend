@@ -4,12 +4,12 @@ import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
 
 // 抓取ERP
-export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTotalData2,setOriginalData) => {
+export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTotalData2, setOriginalData) => {
   setLoading(true);
   try {
     const res = await getEPRData({ barCode: inputBarCode });
     if (res?.data?.success) {
-      await getTable(setTableData, setTableTotalData2,setOriginalData);
+      await getTable(setTableData, setTableTotalData2, setOriginalData);
     } else if (!res?.success && res?.error) {
       Alert({ title: `${res?.error?.message}` });
     }
@@ -21,18 +21,18 @@ export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTot
 };
 
 // 抓取WMS系統所有調撥單
-export const getTable = async (setTableData, setTableTotalData2,setOriginalData) => {
+export const getTable = async (setTableData, setTableTotalData2, setOriginalData) => {
   try {
     const [order, orderDetail] = await Promise.all([getOrder({ cmd: "F", status: 0 }), getOrderDetail()]);
 
     if (order?.data?.success) {
       setTableData(order?.data?.data);
-      setOriginalData(order?.data?.data)
+      setOriginalData(order?.data?.data);
     } else if (!order?.success) {
       Alert({ title: `目前網路不穩定，請重新再試。` });
     }
 
-    if (setTableTotalData2 && orderDetail?.data?.success) {
+    if (orderDetail?.data?.success) {
       setTableTotalData2(orderDetail?.data?.data);
     } else if (!orderDetail?.success) {
       Alert({ title: `目前網路不穩定，請重新再試。` });

@@ -88,7 +88,7 @@ export const updateInventoryResult = (payload) => api.post("/inventory/updateInv
 export const sendToWMS = (payload) => api.post("/send-to-wms", payload, { timeout: 45000 });
 
 /* 讀取訂單 */
-export const getOrder = (payload) => api.get("/order/cmdid", { params: { cmd: payload } });
+export const getOrder = (payload) => api.get("/order/cmdid", { params: payload });
 export const getOrderByWID = (payload) => api.get("/order/wid", { params: { wid: payload } });
 export const getOrderDetail = (payload) => api.get("/order/detail", { params: { cmd: payload } });
 export const getOrderDetailByWID = (payload) => api.get("/order/detail/wid", { params: { wid: payload } });
