@@ -46,7 +46,7 @@ export const getList = async (waveNo, setTableData2) => {
     const res = await getOrderDetailByWID(String(waveNo));
     if (res?.success) {
       const detail = res.data.data; // 陣列
-      const newDetail = detail.filter((v) => v.W_ID === waveNo);
+      const newDetail = detail.filter((v) => v.STATUS == 0 && v.W_ID === waveNo);
       setTableData2(newDetail);
     } else if (!res?.success) {
       Alert({ title: `目前網路不穩定，請重新再試。` });
