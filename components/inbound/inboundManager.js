@@ -4,13 +4,16 @@ import Alert from "../common/alert/alert";
 import { useEffect, useState } from "react";
 import { getTable } from "./inboundFunction";
 import { Settings, Trash2, Package, Activity, X, Filter, Lock, Database, Search } from "lucide-react";
-import { deleteTask } from "@/pages/api";
+import { deleteTask, sendToWMS } from "@/pages/api";
+import { FaReplyAll } from "react-icons/fa";
+import { GrPowerReset } from "react-icons/gr";
+import { generateRandomNumber } from "@/utils/random";
 
 export default function InboundManager({ isOpen, onClose }) {
   const dispatch = useDispatch();
   const { stations } = useSelector((s) => s.workstation);
   const inbound = useSelector((state) => state.inbound);
-  console.log(inbound, "inbound");
+
   const [station, setStation] = useState("A01");
   const [o, setO] = useState("");
   const [allOrderList, setAllOrderList] = useState([]);
@@ -19,7 +22,7 @@ export default function InboundManager({ isOpen, onClose }) {
   const { step, screen, waveNo, shelf, shelfItem, orderCode } = stationData;
 
   useEffect(() => {
-    getTable(setAllOrderList,setAllOrderList);
+    getTable(setAllOrderList, setAllOrderList);
   }, []);
 
   const handleChange = (e) => {
@@ -77,6 +80,13 @@ export default function InboundManager({ isOpen, onClose }) {
     });
   };
 
+  const handleTaskdone = async () => {
+    if(step <= 2) return;
+    const random = generateRandomNumber();
+    const data = { action: "ask_done", STATION: station, dataid: random };
+    await sendToWMS(data);
+  };
+
   const handleOrder = (type) => {
     dispatch(updateOrderList({ type, order: o }));
   };
@@ -102,11 +112,14 @@ export default function InboundManager({ isOpen, onClose }) {
             <h2 className="text-xl text-white text-slate-800">入庫單控制面板</h2>
           </div>
           <div className="flex gap-3">
+            <button onClick={() => handleTaskdone()} className="flex items-center gap-1 px-4 py-2 bg-blue-50 text-blue-600 hover:bg-yellow-500 hover:text-black rounded-lg text-sm  transition-colors border border-blue-200">
+              <FaReplyAll size={16} /> 重發任務
+            </button>
             <button onClick={() => handleClearTask()} className="flex items-center gap-1 px-4 py-2 bg-red-50 text-red-600 hover:bg-yellow-500 hover:text-black rounded-lg text-sm  transition-colors border border-red-200">
               <Trash2 size={16} /> 清除任務
             </button>
             <button onClick={() => handleClear("all", stations)} className="flex items-center gap-1 px-4 py-2 bg-red-500 text-red-100 bg-red-50 hover:bg-yellow-500 hover:text-black rounded-lg text-sm   transition-colors border border-red-200">
-              <Trash2 size={16} /> 全部重置
+              <GrPowerReset size={16} /> 全部重置
             </button>
             <button onClick={onClose} className="p-2.5 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200">
               <X size={20} className="text-slate-500" />
