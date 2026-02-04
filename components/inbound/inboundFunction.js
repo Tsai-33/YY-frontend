@@ -4,12 +4,12 @@ import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
 
 // 取得ERP資料
-export const getERP = async (setLoading, inputBarCode, setTableData, orderList, setOriginalData) => {
+export const getERP = async (setLoading, inputBarCode, setTableData, setOriginalData, orderList) => {
   setLoading(true);
   try {
     const res = await getEPRData({ barCode: inputBarCode });
     if (res?.success) {
-      getTable(setTableData, setOriginalData, orderList);
+      await getTable(setTableData, setOriginalData, orderList);
     } else if (!res?.success && res?.error) {
       Alert({ title: "目前無法取得ERP資料" });
     }

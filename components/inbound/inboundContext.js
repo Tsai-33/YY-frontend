@@ -83,7 +83,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       dispatch(setInbound({ station: currentStation, order: value, orderCode: value?.INSTOCK_NO, waveNo: value?.W_ID, step: 2 }));
       barCodeRef.current.value = "";
     } else {
-      await getERP(setLoading, inputBarCode, setTableData, orderList, setOriginalData);
+      await getERP(setLoading, inputBarCode, setTableData, setOriginalData, orderList);
     }
   };
   const handleConfirmList = async () => {
@@ -210,8 +210,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     const res = await addShelf_in(setLoading, setAddModal, shelf, order);
     if (!res?.success && res?.error?.message) {
       Alert({ title: res?.error?.message });
-    }else{
-       Alert({ title: '新增成功' });
+    } else {
+      Alert({ title: "新增成功" });
     }
   };
   const handleReturnShelf = async () => {
@@ -373,10 +373,10 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     const res = await searchWMS_in(data.SALE_NO, data.PRT_NO, data.STOCK_AREA, data.SHELVE_ID);
     setWMSData(res?.data?.data);
   };
-  const handleOtherShelve = async()=>{
+  const handleOtherShelve = async () => {
     const res = await searchWMSBynoSALE_in();
     setWMSData(res?.data?.data);
-  }
+  };
 
   // ============================
   // ⭐ 副作用
@@ -386,7 +386,9 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     dispatch(clearAllShelves());
   }, [orderList]);
   useEffect(() => {
-    if (waveNo) getList(waveNo, setTableData2);
+    if (waveNo) {
+      getList(waveNo, setTableData2);
+    }
   }, [shelfItem, waveNo]);
   useEffect(() => {
     if (!order) return;
@@ -495,7 +497,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 // ⭐ 貨架上資訊
 // ============================
 
-const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick ,handleOtherShelve}) => {
+const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOtherShelve }) => {
   return (
     <>
       <SchematicDiagramList>
