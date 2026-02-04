@@ -15,6 +15,7 @@ import Alert from "@/components/common/alert/alert";
 import ShelfTransferStation from "@/components/shelfTransfer/shelfTransferStation";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
 import SchematicDiagram from "@/components/diagram/schematicDiagram";
+import { checkTask_shelfTransfer, addTask_shelfTransfer } from "@/components/shelfTransfer/shelfTransferFunction";
 
 export default function ShelfTransferShelf() {
   const dispatch = useDispatch();
@@ -149,6 +150,15 @@ export default function ShelfTransferShelf() {
       return;
     }
 
+    // 檢查是否有其他任務正在執行
+    const task = await checkTask_shelfTransfer(stations);
+    if (!task?.success) return;
+    const hasTask = task?.data?.data?.some((item) => item.location === "shelfTransfer" || item.location === "");
+    if (!hasTask) {
+      Alert({ title: "目前有其他任務正在執行" });
+      return;
+    }
+
     try {
       const tasks = selectedRows.map((shelveId, index) => ({
         Command: "MOVE",
@@ -210,6 +220,7 @@ export default function ShelfTransferShelf() {
 
         setTableData([]);
         setSelectedRows([]);
+        await addTask_shelfTransfer(stations);
       } else {
         Alert({ title: res?.data?.message || "派車失敗", icon: "error" });
       }

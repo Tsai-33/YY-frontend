@@ -11,6 +11,7 @@ import SchematicDiagram from "../diagram/schematicDiagram";
 import { setShelfTransfer } from "@/redux/reducer/reducerShelfTransfer";
 import { initWorkstation } from "@/redux/reducer/reducerWorkStations";
 import Alert from "../common/alert/alert";
+import { checkTask_shelfTransfer, addTask_shelfTransfer } from "./shelfTransferFunction";
 
 export default function ShelfTransferTable() {
   const dispatch = useDispatch();
@@ -173,6 +174,16 @@ export default function ShelfTransferTable() {
       Alert({ title: `請選擇1~${stations.length}個貨架` });
       return;
     }
+
+    // 檢查是否有其他任務正在執行
+    const task = await checkTask_shelfTransfer(stations);
+    if (!task?.success) return;
+    const hasTask = task?.data?.data?.some((item) => item.location === "shelfTransfer" || item.location === "");
+    if (!hasTask) {
+      Alert({ title: "目前有其他任務正在執行" });
+      return;
+    }
+
     try {
       const tasks = selectedShelve.map((shelveId, index) => ({
         Command: "MOVE",
@@ -232,6 +243,7 @@ export default function ShelfTransferTable() {
         }
 
         setTableData((prev) => prev.filter((v) => v.SALE_NO !== orderInput));
+        await addTask_shelfTransfer(stations);
       } else {
         Alert({ title: res?.data?.message || "派車失敗", icon: "error" });
       }

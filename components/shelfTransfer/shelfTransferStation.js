@@ -1,6 +1,6 @@
 import ActionBtn from "@/components/common/btns/actionBtn";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   updateShelveData,
   updateSelectedItems,
@@ -23,6 +23,7 @@ import {
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 import { AlertTriangle } from "lucide-react";
+import { deleteTask_shelfTransfer } from "./shelfTransferFunction";
 
 export default function ShelfTransferStation() {
   const dispatch = useDispatch();
@@ -42,6 +43,18 @@ export default function ShelfTransferStation() {
     shelveChecks = {},
     pushButton,
   } = useSelector((s) => s.shelfTransfer[currentStationSafe] || {});
+
+  // ===== 刪除 task（從 step 3 跳回 step 1）=====
+  const hasDeletedRef = useRef(false);
+  useEffect(() => {
+    hasDeletedRef.current = false;
+    return () => {
+      if (!hasDeletedRef.current) {
+        hasDeletedRef.current = true;
+        deleteTask_shelfTransfer(stations);
+      }
+    };
+  }, [stations]);
 
   // ===== 根據站點數量動態產生 Table =====
   const totalSlots = stations.length;
