@@ -311,7 +311,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const executeSearch = () => {
     dispatch(resetInbound({ type: "search", station: currentStation, W_ID: waveNo }));
     const keyword = document.getElementById("searchInput").value.trim().toUpperCase();
-    const filtered = originalData.filter((item) => item.INSTOCK_NO.toUpperCase().includes(keyword) || item?.SALE_NO?.toUpperCase().includes(keyword) || String(item.BILL_TIME || "").includes(keyword));
+    const filtered = originalData.filter((item) => item.INSTOCK_NO.toUpperCase().includes(keyword) || item?.SALE_NO?.toUpperCase().includes(keyword) || String(item.BILL_TIME || "").includes(keyword) || String(item.CUS_NO || "").includes(keyword));
     setTableData(filtered);
   };
   const handleSearchKeyDown = (e) => {
@@ -435,7 +435,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
               <ActionBtn icon="icon-check" text="入倉單完成" variant="orange" disabled={tableData2.length > 0} onClick={handleFinish} />
             </div>
           )}
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 text-sm">
             <InboundTable data={tableData} data2={tableData2} setData2={setTableData2} />
           </div>
         </div>

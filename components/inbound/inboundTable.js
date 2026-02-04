@@ -4,7 +4,7 @@ import TableAll from "../common/table/tableAll";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setInbound } from "@/redux/reducer/reducerInbound";
 import { getList } from "./inboundFunction";
-import { Divide } from "lucide-react";
+
 
 export default function InboundTable({ data, data2, setData2 }) {
   const dispatch = useDispatch();
@@ -14,9 +14,10 @@ export default function InboundTable({ data, data2, setData2 }) {
   // =============== 畫面一 ====================
   // radio table (左)
   const tableHeader = [
-    { label: "入倉單號", key: "INSTOCK_NO", width: `40%` },
-    { label: "訂單單號", key: "SALE_NO", width: `40%` },
-    { label: "單據日期", key: "BILL_TIME", width: `20%` },
+    { label: "入倉單號", key: "INSTOCK_NO", width: `35%` },
+    { label: "訂單單號", key: "SALE_NO", width: `35%` },
+    { label: "客戶", key: "CUS_NO", width: `15%` },
+    { label: "日期", key: "BILL_TIME", width: `15%` },
   ];
   const handleSelectedOption = (name, value, idKey) => {
     const valueId = value[idKey];
