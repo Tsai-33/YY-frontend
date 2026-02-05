@@ -84,7 +84,12 @@ export default function OutboundExternalNewTable({ data, selectedArray, setSelec
 
     // ============= 用當前站點貨架的 MAKE_NO 過濾 ORDER_DETAIL =============
     const filteredDetailData = useMemo(() => {
+        console.log('=== DEBUG filteredDetailData ===');
+        console.log('shelfItem:', shelfItem);
+        console.log('detailTableData:', detailTableData);
+
         if (!shelfItem || !detailTableData || detailTableData.length === 0) {
+            console.log('條件不滿足: shelfItem=', !!shelfItem, ', detailTableData長度=', detailTableData?.length || 0);
             return [];
         }
         const items = Array.isArray(shelfItem) ? shelfItem : [shelfItem];
@@ -92,7 +97,12 @@ export default function OutboundExternalNewTable({ data, selectedArray, setSelec
             if (!item.MAKE_NO) return [];
             return item.MAKE_NO.split(',').map(m => m.trim());
         });
-        return detailTableData.filter(detail => shelfMakeNos.includes(detail.MAKE_NO));
+        console.log('shelfMakeNos (拆分後):', shelfMakeNos);
+        console.log('detailTableData MAKE_NO:', detailTableData.map(d => d.MAKE_NO));
+
+        const result = detailTableData.filter(detail => shelfMakeNos.includes(detail.MAKE_NO));
+        console.log('結果:', result);
+        return result;
     }, [shelfItem, detailTableData]);
 
     // ============= 預設勾選整箱BOX_NO > 0 零散不勾 =============
