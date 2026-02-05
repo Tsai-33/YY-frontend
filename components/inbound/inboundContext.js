@@ -523,6 +523,7 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOth
             </span>
           </div>
         </div> */}
+        {/* 2026/02/05更改版本 */}
         <div className="flex flex-col text-lg">
           <div className="flex justify-between">
             <span className="truncate" title={order?.INSTOCK_NO}>
