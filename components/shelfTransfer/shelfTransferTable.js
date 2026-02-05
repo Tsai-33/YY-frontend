@@ -11,6 +11,7 @@ import SchematicDiagram from "../diagram/schematicDiagram";
 import { setShelfTransfer } from "@/redux/reducer/reducerShelfTransfer";
 import { initWorkstation } from "@/redux/reducer/reducerWorkStations";
 import Alert from "../common/alert/alert";
+import { checkTask_shelfTransfer, addTask_shelfTransfer } from "./shelfTransferFunction";
 
 export default function ShelfTransferTable() {
   const dispatch = useDispatch();
@@ -169,10 +170,20 @@ export default function ShelfTransferTable() {
 
   // 確定按鈕叫車
   const handleConfirm = async () => {
-    if (selectedShelve.length < 2 || selectedShelve.length > stations.length) {
-      Alert({ title: `請選擇2~${stations.length}個貨架` });
+    if (selectedShelve.length < 1 || selectedShelve.length > stations.length) {
+      Alert({ title: `請選擇1~${stations.length}個貨架` });
       return;
     }
+
+    // 檢查是否有其他任務正在執行
+    const task = await checkTask_shelfTransfer(stations);
+    if (!task?.success) return;
+    const hasTask = task?.data?.data?.some((item) => item.location === "shelfTransfer" || item.location === "");
+    if (!hasTask) {
+      Alert({ title: "目前有其他任務正在執行" });
+      return;
+    }
+
     try {
       const tasks = selectedShelve.map((shelveId, index) => ({
         Command: "MOVE",
@@ -232,6 +243,7 @@ export default function ShelfTransferTable() {
         }
 
         setTableData((prev) => prev.filter((v) => v.SALE_NO !== orderInput));
+        await addTask_shelfTransfer(stations);
       } else {
         Alert({ title: res?.data?.message || "派車失敗", icon: "error" });
       }
@@ -240,8 +252,8 @@ export default function ShelfTransferTable() {
     }
   };
 
-  // 檢查是否可以按確定(至少2個最多站點數量)
-  const canConfirm = selectedShelve.length >= 2 && selectedShelve.length <= stations.length;
+  // 檢查是否可以按確定(至少1個最多站點數量)
+  const canConfirm = selectedShelve.length >= 1 && selectedShelve.length <= stations.length;
 
   return (
     <>
@@ -271,49 +283,38 @@ export default function ShelfTransferTable() {
             <div className="custom-scrollbar " style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
               {selectedOrder && groupedShelveData.length > 0 ? (
                 <>
-                  <div className="flex-1 overflow-auto space-y-6 mb-6">
+                  <div className="flex-1 overflow-auto space-y-2 mb-6">
                     {groupedShelveData.map((shelveGroup, index) => {
                       const isSelected = selectedShelve.includes(shelveGroup.SHELVE_ID);
                       return (
-                        <div key={shelveGroup.SHELVE_ID} onClick={() => handleShelveClick(shelveGroup)} className="cursor-pointer transition-all hover:shadow-lg">
+                        <div key={shelveGroup.SHELVE_ID} onClick={() => handleShelveClick(shelveGroup)} className="py-1 cursor-pointer transition-all hover:shadow-lg">
                           <SchematicDiagram isSelected={isSelected}>
-                            {/* 貨架、庫別 */}
-                            <div className="flex justify-between items-center mb-4">
-                              <div className="flex items-center gap-3">
-                                <div className="text-2xl font-bold">貨架編號：{shelveGroup.SHELVE_ID}</div>
-                                {/* 打勾 */}
-                                {isSelected && (
-                                  <div className="bg-green-500 rounded-full w-8 h-8 flex items-center justify-center">
-                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                  </div>
-                                )}
+                            <div className="flex flex-col">
+                              <div className="flex items-center justify-between gap-4 w-full">
+                                <div className="whitespace-nowrap">貨架編號: {shelveGroup.SHELVE_ID}</div>
+                                <div>入庫庫別: {shelveGroup.STOCK_AREA}</div>
                               </div>
-                              <div className="text-2xl font-bold">入庫庫別：{shelveGroup.STOCK_AREA}</div>
-                            </div>
-
-                            {/* 該貨架的所有產品 */}
-                            {shelveGroup.items.map((item, itemIndex) => (
-                              <div key={itemIndex} className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0">
-                                {/* 產品品號、棧板規格 */}
-                                <div className="flex justify-between items-center mb-2">
-                                  <div className="text-2xl font-bold">產品品號：{item.PRT_NO}</div>
-                                  {/* <div className="text-2xl font-bold">棧板規格：{item.SHELVE_TYPE}</div> */}
-                                </div>
-                                {/* 品名 */}
-                                <div className="text-2xl font-bold mb-2">品名：{item.PRT_NAME}</div>
-                                {/* 箱數、包數 */}
-                                <div className="flex gap-12">
-                                  <div className="text-2xl font-bold">箱數：{item.BOX_NO} 箱</div>
-                                  <div className="text-2xl font-bold">包數：{item.PP_NO} 包</div>
-                                </div>
-                              </div>
-                            ))}
-
-                            {/* 進度 */}
-                            <div className="text-2xl font-bold text-right mt-4">
-                              {index + 1}/{groupedShelveData.length}
+                              <div className="border-t border-[#c4a57b] pt-3 mt-3"></div>
+                              <table className="w-full border-collapse text-left">
+                                <thead className="bg-gray-300 rounded-lg">
+                                  <tr>
+                                    <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
+                                    <th className="p-2">品名</th>
+                                    <th className="p-2 w-[12%]">總箱數</th>
+                                    <th className="rounded-tr-xl p-2 w-[12%]">總包數</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="bg-gray-100 rounded-lg">
+                                  {shelveGroup.items.map((item, itemIndex) => (
+                                    <tr key={itemIndex} className={itemIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                                      <td className={`p-2 ${itemIndex === shelveGroup.items.length - 1 ? "rounded-bl-xl" : ""}`}>{item?.PRT_NO}</td>
+                                      <td className="p-2">{item?.PRT_NAME}</td>
+                                      <td className="p-2">{item?.BOX_NO}</td>
+                                      <td className={`p-2 ${itemIndex === shelveGroup.items.length - 1 ? "rounded-br-xl" : ""}`}>{item?.PP_NO}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
                             </div>
                           </SchematicDiagram>
                         </div>

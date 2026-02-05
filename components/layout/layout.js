@@ -7,9 +7,11 @@ import { logout as logoutAPI } from "@/pages/api/authService";
 import ProtectedRoute from "../common/ProtectedRoute";
 import InboundManager from "../inbound/inboundManager";
 import OutboundExternalManager from "../outboundExternal/outboundExternalManager";
+import OutboundExternalNewManager from "../outboundExternalNew/outboundExternalNewManager";
 import TransferManager from "../transfer/transferManager";
 import ShelfTransferManager from "../shelfTransfer/shelfTransferManager";
 import OutboundInternalManager from "../outboundInternal/outboundInternalManager";
+import OutboundInternalNewManager from "../outboundInternalNew/outboundInternalNewManager";
 
 import InventoryManage from "../inventory/inventoryManage";
 // 控制面板
@@ -18,6 +20,8 @@ import InventoryManage from "../inventory/inventoryManage";
 const PAGE_TITLES = {
   "/workspace": "工作站工作列表",
   "/outboundExternal": "銷貨",
+  "/outboundExternalNew": "銷貨(新)",
+  "/outboundInternalNew": "領用(新)",
   "/outboundInternal": "領用",
   "/shelfTransfer": "理貨",
   "/inbound": "入倉",
@@ -140,8 +144,11 @@ export default function Layout({ children }) {
       {path.startsWith("/transfer") && (
         <TransferManager isOpen={open} onClose={() => setOpen(false)} />
       )}
-      {path.startsWith("/outboundExternal") && (
+      {path === "/outboundExternal" && (
         <OutboundExternalManager isOpen={open} onClose={() => setOpen(false)} />
+      )}
+      {path === "/outboundExternalNew" && (
+        <OutboundExternalNewManager isOpen={open} onClose={() => setOpen(false)} />
       )}
       {path.startsWith("/shelfTransfer") && (
         <ShelfTransferManager isOpen={open} onClose={() => setOpen(false)} />
@@ -149,7 +156,10 @@ export default function Layout({ children }) {
       {path.startsWith("/inventory") && (
         <InventoryManage isOpen={open} onClose={() => setOpen(false)} />
       )}
-      {path.startsWith("/outboundInternal") && (
+      {path === "/outboundInternalNew" && (
+        <OutboundInternalNewManager isOpen={open} onClose={() => setOpen(false)} />
+      )}
+      {path === "/outboundInternal" && (
         <OutboundInternalManager isOpen={open} onClose={() => setOpen(false)} />
       )}
     </div>

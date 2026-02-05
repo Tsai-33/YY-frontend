@@ -20,6 +20,8 @@ import workStationsReducer from "@/redux/reducer/reducerWorkStations";
 import transferReducer from "./reducer/reducerTransfer";
 import shelfTransferReducer from "./reducer/reducerShelfTransfer";;
 import inventoryReducer from "./reducer/reducerInventory";
+import outboundExternalNewReducer from "./reducer/reducerOutboundExternalNew";
+import outboundInternalNewReducer from "./reducer/reducerOutboundInternalNew";
 
 const pagePersistConfig = {
   key: "page",
@@ -56,6 +58,16 @@ const inventoryPersistConfig = {
   storage,
 };
 
+const outboundExternalNewPersistConfig = {
+  key: "outboundExternalNew",
+  storage,
+};
+
+const outboundInternalNewPersistConfig = {
+  key: "outboundInternalNew",
+  storage,
+};
+
 const userPersistConfig = {
   key: "user",
   storage,
@@ -85,6 +97,8 @@ const rootReducer = combineReducers({
   user: persistReducer(userPersistConfig, userReducer),
   workstation: persistReducer(workStationsPersistConfig, workStationsReducer),
   inventory: persistReducer(inventoryPersistConfig, inventoryReducer),
+  outboundExternalNew: persistReducer(outboundExternalNewPersistConfig, outboundExternalNewReducer),
+  outboundInternalNew: persistReducer(outboundInternalNewPersistConfig, outboundInternalNewReducer),
 });
 
 export const store = configureStore({
