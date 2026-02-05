@@ -50,12 +50,12 @@ export default function OutboundExternalNew() {
 
   // =====根據銷貨單取得細節=====
   useEffect(() => {
-    if (order?.SALE_NO) {
-      fetchOrderDetail(order.SALE_NO);
+    if (order?.SALE_NO && order?.W_ID) {
+      fetchOrderDetail(order.SALE_NO, order.W_ID);
     } else {
       setOrderDetail([]);
     }
-  }, [order?.SALE_NO]);
+  }, [order?.SALE_NO, order?.W_ID]);
 
   useEffect(() => {
     setOrderInput(orderCode || "");
@@ -78,9 +78,10 @@ export default function OutboundExternalNew() {
     }
   }, [step, shelf?.SHELVE_ID]);
 
-  const fetchOrderDetail = async (saleNo) => {
+  const fetchOrderDetail = async (saleNo, wId) => {
     try {
-      const res = await getOutBoundExternalOrderDetailBySaleNo(saleNo);
+      console.log("shelfItem: ", shelfItem)
+      const res = await getOutBoundExternalOrderDetailBySaleNo(saleNo, wId);
       if (res.data.success) {
         setOrderDetail(res.data.data || []);
       }

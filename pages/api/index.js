@@ -27,9 +27,9 @@ export const getOutBoundExternalOrderDetail = (sale_no) =>
   api.get(`/outboundExternal/getOutBoundExternalOrderDetail`, {
     params: { sale_no },
   });
-export const getOutBoundExternalOrderDetailBySaleNo = (sale_no) =>
+export const getOutBoundExternalOrderDetailBySaleNo = (sale_no, w_id) =>
   api.get(`/outboundExternal/getOutBoundExternalOrderDetailBySaleNo`, {
-    params: { sale_no },
+    params: { sale_no, w_id },
   });
 export const getOutBoundExternalOrderDetailByWID = (w_id) =>
   api.get(`/outboundExternal/getOutBoundExternalOrderDetailByWID`, {
