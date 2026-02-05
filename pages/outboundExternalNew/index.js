@@ -379,8 +379,11 @@ export default function OutboundExternalNew() {
           demandByPrtNo[prtNo].BOX_NO += item.BOX_NO || 0;
         });
 
+        // 只檢查被選中的貨架庫存
+        const selectedShelveIds = (selectedShelves || []).map((s) => s.SHELVE_ID);
         const stockByPrtNo = {};
         orderDetail?.forEach((item) => {
+          if (!selectedShelveIds.includes(item.SHELVE_ID)) return;
           const prtNo = item.PRT_NO;
           if (!stockByPrtNo[prtNo]) {
             stockByPrtNo[prtNo] = { PP_NO: 0, BOX_NO: 0 };
@@ -389,10 +392,11 @@ export default function OutboundExternalNew() {
           stockByPrtNo[prtNo].BOX_NO += item.BOX_NO || 0;
         });
 
+        // 只檢查被選中貨架上的 PRT_NO 是否足夠
         const insufficientItems = [];
-        for (const prtNo of Object.keys(demandByPrtNo)) {
-          const demand = demandByPrtNo[prtNo];
-          const stock = stockByPrtNo[prtNo] || { PP_NO: 0, BOX_NO: 0 };
+        for (const prtNo of Object.keys(stockByPrtNo)) {
+          const demand = demandByPrtNo[prtNo] || { PP_NO: 0, BOX_NO: 0 };
+          const stock = stockByPrtNo[prtNo];
           if (stock.PP_NO < demand.PP_NO || stock.BOX_NO < demand.BOX_NO) {
             insufficientItems.push({
               prtNo,
