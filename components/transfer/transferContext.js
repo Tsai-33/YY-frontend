@@ -485,9 +485,8 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     getTable(setTableData, setTableTotalData2, setOriginalData);
   }, [waveNo]);
   useEffect(() => {
-    if (!waveNo) return;
     getList(waveNo, setTableData2);
-  }, [shelfItem]);
+  }, [shelfItem,waveNo]);
 
   return (
     <>
