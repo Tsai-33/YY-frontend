@@ -43,27 +43,27 @@ export const workstationConfig = {
     },
     jobs: [
       { key: "inbound", text: "入倉", path: "/inbound", icon: "icon-inbound" },
+      // {
+      //   key: "outboundExternal",
+      //   text: "銷貨",
+      //   path: "/outboundExternal",
+      //   icon: "icon-outboundExternal",
+      // },
       {
         key: "outboundExternal",
         text: "銷貨",
-        path: "/outboundExternal",
-        icon: "icon-outboundExternal",
-      },
-      {
-        key: "outboundExternalNew",
-        text: "銷貨(新)",
         path: "/outboundExternalNew",
         icon: "icon-outboundExternal",
       },
+      // {
+      //   key: "outboundInternal",
+      //   text: "領用",
+      //   path: "/outboundInternal",
+      //   icon: "icon-outboundInternal",
+      // },
       {
         key: "outboundInternal",
         text: "領用",
-        path: "/outboundInternal",
-        icon: "icon-outboundInternal",
-      },
-      {
-        key: "outboundInternalNew",
-        text: "領用(新)",
         path: "/outboundInternalNew",
         icon: "icon-outboundInternal",
       },
