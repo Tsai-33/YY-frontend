@@ -382,7 +382,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ⭐ 副作用
   // ============================
   useEffect(() => {
-    console.log('這裡要怎判斷')
+    console.log("這裡要怎判斷");
     getTable(setTableData, setOriginalData, orderList);
     dispatch(clearAllShelves());
   }, [orderList]);
@@ -502,7 +502,7 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOth
   return (
     <>
       <SchematicDiagramList>
-        <div className="flex flex-col text-lg">
+        {/* <div className="flex flex-col text-lg">
           <div className="flex justify-between">
             <span className="truncate" title={order?.INSTOCK_NO}>
               入倉單單號: {order?.INSTOCK_NO || ""}
@@ -522,6 +522,35 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOth
               數量: {order?.PP_NOS || ""} {order?.UNIT || ""}
             </span>
           </div>
+        </div> */}
+        <div className="flex flex-col text-lg">
+          <div className="flex justify-between">
+            <span className="truncate" title={order?.INSTOCK_NO}>
+              入倉單單號: {order?.INSTOCK_NO || ""}
+            </span>
+            <span>入庫庫別: {order?.STOCK_AREA || ""}</span>
+          </div>
+          <div className="border-t border-white pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
+          <table className="w-full border-collapse text-left border-collapse">
+            <thead className="bg-gray-300 rounded-lg">
+              <tr>
+                <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
+                <th className="p-2">品名</th>
+                <th className="p-2 w-[12%]">箱數</th>
+                <th className="p-2 w-[18%]">包數</th>
+                <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="bg-gray-100 rounded-lg">
+                <td title={order?.PRT_NO} className="truncate p-2 rounded-bl-lg">{order?.PRT_NO || ""}</td>
+                <td title={order?.PRT_NAME} className="truncate p-2">{order?.PRT_NAME || ""}</td>
+                <td className="p-2">{order?.BOX_NOS || ""}</td>
+                <td className="p-2">{order?.PP_NOS || ""}</td>
+                <td className="p-2 rounded-br-lg">{order?.UNIT || ""}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </SchematicDiagramList>
       {wmsData ? (
