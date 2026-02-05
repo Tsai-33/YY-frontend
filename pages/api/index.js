@@ -18,6 +18,8 @@ export const updateInboundWMSREMARK = (payload) => api.post("/inbound/update/wms
 export const finishInboundOrder = (payload) => api.post("/inbound/finish/order", payload);
 export const restoreOrders = (payload) => api.post("/inbound/restore/orders", payload);
 export const searchInboundWMS = (payload)=> api.post("/inbound/search/wms", payload);
+export const searchInboundWMSBynoSALE = ()=> api.get("/inbound/search/wms/no/saleno");
+
 
 /* 取得出庫單(銷貨) */
 export const getOutboundExternal = () => api.get("/outboundExternal/getOutBoundExternal");
@@ -25,9 +27,9 @@ export const getOutBoundExternalOrderDetail = (sale_no) =>
   api.get(`/outboundExternal/getOutBoundExternalOrderDetail`, {
     params: { sale_no },
   });
-export const getOutBoundExternalOrderDetailBySaleNo = (sale_no) =>
+export const getOutBoundExternalOrderDetailBySaleNo = (sale_no, w_id) =>
   api.get(`/outboundExternal/getOutBoundExternalOrderDetailBySaleNo`, {
-    params: { sale_no },
+    params: { sale_no, w_id },
   });
 export const getOutBoundExternalOrderDetailByWID = (w_id) =>
   api.get(`/outboundExternal/getOutBoundExternalOrderDetailByWID`, {
@@ -86,7 +88,7 @@ export const updateInventoryResult = (payload) => api.post("/inventory/updateInv
 export const sendToWMS = (payload) => api.post("/send-to-wms", payload, { timeout: 45000 });
 
 /* 讀取訂單 */
-export const getOrder = (payload) => api.get("/order/cmdid", { params: { cmd: payload } });
+export const getOrder = (payload) => api.get("/order/cmdid", { params: payload });
 export const getOrderByWID = (payload) => api.get("/order/wid", { params: { wid: payload } });
 export const getOrderDetail = (payload) => api.get("/order/detail", { params: { cmd: payload } });
 export const getOrderDetailByWID = (payload) => api.get("/order/detail/wid", { params: { wid: payload } });
