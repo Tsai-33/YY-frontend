@@ -5,7 +5,6 @@ import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setInbound } from "@/redux/reducer/reducerInbound";
 import { getList } from "./inboundFunction";
 
-
 export default function InboundTable({ data, data2, setData2 }) {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
@@ -56,8 +55,13 @@ export default function InboundTable({ data, data2, setData2 }) {
   // checkbox table
   const tableHeader2 = [
     { label: "", key: "checkbox", width: `48px` },
-    { label: "產品品號", key: "PRT_NO", width: `60%` },
-    { label: "總包數", key: "BOX_PACK", width: `30%` },
+    {
+      label: "產品品號",
+      key: "PRT_NO",
+      width: `60%`,
+      render: (row) => row.PRT_NO || row.Est_PRT_NO,
+    },
+    { label: "總包數", key: "PP_NO", width: `30%`, render: (row) => row.PP_NO || row.Est_PPs },
   ];
   useEffect(() => {
     if (!waveNo) return;

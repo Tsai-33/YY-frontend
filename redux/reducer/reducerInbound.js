@@ -12,6 +12,7 @@ const createStation = (station) => ({
   selected: [], // 目前選擇
   shelves: [], // 多選的車
   remark: "", // 共用備註
+  job: [], // 指定貨物
 });
 
 const initialState = {
@@ -31,9 +32,17 @@ const inboundSlice = createSlice({
       }
     },
     setInbound: (state, action) => {
-      const { orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation, remark } = action.payload;
+      const { job, orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation, remark } = action.payload;
       if (!state[station]) return;
 
+      if (job !== undefined) {
+        //  [ { Est_PRT_NO: '01TSL048290MB', Est_Boxes: 0, Est_PPs: 0 } ]
+        const edit_job = []
+        
+        edit_job.PRT_NO = edit_job.Est_PRT_NO
+        console.log(job, "123");
+        state[station].job = job;
+      }
       if (step !== undefined) state[station].step = step;
       if (screen !== undefined) state[station].screen = screen;
       if (order !== undefined) state[station].order = order;
