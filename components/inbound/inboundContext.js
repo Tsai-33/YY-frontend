@@ -28,7 +28,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const currentStationSafe = currentStation || stations?.[0] || "";
   const inbound = useSelector((s) => s.inbound);
   const { orderList } = useSelector((s) => s.inbound);
-  const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, shelves, remark } = useSelector((s) => s.inbound[currentStationSafe] || {});
+  const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, shelves, remark, job } = useSelector((s) => s.inbound[currentStationSafe] || {});
 
   // ============================
   // ⭐ 貨架顯示用的資料
@@ -360,7 +360,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     if (step <= 2) return <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfirmList} disabled={!waveNo} />;
     return (
       <div className="w-full flex justify-between">
-        <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} />
+        {/* <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} /> */}
+        <button className="cursor-not-allowed w-50"></button>
         <ActionBtn icon="icon-inbound" text="確定上架" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
         <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
       </div>
@@ -439,7 +440,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
             </div>
           )}
           <div className="flex-1 min-h-0 text-sm">
-            <InboundTable data={tableData} data2={tableData2} setData2={setTableData2} />
+            <InboundTable data={tableData} data2={job.length > 0 ? job : tableData2} setData2={setTableData2} />
           </div>
         </div>
 
@@ -529,6 +530,8 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOth
             <span className="truncate" title={order?.INSTOCK_NO}>
               入倉單單號: {order?.INSTOCK_NO || ""}
             </span>
+            <span>客戶: {order?.CUS_NO|| ""}</span>
+
             <span>入庫庫別: {order?.STOCK_AREA || ""}</span>
           </div>
           <div className="border-t border-white pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
@@ -544,8 +547,12 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOth
             </thead>
             <tbody>
               <tr className="bg-gray-100 rounded-lg">
-                <td title={order?.PRT_NO} className="truncate p-2 rounded-bl-lg">{order?.PRT_NO || ""}</td>
-                <td title={order?.PRT_NAME} className="truncate p-2">{order?.PRT_NAME || ""}</td>
+                <td title={order?.PRT_NO} className="truncate p-2 rounded-bl-lg">
+                  {order?.PRT_NO || ""}
+                </td>
+                <td title={order?.PRT_NAME} className="truncate p-2">
+                  {order?.PRT_NAME || ""}
+                </td>
                 <td className="p-2">{order?.BOX_NOS || ""}</td>
                 <td className="p-2">{order?.PP_NOS || ""}</td>
                 <td className="p-2 rounded-br-lg">{order?.UNIT || ""}</td>

@@ -105,9 +105,10 @@ export default function SocketManager() {
             // 入庫
             dispatch(
               setInbound({
-                station: eventData.STATION,
+                station: eventData?.STATION,
                 shelf: eventData,
                 shelfItem: eventData?.ITEMS,
+                job: eventData?.Job,
                 screen: "working",
                 step: 3,
                 remark: eventData?.ITEMS[0]?.REMARK,
