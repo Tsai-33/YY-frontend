@@ -371,7 +371,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ⭐ 搜尋 WMS新資料
   // ============================
   const searchWMS = async (data) => {
-    const res = await searchWMS_in(data.SALE_NO, data.PRT_NO, data.STOCK_AREA, data.SHELVE_ID);
+    const res = await searchWMS_in(data.SALE_NO, data.PRT_NO, data.STOCK_AREA, data.SHELVE_ID, data.INSTOCK_NO);
     setWMSData(res?.data?.data);
   };
   const handleOtherShelve = async () => {
@@ -443,7 +443,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
             </div>
           )}
           <div className="flex-1 min-h-0 text-sm">
-            <InboundTable data={tableData} data2={job?.length > 0 ? job : tableData2} setData2={setTableData2} />
+            <InboundTable data={tableData} data2={tableData2} setData2={setTableData2} />
           </div>
         </div>
 
@@ -506,27 +506,6 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOth
   return (
     <>
       <SchematicDiagramList>
-        {/* <div className="flex flex-col text-lg">
-          <div className="flex justify-between">
-            <span className="truncate" title={order?.INSTOCK_NO}>
-              入倉單單號: {order?.INSTOCK_NO || ""}
-            </span>
-            <span>入庫庫別: {order?.STOCK_AREA || ""}</span>
-          </div>
-          <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
-          <div className="truncate" title={order?.PRT_NO}>
-            產品品號: {order?.PRT_NO || ""}
-          </div>
-          <div className="truncate" title={order?.PRT_NAME}>
-            品名: {order?.PRT_NAME || ""}
-          </div>
-          <div className="flex gap-16">
-            <span>箱數: {order?.BOX_NOS || ""} 箱</span>
-            <span>
-              數量: {order?.PP_NOS || ""} {order?.UNIT || ""}
-            </span>
-          </div>
-        </div> */}
         {/* 2026/02/05更改版本 */}
         <div className="flex flex-col text-lg">
           <div className="flex justify-between">
@@ -564,6 +543,8 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOth
           </table>
         </div>
       </SchematicDiagramList>
+
+      {/* 顯示wms抓的 2026/02/05 討論不需要了 樓下刷單       
       {wmsData ? (
         wmsData.length > 0 ? (
           <>
@@ -586,7 +567,6 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOth
               return (
                 <div key={index} onClick={() => handleShelveClick(shelveWMS)} className="cursor-pointer transition-all hover:shadow-lg py-1">
                   <SchematicDiagram isSelected={isSelected}>
-                    {/* 貨架、庫別 */}
                     <div className="flex flex-col">
                       <div className="flex items-center justify-between gap-4 w-full">
                         <div className="whitespace-nowrap">貨架編號: {shelveWMS?.SHELVE_ID}</div>
@@ -631,7 +611,7 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOth
         )
       ) : (
         <LoadingText />
-      )}
+      )} */}
     </>
   );
 };
