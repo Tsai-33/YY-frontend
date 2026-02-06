@@ -8,11 +8,12 @@ import InboundTable from "@/components/inbound/inboundTable";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
-import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in, searchWMS_in, updateWMS_in, searchWMSBynoSALE_in } from "./inboundFunction";
+import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in, searchWMS_in, updateWMS_in, searchWMSBynoSALE_in, decryptBarCodePRTNO_in } from "./inboundFunction";
 import { checkNodePos, checkOrder, checkOrderDetail } from "@/pages/api";
 import LoadingText from "../common/loading/loading-text";
 import { FaTrashAlt } from "react-icons/fa";
 import { MdShelves } from "react-icons/md";
+import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
 
 export default function InboundContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
@@ -27,7 +28,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
   const inbound = useSelector((s) => s.inbound);
-  const { orderList } = useSelector((s) => s.inbound);
+  const { orderList, lackStation } = useSelector((s) => s.inbound);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, shelves, remark, job } = useSelector((s) => s.inbound[currentStationSafe] || {});
 
   // ============================
@@ -100,6 +101,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
     dispatch(setInbound({ station: currentStation, order: {}, waveNo: null, orderCode: "", step: 1 }));
     const res = await confrimList_in(setLoading, order, stations, shelves);
+
     if (res?.success) {
       // nodejs 訊息
       if (res.data.data.result === "OK") {
@@ -382,6 +384,22 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       Alert({ title: res?.error?.message });
     }
   };
+  // ============================
+  // ⭐ 找正確的訂單在哪個站點
+  // ============================
+  const boxRef = useRef();
+  const handleSearchStation = async (e) => {
+    if (e.key !== "Enter") return;
+    const inputValue = e.target.value;
+    const res = await decryptBarCodePRTNO_in(inputValue, inbound);
+    if (res?.success) {
+      dispatch(setCurrentStation(res?.data?.data));
+      Alert({ title: "搜尋成功!" });
+      boxRef.current.value = "";
+    } else {
+      Alert({ title: res?.error?.message });
+    }
+  };
 
   // ============================
   // ⭐ 副作用
@@ -402,7 +420,12 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     searchWMS(order);
     dispatch(clearAllShelves());
   }, [order]);
+  useEffect(() => {
+    if (waveNo == "") {
+    }
+  }, [lackStation]);
 
+  console.log(order, "o");
   return (
     <>
       <div className="flex gap-4 py-2 items-stretch h-[72vh]">
@@ -427,8 +450,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
             </div>
           )}
           {step > 2 && (
-            <div className="flex p-2 items-center justify-between">
-              <div className="flex-1">
+            <div className="flex p-2 items-center justify-end">
+              {/* <div className="flex-1">
                 {shelf?.EstBoxes > 0 && (
                   <div className="flex items-end gap-x-2">
                     <span>建議入倉總數:</span>
@@ -438,7 +461,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
                     <span>箱</span>
                   </div>
                 )}
-              </div>
+              </div> */}
               <ActionBtn icon="icon-check" text="入倉單完成" variant="orange" disabled={tableData2.length > 0} onClick={handleFinish} />
             </div>
           )}
@@ -449,11 +472,23 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
         {/* 右側資訊區 */}
         <div className="w-[53%] flex flex-col">
-          <div className="flex items-center p-4">
-            <label htmlFor="order">
-              入倉單條碼<span className="text-lg px-1">:</span>
-            </label>
-            <OrderTitle />
+          <div className="flex items-center justify-between p-4">
+            <div className="flex">
+              <label htmlFor="order">
+                入倉單條碼<span className="text-lg px-1">:</span>
+              </label>
+              <OrderTitle />
+            </div>
+            <div className="flex">
+              {step > 2 && (
+                <>
+                  <label htmlFor="input">
+                    外箱號碼<span className="text-lg px-1">:</span>
+                  </label>
+                  <InputFrame ref={boxRef} type="text" id="input" onKeyDown={handleSearchStation} />
+                </>
+              )}
+            </div>
           </div>
           <div className="flex flex-col flex-1 min-h-0 justify-between bg-white p-8 pb-4 h-full overflow-hidden">
             {orderCode && (
@@ -637,7 +672,14 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems }) => {
 
         <div>
           {displayItems.length === 0 ? (
-            <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
+            <>
+              <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
+              {shelf?.CARS && (
+                <div className="bg-transparent text-right p-2 pr-4">
+                  <span>車次：{shelf.CARS}</span>
+                </div>
+              )}
+            </>
           ) : (
             <table className="table-fixed w-full text-left border-collapse">
               <thead className="bg-gray-300 rounded-lg">

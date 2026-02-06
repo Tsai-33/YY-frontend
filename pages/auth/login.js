@@ -23,7 +23,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   // 測試選站 上市後刪掉)
-  const [thisStation, setThisStation] = useState(process.env.NEXT_PUBLIC_IP_A);
+  const [thisStation, setThisStation] = useState();
   const handleChangeStation = (e) => {
     setThisStation(e.target.value);
   };

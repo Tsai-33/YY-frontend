@@ -1,4 +1,23 @@
-import { addInboundWCS, restoreOrders, finishInboundOrder, sendToWMS, updateInboundWMS, getOrder, getOrderDetailByWID, checkWCS, updateTask, deleteTask, getEPRData, returnInboundWCS, checkWCSLastCar, getWMS, searchInboundWMS, updateInboundWMSREMARK, searchInboundWMSBynoSALE } from "@/pages/api";
+import {
+  addInboundWCS,
+  restoreOrders,
+  finishInboundOrder,
+  sendToWMS,
+  updateInboundWMS,
+  getOrder,
+  getOrderDetailByWID,
+  checkWCS,
+  updateTask,
+  deleteTask,
+  getEPRData,
+  returnInboundWCS,
+  checkWCSLastCar,
+  getWMS,
+  searchInboundWMS,
+  updateInboundWMSREMARK,
+  searchInboundWMSBynoSALE,
+  searchInboundDecrypt,
+} from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
@@ -9,7 +28,6 @@ export const getERP = async (setLoading, inputBarCode, setTableData, setOriginal
   try {
     const res = await getEPRData({ barCode: inputBarCode });
     if (res?.success) {
-      console.log(res, "14141414");
       await getTable(setTableData, setOriginalData, orderList);
     } else if (!res?.success && res?.error) {
       Alert({ title: "目前無法取得ERP資料" });
@@ -240,5 +258,16 @@ export const updateWMS_in = async (SHELVE_ID, PRT_NO, REMARK) => {
     return await updateInboundWMSREMARK({ REMARK: REMARK, PRT_NO: PRT_NO, SHELVE_ID: SHELVE_ID });
   } catch (err) {
     console.log(`searchWMS:`, err);
+  }
+};
+
+// 檢查目前掃描的外箱條碼
+export const decryptBarCodePRTNO_in = async (value,inbound) => {
+  try {
+    return await searchInboundDecrypt({ barcode: value, inbound: inbound });
+  } catch (err) {
+    console.log(`handleSearchStation:`, err);
+    return err;
+  } finally {
   }
 };

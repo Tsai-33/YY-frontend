@@ -191,6 +191,17 @@ export default function SocketManager() {
         if (eventData?.action === "taskdone" && command === "RETURN" && eventData?.PURPOSE === 4) {
           dispatch(setShelfTransfer({ shelf: eventData, isReturn: true }));
         }
+        // 使用別台電腦傳送入庫資訊
+        if (eventData?.action === "newjob") {
+          console.log(eventData,'eventData')
+          // 樓下電腦傳送樓上
+          let lack_station = eventData?.STATION || [];
+          if (lack_station.length > 0) {
+            lack_station.forEach((st) => {
+              dispatch(setInbound({ station: st, screen: "loading", lackStation: st , waveNo : Number(eventData?.W_ID)  }));
+            });
+          }
+        }
       };
 
       newSocket.onclose = (event) => {
