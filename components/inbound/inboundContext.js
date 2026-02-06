@@ -376,14 +376,17 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   };
   const handleOtherShelve = async () => {
     const res = await searchWMSBynoSALE_in();
-    setWMSData(res?.data?.data);
+    if (res.success) {
+      setWMSData(res?.data?.data);
+    } else {
+      Alert({ title: res?.error?.message });
+    }
   };
 
   // ============================
   // ⭐ 副作用
   // ============================
   useEffect(() => {
-    console.log("這裡要怎判斷");
     getTable(setTableData, setOriginalData, orderList);
     dispatch(clearAllShelves());
   }, [orderList]);
@@ -440,7 +443,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
             </div>
           )}
           <div className="flex-1 min-h-0 text-sm">
-            <InboundTable data={tableData} data2={job.length > 0 ? job : tableData2} setData2={setTableData2} />
+            <InboundTable data={tableData} data2={job?.length > 0 ? job : tableData2} setData2={setTableData2} />
           </div>
         </div>
 
@@ -530,7 +533,7 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOth
             <span className="truncate" title={order?.INSTOCK_NO}>
               入倉單單號: {order?.INSTOCK_NO || ""}
             </span>
-            <span>客戶: {order?.CUS_NO|| ""}</span>
+            <span>客戶: {order?.CUS_NO || ""}</span>
 
             <span>入庫庫別: {order?.STOCK_AREA || ""}</span>
           </div>
