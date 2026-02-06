@@ -9,7 +9,7 @@ export const getERP = async (setLoading, inputBarCode, setTableData, setOriginal
   try {
     const res = await getEPRData({ barCode: inputBarCode });
     if (res?.success) {
-      console.log(res,'14141414')
+      console.log(res, "14141414");
       await getTable(setTableData, setOriginalData, orderList);
     } else if (!res?.success && res?.error) {
       Alert({ title: "目前無法取得ERP資料" });
@@ -219,9 +219,9 @@ export const deleteTask_in = async (stations) => {
   }
 };
 
-export const searchWMS_in = async (SALE_NO, PRT_NO, STOCK_AREA, SHELVE_ID = []) => {
+export const searchWMS_in = async (SALE_NO, PRT_NO, STOCK_AREA, SHELVE_ID = [], INSTOCK_NO) => {
   try {
-    return await searchInboundWMS({ SALE_NO: SALE_NO, PRT_NO: PRT_NO, STOCK_AREA: STOCK_AREA, SHELVE_IDs: SHELVE_ID });
+    return await searchInboundWMS({ SALE_NO: SALE_NO, PRT_NO: PRT_NO, STOCK_AREA: STOCK_AREA, SHELVE_IDs: SHELVE_ID, INSTOCK_NO: INSTOCK_NO });
   } catch (err) {
     console.log(`searchWMS:`, err);
   }

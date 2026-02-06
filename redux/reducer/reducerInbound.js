@@ -38,7 +38,6 @@ const inboundSlice = createSlice({
       if (job !== undefined) {
         //  [ { Est_PRT_NO: '01TSL048290MB', Est_Boxes: 0, Est_PPs: 0 } ]
         const edit_job = []
-        
         edit_job.PRT_NO = edit_job.Est_PRT_NO
         console.log(job, "123");
         state[station].job = job;

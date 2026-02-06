@@ -59,9 +59,15 @@ export default function InboundTable({ data, data2, setData2 }) {
       label: "產品品號",
       key: "PRT_NO",
       width: `60%`,
-      render: (row) => row.PRT_NO || row.Est_PRT_NO,
     },
-    { label: "總包數", key: "PP_NO", width: `30%`, render: (row) => row.PP_NO || row.Est_PPs },
+    //  {
+    //   label: "產品品號",
+    //   key: "PRT_NO",
+    //   width: `60%`,
+    //   render: (row) => row.PRT_NO || row.Est_PRT_NO,
+    // },
+    { label: "總包數", key: "PP_NO", width: `30%` },
+    // { label: "總包數", key: "PP_NO", width: `30%`, render: (row) => row.PP_NO || row.Est_PPs },
   ];
   useEffect(() => {
     if (!waveNo) return;
