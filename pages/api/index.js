@@ -35,7 +35,7 @@ export const getOutBoundExternalOrderDetailByWID = (w_id) =>
   api.get(`/outboundExternal/getOutBoundExternalOrderDetailByWID`, {
     params: { w_id },
   });
-export const shiftOutOnReturn = (data) => api.post("/outboundExternal/shiftOutOnReturn", data);
+export const shiftOutOnReturn = (data) => api.post("/outboundExternal/shiftOutOnReturn", data, { timeout: 30000 });
 export const updateStatusForOutboundCallCar = (data) => api.post("/outboundExternal/updateStatusForOutboundCallCar", data);
 export const clearNodePosGGROUP = (data) => api.post("/outboundExternal/clearNodePosGGROUP", data);
 
@@ -53,7 +53,7 @@ export const getOutboundInternalOrderDetailByWID = (w_id) =>
   api.get(`/outboundInternal/getOutboundInternalOrderDetailByWID`, {
     params: { w_id },
   });
-export const shiftOutOnReturnInternal = (data) => api.post("/outboundInternal/shiftOutOnReturn", data);
+export const shiftOutOnReturnInternal = (data) => api.post("/outboundInternal/shiftOutOnReturn", data, { timeout: 30000 });
 export const updateStatusForOutboundCallCarInternal = (data) => api.post("/outboundInternal/updateStatusForOutboundCallCar", data);
 export const clearNodePosGGROUPInternal = (data) => api.post("/outboundInternal/clearNodePosGGROUP", data);
 
