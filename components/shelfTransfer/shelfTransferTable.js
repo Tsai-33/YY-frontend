@@ -17,12 +17,6 @@ export default function ShelfTransferTable() {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
 
-  // TODO 暫時不透過workspace進來
-  // useEffect(() => {
-  //     if (!currentStation) {
-  //         dispatch(initWorkstation("172.16.11.75"));
-  //     }
-  // }, [currentStation, dispatch]);
   const currentStationSafe = currentStation || stations?.[0] || "";
   const { orderList, lackStation } = useSelector((s) => s.shelfTransfer);
   const { step, screen, orderCode, order, selectedShelves } = useSelector((s) => s.shelfTransfer[currentStationSafe] || {});
@@ -36,32 +30,23 @@ export default function ShelfTransferTable() {
 
   // ===== 理貨單 =====
   const [tableData, setTableData] = useState([]);
-  useEffect(() => {
-    fetchList();
-  }, []);
-  const fetchList = async () => {
+  const [searching, setSearching] = useState(false);
+  const fetchList = async (keyword) => {
+    if (!keyword) {
+      setTableData([]);
+      return;
+    }
+    setSearching(true);
     try {
-      const res = await getShelfTransfer();
+      const res = await getShelfTransfer(keyword);
       if (res.data.success) {
-        const detail = res.data.data;
-        // 根據 SALE_NO 分組合併，避免重複顯示
-        const grouped = {};
-        detail.forEach((item) => {
-          const saleNo = item.SALE_NO;
-          if (!grouped[saleNo]) {
-            grouped[saleNo] = {
-              ...item,
-              SHELVE_COUNT: 0,
-              BOX_NO_SUM: 0,
-            };
-          }
-          grouped[saleNo].SHELVE_COUNT += item.SHELVE_COUNT || 0;
-          grouped[saleNo].BOX_NO_SUM += item.BOX_NO_SUM || 0;
-        });
-        setTableData(Object.values(grouped));
+        // 後端已按 SALE_NO 前兩段分組，直接使用
+        setTableData(res.data.data);
       }
     } catch (error) {
       console.warn("getShelfTransfer: ", error);
+    } finally {
+      setSearching(false);
     }
   };
 
@@ -105,9 +90,6 @@ export default function ShelfTransferTable() {
 
   // =====過濾Table選中的資料=====
   const [selectedOrder, setSelectedOrder] = useState(null);
-  // const selectedShelveData = selectedOrder
-  //     ? testShelve.filter(item => item.SALE_NO === selectedOrder.SALE_NO)
-  //     : [];
   const handleRowClick = (name, row, idKey) => {
     setSelectedOrder(row);
     setOrderInput(row.SALE_NO);
@@ -139,22 +121,19 @@ export default function ShelfTransferTable() {
     setOrderInput(e.target.value);
   };
 
-  const handleInputKeyDown = (e) => {
+  const handleInputKeyDown = async (e) => {
     if (e.key !== "Enter") return;
     const value = e.target.value.trim();
     if (!value) return;
 
-    const matchOrder = tableData.find((item) => item.SALE_NO === value);
-
-    if (matchOrder) {
-      setSelectedOrder(matchOrder);
-      fetchShelveData(matchOrder.SALE_NO);
-    } else {
-      setSelectedOrder(null);
-    }
+    // 呼叫 API 搜尋 SALE_NO
+    await fetchList(value);
+    setSelectedOrder(null);
+    setShelveData([]);
+    setSelectedShelve([]);
   };
 
-  // =====處理右側貨架點擊=====
+  // =====處理右側貨架點擊（當前 SALE_NO 的貨架選擇）=====
   const [selectedShelve, setSelectedShelve] = useState([]);
   const handleShelveClick = (shelveGroup) => {
     const shelveId = shelveGroup.SHELVE_ID;
@@ -168,10 +147,62 @@ export default function ShelfTransferTable() {
     );
   };
 
-  // 確定按鈕叫車
+  // ===== 累積選擇的貨架（跨 SALE_NO）=====
+  const [accumulatedShelves, setAccumulatedShelves] = useState([]);
+
+  // 加入按鈕：把當前選中的貨架加入累積清單
+  const handleAddToAccumulated = () => {
+    if (selectedShelve.length === 0) {
+      Alert({ title: "請先選擇貨架" });
+      return;
+    }
+
+    // 檢查是否超過站點數量
+    const totalAfterAdd = accumulatedShelves.length + selectedShelve.length;
+    if (totalAfterAdd > stations.length) {
+      Alert({ title: `最多只能選擇 ${stations.length} 個貨架，目前已有 ${accumulatedShelves.length} 個` });
+      return;
+    }
+
+    // 把選中的貨架加入累積清單（包含 SALE_NO 資訊）
+    const newItems = selectedShelve.map((shelveId) => {
+      const shelveGroup = groupedShelveData.find((g) => g.SHELVE_ID === shelveId);
+      return {
+        SALE_NO: selectedOrder?.SALE_NO,
+        SHELVE_ID: shelveId,
+        STOCK_AREA: shelveGroup?.STOCK_AREA,
+        items: shelveGroup?.items || [],
+      };
+    });
+
+    // 過濾掉已存在的貨架
+    const existingIds = accumulatedShelves.map((s) => s.SHELVE_ID);
+    const uniqueNewItems = newItems.filter((item) => !existingIds.includes(item.SHELVE_ID));
+
+    if (uniqueNewItems.length === 0) {
+      Alert({ title: "選擇的貨架已在清單中" });
+      return;
+    }
+
+    setAccumulatedShelves([...accumulatedShelves, ...uniqueNewItems]);
+    setSelectedShelve([]);
+    Alert({ title: `已加入 ${uniqueNewItems.length} 個貨架`, icon: "success", timer: 1000 });
+  };
+
+  // 從累積清單移除貨架
+  const handleRemoveFromAccumulated = (shelveId) => {
+    setAccumulatedShelves(accumulatedShelves.filter((s) => s.SHELVE_ID !== shelveId));
+  };
+
+  // 清空累積清單
+  const handleClearAccumulated = () => {
+    setAccumulatedShelves([]);
+  };
+
+  // 確定按鈕叫車（使用累積的貨架）
   const handleConfirm = async () => {
-    if (selectedShelve.length < 1 || selectedShelve.length > stations.length) {
-      Alert({ title: `請選擇1~${stations.length}個貨架` });
+    if (accumulatedShelves.length < 1 || accumulatedShelves.length > stations.length) {
+      Alert({ title: `請選擇 1~${stations.length} 個貨架` });
       return;
     }
 
@@ -185,9 +216,9 @@ export default function ShelfTransferTable() {
     }
 
     try {
-      const tasks = selectedShelve.map((shelveId, index) => ({
+      const tasks = accumulatedShelves.map((shelve, index) => ({
         Command: "MOVE",
-        SHELVE_ID: shelveId,
+        SHELVE_ID: shelve.SHELVE_ID,
         BAR_CODE: null,
         FACE: 2,
         STATION: stations[index],
@@ -195,21 +226,21 @@ export default function ShelfTransferTable() {
         STATUS: 0,
         CART_ID: "",
         DATA_ID: generateRandomNumber(),
-        WAVENO: selectedOrder?.W_ID,
+        WAVENO: "",
         GGROUP: "",
       }));
-      console.log("task: ", tasks)
+      console.log("task: ", tasks);
 
       const res = await insertShelfTask({ tasks });
 
       if (res.data.success) {
         const initialShelveStatus = {};
-        selectedShelve.forEach((shelveId) => {
-          initialShelveStatus[shelveId] = "loading";
+        accumulatedShelves.forEach((shelve) => {
+          initialShelveStatus[shelve.SHELVE_ID] = "loading";
         });
 
         // 更新所有相關站點的狀態
-        selectedShelve.forEach((shelveId, index) => {
+        accumulatedShelves.forEach((shelve, index) => {
           const stationId = stations[index];
           dispatch(
             setShelfTransfer({
@@ -217,8 +248,8 @@ export default function ShelfTransferTable() {
               step: 3,
               screen: "loading",
               mode: "order",
-              orderCode: orderInput,
-              selectedShelves: selectedShelve,
+              orderCode: "",
+              selectedShelves: accumulatedShelves.map((s) => s.SHELVE_ID),
               shelveStatus: initialShelveStatus,
               shelveData: {},
             }),
@@ -226,7 +257,7 @@ export default function ShelfTransferTable() {
         });
 
         // 確保當前站點也更新
-        const updatedStations = selectedShelve.map((_, index) => stations[index]);
+        const updatedStations = accumulatedShelves.map((_, index) => stations[index]);
         if (currentStationSafe && !updatedStations.includes(currentStationSafe)) {
           dispatch(
             setShelfTransfer({
@@ -234,15 +265,16 @@ export default function ShelfTransferTable() {
               step: 3,
               screen: "loading",
               mode: "order",
-              orderCode: orderInput,
-              selectedShelves: selectedShelve,
+              orderCode: "",
+              selectedShelves: accumulatedShelves.map((s) => s.SHELVE_ID),
               shelveStatus: initialShelveStatus,
               shelveData: {},
             }),
           );
         }
 
-        setTableData((prev) => prev.filter((v) => v.SALE_NO !== orderInput));
+        // 清空累積清單
+        setAccumulatedShelves([]);
         await addTask_shelfTransfer(stations);
       } else {
         Alert({ title: res?.data?.message || "派車失敗", icon: "error" });
@@ -252,8 +284,9 @@ export default function ShelfTransferTable() {
     }
   };
 
-  // 檢查是否可以按確定(至少1個最多站點數量)
-  const canConfirm = selectedShelve.length >= 1 && selectedShelve.length <= stations.length;
+  // 檢查是否可以按確定
+  const canConfirm = accumulatedShelves.length >= 1 && accumulatedShelves.length <= stations.length;
+  const canAdd = selectedShelve.length > 0 && accumulatedShelves.length + selectedShelve.length <= stations.length;
 
   return (
     <>
@@ -267,9 +300,30 @@ export default function ShelfTransferTable() {
       </div>
       {/* input */}
       <div className="flex gap-4 py-2 items-stretch h-[72vh]">
-        {/* Table */}
-        <div className="w-[47%] flex flex-col">
-          <Table variant="green" type="checkbox" name="shelfTransferList" headers={headers} data={tableData} needInput={true} idKey="SALE_NO" checked={selectedOrder} onChange={handleRowClick} />
+        {/* 左邊：Table + 已選擇清單 */}
+        <div className="w-[47%] flex flex-col gap-2">
+          {/* Table */}
+          <div className="flex-1 min-h-0">
+            <Table variant="green" type="checkbox" name="shelfTransferList" headers={headers} data={tableData} needInput={true} idKey="SALE_NO" checked={selectedOrder} onChange={handleRowClick} />
+          </div>
+          {/* 已累積的貨架清單 */}
+          {accumulatedShelves.length > 0 && (
+            <div className="bg-orange-50 border border-orange-300 rounded-lg p-3 max-h-[30%] overflow-auto">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-bold text-orange-700">已選擇 {accumulatedShelves.length} / {stations.length} 個貨架</span>
+                <button onClick={handleClearAccumulated} className="text-sm text-red-500 hover:text-red-700">清空</button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {accumulatedShelves.map((shelve) => (
+                  <div key={shelve.SHELVE_ID} className="bg-white border border-orange-400 rounded px-2 py-1 flex items-center gap-2">
+                    <span className="text-sm font-medium">{shelve.SHELVE_ID}</span>
+                    <span className="text-xs text-gray-500">({shelve.SALE_NO})</span>
+                    <button onClick={() => handleRemoveFromAccumulated(shelve.SHELVE_ID)} className="text-red-500 hover:text-red-700 text-lg leading-none">&times;</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         {/* 右邊畫面 */}
         <div className="w-[53%] flex flex-col overflow-hidden">
@@ -286,12 +340,20 @@ export default function ShelfTransferTable() {
                   <div className="flex-1 overflow-auto space-y-2 mb-6">
                     {groupedShelveData.map((shelveGroup, index) => {
                       const isSelected = selectedShelve.includes(shelveGroup.SHELVE_ID);
+                      const isAlreadyAdded = accumulatedShelves.some((s) => s.SHELVE_ID === shelveGroup.SHELVE_ID);
                       return (
-                        <div key={shelveGroup.SHELVE_ID} onClick={() => handleShelveClick(shelveGroup)} className="py-1 cursor-pointer transition-all hover:shadow-lg">
-                          <SchematicDiagram isSelected={isSelected}>
+                        <div
+                          key={shelveGroup.SHELVE_ID}
+                          onClick={() => !isAlreadyAdded && handleShelveClick(shelveGroup)}
+                          className={`py-1 transition-all ${isAlreadyAdded ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'}`}
+                        >
+                          <SchematicDiagram isSelected={isSelected || isAlreadyAdded}>
                             <div className="flex flex-col">
                               <div className="flex items-center justify-between gap-4 w-full">
-                                <div className="whitespace-nowrap">貨架編號: {shelveGroup.SHELVE_ID}</div>
+                                <div className="whitespace-nowrap">
+                                  貨架編號: {shelveGroup.SHELVE_ID}
+                                  {isAlreadyAdded && <span className="ml-2 text-orange-500 text-sm">(已加入)</span>}
+                                </div>
                                 <div>入庫庫別: {shelveGroup.STOCK_AREA}</div>
                               </div>
                               <div className="border-t border-[#c4a57b] pt-3 mt-3"></div>
@@ -326,9 +388,20 @@ export default function ShelfTransferTable() {
                 <div className="flex-1 flex items-center justify-center text-gray-400 text-2xl">請選擇左側訂單查看詳細資訊</div>
               )}
             </div>
-            {/* 確定按鈕 */}
-            <div className="flex flex-1 flex-col justify-end items-center p-4">
-              <ActionBtn icon="icon-check" text="確定" variant="orange" disabled={!canConfirm} onClick={handleConfirm} />
+            {/* 按鈕區 */}
+            <div className="flex flex-1 flex-col justify-end items-center p-4 gap-2">
+              {/* 加入按鈕 */}
+              {selectedOrder && (
+                <ActionBtn
+                  icon="icon-plus"
+                  text={`加入 (${selectedShelve.length})`}
+                  variant="green"
+                  disabled={!canAdd}
+                  onClick={handleAddToAccumulated}
+                />
+              )}
+              {/* 確定按鈕 */}
+              <ActionBtn icon="icon-check" text={`確定叫車 (${accumulatedShelves.length})`} variant="orange" disabled={!canConfirm} onClick={handleConfirm} />
             </div>
           </div>
         </div>
@@ -336,7 +409,7 @@ export default function ShelfTransferTable() {
       {/* 站點 */}
       <div className="w-full flex justify-between gap-4 z-20">
         {stations.map((station) => (
-          <ActionBtn text={station} variant="green" className="flex-1" disabled={false} />
+          <ActionBtn key={station} text={station} variant="green" className="flex-1" disabled={false} />
         ))}
       </div>
     </>
