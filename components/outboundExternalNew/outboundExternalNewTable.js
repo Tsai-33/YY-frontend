@@ -92,17 +92,37 @@ export default function OutboundExternalNewTable({ data, selectedArray, setSelec
             console.log('條件不滿足: shelfItem=', !!shelfItem, ', detailTableData長度=', detailTableData?.length || 0);
             return [];
         }
+
+        // 1. 從貨架取得所有 MAKE_NO
         const items = Array.isArray(shelfItem) ? shelfItem : [shelfItem];
         const shelfMakeNos = items.flatMap(item => {
             if (!item.MAKE_NO) return [];
             return item.MAKE_NO.split(',').map(m => m.trim());
         });
         console.log('shelfMakeNos (拆分後):', shelfMakeNos);
-        console.log('detailTableData MAKE_NO:', detailTableData.map(d => d.MAKE_NO));
 
-        const result = detailTableData.filter(detail => shelfMakeNos.includes(detail.MAKE_NO));
-        console.log('結果:', result);
-        return result;
+        // 2. 展開 ORDER_DETAIL 中的 MAKE_NO
+        const expandedDetails = [];
+        for (const detail of detailTableData) {
+            if (!detail.MAKE_NO) continue;
+            const makeNos = detail.MAKE_NO.split(',').map(m => m.trim());
+            const totalCount = makeNos.length;
+
+            for (let i = 0; i < makeNos.length; i++) {
+                const makeNo = makeNos[i];
+                // 只保留貨架上有的 MAKE_NO
+                if (shelfMakeNos.includes(makeNo)) {
+                    expandedDetails.push({
+                        ...detail,
+                        MAKE_NO: makeNo,
+                        // 按比例分配 BOX_NO 和 PP_NO
+                        BOX_NO: Math.ceil((detail.BOX_NO || 0) / totalCount),
+                        PP_NO: Math.round(((detail.PP_NO || 0) / totalCount) * 100) / 100
+                    });
+                }
+            }
+        }
+        return expandedDetails;
     }, [shelfItem, detailTableData]);
 
     // ============= 預設勾選整箱BOX_NO > 0 零散不勾 =============
