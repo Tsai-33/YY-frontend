@@ -147,10 +147,10 @@ export default function ShelfTransferTable() {
     );
   };
 
-  // ===== 累積選擇的貨架（跨 SALE_NO）=====
+  // ===== 累積選擇的貨架(跨 SALE_NO)=====
   const [accumulatedShelves, setAccumulatedShelves] = useState([]);
 
-  // 加入按鈕：把當前選中的貨架加入累積清單
+  // 加入按鈕：把當前選中的貨架加入清單
   const handleAddToAccumulated = () => {
     if (selectedShelve.length === 0) {
       Alert({ title: "請先選擇貨架" });
@@ -164,7 +164,7 @@ export default function ShelfTransferTable() {
       return;
     }
 
-    // 把選中的貨架加入累積清單（包含 SALE_NO 資訊）
+    // 把選中的貨架加入累積清單
     const newItems = selectedShelve.map((shelveId) => {
       const shelveGroup = groupedShelveData.find((g) => g.SHELVE_ID === shelveId);
       return {
@@ -239,6 +239,9 @@ export default function ShelfTransferTable() {
           initialShelveStatus[shelve.SHELVE_ID] = "loading";
         });
 
+        // 取得所有不重複的 SALE_NO
+        const uniqueSaleNos = [...new Set(accumulatedShelves.map((s) => s.SALE_NO).filter(Boolean))];
+
         // 更新所有相關站點的狀態
         accumulatedShelves.forEach((shelve, index) => {
           const stationId = stations[index];
@@ -248,7 +251,8 @@ export default function ShelfTransferTable() {
               step: 3,
               screen: "loading",
               mode: "order",
-              orderCode: "",
+              orderCode: uniqueSaleNos[0] || "",
+              orderCodes: uniqueSaleNos,
               selectedShelves: accumulatedShelves.map((s) => s.SHELVE_ID),
               shelveStatus: initialShelveStatus,
               shelveData: {},
@@ -265,7 +269,8 @@ export default function ShelfTransferTable() {
               step: 3,
               screen: "loading",
               mode: "order",
-              orderCode: "",
+              orderCode: uniqueSaleNos[0] || "",
+              orderCodes: uniqueSaleNos,
               selectedShelves: accumulatedShelves.map((s) => s.SHELVE_ID),
               shelveStatus: initialShelveStatus,
               shelveData: {},
@@ -308,14 +313,14 @@ export default function ShelfTransferTable() {
           </div>
           {/* 已累積的貨架清單 */}
           {accumulatedShelves.length > 0 && (
-            <div className="bg-orange-50 border border-orange-300 rounded-lg p-3 max-h-[30%] overflow-auto">
+            <div className="bg-white rounded-lg p-3 max-h-[30%] overflow-auto">
               <div className="flex justify-between items-center mb-2">
-                <span className="font-bold text-orange-700">已選擇 {accumulatedShelves.length} / {stations.length} 個貨架</span>
+                <span className="font-bold">已選擇 {accumulatedShelves.length} / {stations.length} 個貨架</span>
                 <button onClick={handleClearAccumulated} className="text-sm text-red-500 hover:text-red-700">清空</button>
               </div>
               <div className="flex flex-wrap gap-2">
                 {accumulatedShelves.map((shelve) => (
-                  <div key={shelve.SHELVE_ID} className="bg-white border border-orange-400 rounded px-2 py-1 flex items-center gap-2">
+                  <div key={shelve.SHELVE_ID} className="bg-white border rounded px-2 py-1 flex items-center gap-2">
                     <span className="text-sm font-medium">{shelve.SHELVE_ID}</span>
                     <span className="text-xs text-gray-500">({shelve.SALE_NO})</span>
                     <button onClick={() => handleRemoveFromAccumulated(shelve.SHELVE_ID)} className="text-red-500 hover:text-red-700 text-lg leading-none">&times;</button>
@@ -394,14 +399,14 @@ export default function ShelfTransferTable() {
               {selectedOrder && (
                 <ActionBtn
                   icon="icon-plus"
-                  text={`加入 (${selectedShelve.length})`}
+                  text={`加入`}
                   variant="green"
                   disabled={!canAdd}
                   onClick={handleAddToAccumulated}
                 />
               )}
               {/* 確定按鈕 */}
-              <ActionBtn icon="icon-check" text={`確定叫車 (${accumulatedShelves.length})`} variant="orange" disabled={!canConfirm} onClick={handleConfirm} />
+              <ActionBtn icon="icon-check" text={`確定叫車`} variant="orange" disabled={!canConfirm} onClick={handleConfirm} />
             </div>
           </div>
         </div>
