@@ -17,6 +17,7 @@ import {
   updateInboundWMSREMARK,
   searchInboundWMSBynoSALE,
   searchInboundDecrypt,
+  getOrderByWID,
 } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
@@ -271,3 +272,13 @@ export const decryptBarCodePRTNO_in = async (value,inbound) => {
   } finally {
   }
 };
+
+export const getInboundOrderByWID = async(W_ID)=>{
+  try {
+    return await getOrderByWID(W_ID);
+  } catch (err) {
+    console.log(`handleSearchStation:`, err);
+    return err;
+  } finally {
+  }
+}

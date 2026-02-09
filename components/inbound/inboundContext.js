@@ -284,6 +284,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const handleChangeREMARK = (e) => {
     dispatch(setInbound({ station: currentStation, remark: e.target.value }));
   };
+  const handleGetOrder = async () => {};
 
   // ============================
   // ⭐ 搜尋框
@@ -362,8 +363,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     if (step <= 2) return <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={handleConfirmList} disabled={!waveNo} />;
     return (
       <div className="w-full flex justify-between">
-        {/* <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2?.length <= 0} /> */}
-        <button className="cursor-not-allowed w-50"></button>
+        <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} />
+        {/* <button className="cursor-not-allowed w-50"></button> */}
         <ActionBtn icon="icon-inbound" text="確定上架" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
         <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
       </div>
@@ -410,7 +411,9 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   }, [orderList]);
   useEffect(() => {
     if (waveNo) {
+      // 重抓之前，先確認有沒有order資料
       getList(waveNo, setTableData2);
+      getTable(setTableData, setOriginalData, orderList);
     }
   }, [shelfItem, waveNo]);
   useEffect(() => {
@@ -420,12 +423,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     searchWMS(order);
     dispatch(clearAllShelves());
   }, [order]);
-  useEffect(() => {
-    if (waveNo == "") {
-    }
-  }, [lackStation]);
 
-  console.log(order, "o");
   return (
     <>
       <div className="flex gap-4 py-2 items-stretch h-[72vh]">
@@ -493,7 +491,11 @@ export default function InboundContext({ barCodeRef, setLoading }) {
           <div className="flex flex-col flex-1 min-h-0 justify-between bg-white p-8 pb-4 h-full overflow-hidden">
             {orderCode && (
               <div className="h-full custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
-                {step <= 2 ? <ActionOrderList order={order} wmsData={wmsData} shelves={shelves} handleShelveClick={handleShelveClick} handleOtherShelve={handleOtherShelve} /> : <ShelfData shelf={shelf} remark={remark} displayItems={displayItems} handleChangeREMARK={handleChangeREMARK} />}
+                {step <= 2 ? (
+                  <ActionOrderList order={order} data={tableData2} wmsData={wmsData} shelves={shelves} handleShelveClick={handleShelveClick} handleOtherShelve={handleOtherShelve} />
+                ) : (
+                  <ShelfData shelf={shelf} remark={remark} displayItems={displayItems} handleChangeREMARK={handleChangeREMARK} />
+                )}
               </div>
             )}
             <div className="flex flex-col justify-end items-center p-4">{orderCode && <ActionButtons />}</div>
@@ -537,7 +539,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 // ⭐ 貨架上資訊
 // ============================
 
-const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOtherShelve }) => {
+const ActionOrderList = ({ order, data, wmsData, shelves, handleShelveClick, handleOtherShelve }) => {
   return (
     <>
       <SchematicDiagramList>
@@ -563,17 +565,32 @@ const ActionOrderList = ({ order, wmsData, shelves, handleShelveClick, handleOth
               </tr>
             </thead>
             <tbody>
-              <tr className="bg-gray-100 rounded-lg">
-                <td title={order?.PRT_NO} className="truncate p-2 rounded-bl-lg">
-                  {order?.PRT_NO || ""}
-                </td>
-                <td title={order?.PRT_NAME} className="truncate p-2">
-                  {order?.PRT_NAME || ""}
-                </td>
-                <td className="p-2">{order?.BOX_NOS || ""}</td>
-                <td className="p-2">{order?.PP_NOS || ""}</td>
-                <td className="p-2 rounded-br-lg">{order?.UNIT || ""}</td>
-              </tr>
+              {data.map((v) => (
+                <tr className="bg-gray-100 rounded-lg">
+                  <td title={v?.PRT_NO} className="truncate p-2 rounded-bl-lg">
+                    {v?.PRT_NO || ""}
+                  </td>
+                  <td title={v?.PRT_NAME} className="truncate p-2">
+                    {v?.PRT_NAME || ""}
+                  </td>
+                  <td className="p-2">{v?.BOX_NOS || ""}</td>
+                  <td className="p-2">{v?.PP_NOS || ""}</td>
+                  <td className="p-2 rounded-br-lg">{v?.UNIT || ""}</td>
+                </tr>
+              ))}
+              {/* ): (
+                <tr className="bg-gray-100 rounded-lg">
+                  <td title={order?.PRT_NO} className="truncate p-2 rounded-bl-lg">
+                    {order?.PRT_NO || ""}
+                  </td>
+                  <td title={order?.PRT_NAME} className="truncate p-2">
+                    {order?.PRT_NAME || ""}
+                  </td>
+                  <td className="p-2">{order?.BOX_NOS || ""}</td>
+                  <td className="p-2">{order?.PP_NOS || ""}</td>
+                  <td className="p-2 rounded-br-lg">{order?.UNIT || ""}</td>
+                </tr>
+              )} */}
             </tbody>
           </table>
         </div>

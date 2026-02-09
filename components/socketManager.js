@@ -9,6 +9,7 @@ import { setShelfTransfer } from "@/redux/reducer/reducerShelfTransfer";
 import { setInventory } from "@/redux/reducer/reducerInventory";
 import { setOutboundExternalNew } from "@/redux/reducer/reducerOutboundExternalNew";
 import { setOutboundInternalNew } from "@/redux/reducer/reducerOutboundInternalNew";
+import { getOrder, getOrderByWID } from "@/pages/api";
 
 export default function SocketManager() {
   const dispatch = useDispatch();
@@ -193,12 +194,12 @@ export default function SocketManager() {
         }
         // 使用別台電腦傳送入庫資訊
         if (eventData?.action === "newjob") {
-          console.log(eventData,'eventData')
           // 樓下電腦傳送樓上
           let lack_station = eventData?.STATION || [];
+          console.log("newjob labview傳送成功:", eventData);
           if (lack_station.length > 0) {
             lack_station.forEach((st) => {
-              dispatch(setInbound({ station: st, screen: "loading", lackStation: st , waveNo : Number(eventData?.W_ID)  }));
+              dispatch(setInbound({ station: st, screen: "loading", lackStation: st, waveNo: Number(eventData?.W_ID), orderCode: eventData?.order?.INSTOCK_NO, order: eventData?.order }));
             });
           }
         }
