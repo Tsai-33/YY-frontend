@@ -238,9 +238,9 @@ export const deleteTask_in = async (stations) => {
   }
 };
 
-export const searchWMS_in = async (SALE_NO, PRT_NO, STOCK_AREA, SHELVE_ID = [], INSTOCK_NO) => {
+export const searchWMS_in = async (SALE_NO, PRT_NO, STOCK_AREA, SHELVE_ID = [], INSTOCK_NO, W_ID) => {
   try {
-    return await searchInboundWMS({ SALE_NO: SALE_NO, PRT_NO: PRT_NO, STOCK_AREA: STOCK_AREA, SHELVE_IDs: SHELVE_ID, INSTOCK_NO: INSTOCK_NO });
+    return await searchInboundWMS({ SALE_NO: SALE_NO, PRT_NO: PRT_NO, STOCK_AREA: STOCK_AREA, SHELVE_IDs: SHELVE_ID, INSTOCK_NO: INSTOCK_NO, W_ID: W_ID });
   } catch (err) {
     console.log(`searchWMS:`, err);
   }
@@ -263,7 +263,7 @@ export const updateWMS_in = async (SHELVE_ID, PRT_NO, REMARK) => {
 };
 
 // 檢查目前掃描的外箱條碼
-export const decryptBarCodePRTNO_in = async (value,inbound) => {
+export const decryptBarCodePRTNO_in = async (value, inbound) => {
   try {
     return await searchInboundDecrypt({ barcode: value, inbound: inbound });
   } catch (err) {
@@ -273,7 +273,7 @@ export const decryptBarCodePRTNO_in = async (value,inbound) => {
   }
 };
 
-export const getInboundOrderByWID = async(W_ID)=>{
+export const getInboundOrderByWID = async (W_ID) => {
   try {
     return await getOrderByWID(W_ID);
   } catch (err) {
@@ -281,4 +281,4 @@ export const getInboundOrderByWID = async(W_ID)=>{
     return err;
   } finally {
   }
-}
+};

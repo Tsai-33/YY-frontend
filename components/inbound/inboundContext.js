@@ -28,7 +28,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
   const inbound = useSelector((s) => s.inbound);
-  const { orderList, lackStation } = useSelector((s) => s.inbound);
+  const { orderList } = useSelector((s) => s.inbound);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, waveNo, shelves, remark, job } = useSelector((s) => s.inbound[currentStationSafe] || {});
 
   // ============================
@@ -284,8 +284,6 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const handleChangeREMARK = (e) => {
     dispatch(setInbound({ station: currentStation, remark: e.target.value }));
   };
-  const handleGetOrder = async () => {};
-
   // ============================
   // ⭐ 搜尋框
   // ============================
@@ -374,7 +372,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ⭐ 搜尋 WMS新資料
   // ============================
   const searchWMS = async (data) => {
-    const res = await searchWMS_in(data.SALE_NO, data.PRT_NO, data.STOCK_AREA, data.SHELVE_ID, data.INSTOCK_NO);
+    const res = await searchWMS_in(data.SALE_NO, data.PRT_NO, data.STOCK_AREA, data.SHELVE_ID, data.INSTOCK_NO, data.W_ID);
     setWMSData(res?.data?.data);
   };
   const handleOtherShelve = async () => {
@@ -538,7 +536,6 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 // ============================
 // ⭐ 貨架上資訊
 // ============================
-
 const ActionOrderList = ({ order, data, wmsData, shelves, handleShelveClick, handleOtherShelve }) => {
   return (
     <>
@@ -557,40 +554,27 @@ const ActionOrderList = ({ order, data, wmsData, shelves, handleShelveClick, han
           <table className="w-full border-collapse text-left border-collapse">
             <thead className="bg-gray-300 rounded-lg">
               <tr>
-                <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
+                <th className="p-2 w-[25%]">產品品號</th>
                 <th className="p-2">品名</th>
                 <th className="p-2 w-[12%]">箱數</th>
                 <th className="p-2 w-[18%]">包數</th>
-                <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
+                <th className="p-2 w-[10%]">單位</th>
               </tr>
             </thead>
             <tbody>
-              {data.map((v) => (
+              {order?.items?.map((v) => (
                 <tr className="bg-gray-100 rounded-lg">
-                  <td title={v?.PRT_NO} className="truncate p-2 rounded-bl-lg">
+                  <td title={v?.PRT_NO} className="truncate p-2">
                     {v?.PRT_NO || ""}
                   </td>
                   <td title={v?.PRT_NAME} className="truncate p-2">
                     {v?.PRT_NAME || ""}
                   </td>
-                  <td className="p-2">{v?.BOX_NOS || ""}</td>
-                  <td className="p-2">{v?.PP_NOS || ""}</td>
-                  <td className="p-2 rounded-br-lg">{v?.UNIT || ""}</td>
+                  <td className="p-2">{v?.Total_Box || ""}</td>
+                  <td className="p-2">{v?.Total_PP || ""}</td>
+                  <td className="p-2">{v?.UNIT || ""}</td>
                 </tr>
               ))}
-              {/* ): (
-                <tr className="bg-gray-100 rounded-lg">
-                  <td title={order?.PRT_NO} className="truncate p-2 rounded-bl-lg">
-                    {order?.PRT_NO || ""}
-                  </td>
-                  <td title={order?.PRT_NAME} className="truncate p-2">
-                    {order?.PRT_NAME || ""}
-                  </td>
-                  <td className="p-2">{order?.BOX_NOS || ""}</td>
-                  <td className="p-2">{order?.PP_NOS || ""}</td>
-                  <td className="p-2 rounded-br-lg">{order?.UNIT || ""}</td>
-                </tr>
-              )} */}
             </tbody>
           </table>
         </div>
@@ -731,7 +715,7 @@ const ShelfItemRow = ({ item, isLast }) => {
   const isNew = item?.isNew || (item?.selectedBox > 0 && (item?.BOX_NO || 0) === 0);
   return (
     <tr className={`${isNew ? "text-red-500" : ""} bg-gray-100 rounded-lg`}>
-      <td className={`p-2 ${isLast ? "rounded-bl-lg" : ""} truncate max-w-0`} title={item?.PRT_NO}>
+      <td className={`p-2 truncate max-w-0`} title={item?.PRT_NO}>
         {item?.PRT_NO}
       </td>
       <td className="p-2 truncate max-w-0" title={item?.PRT_NAME}>
@@ -744,7 +728,7 @@ const ShelfItemRow = ({ item, isLast }) => {
       <td className="p-2 truncate max-w-0" title={item?.PP_NO}>
         {item?.PP_NO} <span className="inline-block text-red-500">{item?.selectedPP > 0 && `(+${item?.selectedPP})`}</span>
       </td>
-      <td className={`p-2 truncate max-w-0 ${isLast ? "rounded-br-lg" : ""}`} title={item?.UNIT}>
+      <td className={`p-2 truncate max-w-0`} title={item?.UNIT}>
         {item?.UNIT}
       </td>
     </tr>
