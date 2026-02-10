@@ -23,7 +23,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   // 測試選站 上市後刪掉)
-  const [thisStation, setThisStation] = useState(process.env.NEXT_PUBLIC_IP_A);
+  const [thisStation, setThisStation] = useState("");
   const handleChangeStation = (e) => {
     setThisStation(e.target.value);
   };
@@ -152,11 +152,17 @@ export default function Login() {
             // 執行強制登入
             setLoading(true);
             try {
-              const forceResponse = await loginAPI(formData.email, formData.password, true);
+              const forceResponse = await loginAPI(
+                formData.email,
+                formData.password,
+                true,
+              );
               if (forceResponse.success) {
                 const { user, accessToken, refreshToken } = forceResponse.data;
                 dispatch(loginSuccess({ user, accessToken, refreshToken }));
-                dispatch(initWorkstation(thisStation ? thisStation : user.ipAddress));
+                dispatch(
+                  initWorkstation(thisStation ? thisStation : user.ipAddress),
+                );
 
                 Alert({
                   title: "登入成功",
@@ -217,7 +223,6 @@ export default function Login() {
       password: password,
     });
   };
-
 
   // 此處到時候要刪除
   const [isDebugVisible, setIsDebugVisible] = useState(false);
@@ -296,19 +301,33 @@ export default function Login() {
                               focus:placeholder:opacity-30
                               "
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className={`absolute right-4 top-1/2 -translate-y-1/2 text-black hover:text-gray-500 transition-colors ${showPassword ? "mt-1" : "mt-2"}`}>
-                  {showPassword ? <span className="icon-openEye text-4xl"></span> : <span className="icon-closeEye text-4xl"></span>}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className={`absolute right-4 top-1/2 -translate-y-1/2 text-black hover:text-gray-500 transition-colors ${showPassword ? "mt-1" : "mt-2"}`}>
+                  {showPassword ? (
+                    <span className="icon-openEye text-4xl"></span>
+                  ) : (
+                    <span className="icon-closeEye text-4xl"></span>
+                  )}
                 </button>
               </div>
               {/* 忘记密码链接 - 右对齐 */}
               <div className="flex justify-end pr-2 pt-2 pb-8">
-                <Link href="/auth/forgot-password" className="text-(--green-deep) hover:text-(--green-fresh) text-sm transition-colors">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-(--green-deep) hover:text-(--green-fresh) text-sm transition-colors">
                   忘記密碼 Forgot your password?
                 </Link>
               </div>
 
               {/* 登录按钮 - 確定 */}
-              <ActionBtn text="確定" type="submit" disabled={loading} className="w-full py-3 bg-(--primary-color) hover:bg-(--green-fresh) text-white disabled:opacity-50 disabled:cursor-not-allowed" />
+              <ActionBtn
+                text="確定"
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-(--primary-color) hover:bg-(--green-fresh) text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              />
             </form>
           </div>
         </div>
@@ -319,20 +338,33 @@ export default function Login() {
         <div className="fixed w-100 z-[9999] bg-white/80 p-4 rounded-lg shadow-xl border-2 border-dashed border-red-500 absolute">
           <p className="text-red-500 font-bold mb-2">⚠️ 開發者測試模式</p>
 
-          <ActionBtn text="測帳密1" variant="yellow"  onClick={() => handleWriteIn("ADMIN001", "admin")} />
-          <ActionBtn text="測帳密2" variant="rose"  onClick={() => handleWriteIn("ADMIN002", "admin")} />
-          <ActionBtn text="測帳密3" variant="violet"  onClick={() => handleWriteIn("ADMIN003", "admin")} />
+          <ActionBtn
+            text="測帳密1"
+            variant="yellow"
+            onClick={() => handleWriteIn("ADMIN001", "admin")}
+          />
+          <ActionBtn
+            text="測帳密2"
+            variant="rose"
+            onClick={() => handleWriteIn("ADMIN002", "admin")}
+          />
+          <ActionBtn
+            text="測帳密3"
+            variant="violet"
+            onClick={() => handleWriteIn("ADMIN003", "admin")}
+          />
 
           <div className="max-w-sm">
-            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="quantity"
+              className="block text-sm font-medium text-gray-700 mb-1">
               選擇目前測試站點
             </label>
             <div className="relative">
               <select
                 id="quantity"
                 className="block w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-gray-700 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-gray-50"
-                onChange={handleChangeStation}
-              >
+                onChange={handleChangeStation}>
                 <option value="" disabled hidden>
                   請選擇
                 </option>
