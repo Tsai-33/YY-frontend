@@ -196,7 +196,7 @@ export const finishList_in = async (setLoading, order, inbound) => {
 
   setLoading(true);
   try {
-    return await finishInboundOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, REMARK: remarks });
+    return await finishInboundOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, REMARK: remarks, PALLET_NO: order.PALLET_NO });
   } catch (err) {
     console.log(`handleFinish:`, err);
     return err;

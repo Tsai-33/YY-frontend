@@ -103,13 +103,22 @@ export default function SocketManager() {
               }),
             );
           } else if (eventData?.PURPOSE === 1) {
+            let job = eventData?.Job || [];
+            if (eventData?.Job?.length > 0) {
+              job = eventData?.Job.map((item) => ({
+                PRT_NO: item.Est_PRT_NO,
+                PP_NO: item.Est_PPs,
+                BOX_NO: item.Est_Boxes, 
+              }));
+            }
+
             // 入庫
             dispatch(
               setInbound({
                 station: eventData?.STATION,
                 shelf: eventData,
                 shelfItem: eventData?.ITEMS,
-                job: eventData?.Job,
+                job: job,
                 screen: "working",
                 step: 3,
                 remark: eventData?.ITEMS[0]?.REMARK,
