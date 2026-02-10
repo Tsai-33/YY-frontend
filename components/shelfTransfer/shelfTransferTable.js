@@ -80,6 +80,7 @@ export default function ShelfTransferTable() {
           SHELVE_ID: id,
           STOCK_AREA: item.STOCK_AREA,
           SHELVE_TYPE: item.SHELVE_TYPE,
+          REMARK: item.REMARK || "",
           items: [],
         };
       }
@@ -358,6 +359,9 @@ export default function ShelfTransferTable() {
                                 <div className="whitespace-nowrap">
                                   貨架編號: {shelveGroup.SHELVE_ID}
                                   {isAlreadyAdded && <span className="ml-2 text-orange-500 text-sm">(已加入)</span>}
+                                </div>
+                                <div className="flex-1 flex items-center gap-2 truncate" title={shelveGroup.REMARK || ""}>
+                                  備註: {shelveGroup.REMARK}
                                 </div>
                                 <div>入庫庫別: {shelveGroup.STOCK_AREA}</div>
                               </div>

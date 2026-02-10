@@ -132,6 +132,7 @@ export default function ShelfTransferShelf() {
           SHELVE_ID: id,
           STOCK_AREA: item.STOCK_AREA,
           SHELVE_TYPE: item.SHELVE_TYPE,
+          REMARK: item.REMARK || "",
           items: [],
         };
       }
@@ -314,6 +315,9 @@ export default function ShelfTransferShelf() {
                   <div className="flex flex-col">
                     <div className="flex items-center justify-between gap-4 w-full">
                       <div className="whitespace-nowrap">貨架編號: {shelveGroup.SHELVE_ID}</div>
+                      <div className="flex-1 flex items-center gap-2 truncate" title={shelveGroup.REMARK || ""}>
+                        備註: {shelveGroup.REMARK}
+                      </div>
                       <div>入庫庫別: {shelveGroup.STOCK_AREA}</div>
                     </div>
                     <div className="border-t border-[#c4a57b] pt-3 mt-3"></div>
