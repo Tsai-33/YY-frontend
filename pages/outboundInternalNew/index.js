@@ -517,14 +517,20 @@ export default function OutboundInternalNew() {
       if ((stationSelected || []).length > 0) {
         itemsToShift = stationSelected;
       } else {
-        itemsToShift =
-          stationShelfItem?.map((item) => ({
-            PRT_NO: item.PRT_NO,
-            MAKE_NO: item.MAKE_NO,
-            outBoxNo: item.BOX_NO,
-            outPpNo: item.PP_NO,
-            ABNORMAL: item.ABNORMAL || 0,
-          })) || [];
+        // 展開每個 MAKE_NO，每個 MAKE_NO = 1 箱, BOX_PACK 包
+        itemsToShift = [];
+        (stationShelfItem || []).forEach((item) => {
+          const makeNos = item.MAKE_NO ? item.MAKE_NO.split(',').map(m => m.trim()) : [];
+          makeNos.forEach((makeNo) => {
+            itemsToShift.push({
+              PRT_NO: item.PRT_NO,
+              MAKE_NO: makeNo,
+              outBoxNo: 1,
+              outPpNo: item.BOX_PACK || 0,
+              ABNORMAL: item.ABNORMAL || 0,
+            });
+          });
+        });
       }
 
       if (itemsToShift.length === 0) {
@@ -658,14 +664,20 @@ export default function OutboundInternalNew() {
       if ((selected || []).length > 0) {
         itemsToShift = selected;
       } else {
-        itemsToShift =
-          shelfItem?.map((item) => ({
-            PRT_NO: item.PRT_NO,
-            MAKE_NO: item.MAKE_NO,
-            outBoxNo: item.BOX_NO,
-            outPpNo: item.PP_NO,
-            ABNORMAL: item.ABNORMAL || 0,
-          })) || [];
+        // 展開每個 MAKE_NO，每個 MAKE_NO = 1 箱, BOX_PACK 包
+        itemsToShift = [];
+        (shelfItem || []).forEach((item) => {
+          const makeNos = item.MAKE_NO ? item.MAKE_NO.split(',').map(m => m.trim()) : [];
+          makeNos.forEach((makeNo) => {
+            itemsToShift.push({
+              PRT_NO: item.PRT_NO,
+              MAKE_NO: makeNo,
+              outBoxNo: 1,
+              outPpNo: item.BOX_PACK || 0,
+              ABNORMAL: item.ABNORMAL || 0,
+            });
+          });
+        });
       }
 
       if (itemsToShift.length === 0) {

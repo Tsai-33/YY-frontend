@@ -3,7 +3,6 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setOutboundInternalNew } from "@/redux/reducer/reducerOutboundInternalNew";
-import { getOutboundInternalOrderDetailByWID } from "@/pages/api";
 
 export default function OutboundInternalNewTable({ data, selectedArray, setSelectedArray, detailTableData, setDetailTableData }) {
     const dispatch = useDispatch();
@@ -29,8 +28,8 @@ export default function OutboundInternalNewTable({ data, selectedArray, setSelec
                     return [...prev, {
                         PRT_NO: value.PRT_NO,
                         MAKE_NO: valueId,
-                        outBoxNo: value.BOX_NO,
-                        outPpNo: value.PP_NO
+                        outBoxNo: 1,
+                        outPpNo: value.BOX_PACK || 0
                     }];
                 }
             });
@@ -61,37 +60,37 @@ export default function OutboundInternalNewTable({ data, selectedArray, setSelec
     const detailHeaders = [
         { label: "", key: "checkbox", width: "10%" },
         { label: "產品品號", key: "PRT_NO", width: "60%" },
-        { label: "總包數", key: "PP_NO", width: "30%" },
+        { label: "總包數", key: "BOX_PACK", width: "30%" },
     ];
 
-    // ============= 根據波次拿訂單的細節 =============
-    useEffect(() => {
-        if (!waveNo || step < 3) return;
-        getList();
-    }, [waveNo, step]);
-    const getList = async () => {
-        try {
-            const res = await getOutboundInternalOrderDetailByWID(waveNo);
-            if (res.data.success) {
-                setDetailTableData(res.data.data);
-            }
-        } catch (error) {
-            console.warn("getList: ", error);
-        }
-    };
-
-    // ============= 用當前站點貨架的 MAKE_NO 過濾 ORDER_DETAIL =============
+    // ============= 直接用 WMS 的 MAKE_NO 顯示 =============
     const filteredDetailData = useMemo(() => {
-        if (!shelfItem || !detailTableData || detailTableData.length === 0) {
+        if (!shelfItem) {
             return [];
         }
+
+        // 從 WMS 展開 MAKE_NO
         const items = Array.isArray(shelfItem) ? shelfItem : [shelfItem];
-        const shelfMakeNos = items.flatMap(item => {
-            if (!item.MAKE_NO) return [];
-            return item.MAKE_NO.split(',').map(m => m.trim());
-        });
-        return detailTableData.filter(detail => shelfMakeNos.includes(detail.MAKE_NO));
-    }, [shelfItem, detailTableData]);
+        const expandedDetails = [];
+
+        for (const item of items) {
+            if (!item.MAKE_NO) continue;
+            const makeNos = item.MAKE_NO.split(',').map(m => m.trim());
+
+            for (let i = 0; i < makeNos.length; i++) {
+                const makeNo = makeNos[i];
+                expandedDetails.push({
+                    PRT_NO: item.PRT_NO,
+                    PRT_NAME: item.PRT_NAME,
+                    MAKE_NO: makeNo,
+                    BOX_NO: 1,
+                    PP_NO: item.BOX_PACK || 0,
+                    BOX_PACK: item.BOX_PACK || 0
+                });
+            }
+        }
+        return expandedDetails;
+    }, [shelfItem]);
 
     // ============= 預設勾選整箱BOX_NO > 0 零散不勾 =============
     useEffect(() => {
@@ -104,8 +103,8 @@ export default function OutboundInternalNewTable({ data, selectedArray, setSelec
             .map(item => ({
                 PRT_NO: item.PRT_NO,
                 MAKE_NO: item.MAKE_NO,
-                outBoxNo: item.BOX_NO,
-                outPpNo: item.PP_NO
+                outBoxNo: 1,
+                outPpNo: item.BOX_PACK || 0
             }));
         setSelectedArray(fullBoxItems);
         hasInitializedRef.current[currentStationSafe] = true;
