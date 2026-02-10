@@ -17,6 +17,7 @@ import {
   updateInboundWMSREMARK,
   searchInboundWMSBynoSALE,
   searchInboundDecrypt,
+  getOrderByWID,
 } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
@@ -195,7 +196,7 @@ export const finishList_in = async (setLoading, order, inbound) => {
 
   setLoading(true);
   try {
-    return await finishInboundOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, REMARK: remarks });
+    return await finishInboundOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, REMARK: remarks, PALLET_NO: order.PALLET_NO });
   } catch (err) {
     console.log(`handleFinish:`, err);
     return err;
@@ -237,9 +238,9 @@ export const deleteTask_in = async (stations) => {
   }
 };
 
-export const searchWMS_in = async (SALE_NO, PRT_NO, STOCK_AREA, SHELVE_ID = [], INSTOCK_NO) => {
+export const searchWMS_in = async (SALE_NO, PRT_NO, STOCK_AREA, SHELVE_ID = [], INSTOCK_NO, W_ID) => {
   try {
-    return await searchInboundWMS({ SALE_NO: SALE_NO, PRT_NO: PRT_NO, STOCK_AREA: STOCK_AREA, SHELVE_IDs: SHELVE_ID, INSTOCK_NO: INSTOCK_NO });
+    return await searchInboundWMS({ SALE_NO: SALE_NO, PRT_NO: PRT_NO, STOCK_AREA: STOCK_AREA, SHELVE_IDs: SHELVE_ID, INSTOCK_NO: INSTOCK_NO, W_ID: W_ID });
   } catch (err) {
     console.log(`searchWMS:`, err);
   }
@@ -262,9 +263,19 @@ export const updateWMS_in = async (SHELVE_ID, PRT_NO, REMARK) => {
 };
 
 // 檢查目前掃描的外箱條碼
-export const decryptBarCodePRTNO_in = async (value,inbound) => {
+export const decryptBarCodePRTNO_in = async (value, inbound) => {
   try {
     return await searchInboundDecrypt({ barcode: value, inbound: inbound });
+  } catch (err) {
+    console.log(`handleSearchStation:`, err);
+    return err;
+  } finally {
+  }
+};
+
+export const getInboundOrderByWID = async (W_ID) => {
+  try {
+    return await getOrderByWID(W_ID);
   } catch (err) {
     console.log(`handleSearchStation:`, err);
     return err;

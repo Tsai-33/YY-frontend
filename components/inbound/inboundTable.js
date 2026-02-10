@@ -9,7 +9,7 @@ export default function InboundTable({ data, data2, setData2 }) {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { orderCode, step, selected, shelfItem, waveNo } = useSelector((s) => s.inbound[currentStationSafe] || {});
+  const { orderCode, step, selected, shelfItem, waveNo , job} = useSelector((s) => s.inbound[currentStationSafe] || {});
   // =============== 畫面一 ====================
   // radio table (左)
   const tableHeader = [
@@ -56,24 +56,23 @@ export default function InboundTable({ data, data2, setData2 }) {
   const tableHeader2 = [
     { label: "", key: "checkbox", width: `48px` },
     {
+      label: "外箱號碼",
+      key: "MAKE_NO",
+      width: `35%`,
+    },
+    {
       label: "產品品號",
       key: "PRT_NO",
-      width: `60%`,
+      width: `35%`
     },
     //  {
     //   label: "產品品號",
     //   key: "PRT_NO",
-    //   width: `60%`,
-    //   render: (row) => row.PRT_NO || row.Est_PRT_NO,
+    //   width: `50%`,
+    //   render: (row) => row.Est_PRT_NO|| row.PRT_NO ,
     // },
-    { label: "總包數", key: "PP_NO", width: `30%` },
-    // { label: "總包數", key: "PP_NO", width: `30%`, render: (row) => row.PP_NO || row.Est_PPs },
+    { label: "總包數", key: "PP_NO", width: `15%`  },
   ];
-  useEffect(() => {
-    if (!waveNo) return;
-    getList(waveNo, setData2);
-  }, [shelfItem]);
-
   // ======== select ==========
   const selectAllRef = useRef(null);
   const handleSelectAll = (allData, idKey) => {
@@ -89,19 +88,20 @@ export default function InboundTable({ data, data2, setData2 }) {
   // 控制全選按鈕
   useEffect(() => {
     if (!selectAllRef.current) return;
-
     // 本頁可選取的資料
     const validData = data2.filter((item) => item.W_ID == waveNo);
 
     // 是否真的「全部都在 selected 裡」
-    const allSelected = validData.length > 0 && validData.every((v) => selected.some((s) => s.INSTOCK_NO === v.INSTOCK_NO));
+    const allSelected = validData.length > 0 && validData.every((v) => selected.some((s) => s.MAKE_NO === v.MAKE_NO));
     selectAllRef.current.checked = allSelected;
   }, [data2, selected]);
+
+
 
   return (
     <>
       {step <= 2 && <NoCheckBoxTable headers={tableHeader} data={data} type="radio" name="inbound" variants="green" idKey="INSTOCK_NO" checked={orderCode} onChange={handleSelectedOption} />}
-      {step > 2 && <TableAll headers={tableHeader2} data={data2} type="checkbox" name="inbound2" variants="green" idKey="INSTOCK_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} />}
+      {step > 2 && <TableAll headers={tableHeader2} data={data2} type="checkbox" name="inbound2" variants="green" idKey="MAKE_NO" checked={selected} onChange={handleSelectedOption} selectAllRef={selectAllRef} onChangeAll={handleSelectAll} />}
     </>
   );
 }
