@@ -30,8 +30,8 @@ export default function OutboundExternalNewTable({ data, selectedArray, setSelec
                     return [...prev, {
                         PRT_NO: value.PRT_NO,
                         MAKE_NO: valueId,
-                        outBoxNo: value.BOX_NO,
-                        outPpNo: value.PP_NO
+                        outBoxNo: 1,
+                        outPpNo: value.BOX_PACK || 0
                     }];
                 }
             });
@@ -63,67 +63,39 @@ export default function OutboundExternalNewTable({ data, selectedArray, setSelec
     const detailHeaders = [
         { label: "", key: "checkbox", width: "10%" },
         { label: "產品品號", key: "PRT_NO", width: "60%" },
-        { label: "總包數", key: "PP_NO", width: "30%" },
+        { label: "總包數", key: "BOX_PACK", width: "30%" },
     ];
 
-    // ============= 根據波次拿訂單的細節 =============
-    useEffect(() => {
-        if (!waveNo || step < 3) return;
-        getList();
-    }, [waveNo, step]);
-    const getList = async () => {
-        try {
-            const res = await getOutBoundExternalOrderDetailByWID(waveNo);
-            if (res.data.success) {
-                setDetailTableData(res.data.data);
-            }
-        } catch (error) {
-            console.warn("getList: ", error);
-        }
-    };
-
-    // ============= 用當前站點貨架的 MAKE_NO 過濾 ORDER_DETAIL =============
+    // ============= 直接用 WMS 的 MAKE_NO 顯示 =============
     const filteredDetailData = useMemo(() => {
-        console.log('=== DEBUG filteredDetailData ===');
-        console.log('shelfItem:', shelfItem);
-        console.log('detailTableData:', detailTableData);
-
-        if (!shelfItem || !detailTableData || detailTableData.length === 0) {
-            console.log('條件不滿足: shelfItem=', !!shelfItem, ', detailTableData長度=', detailTableData?.length || 0);
+        if (!shelfItem) {
             return [];
         }
 
-        // 1. 從貨架取得所有 MAKE_NO
+        // 從WMS展開 MAKE_NO
         const items = Array.isArray(shelfItem) ? shelfItem : [shelfItem];
-        const shelfMakeNos = items.flatMap(item => {
-            if (!item.MAKE_NO) return [];
-            return item.MAKE_NO.split(',').map(m => m.trim());
-        });
-        console.log('shelfMakeNos (拆分後):', shelfMakeNos);
-
-        // 2. 展開 ORDER_DETAIL 中的 MAKE_NO
         const expandedDetails = [];
-        for (const detail of detailTableData) {
-            if (!detail.MAKE_NO) continue;
-            const makeNos = detail.MAKE_NO.split(',').map(m => m.trim());
+
+        for (const item of items) {
+            if (!item.MAKE_NO) continue;
+            const makeNos = item.MAKE_NO.split(',').map(m => m.trim());
             const totalCount = makeNos.length;
 
             for (let i = 0; i < makeNos.length; i++) {
                 const makeNo = makeNos[i];
-                // 只保留貨架上有的 MAKE_NO
-                if (shelfMakeNos.includes(makeNo)) {
-                    expandedDetails.push({
-                        ...detail,
-                        MAKE_NO: makeNo,
-                        // 按比例分配 BOX_NO 和 PP_NO
-                        BOX_NO: Math.ceil((detail.BOX_NO || 0) / totalCount),
-                        PP_NO: Math.round(((detail.PP_NO || 0) / totalCount) * 100) / 100
-                    });
-                }
+                expandedDetails.push({
+                    PRT_NO: item.PRT_NO,
+                    PRT_NAME: item.PRT_NAME,
+                    MAKE_NO: makeNo,
+                    // 按比例分配 BOX_NO 和 PP_NO
+                    BOX_NO: Math.ceil((item.BOX_NO || 0) / totalCount),
+                    PP_NO: Math.round(((item.PP_NO || 0) / totalCount) * 100) / 100,
+                    BOX_PACK: item.BOX_PACK || 0
+                });
             }
         }
         return expandedDetails;
-    }, [shelfItem, detailTableData]);
+    }, [shelfItem]);
 
     // ============= 預設勾選整箱BOX_NO > 0 零散不勾 =============
     useEffect(() => {
@@ -136,8 +108,8 @@ export default function OutboundExternalNewTable({ data, selectedArray, setSelec
             .map(item => ({
                 PRT_NO: item.PRT_NO,
                 MAKE_NO: item.MAKE_NO,
-                outBoxNo: item.BOX_NO,
-                outPpNo: item.PP_NO
+                outBoxNo: 1,
+                outPpNo: item.BOX_PACK || 0
             }));
         setSelectedArray(fullBoxItems);
         hasInitializedRef.current[currentStationSafe] = true;
