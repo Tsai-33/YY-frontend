@@ -116,6 +116,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
           }
         }
         lack_station.forEach((st) => {
+          console.log(st,orderCode,'123456789')
           dispatch(setInbound({ station: st, screen: "loading", orderCode, waveNo: order.W_ID, order, orderList: orderCode, lackStation: st }));
         });
         setTableData((prev) => prev.filter((v) => v.INSTOCK_NO !== orderCode && v.STATUS == 0));
@@ -393,6 +394,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     if (e.key !== "Enter") return;
     const inputValue = e.target.value;
     const res = await decryptBarCodePRTNO_in(inputValue, inbound);
+    console.log(res?.data?.data,'抓到的資料?')
     if (res?.success) {
       if (res?.data?.data?.station) {
         // 自動勾選
@@ -401,11 +403,13 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         dispatch(setInbound({ selected: selected, station: res?.data?.data?.station }));
         // 自動跳頁
         dispatch(setCurrentStation(res?.data?.data?.station));
+        e.preventDefault();
         Alert({ title: "搜尋成功!" });
       }
 
       // boxRef.current.value = "";
     } else {
+      e.preventDefault();
       Alert({ title: res?.error?.message });
     }
   };
@@ -424,13 +428,14 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       getTable(setTableData, setOriginalData, orderList);
     }
   }, [shelfItem, waveNo]);
-  useEffect(() => {
-    if (!order) return;
-    // 2026-1-28 現場討論，告知必須抓出相符條件
-    // 假設訂單內有SHELVE_ID的陣列
-    searchWMS(order);
-    dispatch(clearAllShelves());
-  }, [order]);
+  // useEffect(() => {
+  //   if (!order) return;
+  //   // 2026-1-28 現場討論，告知必須抓出相符條件
+  //   // 假設訂單內有SHELVE_ID的陣列
+  //   searchWMS(order);
+  //   dispatch(clearAllShelves());
+  // }, [order]);
+
 
   return (
     <>

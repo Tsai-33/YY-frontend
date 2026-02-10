@@ -1,4 +1,5 @@
 const IP_A = process.env.NEXT_PUBLIC_IP_A;
+const IP_A1 = process.env.NEXT_PUBLIC_IP_A1;
 const IP_B = process.env.NEXT_PUBLIC_IP_B;
 const IP_C = process.env.NEXT_PUBLIC_IP_C;
 const IP_D = process.env.NEXT_PUBLIC_IP_D;
@@ -6,20 +7,10 @@ const IP_E = process.env.NEXT_PUBLIC_IP_E;
 
 export const workstationConfig = {
   A: {
-    computers: [IP_A, "localhost"],
+    computers: [IP_A, IP_A1, "localhost"],
     stations: {
-      [IP_A]: [
-        "A01",
-        "A02",
-        "A03",
-        "A04",
-        "A05",
-        "A06",
-        "A07",
-        "A08",
-        "A09",
-        "A10",
-      ],
+      [IP_A]: ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"],
+      [IP_A1]: ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"],
     },
     jobs: [
       { key: "inbound", text: "入倉", path: "/inbound", icon: "icon-inbound" },

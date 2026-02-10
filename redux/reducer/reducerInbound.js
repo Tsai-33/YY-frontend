@@ -35,9 +35,11 @@ const inboundSlice = createSlice({
       const { job, orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation, remark } = action.payload;
       if (!state[station]) return;
 
+      console.log(job, orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation, remark, "redux");
+
       if (job !== undefined) {
-        const edit_job = []
-        edit_job.PRT_NO = edit_job.Est_PRT_NO
+        const edit_job = [];
+        edit_job.PRT_NO = edit_job.Est_PRT_NO;
         state[station].job = job;
       }
       if (step !== undefined) state[station].step = step;

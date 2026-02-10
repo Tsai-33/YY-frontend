@@ -99,6 +99,7 @@ const rootReducer = combineReducers({
   inventory: persistReducer(inventoryPersistConfig, inventoryReducer),
   outboundExternalNew: persistReducer(outboundExternalNewPersistConfig, outboundExternalNewReducer),
   outboundInternalNew: persistReducer(outboundInternalNewPersistConfig, outboundInternalNewReducer),
+
 });
 
 export const store = configureStore({

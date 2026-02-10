@@ -104,11 +104,13 @@ export default function SocketManager() {
             );
           } else if (eventData?.PURPOSE === 1) {
             let job = eventData?.Job || [];
+
             if (eventData?.Job?.length > 0) {
+
               job = eventData?.Job.map((item) => ({
                 PRT_NO: item.Est_PRT_NO,
                 PP_NO: item.Est_PPs,
-                BOX_NO: item.Est_Boxes, 
+                BOX_NO: item.Est_Boxes,
               }));
             }
 
@@ -208,7 +210,7 @@ export default function SocketManager() {
           console.log("newjob labview傳送成功:", eventData);
           if (lack_station.length > 0) {
             lack_station.forEach((st) => {
-              dispatch(setInbound({ station: st, screen: "loading", lackStation: st, waveNo: Number(eventData?.W_ID), orderCode: eventData?.order?.INSTOCK_NO, order: eventData?.order }));
+              dispatch(setInbound({ station: st, screen: "loading", step: 2, lackStation: st, waveNo: Number(eventData?.W_ID), orderList: eventData?.order?.INSTOCK_NO, orderCode: eventData?.order?.INSTOCK_NO, order: eventData?.order }));
             });
           }
         }
