@@ -32,6 +32,7 @@ const workstationSlice = createSlice({
 });
 
 export const initWorkstation = (ip) => (dispatch) => {
+  console.log("當前系統偵測到的 IP 是:", ip);
   const config = workstationConfig;
 
   // --- A 區 (一台電腦，十個站台)
@@ -53,7 +54,7 @@ export const initWorkstation = (ip) => (dispatch) => {
     dispatch(setCurrentStation(stations[0]));
     return { success: true };
   }
-  // --- B 區 
+  // --- B 區
   if (config.B.computers.includes(ip)) {
     const stations = config.B.stations[ip];
 
@@ -91,10 +92,31 @@ export const initWorkstation = (ip) => (dispatch) => {
     return { success: true };
   }
 
-  // 未授權 IP
-  return { success: false, message: "IP 未授權" };
+  if (config.D) {
+    const defaultStations = Object.values(config.D.stations)[0] || [];
+
+    dispatch(
+      setWorkstation({
+        area: "D",
+        ip,
+        stations: defaultStations,
+        jobs: config.D.jobs,
+        currentStation: defaultStations[0] || null,
+        currentJob: null,
+      }),
+    );
+    return { success: true };
+  }
+
+  // 如果連 D 區設定都沒有，才報錯
+  return { success: false, message: "系統配置錯誤" };
 };
 
-export const { setWorkstation, setCurrentStation, setCurrentJob, resetWorkstation } = workstationSlice.actions;
+export const {
+  setWorkstation,
+  setCurrentStation,
+  setCurrentJob,
+  resetWorkstation,
+} = workstationSlice.actions;
 
 export default workstationSlice.reducer;

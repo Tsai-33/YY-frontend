@@ -10,7 +10,7 @@ import CheckInput from "@/components/common/input/checkInput";
 export default function StockQuery() {
   const tableHeader = [
     { label: "產品品號", key: "PRT_NO", width: 265 },
-    { label: "產品品名", key: "PRT_NAME", width: 370 },
+    { label: "產品品名", key: "PRT_NAME", width: 500 },
     { label: "庫別", key: "STOCK_AREA", width: 100 },
     {
       label: "產品數量",
@@ -23,11 +23,11 @@ export default function StockQuery() {
     {
       label: "箱數",
       key: "BOX_NO",
-      width: 100,
+      width: 150,
       render: (row) => row.BOX_NO,
       renderDetail: (d) => d.TOTAL_BOX_NO || "---",
     },
-    { label: "訂單單號", key: "SALE_NO", width: 265 },
+    { label: "訂單單號", key: "SALE_NO", width: 330 },
     {
       label: "入倉單號",
       key: "INSTOCK_NO",
@@ -40,7 +40,7 @@ export default function StockQuery() {
     { label: "異動日期", key: "BILL_TIME", width: 200 },
     { label: "訂單預交日", key: "WORK_TIME", width: 250 },
     { label: "每箱包數", key: "BOX_PACK", width: 200 },
-    { label: "材積", key: "VOLUMN", width: 110 },
+    { label: "材積", key: "VOLUMN", width: 150 },
     { label: "貨號", key: "PRT_CODE", width: 235 },
     { label: "客戶代號", key: "CUS_NO", width: 200 },
     { label: "品號簡碼", key: "BRIFT_CODE", width: 200 },
