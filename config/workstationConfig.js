@@ -8,7 +8,18 @@ export const workstationConfig = {
   A: {
     computers: [IP_A, "localhost"],
     stations: {
-      [IP_A]: ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"],
+      [IP_A]: [
+        "A01",
+        "A02",
+        "A03",
+        "A04",
+        "A05",
+        "A06",
+        "A07",
+        "A08",
+        "A09",
+        "A10",
+      ],
     },
     jobs: [
       { key: "inbound", text: "入倉", path: "/inbound", icon: "icon-inbound" },
@@ -89,7 +100,7 @@ export const workstationConfig = {
   C: {
     computers: [IP_D],
     stations: {
-      [IP_D]: ["D01", "D02", "D03", "D04","D05"],
+      [IP_D]: ["D01", "D02", "D03", "D04", "D05"],
     },
     jobs: [
       {
@@ -109,6 +120,20 @@ export const workstationConfig = {
         text: "盤點",
         path: "/inventory",
         icon: "icon-inventory",
+      },
+    ],
+  },
+  D: {
+    computers: [],
+    stations: {
+      default: ["F01"],
+    },
+    jobs: [
+      {
+        key: "inboundRemote",
+        text: "遠端入庫",
+        path: "/inbound/remote",
+        icon: "icon-inbound",
       },
     ],
   },

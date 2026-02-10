@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import Link from "next/link";
@@ -41,13 +41,16 @@ export default function Layout({ children }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const { isAuthenticated, userName, userRole } = useSelector(
-    (state) => state.user
+    (state) => state.user,
   );
 
   const path = router.pathname;
 
-  const mainClass =
-    path === "/" ? "flex-1 min-h-0" : "flex-1 min-h-0 flex flex-col justify-between my-5 mx-4 relative";
+  const isRemotePage = path === "/inbound/remote";
+
+  const mainClass = ["/", "/inbound/remote"].includes(path)
+    ? "flex-1 min-h-0"
+    : "flex-1 min-h-0 flex flex-col justify-between my-5 mx-4 relative";
 
   // 處理登出
   const handleLogout = async () => {
@@ -85,55 +88,60 @@ export default function Layout({ children }) {
   return (
     <div className="flex flex-col h-screen">
       {/* 頂部導航欄 */}
-      <header className="shrink-0 h-19 w-full max-w-full px-4 bg-white flex items-center justify-between z-20">
-        {/* Logo */}
-        <Link href="/">
-          <img
-            src={LOGO_PATH}
-            alt="YOHO Logo"
-            className="h-12 w-auto object-contain"
-          />
-        </Link>
+      {!isRemotePage && (
+        <header className="shrink-0 h-19 w-full max-w-full px-4 bg-white flex items-center justify-between z-20">
+          {/* Logo */}
+          <Link href="/">
+            <img
+              src={LOGO_PATH}
+              alt="YOHO Logo"
+              className="h-12 w-auto object-contain"
+            />
+          </Link>
 
-        {/* 登入/登出按鈕 */}
-        <div className="flex items-center gap-10 text-(length:--font-size-2xl)">
-          {isAuthenticated ? (
-            <>
-              {userName && (() => {
-                const role = userRole;
-                if (role !== "user") {
-                  return (
-                    <Link href="/workspace_admin">
-                      <span className="text-gray-700 font-medium cursor-pointer hover:underline">
-                      <i className="icon-user p-2"></i>{userName}
-                      </span>
-                    </Link>
-                  );
-                }else{
-                  return (
-                    <span className="text-gray-700 font-medium">
-                      <i className="icon-user "></i>{userName}
-                    </span>
-                  );  
-                }
-              })()}
+          {/* 登入/登出按鈕 */}
+          <div className="flex items-center gap-10 text-(length:--font-size-2xl)">
+            {isAuthenticated ? (
+              <>
+                {userName &&
+                  (() => {
+                    const role = userRole;
+                    if (role !== "user") {
+                      return (
+                        <Link href="/workspace_admin">
+                          <span className="text-gray-700 font-medium cursor-pointer hover:underline">
+                            <i className="icon-user p-2"></i>
+                            {userName}
+                          </span>
+                        </Link>
+                      );
+                    } else {
+                      return (
+                        <span className="text-gray-700 font-medium">
+                          <i className="icon-user "></i>
+                          {userName}
+                        </span>
+                      );
+                    }
+                  })()}
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-700 hover:text-red-600 font-medium transition-colors cursor-pointer">
+                  登出 Logout
+                </button>
+              </>
+            ) : (
               <button
-                onClick={handleLogout}
-                className="text-gray-700 hover:text-red-600 font-medium transition-colors cursor-pointer">
-                登出 Logout
+                onClick={handleLogin}
+                className="text-gray-700 hover:text-(--green-vivid) font-medium transition-colors cursor-pointer">
+                登入 Login
               </button>
-            </>
-          ) : (
-            <button
-              onClick={handleLogin}
-              className="text-gray-700 hover:text-(--green-vivid) font-medium transition-colors cursor-pointer">
-              登入 Login
-            </button>
-          )}
-        </div>
-      </header>
+            )}
+          </div>
+        </header>
+      )}
       {/* 主內容區域 */}
-      <main className={mainClass}>
+      <main className={`${mainClass} ${isRemotePage ? "h-full" : ""}`}>
         <ProtectedRoute>{children}</ProtectedRoute>
       </main>
 
@@ -148,7 +156,10 @@ export default function Layout({ children }) {
         <OutboundExternalManager isOpen={open} onClose={() => setOpen(false)} />
       )}
       {path === "/outboundExternalNew" && (
-        <OutboundExternalNewManager isOpen={open} onClose={() => setOpen(false)} />
+        <OutboundExternalNewManager
+          isOpen={open}
+          onClose={() => setOpen(false)}
+        />
       )}
       {path.startsWith("/shelfTransfer") && (
         <ShelfTransferManager isOpen={open} onClose={() => setOpen(false)} />
@@ -157,7 +168,10 @@ export default function Layout({ children }) {
         <InventoryManage isOpen={open} onClose={() => setOpen(false)} />
       )}
       {path === "/outboundInternalNew" && (
-        <OutboundInternalNewManager isOpen={open} onClose={() => setOpen(false)} />
+        <OutboundInternalNewManager
+          isOpen={open}
+          onClose={() => setOpen(false)}
+        />
       )}
       {path === "/outboundInternal" && (
         <OutboundInternalManager isOpen={open} onClose={() => setOpen(false)} />
