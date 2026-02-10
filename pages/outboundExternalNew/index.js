@@ -142,7 +142,10 @@ export default function OutboundExternalNew() {
   const executeSearch = () => {
     dispatch(setOutboundExternalNew({ station: currentStationSafe, order: {}, orderCode: "", waveNo: null, selectedShelves: [] }));
     const keyword = document.getElementById("searchInput").value.trim().toUpperCase();
-    const filtered = originalData.filter((item) => item.OUTSTOCK_NO?.toUpperCase().includes(keyword) || item.SALE_NO?.toUpperCase().includes(keyword));
+    // 模糊搜尋（已註解）
+    // const filtered = originalData.filter((item) => item.OUTSTOCK_NO?.toUpperCase().includes(keyword) || item.SALE_NO?.toUpperCase().includes(keyword));
+    // 精準搜尋（前綴匹配）
+    const filtered = originalData.filter((item) => item.OUTSTOCK_NO?.toUpperCase().startsWith(keyword) || item.SALE_NO?.toUpperCase().startsWith(keyword));
     setTableData(filtered);
     // 搜到一筆時自動選取並進入 step 2
     if (filtered.length === 1) {

@@ -35,6 +35,7 @@ export default function ShelfTransferStation() {
   const {
     mode,
     orderCode,
+    orderCodes = [],
     selectedShelves,
     shelveData,
     shelveStatus,
@@ -134,24 +135,13 @@ export default function ShelfTransferStation() {
 
       let res;
 
-      if (mode === "shelf") {
-        // 貨架調整
-        res = await transferItems({
-          items: itemsToMove,
-          sourceShelveId: activeShelveId,
-          targetShelveId: targetShelve,
-          operator,
-        });
-      } else {
-        // 訂單理貨
-        res = await updateTransferItems({
-          items: itemsToMove,
-          sourceShelveId: activeShelveId,
-          targetShelveId: targetShelve,
-          operator,
-          saleNo: orderCode,
-        });
-      }
+      // 統一使用 transferItems（有完整的新增/合併邏輯，可處理不同 SALE_NO）
+      res = await transferItems({
+        items: itemsToMove,
+        sourceShelveId: activeShelveId,
+        targetShelveId: targetShelve,
+        operator,
+      });
 
       if (res?.data?.success) {
         dispatch(
@@ -396,7 +386,7 @@ export default function ShelfTransferStation() {
         </div>
         <div className="text-xl text-black font-bold mb-3">
           {mode === "order"
-            ? "訂單單號：" + orderCode
+            ? "訂單單號：" + (orderCodes.length > 0 ? orderCodes.join(", ") : orderCode)
             : "入庫倉別：" + orderCode}
         </div>
         {/* 下拉選貨架、確定按鈕 */}
