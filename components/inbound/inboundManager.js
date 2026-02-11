@@ -85,7 +85,6 @@ export default function InboundManager({ isOpen, onClose }) {
     const random = generateRandomNumber();
     const data = { action: "ask_done", STATION: station, dataid: random };
     const res = await sendToWMS(data);
-    console.log(res,'123')
     if (res?.data?.data?.result == "ok") {
       Alert({ title: '重抓成功' });
       dispatch(setInbound({ step: 3, screen: "working" }));
