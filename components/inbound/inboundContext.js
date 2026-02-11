@@ -405,12 +405,12 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         e.preventDefault();
         Alert({ title: "搜尋成功!" });
       }
-
-      // boxRef.current.value = "";
     } else {
       e.preventDefault();
       Alert({ title: res?.error?.message });
+
     }
+    boxRef.current.value = "";
   };
 
   // ============================
