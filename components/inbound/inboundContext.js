@@ -116,8 +116,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
           }
         }
         lack_station.forEach((st) => {
-          console.log(st,orderCode,'123456789')
-          dispatch(setInbound({ station: st, screen: "loading", orderCode, waveNo: order.W_ID, order, orderList: orderCode, lackStation: st }));
+          dispatch(setInbound({ station: st, screen: "loading", orderCode: orderCode, waveNo: order.W_ID, order: order, orderList: orderCode, lackStation: st }));
         });
         setTableData((prev) => prev.filter((v) => v.INSTOCK_NO !== orderCode && v.STATUS == 0));
         await addTask_in(stations);
@@ -394,7 +393,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     if (e.key !== "Enter") return;
     const inputValue = e.target.value;
     const res = await decryptBarCodePRTNO_in(inputValue, inbound);
-    console.log(res?.data?.data,'抓到的資料?')
+    console.log(res?.data?.data, "抓到的資料?");
     if (res?.success) {
       if (res?.data?.data?.station) {
         // 自動勾選
@@ -419,7 +418,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   // ============================
   useEffect(() => {
     getTable(setTableData, setOriginalData, orderList);
-    dispatch(clearAllShelves());
+    // dispatch(clearAllShelves());
   }, [orderList]);
   useEffect(() => {
     if (waveNo) {
@@ -435,7 +434,6 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   //   searchWMS(order);
   //   dispatch(clearAllShelves());
   // }, [order]);
-
 
   return (
     <>

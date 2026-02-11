@@ -9,7 +9,8 @@ import { setShelfTransfer } from "@/redux/reducer/reducerShelfTransfer";
 import { setInventory } from "@/redux/reducer/reducerInventory";
 import { setOutboundExternalNew } from "@/redux/reducer/reducerOutboundExternalNew";
 import { setOutboundInternalNew } from "@/redux/reducer/reducerOutboundInternalNew";
-import { getOrder, getOrderByWID } from "@/pages/api";
+import { getOrder, getOrderByWID, updateTask } from "@/pages/api";
+import { addTask_in } from "./inbound/inboundFunction";
 
 export default function SocketManager() {
   const dispatch = useDispatch();
@@ -212,6 +213,7 @@ export default function SocketManager() {
             lack_station.forEach((st) => {
               dispatch(setInbound({ station: st, screen: "loading", step: 2, lackStation: st, waveNo: Number(eventData?.W_ID), orderList: eventData?.order?.INSTOCK_NO, orderCode: eventData?.order?.INSTOCK_NO, order: eventData?.order }));
             });
+            await updateTask({ stations: "A01", location: "inbound" });
           }
         }
       };
