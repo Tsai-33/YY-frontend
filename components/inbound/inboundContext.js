@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ActionBtn from "@/components/common/btns/actionBtn";
 import InputFrame from "@/components/common/input/inputFrame";
-import { clearAllShelves, resetInbound, selectShelf, setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
+import { resetInbound, selectShelf, setInbound, updateShelfItem } from "@/redux/reducer/reducerInbound";
 import SchematicDiagram from "../../components/diagram/schematicDiagram";
 import InboundTable from "@/components/inbound/inboundTable";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
@@ -328,16 +328,57 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     dispatch(resetInbound({ type: "search", station: currentStation, W_ID: waveNo }));
     setTableData(originalData);
   };
+
   // ============================
   // ⭐ 撈ERP資料 / 顯示入庫單號
   // ============================
   const OrderTitle = () => {
-    if (step > 2) return <span>{orderCode}</span>;
-    return (
-      <div className="w-75 ml-2">
-        <InputFrame type="text" ref={barCodeRef} onKeyDown={handleBarCode} />
-      </div>
-    );
+    if (step > 2) {
+      return (
+        <div className="w-full flex flex-col">
+          <div className="flex items-center justify-between">
+            <div className="flex">
+              <label htmlFor="order">
+                入倉單條碼<span className="text-lg px-1">:</span>
+              </label>
+              <div>{orderCode}</div>
+            </div>
+            <div className="flex">
+              <label htmlFor="input">
+                外箱號碼<span className="text-lg px-1">:</span>
+              </label>
+              <InputFrame ref={boxRef} type="text" id="input" onKeyDown={handleSearchStation} />
+            </div>
+          </div>
+
+          <div className="flex justify-between">
+            <div className="flex items-center">
+              <span>客戶</span>
+              <span className="text-lg px-1">:</span>
+              <span>{order?.CUS_NO}</span>
+              <div className="w-[2vw]"></div>
+              <span>棧板號</span>
+              <span className="text-lg px-1">:</span>
+              <span>{shelf?.PALLET_NO}</span>
+            </div>
+            <div className="flex items-center">
+              <span>訂單號</span>
+              <span className="text-lg px-1">:</span>
+              <span>{order?.SALE_NO}</span>
+            </div>
+          </div>
+        </div>
+      );
+    } else {
+      return (
+        <>
+          <label htmlFor="order">
+            入倉單條碼<span className="text-lg px-1">:</span>
+          </label>
+          <InputFrame id="order" type="text" ref={barCodeRef} onKeyDown={handleBarCode} />
+        </>
+      );
+    }
   };
   // ============================
   // ⭐ Modal 資料加總
@@ -408,7 +449,6 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     } else {
       e.preventDefault();
       Alert({ title: res?.error?.message });
-
     }
     boxRef.current.value = "";
   };
@@ -480,24 +520,9 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         </div>
 
         {/* 右側資訊區 */}
-        <div className="w-[53%] flex flex-col">
+        <div className={`${step <= 2 ? `w-[53%]` : `w-[80%]`} flex flex-col`}>
           <div className="flex items-center justify-between p-4">
-            <div className="flex">
-              <label htmlFor="order">
-                入倉單條碼<span className="text-lg px-1">:</span>
-              </label>
-              <OrderTitle />
-            </div>
-            <div className="flex">
-              {step > 2 && (
-                <>
-                  <label htmlFor="input">
-                    外箱號碼<span className="text-lg px-1">:</span>
-                  </label>
-                  <InputFrame ref={boxRef} type="text" id="input" onKeyDown={handleSearchStation} />
-                </>
-              )}
-            </div>
+            <OrderTitle />
           </div>
           <div className="flex flex-col flex-1 min-h-0 justify-between bg-white p-8 pb-4 h-full overflow-hidden">
             {orderCode && (
@@ -708,14 +733,14 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems }) => {
   };
   return (
     <SchematicDiagram>
-      <div className="flex flex-col">
+      <div className="flex flex-col gap-2 text-[length:var(--font-size-4xl)]">
         <div className="flex items-center justify-between gap-4 w-full">
           <div className="whitespace-nowrap">貨架編號: {shelf?.SHELVE_ID}</div>
-          <div className="flex-1 flex items-center gap-2">
-            <span>備註:</span>
-            <input type="text" value={remark} placeholder="點擊輸入備註..." className="flex-1 px-2 py-1 outline-none rounded bg-transparent focus:bg-white transition-colors duration-200" onChange={handleChangeREMARK} onKeyDown={handleKeyDown} />
-          </div>
           <div>入庫庫別: {shelf?.area}</div>
+        </div>
+        <div className="flex-1 flex items-center gap-2">
+          <span>備註:</span>
+          <input type="text" value={remark} placeholder="點擊輸入備註..." className="flex-1 px-2 py-1 outline-none rounded bg-transparent focus:bg-white transition-colors duration-200" onChange={handleChangeREMARK} onKeyDown={handleKeyDown} />
         </div>
         <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
 

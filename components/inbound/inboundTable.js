@@ -9,7 +9,7 @@ export default function InboundTable({ data, data2, setData2 }) {
   const dispatch = useDispatch();
   const { stations, currentStation } = useSelector((s) => s.workstation);
   const currentStationSafe = currentStation || stations?.[0] || "";
-  const { orderCode, step, selected, shelfItem, waveNo , job} = useSelector((s) => s.inbound[currentStationSafe] || {});
+  const { orderCode, step, selected, shelfItem, waveNo, job } = useSelector((s) => s.inbound[currentStationSafe] || {});
   // =============== 畫面一 ====================
   // radio table (左)
   const tableHeader = [
@@ -56,22 +56,11 @@ export default function InboundTable({ data, data2, setData2 }) {
   const tableHeader2 = [
     { label: "", key: "checkbox", width: `48px` },
     {
-      label: "外箱號碼",
-      key: "MAKE_NO",
-      width: `35%`,
-    },
-    {
       label: "產品品號",
       key: "PRT_NO",
-      width: `35%`
+      width: `60%`,
     },
-    //  {
-    //   label: "產品品號",
-    //   key: "PRT_NO",
-    //   width: `50%`,
-    //   render: (row) => row.Est_PRT_NO|| row.PRT_NO ,
-    // },
-    { label: "總包數", key: "PP_NO", width: `15%`  },
+    { label: "總包數", key: "PP_NO", width: `30%` },
   ];
   // ======== select ==========
   const selectAllRef = useRef(null);
@@ -95,8 +84,6 @@ export default function InboundTable({ data, data2, setData2 }) {
     const allSelected = validData.length > 0 && validData.every((v) => selected.some((s) => s.MAKE_NO === v.MAKE_NO));
     selectAllRef.current.checked = allSelected;
   }, [data2, selected]);
-
-
 
   return (
     <>

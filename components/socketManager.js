@@ -208,7 +208,6 @@ export default function SocketManager() {
         if (eventData?.action === "newjob") {
           // 樓下電腦傳送樓上
           let lack_station = eventData?.STATION || [];
-          console.log("newjob labview傳送成功:", eventData);
           if (lack_station.length > 0) {
             lack_station.forEach((st) => {
               dispatch(setInbound({ station: st, screen: "loading", step: 2, lackStation: st, waveNo: Number(eventData?.W_ID), orderList: eventData?.order?.INSTOCK_NO, orderCode: eventData?.order?.INSTOCK_NO, order: eventData?.order }));

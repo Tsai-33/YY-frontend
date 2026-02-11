@@ -34,9 +34,6 @@ const inboundSlice = createSlice({
     setInbound: (state, action) => {
       const { job, orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation, remark } = action.payload;
       if (!state[station]) return;
-
-      console.log(job, orderList, step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, lackStation, remark, "redux");
-
       if (job !== undefined) {
         const edit_job = [];
         edit_job.PRT_NO = edit_job.Est_PRT_NO;
@@ -124,6 +121,8 @@ const inboundSlice = createSlice({
     resetInbound: (state, action) => {
       const { type, station, W_ID } = action.payload;
 
+      console.log(type,station,W_ID,'123')
+
       if (type === "one") {
         state[station].screen = "loading";
       } else if (type === "all") {
@@ -151,14 +150,14 @@ const inboundSlice = createSlice({
         Object.keys(state).forEach((key) => {
           const s = state[key];
           if (s && typeof s === "object" && "waveNo" in s && s.waveNo === W_ID) {
-            state[key] = createStation();
+            state[key] = createStation(station);
           }
         });
       } else if (type === "search") {
         Object.keys(state).forEach((key) => {
           const s = state[key];
           if (s && typeof s === "object" && "waveNo" in s && s.waveNo === W_ID) {
-            state[key] = createStation();
+            state[key] = createStation(station);
           }
         });
       }
