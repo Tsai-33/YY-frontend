@@ -8,6 +8,7 @@ import { deleteTask, sendToWMS } from "@/pages/api";
 import { FaReplyAll } from "react-icons/fa";
 import { GrPowerReset } from "react-icons/gr";
 import { generateRandomNumber } from "@/utils/random";
+import toast from "react-hot-toast";
 
 export default function InboundManager({ isOpen, onClose }) {
   const dispatch = useDispatch();
@@ -85,11 +86,12 @@ export default function InboundManager({ isOpen, onClose }) {
     const random = generateRandomNumber();
     const data = { action: "ask_done", STATION: station, dataid: random };
     const res = await sendToWMS(data);
+
     if (res?.data?.data?.result == "ok") {
-      Alert({ title: '重抓成功' });
+      toast.success("重抓成功");
       dispatch(setInbound({ step: 3, screen: "working" }));
     } else {
-      Alert({ title: res?.data?.data?.result });
+      toast.error(`${res?.data?.data?.result}`);
     }
   };
 

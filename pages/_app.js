@@ -7,6 +7,7 @@ import "@/public/icomoon/style.css";
 import { Roboto_Mono } from "next/font/google";
 import Head from "next/head";
 import SocketManager from "@/components/socketManager";
+import { Toaster } from "react-hot-toast";
 
 const roboto = Roboto_Mono({
   subsets: ["latin"],
@@ -29,6 +30,17 @@ export default function App({ Component, pageProps }) {
             <SocketManager />
             <Layout>
               <Component {...pageProps} />
+              <Toaster
+                position="top-center"
+                reverseOrder={false}
+                toastOptions={{
+                  // 這裡設定全域樣式
+                  style: {
+                    padding: "16px 24px", 
+                    borderRadius: "10px", 
+                  },
+                }}
+              />
             </Layout>
           </PersistGate>
         </Provider>

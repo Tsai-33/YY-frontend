@@ -14,6 +14,7 @@ import LoadingText from "../common/loading/loading-text";
 import { FaTrashAlt } from "react-icons/fa";
 import { MdShelves } from "react-icons/md";
 import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
+import toast from "react-hot-toast";
 
 export default function InboundContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
@@ -258,7 +259,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     const res = await finishList_in(setLoading, order, inbound);
     if (res?.success) {
       dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res?.data?.data }));
-      Alert({ title: "此單已完成" });
+      toast.success("此單已完成");
       const check = await checkNodePos({ STATION: currentStation });
       if (check?.data?.data?.length <= 0) await deleteTask_in(stations);
     } else {
@@ -311,8 +312,12 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     }, 3000);
   };
   const executeSearch = () => {
+    // 1. 先確認輸入框是否存在
+    const searchInput = document.getElementById("searchInput");
+    if (!searchInput) return;
+
     dispatch(resetInbound({ type: "search", station: currentStation, W_ID: waveNo }));
-    const keyword = document.getElementById("searchInput").value.trim().toUpperCase();
+    const keyword = searchInput.value.trim().toUpperCase();
     const filtered = originalData.filter((item) => item.INSTOCK_NO.toUpperCase().includes(keyword) || item?.SALE_NO?.toUpperCase().includes(keyword) || String(item.BILL_TIME || "").includes(keyword) || String(item.CUS_NO || "").includes(keyword));
     setTableData(filtered);
   };
@@ -434,7 +439,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     if (e.key !== "Enter") return;
     const inputValue = e.target.value;
     const res = await decryptBarCodePRTNO_in(inputValue, inbound);
-    console.log(res?.data?.data, "抓到的資料?");
+
     if (res?.success) {
       if (res?.data?.data?.station) {
         // 自動勾選
@@ -443,12 +448,11 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         dispatch(setInbound({ selected: selected, station: res?.data?.data?.station }));
         // 自動跳頁
         dispatch(setCurrentStation(res?.data?.data?.station));
-        e.preventDefault();
-        Alert({ title: "搜尋成功!" });
+        toast.success(`搜尋成功!`);
       }
     } else {
       e.preventDefault();
-      Alert({ title: res?.error?.message });
+      toast.error(`${res?.error?.message}`);
     }
     boxRef.current.value = "";
   };
@@ -729,6 +733,7 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems }) => {
     if (e.key === "Enter") {
       e.preventDefault();
       e.target.blur();
+      toast.success("寫入備註成功!");
     }
   };
   return (
