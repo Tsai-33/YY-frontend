@@ -352,7 +352,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
               <label htmlFor="input">
                 外箱號碼<span className="text-lg px-1">:</span>
               </label>
-              <InputFrame ref={boxRef} type="text" id="input" onKeyDown={handleSearchStation} />
+              <InputFrame ref={boxRef} type="text" id="input" inputMode="url" onKeyDown={handleSearchStation} />
             </div>
           </div>
 
@@ -449,6 +449,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         // 自動跳頁
         dispatch(setCurrentStation(res?.data?.data?.station));
         toast.success(`搜尋成功!`);
+        boxRef.current.focus();
       }
     } else {
       e.preventDefault();
@@ -478,6 +479,21 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   //   searchWMS(order);
   //   dispatch(clearAllShelves());
   // }, [order]);
+  useEffect(() => {
+  
+    // 延遲 100ms 是為了確保 DOM 已經完全渲染並出現在畫面上
+    // 特別是如果你有切換動畫或 Step 切換
+    const timer = setTimeout(() => {
+      if (step <= 2 && barCodeRef.current) {
+        barCodeRef.current.focus();
+      } else if (step > 2 && boxRef.current) {
+        boxRef.current.focus();
+        boxRef.current.select();
+      }
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [currentStation, step]);
 
   return (
     <>
