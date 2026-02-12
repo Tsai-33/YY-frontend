@@ -265,7 +265,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     if (res?.success) dispatch(resetInbound({ type: "one", station: currentStation, W_ID: waveNo }));
   };
   const handleFinish = async () => {
-    const res = await finishList_in(setLoading, order, inbound);
+    const res = await finishList_in(setLoading, order, currentStation);
     if (res?.success) {
       dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res?.data?.data }));
       toast.success("此單已完成");
