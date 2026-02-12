@@ -107,7 +107,6 @@ export default function SocketManager() {
             let job = eventData?.Job || [];
 
             if (eventData?.Job?.length > 0) {
-
               job = eventData?.Job.map((item) => ({
                 PRT_NO: item.Est_PRT_NO,
                 PP_NO: item.Est_PPs,
@@ -117,8 +116,8 @@ export default function SocketManager() {
 
             // 排除掉DUMMY
             let items = eventData?.ITEMS;
-            if(eventData?.ITEMS?.length>0){
-              items = eventData?.ITEMS.filter(v=>v.PRT_NAME === 'DUMMY')
+            if (eventData?.ITEMS?.length > 0) {
+              items = eventData?.ITEMS.filter((v) => v.PRT_NAME !== "DUMMY");
             }
 
             // 入庫
