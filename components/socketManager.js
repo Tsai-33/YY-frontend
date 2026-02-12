@@ -116,7 +116,10 @@ export default function SocketManager() {
             }
 
             // 排除掉DUMMY
-            
+            let items = eventData?.ITEMS;
+            if(eventData?.ITEMS?.length>0){
+              items = eventData?.ITEMS.filter(v=>v.PRT_NAME === 'DUMMY')
+            }
 
             // 入庫
             dispatch(
