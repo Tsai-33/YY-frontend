@@ -456,7 +456,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         // 確認是不是這個棧板的
         if (shelf?.PALLET_NO === selected[0]?.PALLET_NO) {
           dispatch(setInbound({ selected: selected, station: res?.data?.data?.station }));
-        } else if(shelf?.PALLET_NO === ''){
+        } else if (shelf?.PALLET_NO === "") {
           toast.error("沒有指定棧板請自行選擇上架貨物");
         } else {
           toast.error("不是此棧板的貨物");
@@ -830,11 +830,11 @@ const ShelfItemRow = ({ item, isLast }) => {
       <td className="p-2 truncate max-w-0" title={item?.PRT_NAME}>
         {item?.PRT_NAME}
       </td>
-      <td className="p-2 truncate max-w-0" title={item?.BOX_NO}>
+      <td className="p-2 truncate max-w-0" title={`${item?.BOX_NO}${item?.selectedBox > 0 && `(+${item?.selectedBox})`}`}>
         {item?.BOX_NO}
         <span className="inline-block text-red-500">{item?.selectedBox > 0 && `(+${item?.selectedBox})`}</span>
       </td>
-      <td className="p-2 truncate max-w-0" title={item?.PP_NO}>
+      <td className="p-2 truncate max-w-0" title={`${item?.PP_NO}${item?.selectedPP > 0 && `(+${item?.selectedPP})`}`}>
         {item?.PP_NO} <span className="inline-block text-red-500">{item?.selectedPP > 0 && `(+${item?.selectedPP})`}</span>
       </td>
       <td className={`p-2 truncate max-w-0`} title={item?.UNIT}>
