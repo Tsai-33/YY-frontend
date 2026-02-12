@@ -242,6 +242,12 @@ export default function OutboundExternal() {
       // 從 ORDER_DETAIL 找對應的產品 (有 MAKE_NO)
       const matchedItem = detailTableData?.find((item) => item.MAKE_NO === makeNo);
 
+      // 從 shelfItem (WMS) 找對應的 PALLET_NO
+      const matchedShelfItem = (shelfItem || []).find((item) => {
+        const shelfMakeNos = item.MAKE_NO ? item.MAKE_NO.split(',').map(m => m.trim()) : [];
+        return shelfMakeNos.includes(makeNo);
+      });
+
       if (matchedItem) {
         const alreadyScanned = (selected || []).some((p) => p.MAKE_NO === makeNo);
 
@@ -256,9 +262,10 @@ export default function OutboundExternal() {
                 {
                   PRT_NO: matchedItem.PRT_NO,
                   MAKE_NO: makeNo,
-                  outBoxNo: matchedItem.BOX_NO,
-                  outPpNo: matchedItem.PP_NO,
+                  outBoxNo: 1,
+                  outPpNo: matchedShelfItem?.BOX_PACK || matchedItem.BOX_PACK || 0,
                   ABNORMAL: matchedItem.ABNORMAL || 0,
+                  PALLET_NO: matchedShelfItem?.PALLET_NO || null,
                 },
               ],
             }),
@@ -505,14 +512,21 @@ export default function OutboundExternal() {
       if ((stationSelected || []).length > 0) {
         itemsToShift = stationSelected;
       } else {
-        itemsToShift =
-          stationShelfItem?.map((item) => ({
-            PRT_NO: item.PRT_NO,
-            MAKE_NO: item.MAKE_NO,
-            outBoxNo: item.BOX_NO,
-            outPpNo: item.PP_NO,
-            ABNORMAL: item.ABNORMAL || 0,
-          })) || [];
+        // 整板出貨：展開每個 MAKE_NO，每個 MAKE_NO = 1 箱, BOX_PACK 包
+        itemsToShift = [];
+        (stationShelfItem || []).forEach((item) => {
+          const makeNos = item.MAKE_NO ? item.MAKE_NO.split(',').map(m => m.trim()) : [];
+          makeNos.forEach((makeNo) => {
+            itemsToShift.push({
+              PRT_NO: item.PRT_NO,
+              MAKE_NO: makeNo,
+              outBoxNo: 1,
+              outPpNo: item.BOX_PACK || 0,
+              ABNORMAL: item.ABNORMAL || 0,
+              PALLET_NO: item.PALLET_NO || null,
+            });
+          });
+        });
       }
 
       if (itemsToShift.length === 0) {
@@ -652,15 +666,21 @@ export default function OutboundExternal() {
         // 零散掃條碼
         itemsToShift = selected;
       } else {
-        // 整板出貨
-        itemsToShift =
-          shelfItem?.map((item) => ({
-            PRT_NO: item.PRT_NO,
-            MAKE_NO: item.MAKE_NO,
-            outBoxNo: item.BOX_NO,
-            outPpNo: item.PP_NO,
-            ABNORMAL: item.ABNORMAL || 0,
-          })) || [];
+        // 整板出貨：展開每個 MAKE_NO，每個 MAKE_NO = 1 箱, BOX_PACK 包
+        itemsToShift = [];
+        (shelfItem || []).forEach((item) => {
+          const makeNos = item.MAKE_NO ? item.MAKE_NO.split(',').map(m => m.trim()) : [];
+          makeNos.forEach((makeNo) => {
+            itemsToShift.push({
+              PRT_NO: item.PRT_NO,
+              MAKE_NO: makeNo,
+              outBoxNo: 1,
+              outPpNo: item.BOX_PACK || 0,
+              ABNORMAL: item.ABNORMAL || 0,
+              PALLET_NO: item.PALLET_NO || null,
+            });
+          });
+        });
       }
 
       if (itemsToShift.length === 0) {
