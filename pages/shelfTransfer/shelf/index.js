@@ -10,7 +10,7 @@ import {
   insertShelfTask,
 } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
-import { setShelfTransfer } from "@/redux/reducer/reducerShelfTransfer";
+import { setShelfTransfer, resetShelfTransfer } from "@/redux/reducer/reducerShelfTransfer";
 import Alert from "@/components/common/alert/alert";
 import ShelfTransferStation from "@/components/shelfTransfer/shelfTransferStation";
 import LoadingShelf from "@/components/common/loading/loading-shelf";
@@ -25,6 +25,18 @@ export default function ShelfTransferShelf() {
   const { step, screen, selectedShelves } = useSelector(
     (s) => s.shelfTransfer[currentStationSafe] || {}
   );
+
+  // 進入頁面時，如果沒有進行中的任務重置狀態
+  const hasInitialized = useRef(false);
+  useEffect(() => {
+    if (!hasInitialized.current) {
+      hasInitialized.current = true;
+      // 如果不是在理貨中(step 3)重置狀態清除資料
+      if (step !== 3) {
+        dispatch(resetShelfTransfer());
+      }
+    }
+  }, []);
 
   // ===== 庫別下拉選單 =====
   const [stockAreas, setStockAreas] = useState([]);
