@@ -161,6 +161,11 @@ export default function Remote() {
               <input
                 ref={barCodeRef}
                 type="text"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.stopPropagation();
+                  }
+                }}
                 className="flex-1 px-4 py-3 rounded-xl text-xl font-bold bg-white/90 text-slate-900 focus:outline-none"
                 placeholder="請掃描單據條碼..."
                 disabled={status === "LOADING"}
@@ -175,7 +180,7 @@ export default function Remote() {
         </div>
 
         {/* 中央主結果顯示 */}
-        <div className="flex-1 flex flex-col items-center justify-center text-white px-5 h-[400px] overflow-hidden relative">
+        <div className="flex-1 flex flex-col items-center justify-center text-white px-5 h-[380px] overflow-hidden relative">
           {/* 使用動畫容器包裹，確保切換時平滑且不跳動 */}
           <div className="w-full flex flex-col items-center justify-center transition-all duration-300">
             {status === "IDLE" && (
@@ -228,7 +233,7 @@ export default function Remote() {
 
         {/* 底部 10 站地圖 (暫時註解 getStationStatus) */}
         <div className="p-6 grid grid-cols-5 gap-4 bg-black/40 backdrop-blur-md">
-          {[...Array(10)].map((_, i) => {
+          {[...Array(9)].map((_, i) => {
             const stationId = `A${(i + 1).toString().padStart(2, "0")}`;
             const currentStatus = stationStatuses[stationId] || "idle"; // 取得忙碌狀態
             const isMatched = station?.includes(
@@ -326,6 +331,7 @@ export default function Remote() {
 
         {/* 固定的底部狀態欄 */}
         <button
+          type="button"
           onClick={handleLogout}
           className="shrink-0 w-full p-6 bg-red-600/20 hover:bg-red-600 text-white transition-all duration-300 flex items-center justify-center gap-3 border-t border-white/10 group active:scale-95">
           <i className="icon-logout text-xl opacity-70 group-hover:opacity-100"></i>

@@ -51,9 +51,16 @@ export default function InventoryShelf() {
   // ⭐ 篩選指定產品品號
   // ============================
   const displayItems = useMemo(() => {
-    return currentPRTNO
+    // 1. 先過濾
+    const filtered = currentPRTNO
       ? rowState.filter((r) => r.PRT_NO === currentPRTNO)
       : rowState;
+
+    // 2. 加上唯一識別 ID (PRT_NO + SALE_NO)
+    return filtered.map((item) => ({
+      ...item,
+      ROW_ID: `${item.PRT_NO}-${item.SALE_NO}`, // 產生唯一鍵
+    }));
   }, [currentPRTNO, rowState]);
 
   // ============================
@@ -65,6 +72,7 @@ export default function InventoryShelf() {
       updateRowState({
         station: currentStation,
         prtNo: row.PRT_NO,
+        saleNo: row.SALE_NO,
         updates: { actualQty: v },
       }),
     );
@@ -79,6 +87,7 @@ export default function InventoryShelf() {
       updateRowState({
         station: currentStation,
         prtNo: row.PRT_NO,
+        saleNo: row.SALE_NO,
         updates: { confirmed: true, error: false },
       }),
     );
@@ -93,6 +102,7 @@ export default function InventoryShelf() {
       updateRowState({
         station: currentStation,
         prtNo: row.PRT_NO,
+        saleNo: row.SALE_NO,
         updates: { confirmed: true, error: true },
       }),
     );
@@ -117,7 +127,7 @@ export default function InventoryShelf() {
   // ============================
   const checkedItems = rowState
     .filter((r) => r.confirmed || r.error)
-    .map((r) => r.PRT_NO);
+    .map((r) => `${r.PRT_NO}-${r.SALE_NO}`);
 
   // ============================
   // 判斷是否可以送出 ERP：所有顯示列都必須 confirmed = true 代表已盤
@@ -130,7 +140,19 @@ export default function InventoryShelf() {
   // ============================
   const tableHeader = [
     { label: "", key: "checkbox", width: `7%` },
-    { label: "產品品號", key: "PRT_NO", width: `32%` },
+    {
+      label: "產品品號",
+      key: "PRT_NO",
+      width: `32%`,
+      render: (row) => (
+        <div className="flex flex-col">
+          <span className="font-medium">{row.PRT_NO}</span>
+          <span className="text-base text-gray-500 font-black">
+            {row.SALE_NO}
+          </span>
+        </div>
+      ),
+    },
     {
       label: "總包數",
       key: "PP_NO",
@@ -192,6 +214,12 @@ export default function InventoryShelf() {
   // ⭐ 右側 shelf 資料顯示+操作
   // ============================
   const submitToBackend = async () => {
+    dispatch(
+      setInventory({
+        station: currentStation,
+        data: { screen: "loading" },
+      }),
+    );
     const payload = {
       stations: stations,
       STATION: currentStation,
@@ -248,61 +276,54 @@ export default function InventoryShelf() {
   // ⭐ 下線功能
   // ============================
   const submitToOffline = async () => {
-    dispatch(
-      setInventory({
-        station: "*",
-        data: { screen: "loading" },
-      }),
-    );
-    try {
-      const random9 = generateRandomNumber();
-      const data = {
-        action: "cancel",
-        dataid: random9,
-        STATION: currentStation,
-      };
-      const res = await sendToWMS(data);
-      if (res?.data?.success) {
-        const deleteRes = await deleteTask({ stations: stations[0] });
+    Alert({
+      title: "確定盤點下線？",
+      showCancel: true,
+      onConfirm: async () => {
+        try {
+          const random9 = generateRandomNumber();
+          const data = {
+            action: "cancel",
+            dataid: random9,
+            STATION: currentStation,
+          };
+          const res = await sendToWMS(data);
+          if (res?.data?.success) {
+            const deleteRes = await deleteTask({ stations: stations[0] });
 
-        if (deleteRes?.data && deleteRes?.data?.success) {
-          dispatch(setPage("inventory-table"));
-          dispatch(setBatchNo(null));
-          dispatch(
-            setInventory({
-              station: "*",
-              data: {
-                screen: "idle",
-                filter: {
-                  stockArea: "",
-                  cusNo: "",
-                  saleNo: "",
-                  prtNo: "",
-                },
-                shelf: {
-                  SHELVE_ID: "",
-                },
-                shelfItem: [],
-              },
-            }),
-          );
-          dispatch(clearRowState({ station: "*" }));
-        } else {
-          Alert({ title: "WMS取消成功，但本地刪除任務失敗", deleteRes });
+            if (deleteRes?.data && deleteRes?.data?.success) {
+              dispatch(setPage("inventory-table"));
+              dispatch(setBatchNo(null));
+              dispatch(
+                setInventory({
+                  station: "*",
+                  data: {
+                    screen: "idle",
+                    filter: {
+                      stockArea: "",
+                      cusNo: "",
+                      saleNo: "",
+                      prtNo: "",
+                    },
+                    shelf: {
+                      SHELVE_ID: "",
+                    },
+                    shelfItem: [],
+                  },
+                }),
+              );
+              dispatch(clearRowState({ station: "*" }));
+            } else {
+              Alert({ title: "WMS取消成功，但本地刪除任務失敗", deleteRes });
+            }
+          } else {
+            Alert({ title: res?.error?.message });
+          }
+        } catch (error) {
+          console.warn(error);
         }
-      } else {
-        Alert({ title: res?.error?.message });
-      }
-    } catch (error) {
-      console.warn(error);
-    } finally {
-      dispatch(
-        setInventory({
-          station: "*",
-          data: { screen: "idle" },
-        }),
-      );
-    }
+      },
+    });
   };
 
   return (
@@ -319,7 +340,7 @@ export default function InventoryShelf() {
             type="checkbox"
             name="inventory"
             variants="green"
-            idKey="PRT_NO"
+            idKey="ROW_ID"
             checked={checkedItems}
             onChange={() => {}}
             height="74vh"
@@ -331,12 +352,12 @@ export default function InventoryShelf() {
           <div className="flex items-center p-4">
             <div>{filterLabel}</div>
           </div>
-          <div className="flex flex-col flex-1 min-h-0 justify-between bg-white p-8 pb-4 h-full overflow-hidden">
+          <div className="flex flex-col flex-1 min-h-0 justify-between bg-white p-4 pb-2 h-full overflow-hidden">
             <div
               className="custom-scrollbar"
               style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
               <SchematicDiagram>
-                <div className="flex flex-col GAP">
+                <div className="flex flex-col gap-2 text-(length:--font-size-2xl)">
                   <div className="flex items-center justify-between gap-4">
                     <div className="whitespace-nowrap">
                       貨架編號:{SHELVE_ID}
@@ -349,7 +370,7 @@ export default function InventoryShelf() {
                     <div>庫別:{currentSTOCKAREA}</div>
                   </div>
                   <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
-                  <table className="w-full border-collapse text-left">
+                  <table className="w-full border-collapse text-center">
                     <thead className="bg-gray-300 rounded-lg">
                       <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
                       <th className="p-2">品名</th>
