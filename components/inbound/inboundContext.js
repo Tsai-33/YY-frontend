@@ -221,9 +221,10 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     }
     const res = await addShelf_in(setLoading, setAddModal, shelf, order);
     if (!res?.success && res?.error?.message) {
-      Alert({ title: res?.error?.message });
+      toast.success(`${res?.error?.message}`)
     } else {
       Alert({ title: "新增成功" });
+      toast.success("新增成功")
     }
   };
   const handleReturnShelf = async () => {
@@ -463,7 +464,6 @@ export default function InboundContext({ barCodeRef, setLoading }) {
             dispatch(setInbound({ selected: selected, station: res?.data?.data?.station }));
           } else if (shelf?.PALLET_NO === "") {
             toast.error("沒有指定棧板請自行選擇上架貨物");
-            console.log("V");
           } else {
             toast.error("不是此棧板的貨物");
           }
