@@ -1,9 +1,8 @@
-import Table from "@/components/common/table/table";
-import { useState, useRef, useEffect, useMemo } from "react";
+import TableAll from "@/components/common/table/tableAll";
+import { useRef, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setOutboundExternalNew } from "@/redux/reducer/reducerOutboundExternalNew";
-import { getOutBoundExternalOrderDetailByWID } from "@/pages/api";
 
 export default function OutboundExternalNewTable({ data, selectedArray, setSelectedArray, detailTableData, setDetailTableData }) {
     const dispatch = useDispatch();
@@ -11,6 +10,7 @@ export default function OutboundExternalNewTable({ data, selectedArray, setSelec
     const currentStationSafe = currentStation || stations?.[0] || "";
     const { orderCode, step, waveNo, shelfItem, selected } = useSelector((s) => s.outboundExternalNew[currentStationSafe] || {});
     const hasInitializedRef = useRef({});
+    const selectAllRef = useRef(null);
 
     // =============== 畫面一 ====================
     const headers = [
@@ -123,6 +123,32 @@ export default function OutboundExternalNewTable({ data, selectedArray, setSelec
 
     const checkedMakeNos = selectedArray.map(item => item.MAKE_NO);
 
+    // ============= 全選/全不選 =============
+    const handleSelectAll = (allData, idKey) => {
+        const isChecked = selectAllRef.current.checked;
+        if (isChecked) {
+            // 全選：將所有資料加入選擇
+            const allItems = allData.map(item => ({
+                PRT_NO: item.PRT_NO,
+                MAKE_NO: item.MAKE_NO,
+                outBoxNo: 1,
+                outPpNo: item.BOX_PACK || 0
+            }));
+            setSelectedArray(allItems);
+        } else {
+            // 全不選：清空選擇
+            setSelectedArray([]);
+        }
+    };
+
+    // 同步全選按鈕狀態
+    useEffect(() => {
+        if (!selectAllRef.current || step <= 2) return;
+        const allSelected = filteredDetailData.length > 0 &&
+            filteredDetailData.every(item => checkedMakeNos.includes(item.MAKE_NO));
+        selectAllRef.current.checked = allSelected;
+    }, [filteredDetailData, checkedMakeNos, step]);
+
     return (
         <>
             {step <= 2 &&
@@ -137,15 +163,17 @@ export default function OutboundExternalNewTable({ data, selectedArray, setSelec
                     onChange={handleSelectedOption}
                 />}
             {step > 2 &&
-                <Table
+                <TableAll
                     headers={detailHeaders}
                     data={filteredDetailData}
                     type="checkbox"
                     name="outboundExternalNew2"
                     variants="green"
                     idKey="MAKE_NO"
-                    checked={checkedMakeNos}
+                    checked={selectedArray}
                     onChange={handleSelectedOption}
+                    selectAllRef={selectAllRef}
+                    onChangeAll={handleSelectAll}
                 />}
         </>
     );

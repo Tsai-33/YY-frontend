@@ -1,9 +1,8 @@
-import Table from "@/components/common/table/table";
-import { useState, useRef, useEffect, useMemo } from "react";
+import TableAll from "@/components/common/table/tableAll";
+import { useRef, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
-import { getOutBoundExternalOrderDetailByWID } from "@/pages/api";
 
 export default function OutboundExternalTable({ data, selectedArray, setSelectedArray, detailTableData, setDetailTableData }) {
     const dispatch = useDispatch();
@@ -11,6 +10,7 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
     const currentStationSafe = currentStation || stations?.[0] || "";
     const { orderCode, step, waveNo, shelfItem, selected } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
     const hasInitializedRef = useRef({}); // 追蹤每個站點是否已做過初始勾選
+    const selectAllRef = useRef(null);
 
     // =============== 畫面一 ====================
     const headers = [
@@ -30,8 +30,9 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
                     return [...prev, {
                         PRT_NO: value.PRT_NO,
                         MAKE_NO: valueId,
-                        outBoxNo: value.BOX_NO,
-                        outPpNo: value.PP_NO
+                        outBoxNo: 1,
+                        outPpNo: value.BOX_PACK || 0,
+                        PALLET_NO: value.PALLET_NO || null
                     }];
                 }
             });
@@ -77,73 +78,38 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
     const detailHeaders = [
         { label: "", key: "checkbox", width: "10%" },
         { label: "產品品號", key: "PRT_NO", width: "60%" },
-        { label: "總包數", key: "PP_NO", width: "30%" },
+        { label: "總包數", key: "BOX_PACK", width: "30%" },
     ]
 
-    // ============= 根據波次拿訂單的細節 =============
-    useEffect(() => {
-        if (!waveNo || step < 3) return;
-        getList();
-    }, [waveNo, step]);
-    const getList = async () => {
-        try {
-            const res = await getOutBoundExternalOrderDetailByWID(waveNo);
-            if (res.data.success) {
-                const detail = res.data.data;
-                setDetailTableData(detail);
-            }
-        } catch (error) {
-            console.warn("getList: ", error);
-        }
-    };
-
-    // ============= 用當前站點貨架的 MAKE_NO 過濾 ORDER_DETAIL =============
+    // ============= 直接用 WMS 的 MAKE_NO 顯示 =============
     const filteredDetailData = useMemo(() => {
-        if (!shelfItem || !detailTableData || detailTableData.length === 0) {
+        if (!shelfItem) {
             return [];
         }
 
+        // 從 WMS 展開 MAKE_NO
         const items = Array.isArray(shelfItem) ? shelfItem : [shelfItem];
+        const expandedDetails = [];
 
-        // 取得所有 MAKE_NO 並展開逗號分隔的值
-        const shelfMakeNos = items.flatMap(item => {
-            if (!item.MAKE_NO) return [];
-            return item.MAKE_NO.split(',').map(m => m.trim());
-        });
+        for (const item of items) {
+            if (!item.MAKE_NO) continue;
+            const makeNos = item.MAKE_NO.split(',').map(m => m.trim());
 
-        // 用貨架的 MAKE_NO 比對 ORDER_DETAIL 的 MAKE_NO
-        return detailTableData.filter(detail => shelfMakeNos.includes(detail.MAKE_NO));
-
-        // ===== Group By PRT_NO 版本=====
-        // const matched = detailTableData.filter(detail => shelfMakeNos.includes(detail.MAKE_NO));
-        //
-        // // 按 PRT_NO 分組加總
-        // const grouped = matched.reduce((acc, item) => {
-        //     const prtNo = item.PRT_NO;
-        //     if (!acc[prtNo]) {
-        //         acc[prtNo] = {
-        //             PRT_NO: prtNo,
-        //             PRT_NAME: item.PRT_NAME,
-        //             totalPP_NO: 0,
-        //             totalBOX_NO: 0,
-        //             MAKE_NOs: []
-        //         };
-        //     }
-        //     acc[prtNo].totalPP_NO += Number(item.PP_NO) || 0;
-        //     acc[prtNo].totalBOX_NO += Number(item.BOX_NO) || 0;
-        //     acc[prtNo].MAKE_NOs.push(item.MAKE_NO);
-        //     return acc;
-        // }, {});
-        //
-        // return Object.values(grouped).map(group => ({
-        //     PRT_NO: group.PRT_NO,
-        //     PRT_NAME: group.PRT_NAME,
-        //     PP_NO: `${group.totalPP_NO}(${group.totalBOX_NO}箱)`,
-        //     totalPP_NO: group.totalPP_NO,
-        //     totalBOX_NO: group.totalBOX_NO,
-        //     MAKE_NOs: group.MAKE_NOs
-        // }));
-    }, [shelfItem, detailTableData]);
+            for (let i = 0; i < makeNos.length; i++) {
+                const makeNo = makeNos[i];
+                expandedDetails.push({
+                    PRT_NO: item.PRT_NO,
+                    PRT_NAME: item.PRT_NAME,
+                    MAKE_NO: makeNo,
+                    BOX_NO: 1,
+                    PP_NO: item.BOX_PACK || 0,
+                    BOX_PACK: item.BOX_PACK || 0,
+                    PALLET_NO: item.PALLET_NO || null
+                });
+            }
+        }
+        return expandedDetails;
+    }, [shelfItem]);
 
     // ============= 預設勾選整箱BOX_NO > 0 零散不勾 =============
     useEffect(() => {
@@ -158,8 +124,9 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
             .map(item => ({
                 PRT_NO: item.PRT_NO,
                 MAKE_NO: item.MAKE_NO,
-                outBoxNo: item.BOX_NO,
-                outPpNo: item.PP_NO
+                outBoxNo: 1,
+                outPpNo: item.BOX_PACK || 0,
+                PALLET_NO: item.PALLET_NO || null
             }));
 
         setSelectedArray(fullBoxItems);
@@ -177,6 +144,31 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
     // ===== Group By PRT_NO 版本=====
     // const checkedPrtNos = [...new Set(selectedArray.map(item => item.PRT_NO))];
 
+    // ============= 全選/全不選 =============
+    const handleSelectAll = (allData, idKey) => {
+        const isChecked = selectAllRef.current.checked;
+        if (isChecked) {
+            const allItems = allData.map(item => ({
+                PRT_NO: item.PRT_NO,
+                MAKE_NO: item.MAKE_NO,
+                outBoxNo: 1,
+                outPpNo: item.BOX_PACK || 0,
+                PALLET_NO: item.PALLET_NO || null
+            }));
+            setSelectedArray(allItems);
+        } else {
+            setSelectedArray([]);
+        }
+    };
+
+    // 同步全選按鈕狀態
+    useEffect(() => {
+        if (!selectAllRef.current || step <= 2) return;
+        const allSelected = filteredDetailData.length > 0 &&
+            filteredDetailData.every(item => checkedMakeNos.includes(item.MAKE_NO));
+        selectAllRef.current.checked = allSelected;
+    }, [filteredDetailData, checkedMakeNos, step]);
+
     return (
         <>
         {step <= 2 &&
@@ -191,15 +183,17 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
                     onChange={handleSelectedOption}
                 />}
             {step > 2 &&
-                <Table
+                <TableAll
                     headers={detailHeaders}
                     data={filteredDetailData}
                     type="checkbox"
                     name="outboundExternal2"
                     variants="green"
                     idKey="MAKE_NO"
-                    checked={checkedMakeNos}
+                    checked={selectedArray}
                     onChange={handleSelectedOption}
+                    selectAllRef={selectAllRef}
+                    onChangeAll={handleSelectAll}
                 />}
             {/* ===== Group By PRT_NO 版本 =====
             {step > 2 &&

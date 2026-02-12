@@ -217,7 +217,8 @@ export default function ShelfTransferStation() {
         return;
       }
 
-      await handleReturnShelve(shelveId);
+      // 實體按鈕跳過確認視窗
+      await handleReturnShelve(shelveId, true);
       dispatch(clearPushButton({ station: currentStationSafe }));
     };
 
@@ -225,7 +226,7 @@ export default function ShelfTransferStation() {
   }, [pushButton]);
 
   // ===== 退回貨架 =====
-  const handleReturnShelve = async (shelveId) => {
+  const handleReturnShelve = async (shelveId, skipConfirm = false) => {
     if (!shelveId) {
       Alert({ title: "抓不到貨架編號" });
       return;
@@ -251,6 +252,22 @@ export default function ShelfTransferStation() {
       Alert({ title: "站點 ID 無效" });
       return;
     }
+
+    // 如果不是跳過確認，則顯示確認視窗
+    if (!skipConfirm) {
+      const result = await Alert({
+        title: "退回貨架確認",
+        html: `確定要退回貨架 <b>${shelveId}</b> 嗎？`,
+        showCancel: true,
+        confirmButtonText: "確定退回",
+        cancelButtonText: "取消",
+      });
+
+      if (!result.isConfirmed) {
+        return;
+      }
+    }
+
     // setLoading(true);
     try {
       // 退回前先儲存備註

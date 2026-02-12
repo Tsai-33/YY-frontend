@@ -1,5 +1,5 @@
-import Table from "@/components/common/table/table";
-import { useState, useRef, useEffect } from "react";
+import TableAll from "@/components/common/table/tableAll";
+import { useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setOutboundInternal } from "@/redux/reducer/reducerOutboundInternal";
@@ -11,6 +11,7 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
     const currentStationSafe = currentStation || stations?.[0] || "";
     const { orderCode, step, waveNo, shelfItem, selected } = useSelector((s) => s.outboundInternal[currentStationSafe] || {});
     const hasInitializedRef = useRef({}); // 追蹤每個站點是否已做過初始勾選
+    const selectAllRef = useRef(null);
 
     // =============== 畫面一 ====================
     const headers = [
@@ -110,6 +111,30 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
 
     const checkedMakeNos = selectedArray.map(item => item.MAKE_NO);
 
+    // ============= 全選/全不選 =============
+    const handleSelectAll = (allData, idKey) => {
+        const isChecked = selectAllRef.current.checked;
+        if (isChecked) {
+            const allItems = allData.map(item => ({
+                PRT_NO: item.PRT_NO,
+                MAKE_NO: item.MAKE_NO,
+                outBoxNo: item.BOX_NO,
+                outPpNo: item.PP_NO
+            }));
+            setSelectedArray(allItems);
+        } else {
+            setSelectedArray([]);
+        }
+    };
+
+    // 同步全選按鈕狀態
+    useEffect(() => {
+        if (!selectAllRef.current || step <= 2) return;
+        const allSelected = detailTableData.length > 0 &&
+            detailTableData.every(item => checkedMakeNos.includes(item.MAKE_NO));
+        selectAllRef.current.checked = allSelected;
+    }, [detailTableData, checkedMakeNos, step]);
+
     return (
         <>
         {step <= 2 &&
@@ -123,16 +148,18 @@ export default function OutboundInternalTable({ data, selectedArray, setSelected
                     checked={orderCode}
                     onChange={handleSelectedOption}
                 />}
-            {step > 2 && 
-                <Table 
-                    headers={detailHeaders} 
-                    data={detailTableData} 
-                    type="checkbox" 
-                    name="outboundInternal2" 
-                    variants="green" 
-                    idKey="MAKE_NO" 
-                    checked={checkedMakeNos} 
-                    onChange={handleSelectedOption} 
+            {step > 2 &&
+                <TableAll
+                    headers={detailHeaders}
+                    data={detailTableData}
+                    type="checkbox"
+                    name="outboundInternal2"
+                    variants="green"
+                    idKey="MAKE_NO"
+                    checked={selectedArray}
+                    onChange={handleSelectedOption}
+                    selectAllRef={selectAllRef}
+                    onChangeAll={handleSelectAll}
                 />}            
         </>
     )
