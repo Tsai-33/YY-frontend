@@ -221,10 +221,10 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     }
     const res = await addShelf_in(setLoading, setAddModal, shelf, order);
     if (!res?.success && res?.error?.message) {
-      toast.success(`${res?.error?.message}`)
+      toast.success(`${res?.error?.message}`);
     } else {
       Alert({ title: "新增成功" });
-      toast.success("新增成功")
+      toast.success("新增成功");
     }
   };
   const handleReturnShelf = async () => {
@@ -261,11 +261,11 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     }
   };
   const handleReturn = async () => {
-    const res = await returnShelf_in(setLoading, shelf, currentStation, order);
+    const res = await returnShelf_in(setLoading, shelf, currentStation, order, remark);
     if (res?.success) dispatch(resetInbound({ type: "one", station: currentStation, W_ID: waveNo }));
   };
   const handleFinish = async () => {
-    const res = await finishList_in(setLoading, order, currentStation);
+    const res = await finishList_in(setLoading, order, currentStation, shelf, remark);
     if (res?.success) {
       dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res?.data?.data }));
       toast.success("此單已完成");

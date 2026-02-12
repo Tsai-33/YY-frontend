@@ -140,10 +140,10 @@ export const addShelf_in = async (setLoading, setAddModal, shelf, order) => {
 };
 
 // 退回
-export const returnShelf_in = async (setLoading, shelf, currentStation, order) => {
+export const returnShelf_in = async (setLoading, shelf, currentStation, order, remark) => {
   setLoading(true);
   try {
-    return await returnInboundWCS({ step: "inbound", SHELVE_ID: shelf?.SHELVE_ID, STATION: currentStation, WAVENO: order.W_ID });
+    return await returnInboundWCS({ step: "inbound", SHELVE_ID: shelf?.SHELVE_ID, STATION: currentStation, WAVENO: order.W_ID, remark: remark });
   } catch (err) {
     console.log("handleReturn :", err);
   } finally {
@@ -178,25 +178,10 @@ export const restoreList_in = async (setLoading, waveNo) => {
 };
 
 // 完成
-export const finishList_in = async (setLoading, order, station) => {
-  // // 整理REMARK
-  // const remarks =
-  //   inbound?.lackStation?.flatMap((v) => {
-  //     const shelfId = inbound[v]?.shelf?.SHELVE_ID;
-  //     if (shelfId) {
-  //       return [
-  //         {
-  //           SHELVE_ID: shelfId,
-  //           REMARK: inbound[v].remark,
-  //         },
-  //       ];
-  //     }
-  //     return []; // 回傳空陣列，最終結果就不會包含這一筆
-  //   }) || [];
-
+export const finishList_in = async (setLoading, order, station, shelf, remark) => {
   setLoading(true);
   try {
-    return await finishInboundOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, station: station });
+    return await finishInboundOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, station: station, SHELVE_ID: shelf.SHELVE_ID, remark: remark });
   } catch (err) {
     console.log(`handleFinish:`, err);
     return err;
