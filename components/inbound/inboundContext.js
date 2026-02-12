@@ -450,22 +450,24 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
     if (res?.success) {
       if (res?.data?.data?.station) {
-        // 自動勾選
-        const makeNoSet = new Set(res?.data?.data?.MAKE_NOs || []);
-        const selected = tableData2.filter((item) => makeNoSet.has(item.MAKE_NO));
-        // 確認是不是這個棧板的
-        if (shelf?.PALLET_NO === selected[0]?.PALLET_NO) {
-          dispatch(setInbound({ selected: selected, station: res?.data?.data?.station }));
-        } else if (shelf?.PALLET_NO === "") {
-          toast.error("沒有指定棧板請自行選擇上架貨物");
-          console.log('V')
-        } else {
-          toast.error("不是此棧板的貨物");
-        }
-
         // 自動跳頁
         dispatch(setCurrentStation(res?.data?.data?.station));
         toast.success(`搜尋成功!`);
+
+        // 自動勾選
+        if (res?.data?.data?.station === currentStation) {
+          const makeNoSet = new Set(res?.data?.data?.MAKE_NOs || []);
+          const selected = tableData2.filter((item) => makeNoSet.has(item.MAKE_NO));
+          // 確認是不是這個棧板的
+          if (shelf?.PALLET_NO === selected[0]?.PALLET_NO) {
+            dispatch(setInbound({ selected: selected, station: res?.data?.data?.station }));
+          } else if (shelf?.PALLET_NO === "") {
+            toast.error("沒有指定棧板請自行選擇上架貨物");
+            console.log("V");
+          } else {
+            toast.error("不是此棧板的貨物");
+          }
+        }
         boxRef.current.focus();
       }
     } else {

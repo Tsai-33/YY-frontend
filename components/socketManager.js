@@ -115,6 +115,9 @@ export default function SocketManager() {
               }));
             }
 
+            // 排除掉DUMMY
+            
+
             // 入庫
             dispatch(
               setInbound({
