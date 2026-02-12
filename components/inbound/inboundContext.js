@@ -796,7 +796,7 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems }) => {
                 <tr>
                   <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
                   <th className="p-2">品名</th>
-                  <th className="p-2 w-[12%]">總箱數</th>
+                  <th className="p-2 w-[18%]">總箱數</th>
                   <th className="p-2 w-[18%]">總包數</th>
                   <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
                 </tr>
