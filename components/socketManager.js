@@ -126,7 +126,7 @@ export default function SocketManager() {
               setInbound({
                 station: eventData?.STATION,
                 shelf: eventData,
-                shelfItem: eventData?.ITEMS,
+                shelfItem: items,
                 job: job,
                 screen: "working",
                 step: 3,
