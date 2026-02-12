@@ -62,7 +62,7 @@ const inventorySlice = createSlice({
               key !== "batchNo" &&
               key !== "_persist" &&
               typeof state[key] === "object" &&
-              state[key] !== null
+              state[key] !== null,
           ) // 只更新站點
           .forEach((stationKey) => {
             Object.assign(state[stationKey], data);
@@ -148,11 +148,13 @@ const inventorySlice = createSlice({
     },
 
     updateRowState: (state, action) => {
-      const { station, prtNo, updates } = action.payload;
+      const { station, prtNo, saleNo, updates } = action.payload;
       const rows = state[station].rowState;
 
       state[station].rowState = rows.map((row) =>
-        row.PRT_NO === prtNo ? { ...row, ...updates } : row
+        row.PRT_NO === prtNo && row.SALE_NO === saleNo
+          ? { ...row, ...updates }
+          : row,
       );
     },
 
@@ -161,7 +163,7 @@ const inventorySlice = createSlice({
       const rows = state[station].rowState;
 
       state[station].rowState = rows.map((row) =>
-        row.PRT_NO === prtNo ? { ...row, confirmed: false, error: false } : row
+        row.PRT_NO === prtNo ? { ...row, confirmed: false, error: false } : row,
       );
     },
     clearRowState: (state, action) => {
