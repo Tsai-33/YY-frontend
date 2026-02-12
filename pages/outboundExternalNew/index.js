@@ -275,9 +275,14 @@ export default function OutboundExternalNew() {
 
       if (!isMakeNoFormat) {
         try {
+          console.log("呼叫解密 API，條碼:", barcode);
           const decryptRes = await decryptBarcode({ text: barcode });
-          if (decryptRes.data.data) {
-            decryptedBarcode = decryptRes.data.data;
+          console.log("解密 API 回傳:", decryptRes);
+          // 處理不同的回傳結構
+          const decryptedData = decryptRes?.data?.data || decryptRes?.data;
+          console.log("解密結果:", decryptedData);
+          if (decryptedData && typeof decryptedData === 'string') {
+            decryptedBarcode = decryptedData;
           }
         } catch (decryptError) {
           console.warn("解密失敗，使用原始條碼:", decryptError);
@@ -292,7 +297,14 @@ export default function OutboundExternalNew() {
         }
       }
 
+      console.log("=== 外箱條碼掃描 ===");
+      console.log("原始條碼:", barcode);
+      console.log("解密後:", decryptedBarcode);
+      console.log("轉換後 MAKE_NO:", makeNo);
+
       const matchedItem = detailTableData?.find((item) => item.MAKE_NO === makeNo);
+      console.log("比對到的資料 (detailTableData):", matchedItem);
+      console.log("當前站點 shelfItem:", shelfItem);
 
       if (matchedItem) {
         // 先檢查這個 MAKE_NO 是否屬於當前站點的貨架
@@ -319,9 +331,31 @@ export default function OutboundExternalNew() {
             });
 
             if (isInOtherShelf) {
-              // 找到了，切換到那個站點
+              // 找到了，切換到那個站點並勾選該 MAKE_NO
+              const otherSelected = stationState?.selected || [];
+              const alreadyScannedInOther = otherSelected.some((p) => p.MAKE_NO === makeNo);
+
+              if (!alreadyScannedInOther) {
+                dispatch(
+                  setOutboundExternalNew({
+                    station: stationId,
+                    selected: [
+                      ...otherSelected,
+                      {
+                        PRT_NO: matchedItem.PRT_NO,
+                        MAKE_NO: makeNo,
+                        outBoxNo: matchedItem.BOX_NO,
+                        outPpNo: matchedItem.PP_NO,
+                        ABNORMAL: matchedItem.ABNORMAL || 0,
+                      },
+                    ],
+                  }),
+                );
+                Alert({ title: `此箱號屬於 ${stationId}，已切換站點並勾選`, icon: "success", timer: 1500 });
+              } else {
+                Alert({ title: `此箱號屬於 ${stationId}，已切換站點（已勾選過）`, icon: "info", timer: 1500 });
+              }
               dispatch(setCurrentStation(stationId));
-              Alert({ title: `此箱號屬於 ${stationId}，已切換站點`, icon: "info", timer: 1500 });
               return;
             }
           }

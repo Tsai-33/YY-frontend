@@ -212,8 +212,9 @@ export default function OutboundInternal() {
       if (!isMakeNoFormat) {
         try {
           const decryptRes = await decryptBarcode({ text: barcode });
-          if (decryptRes.data.data) {
-            decryptedBarcode = decryptRes.data.data;
+          const decryptedData = decryptRes?.data?.data || decryptRes?.data;
+          if (decryptedData && typeof decryptedData === 'string') {
+            decryptedBarcode = decryptedData;
           }
         } catch (decryptError) {
           console.warn("解密失敗，使用原始條碼:", decryptError);
@@ -235,6 +236,8 @@ export default function OutboundInternal() {
 
       // 從 ORDER_DETAIL 找對應的產品 (有 MAKE_NO)
       const matchedItem = detailTableData?.find((item) => item.MAKE_NO === makeNo);
+      console.log("比對到的資料 (detailTableData):", matchedItem);
+      console.log("當前站點 shelfItem:", shelfItem);
 
       if (matchedItem) {
         // 先檢查這個 MAKE_NO 是否屬於當前站點的貨架
@@ -261,9 +264,25 @@ export default function OutboundInternal() {
             });
 
             if (isInOtherShelf) {
-              // 找到後切換到那個站點
+              // 找到了，切換到那個站點並勾選該 MAKE_NO
+              const alreadyScannedInArray = selectedArray.some((p) => p.MAKE_NO === makeNo);
+
+              if (!alreadyScannedInArray) {
+                setSelectedArray((prev) => [
+                  ...prev,
+                  {
+                    PRT_NO: matchedItem.PRT_NO,
+                    MAKE_NO: makeNo,
+                    outBoxNo: matchedItem.BOX_NO,
+                    outPpNo: matchedItem.PP_NO,
+                    ABNORMAL: matchedItem.ABNORMAL || 0,
+                  },
+                ]);
+                Alert({ title: `此箱號屬於 ${stationId}，已切換站點並勾選`, icon: "success", timer: 1500 });
+              } else {
+                Alert({ title: `此箱號屬於 ${stationId}，已切換站點（已勾選過）`, icon: "info", timer: 1500 });
+              }
               dispatch(setCurrentStation(stationId));
-              Alert({ title: `此箱號屬於 ${stationId}，已切換站點`, icon: "info", timer: 1500 });
               return;
             }
           }

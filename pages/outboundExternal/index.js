@@ -218,8 +218,9 @@ export default function OutboundExternal() {
       if (!isMakeNoFormat) {
         try {
           const decryptRes = await decryptBarcode({ text: barcode });
-          if (decryptRes.data.data) {
-            decryptedBarcode = decryptRes.data.data;
+          const decryptedData = decryptRes?.data?.data || decryptRes?.data;
+          if (decryptedData && typeof decryptedData === 'string') {
+            decryptedBarcode = decryptedData;
           }
         } catch (decryptError) {
           console.warn("解密失敗，使用原始條碼:", decryptError);
@@ -248,6 +249,10 @@ export default function OutboundExternal() {
         return shelfMakeNos.includes(makeNo);
       });
 
+      console.log("比對到的資料 (detailTableData):", matchedItem);
+      console.log("比對到的貨架資料 (shelfItem):", matchedShelfItem);
+      console.log("當前站點 shelfItem:", shelfItem);
+
       if (matchedItem) {
         // 先檢查這個 MAKE_NO 是否屬於當前站點的貨架
         const currentShelfItem = shelfItem || [];
@@ -273,9 +278,39 @@ export default function OutboundExternal() {
             });
 
             if (isInOtherShelf) {
-              // 找到後切換到那個站點
+              // 找到了，切換到那個站點並勾選該 MAKE_NO
+              const otherSelected = stationState?.selected || [];
+              const alreadyScannedInOther = otherSelected.some((p) => p.MAKE_NO === makeNo);
+
+              // 從其他站點的 shelfItem 找到對應的資料
+              const otherMatchedShelfItem = otherShelfItem.find((item) => {
+                if (!item.MAKE_NO) return false;
+                const makeNos = item.MAKE_NO.split(',').map(m => m.trim());
+                return makeNos.includes(makeNo);
+              });
+
+              if (!alreadyScannedInOther) {
+                dispatch(
+                  setOutboundExternal({
+                    station: stationId,
+                    selected: [
+                      ...otherSelected,
+                      {
+                        PRT_NO: matchedItem.PRT_NO,
+                        MAKE_NO: makeNo,
+                        outBoxNo: 1,
+                        outPpNo: otherMatchedShelfItem?.BOX_PACK || matchedItem.BOX_PACK || 0,
+                        ABNORMAL: matchedItem.ABNORMAL || 0,
+                        PALLET_NO: otherMatchedShelfItem?.PALLET_NO || null,
+                      },
+                    ],
+                  }),
+                );
+                Alert({ title: `此箱號屬於 ${stationId}，已切換站點並勾選`, icon: "success", timer: 1500 });
+              } else {
+                Alert({ title: `此箱號屬於 ${stationId}，已切換站點（已勾選過）`, icon: "info", timer: 1500 });
+              }
               dispatch(setCurrentStation(stationId));
-              Alert({ title: `此箱號屬於 ${stationId}，已切換站點`, icon: "info", timer: 1500 });
               return;
             }
           }
