@@ -558,7 +558,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         </div>
 
         {/* 右側資訊區 */}
-        <div className={`${step <= 2 ? `w-[53%]` : `w-[80%]`} flex flex-col`}>
+        <div className={`${step <= 2 ? `w-[53%]` : `w-[53%]`} flex flex-col`}>
           <div className="flex items-center justify-between p-4">
             <OrderTitle />
           </div>
