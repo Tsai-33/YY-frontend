@@ -264,7 +264,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     if (res?.success) dispatch(resetInbound({ type: "one", station: currentStation, W_ID: waveNo }));
   };
   const handleFinish = async () => {
-    const res = await finishList_in(setLoading, order, currentStation);
+    const res = await finishList_in(setLoading, order, inbound);
     if (res?.success) {
       dispatch(resetInbound({ type: "wave", station: currentStation, W_ID: res?.data?.data }));
       toast.success("此單已完成");
@@ -456,6 +456,8 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         // 確認是不是這個棧板的
         if (shelf?.PALLET_NO === selected[0]?.PALLET_NO) {
           dispatch(setInbound({ selected: selected, station: res?.data?.data?.station }));
+        } else if(!selected[0].PALLET_NO){
+          toast.error("沒有指定棧板請自行選擇");
         } else {
           toast.error("不是此棧板的貨物");
         }
@@ -767,7 +769,7 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems }) => {
   };
   return (
     <SchematicDiagram>
-      <div className="flex flex-col gap-2 text-[length:var(--font-size-4xl)]">
+      <div className="flex flex-col gap-2 ">
         <div className="flex items-center justify-between gap-4 w-full">
           <div className="whitespace-nowrap">貨架編號: {shelf?.SHELVE_ID}</div>
           <div>入庫庫別: {shelf?.area}</div>
