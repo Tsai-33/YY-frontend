@@ -121,10 +121,9 @@ const inboundSlice = createSlice({
     resetInbound: (state, action) => {
       const { type, station, W_ID } = action.payload;
 
-      console.log(type,station,W_ID,'123')
-
       if (type === "one") {
         state[station].screen = "loading";
+        state[station].remark = "";
       } else if (type === "all") {
         const nextState = { ...initialState };
 

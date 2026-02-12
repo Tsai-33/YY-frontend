@@ -137,7 +137,15 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       Alert({ title: "沒有選擇項目" });
       return;
     }
-    const res = await onToShelf_in(setLoading, selected, shelf, order, dispatch, setInbound, currentStation, setConfirmModal, remark);
+
+    // 先確認這個東西要的棧板
+    let PALLET_NO = shelf?.PALLET_NO;
+    if (!shelf?.PALLET_NO && tableData2[0].PALLET_NO) {
+      PALLET_NO = "N99";
+      // 如果well沒有給PALLET_NO 就確認ORDERDETAIL有沒有PALLET_NO ， 有 = 新增貨架的 / 沒有 = 外購品
+    }
+
+    const res = await onToShelf_in(setLoading, selected, shelf, order, dispatch, setInbound, currentStation, setConfirmModal, remark, PALLET_NO);
     if (res?.success) {
       let newShelf = (shelfItem || []).map((s) => ({ ...s }));
       selected.forEach((v) => {
@@ -445,7 +453,13 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         // 自動勾選
         const makeNoSet = new Set(res?.data?.data?.MAKE_NOs || []);
         const selected = tableData2.filter((item) => makeNoSet.has(item.MAKE_NO));
-        dispatch(setInbound({ selected: selected, station: res?.data?.data?.station }));
+        // 確認是不是這個棧板的
+        if (shelf?.PALLET_NO === selected[0]?.PALLET_NO) {
+          dispatch(setInbound({ selected: selected, station: res?.data?.data?.station }));
+        } else {
+          toast.error("不是此棧板的貨物");
+        }
+
         // 自動跳頁
         dispatch(setCurrentStation(res?.data?.data?.station));
         toast.success(`搜尋成功!`);
@@ -480,7 +494,6 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   //   dispatch(clearAllShelves());
   // }, [order]);
   useEffect(() => {
-  
     // 延遲 100ms 是為了確保 DOM 已經完全渲染並出現在畫面上
     // 特別是如果你有切換動畫或 Step 切換
     const timer = setTimeout(() => {
