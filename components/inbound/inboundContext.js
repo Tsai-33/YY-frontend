@@ -457,7 +457,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
         if (shelf?.PALLET_NO === selected[0]?.PALLET_NO) {
           dispatch(setInbound({ selected: selected, station: res?.data?.data?.station }));
         } else if(!selected[0].PALLET_NO){
-          toast.error("沒有指定棧板請自行選擇");
+          toast.error("沒有指定棧板請自行選擇上架貨物");
         } else {
           toast.error("不是此棧板的貨物");
         }
