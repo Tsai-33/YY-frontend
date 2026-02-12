@@ -1,5 +1,5 @@
-import Table from "@/components/common/table/table";
-import { useState, useRef, useEffect, useMemo } from "react";
+import TableAll from "@/components/common/table/tableAll";
+import { useRef, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import NoCheckBoxTable from "../common/table/noCheckBoxTable";
 import { setOutboundExternal } from "@/redux/reducer/reducerOutboundExternal";
@@ -10,6 +10,7 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
     const currentStationSafe = currentStation || stations?.[0] || "";
     const { orderCode, step, waveNo, shelfItem, selected } = useSelector((s) => s.outboundExternal[currentStationSafe] || {});
     const hasInitializedRef = useRef({}); // 追蹤每個站點是否已做過初始勾選
+    const selectAllRef = useRef(null);
 
     // =============== 畫面一 ====================
     const headers = [
@@ -143,6 +144,31 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
     // ===== Group By PRT_NO 版本=====
     // const checkedPrtNos = [...new Set(selectedArray.map(item => item.PRT_NO))];
 
+    // ============= 全選/全不選 =============
+    const handleSelectAll = (allData, idKey) => {
+        const isChecked = selectAllRef.current.checked;
+        if (isChecked) {
+            const allItems = allData.map(item => ({
+                PRT_NO: item.PRT_NO,
+                MAKE_NO: item.MAKE_NO,
+                outBoxNo: 1,
+                outPpNo: item.BOX_PACK || 0,
+                PALLET_NO: item.PALLET_NO || null
+            }));
+            setSelectedArray(allItems);
+        } else {
+            setSelectedArray([]);
+        }
+    };
+
+    // 同步全選按鈕狀態
+    useEffect(() => {
+        if (!selectAllRef.current || step <= 2) return;
+        const allSelected = filteredDetailData.length > 0 &&
+            filteredDetailData.every(item => checkedMakeNos.includes(item.MAKE_NO));
+        selectAllRef.current.checked = allSelected;
+    }, [filteredDetailData, checkedMakeNos, step]);
+
     return (
         <>
         {step <= 2 &&
@@ -157,15 +183,17 @@ export default function OutboundExternalTable({ data, selectedArray, setSelected
                     onChange={handleSelectedOption}
                 />}
             {step > 2 &&
-                <Table
+                <TableAll
                     headers={detailHeaders}
                     data={filteredDetailData}
                     type="checkbox"
                     name="outboundExternal2"
                     variants="green"
                     idKey="MAKE_NO"
-                    checked={checkedMakeNos}
+                    checked={selectedArray}
                     onChange={handleSelectedOption}
+                    selectAllRef={selectAllRef}
+                    onChangeAll={handleSelectAll}
                 />}
             {/* ===== Group By PRT_NO 版本 =====
             {step > 2 &&

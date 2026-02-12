@@ -249,6 +249,38 @@ export default function OutboundExternal() {
       });
 
       if (matchedItem) {
+        // 先檢查這個 MAKE_NO 是否屬於當前站點的貨架
+        const currentShelfItem = shelfItem || [];
+        const isInCurrentShelf = currentShelfItem.some((item) => {
+          if (!item.MAKE_NO) return false;
+          const makeNos = item.MAKE_NO.split(',').map(m => m.trim());
+          return makeNos.includes(makeNo);
+        });
+
+        // 如果不在當前站點的貨架，檢查其他站點
+        if (!isInCurrentShelf) {
+          const latestState = outboundExternalStateRef.current;
+          for (const stationId of stations) {
+            if (stationId === currentStationSafe) continue;
+            const stationState = latestState[stationId];
+            if (stationState?.step !== 3 || stationState?.screen !== "working") continue;
+
+            const otherShelfItem = stationState?.shelfItem || [];
+            const isInOtherShelf = otherShelfItem.some((item) => {
+              if (!item.MAKE_NO) return false;
+              const makeNos = item.MAKE_NO.split(',').map(m => m.trim());
+              return makeNos.includes(makeNo);
+            });
+
+            if (isInOtherShelf) {
+              // 找到後切換到那個站點
+              dispatch(setCurrentStation(stationId));
+              Alert({ title: `此箱號屬於 ${stationId}，已切換站點`, icon: "info", timer: 1500 });
+              return;
+            }
+          }
+        }
+
         const alreadyScanned = (selected || []).some((p) => p.MAKE_NO === makeNo);
 
         if (alreadyScanned) {
@@ -273,6 +305,26 @@ export default function OutboundExternal() {
           Alert({ title: `已掃描: ${makeNo}`, icon: "success", timer: 1000 });
         }
       } else {
+        // 在 detailTableData 中找不到，也檢查其他站點
+        const latestState = outboundExternalStateRef.current;
+        for (const stationId of stations) {
+          if (stationId === currentStationSafe) continue;
+          const stationState = latestState[stationId];
+          if (stationState?.step !== 3 || stationState?.screen !== "working") continue;
+
+          const otherShelfItem = stationState?.shelfItem || [];
+          const isInOtherShelf = otherShelfItem.some((item) => {
+            if (!item.MAKE_NO) return false;
+            const makeNos = item.MAKE_NO.split(',').map(m => m.trim());
+            return makeNos.includes(makeNo);
+          });
+
+          if (isInOtherShelf) {
+            dispatch(setCurrentStation(stationId));
+            Alert({ title: `此箱號屬於 ${stationId}，已切換站點`, icon: "info", timer: 1500 });
+            return;
+          }
+        }
         Alert({ title: "條碼不符合，找不到對應箱號" });
       }
     } catch (error) {
