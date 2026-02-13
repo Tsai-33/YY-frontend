@@ -45,6 +45,16 @@ export default function ShelfTransferStation() {
     pushButton,
   } = useSelector((s) => s.shelfTransfer[currentStationSafe] || {});
 
+  // ===== 進入頁面時清除殘留的 pushButton =====
+  const hasInitializedRef = useRef(false);
+  useEffect(() => {
+    if (!hasInitializedRef.current && pushButton) {
+      hasInitializedRef.current = true;
+      console.log("[ShelfTransfer] 清除留下的 pushButton:", pushButton);
+      dispatch(clearPushButton({ station: currentStationSafe }));
+    }
+  }, []);
+
   // ===== 刪除 task（從 step 3 跳回 step 1）=====
   const hasDeletedRef = useRef(false);
   useEffect(() => {
@@ -201,6 +211,8 @@ export default function ShelfTransferStation() {
   useEffect(() => {
     if (!pushButton || !selectedShelves || selectedShelves.length === 0) return;
 
+    console.log("[ShelfTransfer] 收到 pushButton 訊號:", pushButton);
+
     const handlePushButton = async () => {
       // 根據按鈕的 STATION 找到對應的貨架
       const stationIndex = stations.indexOf(pushButton.STATION);
@@ -217,6 +229,7 @@ export default function ShelfTransferStation() {
         return;
       }
 
+      console.log("[ShelfTransfer] 準備自動退回貨架:", shelveId);
       // 實體按鈕跳過確認視窗
       await handleReturnShelve(shelveId, true);
       dispatch(clearPushButton({ station: currentStationSafe }));
