@@ -88,11 +88,13 @@ export default function Remote() {
           // 站點被佔用中
           setErrorMsg("站點 A01 有其他項目正在進行中，請稍候再試");
           setStatus("NG");
+          barCodeRef.current.value = "";
           return; // 中斷流程，不執行 getOrderWave
         }
       } else {
         setErrorMsg("無法取得站點狀態，請檢查網路");
         setStatus("NG");
+        barCodeRef.current.value = "";
         return;
       }
 
@@ -119,6 +121,7 @@ export default function Remote() {
         } else {
           setErrorMsg(targetData?.message || "ERP 驗證失敗");
           setStatus("NG");
+          barCodeRef.current.value = "";
           addHistory(barCode, "NG", null);
         }
       }
@@ -126,6 +129,7 @@ export default function Remote() {
       console.error("處理出錯:", err);
       setErrorMsg("系統處理錯誤");
       setStatus("NG");
+      barCodeRef.current.value = "";
     }
   };
 
