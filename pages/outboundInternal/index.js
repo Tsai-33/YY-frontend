@@ -39,6 +39,17 @@ export default function OutboundInternal() {
     dispatch(setCurrentJob("領用"));
   }, [currentStation, dispatch]);
 
+  // 進入頁面時清除所有站點的殘留 pushButton
+  const hasCleanedPushButton = useRef(false);
+  useEffect(() => {
+    if (!hasCleanedPushButton.current && stations.length > 0) {
+      hasCleanedPushButton.current = true;
+      stations.forEach((stationId) => {
+        dispatch(clearPushButton({ station: stationId }));
+      });
+    }
+  }, [stations]);
+
   // 目前選擇的工作站
   const handleSwitchStation = (station) => {
     dispatch(setCurrentStation(station));
