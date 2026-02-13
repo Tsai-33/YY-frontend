@@ -240,8 +240,12 @@ export default function OutboundExternal() {
       }
       console.log("轉換後 MAKE_NO：", makeNo);
 
-      // 從 ORDER_DETAIL 找對應的產品 (有 MAKE_NO)
-      const matchedItem = detailTableData?.find((item) => item.MAKE_NO === makeNo);
+      // 從 ORDER_DETAIL 找對應的產品 (有 MAKE_NO) 逗號分隔
+      let matchedItem = detailTableData?.find((item) => {
+        if (!item.MAKE_NO) return false;
+        const makeNos = item.MAKE_NO.split(',').map(m => m.trim());
+        return makeNos.includes(makeNo);
+      });
 
       // 從 shelfItem (WMS) 找對應的 PALLET_NO
       const matchedShelfItem = (shelfItem || []).find((item) => {
@@ -249,7 +253,12 @@ export default function OutboundExternal() {
         return shelfMakeNos.includes(makeNo);
       });
 
-      console.log("比對到的資料 (detailTableData):", matchedItem);
+      // 如果 detailTableData 找不到，從 shelfItem 找
+      if (!matchedItem && matchedShelfItem) {
+        matchedItem = matchedShelfItem;
+      }
+
+      console.log("比對到的資料:", matchedItem);
       console.log("比對到的貨架資料 (shelfItem):", matchedShelfItem);
       console.log("當前站點 shelfItem:", shelfItem);
 
@@ -340,7 +349,7 @@ export default function OutboundExternal() {
           Alert({ title: `已掃描: ${makeNo}`, icon: "success", timer: 1000 });
         }
       } else {
-        // 在 detailTableData 中找不到，也檢查其他站點
+        // 在 detailTableData 和當前站點 shelfItem 都找不到，檢查其他站點
         const latestState = outboundExternalStateRef.current;
         for (const stationId of stations) {
           if (stationId === currentStationSafe) continue;
@@ -348,15 +357,39 @@ export default function OutboundExternal() {
           if (stationState?.step !== 3 || stationState?.screen !== "working") continue;
 
           const otherShelfItem = stationState?.shelfItem || [];
-          const isInOtherShelf = otherShelfItem.some((item) => {
+          const matchedOtherShelfItem = otherShelfItem.find((item) => {
             if (!item.MAKE_NO) return false;
             const makeNos = item.MAKE_NO.split(',').map(m => m.trim());
             return makeNos.includes(makeNo);
           });
 
-          if (isInOtherShelf) {
+          if (matchedOtherShelfItem) {
+            // 找到後切換到那個站點並勾選該 MAKE_NO
+            const otherSelected = stationState?.selected || [];
+            const alreadyScannedInOther = otherSelected.some((p) => p.MAKE_NO === makeNo);
+
+            if (!alreadyScannedInOther) {
+              dispatch(
+                setOutboundExternal({
+                  station: stationId,
+                  selected: [
+                    ...otherSelected,
+                    {
+                      PRT_NO: matchedOtherShelfItem.PRT_NO,
+                      MAKE_NO: makeNo,
+                      outBoxNo: 1,
+                      outPpNo: matchedOtherShelfItem.BOX_PACK || 0,
+                      ABNORMAL: matchedOtherShelfItem.ABNORMAL || 0,
+                      PALLET_NO: matchedOtherShelfItem.PALLET_NO || null,
+                    },
+                  ],
+                }),
+              );
+              Alert({ title: `此箱號屬於 ${stationId}，已切換站點並勾選`, icon: "success", timer: 1500 });
+            } else {
+              Alert({ title: `此箱號屬於 ${stationId}，已切換站點（已勾選過）`, icon: "info", timer: 1500 });
+            }
             dispatch(setCurrentStation(stationId));
-            Alert({ title: `此箱號屬於 ${stationId}，已切換站點`, icon: "info", timer: 1500 });
             return;
           }
         }
