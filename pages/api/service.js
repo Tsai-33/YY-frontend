@@ -2,7 +2,7 @@ import axios from "axios";
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3947",
-  timeout: 10000,
+  timeout: 45000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -11,8 +11,8 @@ export const api = axios.create({
 // ============================================================
 // Auto-Refresh Token 機制
 // ============================================================
-let isRefreshing = false;      // 標記是否正在刷新 token
-let failedQueue = [];          // 等待刷新完成的請求隊列
+let isRefreshing = false; // 標記是否正在刷新 token
+let failedQueue = []; // 等待刷新完成的請求隊列
 
 /**
  * 處理等待隊列中的請求
@@ -69,7 +69,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // ============================================================
@@ -87,13 +87,18 @@ api.interceptors.response.use(
     const originalRequest = error.config;
     const status = error.response?.status;
     const code = error.response?.data?.code;
-    const message = error.response?.data?.message || error.message || "Unknown error";
+    const message =
+      error.response?.data?.message || error.message || "Unknown error";
 
     // ============================================================
     // ⚠️ 優先級最高: Session 已被登出 (Auto Logout Job / Force Login)
     // 這種情況不需要嘗試 refresh，直接導向登入頁
     // ============================================================
-    if (code === "SESSION_LOGGED_OUT" || code === "NO_SESSION" || code === "INVALID_TOKEN") {
+    if (
+      code === "SESSION_LOGGED_OUT" ||
+      code === "NO_SESSION" ||
+      code === "INVALID_TOKEN"
+    ) {
       handleSessionLoggedOut();
       return new Promise(() => {});
     }
@@ -133,7 +138,7 @@ api.interceptors.response.use(
         const response = await axios.post(
           `${api.defaults.baseURL}/auth/refresh-token`,
           { refreshToken },
-          { timeout: 5000 }
+          { timeout: 5000 },
         );
 
         const result = response.data;
@@ -230,7 +235,7 @@ api.interceptors.response.use(
         raw: error,
       },
     });
-  }
+  },
 );
 
 // ============================================================
