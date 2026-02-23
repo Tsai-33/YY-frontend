@@ -398,7 +398,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
         <SchematicDiagramList>
           <div className="flex flex-col">
             <div className="flex justify-end mb-2">
-              <span>目的庫別: {order?.STOCK_AREA}</span>
+              <span>目的庫別: {order?.STOCK_AREA == "X01" ? "外部倉" : order?.STOCK_AREA}</span>
             </div>
             {filteredItems.map((v, i) => (
               <div key={i} className="mb-4 border-b pb-2 last:border-0">
@@ -452,6 +452,9 @@ export default function TransferContext({ barCodeRef, setLoading }) {
 
     // 目的地顯示 (+), 來源地顯示 (-)
     const operator = isDestination ? "+" : "-";
+
+
+        if (item?.PRT_NAME === "DUMMY") return;
     return (
       <div className={`flex flex-col ${textClass}`}>
         <div className="flex gap-x-2">
@@ -486,7 +489,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   }, [waveNo]);
   useEffect(() => {
     getList(waveNo, setTableData2);
-  }, [shelfItem,waveNo]);
+  }, [shelfItem, waveNo]);
 
   return (
     <>
