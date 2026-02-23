@@ -223,7 +223,6 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     if (!res?.success && res?.error?.message) {
       toast.success(`${res?.error?.message}`);
     } else {
-      Alert({ title: "新增成功" });
       toast.success("新增成功");
     }
   };
