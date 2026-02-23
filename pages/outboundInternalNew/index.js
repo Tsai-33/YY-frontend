@@ -36,6 +36,8 @@ export default function OutboundInternalNew() {
 
   // 進入頁面時清除所有站點的殘留 pushButton
   const hasCleanedPushButton = useRef(false);
+  // 防止多個站點同時按下 push_button 時重複顯示「出庫完成」Alert
+  const hasCompletedRef = useRef(false);
   useEffect(() => {
     if (!hasCleanedPushButton.current && stations.length > 0) {
       hasCleanedPushButton.current = true;
@@ -646,32 +648,24 @@ export default function OutboundInternalNew() {
 
     setLoading(true);
     try {
-      let itemsToShift = [];
+      const noItemsSelected = (stationSelected || []).length === 0;
 
-      if ((stationSelected || []).length > 0) {
-        itemsToShift = stationSelected;
-      } else {
-        // 展開每個 MAKE_NO，每個 MAKE_NO = 1 箱, BOX_PACK 包
-        itemsToShift = [];
-        (stationShelfItem || []).forEach((item) => {
-          const makeNos = item.MAKE_NO ? item.MAKE_NO.split(',').map(m => m.trim()) : [];
-          makeNos.forEach((makeNo) => {
-            itemsToShift.push({
-              PRT_NO: item.PRT_NO,
-              MAKE_NO: makeNo,
-              outBoxNo: 1,
-              outPpNo: item.BOX_PACK || 0,
-              ABNORMAL: item.ABNORMAL || 0,
-            });
-          });
+      // 沒有勾選時，詢問是否直接退回貨架
+      if (noItemsSelected) {
+        const confirmResult = await Alert({
+          title: "沒有勾選任何產品",
+          text: "是否直接退回貨架？",
+          showCancel: true,
+          confirmButtonText: "是",
+          cancelButtonText: "否",
         });
+        if (!confirmResult.isConfirmed) {
+          setLoading(false);
+          return;
+        }
       }
 
-      if (itemsToShift.length === 0) {
-        Alert({ title: "沒有出庫的產品" });
-        setLoading(false);
-        return;
-      }
+      const itemsToShift = stationSelected || [];
 
       const preCheckState = outboundInternalNewStateRef.current;
       const preCheckOthers = stations.filter((sid) => {
@@ -687,13 +681,14 @@ export default function OutboundInternalNew() {
         await updateRemark({ shelveId: stationShelf.SHELVE_ID, remark: stationRemark });
       }
 
+      // 呼叫出庫 API（沒勾選時 items 為空，扣的都是 0）
       const shiftRes = await shiftOutOnReturnInternal({
         items: itemsToShift,
         waveNo: stationOrder.W_ID,
         saleNo: stationOrderCode,
         shelveId: stationShelf.SHELVE_ID,
         station: stationId,
-        isFullPallet: (stationSelected || []).length === 0,
+        isFullPallet: false,
         isLastStation,
       });
 
@@ -751,6 +746,12 @@ export default function OutboundInternalNew() {
           );
           Alert({ title: `還有 ${otherWorkingStations.length} 個工作站未完成退回貨架` });
         } else {
+          // 防止重複顯示出庫完成 Alert
+          if (hasCompletedRef.current) {
+            return;
+          }
+          hasCompletedRef.current = true;
+
           stations.forEach((sid) => {
             dispatch(
               setOutboundInternalNew({
@@ -772,6 +773,11 @@ export default function OutboundInternalNew() {
           await deleteTask_out(stations);
           await getOutboundInternalNewTable();
           Alert({ title: "出庫完成" });
+
+          // 重置 flag，讓下次出庫可以再次顯示
+          setTimeout(() => {
+            hasCompletedRef.current = false;
+          }, 1000);
         }
       }
     } catch (error) {
@@ -793,32 +799,24 @@ export default function OutboundInternalNew() {
 
     setLoading(true);
     try {
-      let itemsToShift = [];
+      const noItemsSelected = (selected || []).length === 0;
 
-      if ((selected || []).length > 0) {
-        itemsToShift = selected;
-      } else {
-        // 展開每個 MAKE_NO，每個 MAKE_NO = 1 箱, BOX_PACK 包
-        itemsToShift = [];
-        (shelfItem || []).forEach((item) => {
-          const makeNos = item.MAKE_NO ? item.MAKE_NO.split(',').map(m => m.trim()) : [];
-          makeNos.forEach((makeNo) => {
-            itemsToShift.push({
-              PRT_NO: item.PRT_NO,
-              MAKE_NO: makeNo,
-              outBoxNo: 1,
-              outPpNo: item.BOX_PACK || 0,
-              ABNORMAL: item.ABNORMAL || 0,
-            });
-          });
+      // 沒有勾選時，詢問是否直接退回貨架
+      if (noItemsSelected) {
+        const confirmResult = await Alert({
+          title: "沒有勾選任何產品",
+          text: "是否直接退回貨架？",
+          showCancel: true,
+          confirmButtonText: "是",
+          cancelButtonText: "否",
         });
+        if (!confirmResult.isConfirmed) {
+          setLoading(false);
+          return;
+        }
       }
 
-      if (itemsToShift.length === 0) {
-        Alert({ title: "沒有出庫的產品" });
-        setLoading(false);
-        return;
-      }
+      const itemsToShift = selected || [];
 
       const preCheckState = outboundInternalNewStateRef.current;
       const preCheckOthers = stations.filter((sid) => {
@@ -833,13 +831,14 @@ export default function OutboundInternalNew() {
         await updateRemark({ shelveId: shelf.SHELVE_ID, remark });
       }
 
+      // 呼叫出庫 API（沒勾選時 items 為空，扣的都是 0）
       const shiftRes = await shiftOutOnReturnInternal({
         items: itemsToShift,
         waveNo: order.W_ID,
         saleNo: orderCode,
         shelveId: shelf.SHELVE_ID,
         station: currentStation,
-        isFullPallet: (selected || []).length === 0,
+        isFullPallet: false,
         isLastStation,
       });
 
@@ -897,6 +896,12 @@ export default function OutboundInternalNew() {
           );
           Alert({ title: `還有 ${otherWorkingStations.length} 個工作站未完成退回貨架` });
         } else {
+          // 防止重複顯示出庫完成 Alert
+          if (hasCompletedRef.current) {
+            return;
+          }
+          hasCompletedRef.current = true;
+
           stations.forEach((stationId) => {
             dispatch(
               setOutboundInternalNew({
@@ -918,6 +923,11 @@ export default function OutboundInternalNew() {
           await deleteTask_out(stations);
           await getOutboundInternalNewTable();
           Alert({ title: "出庫完成" });
+
+          // 重置 flag，讓下次出庫可以再次顯示
+          setTimeout(() => {
+            hasCompletedRef.current = false;
+          }, 1000);
         }
       }
     } catch (error) {
