@@ -39,6 +39,8 @@ export default function OutboundExternal() {
 
   // 進入頁面時清除所有站點的殘留 pushButton
   const hasCleanedPushButton = useRef(false);
+  // 防止多個站點同時按下 push_button 時重複顯示「出庫完成」Alert
+  const hasCompletedRef = useRef(false);
   useEffect(() => {
     if (!hasCleanedPushButton.current && stations.length > 0) {
       hasCleanedPushButton.current = true;
@@ -637,34 +639,24 @@ export default function OutboundExternal() {
 
     setLoading(true);
     try {
-      // 1.判斷是整板還是零散
-      let itemsToShift = [];
+      const noItemsSelected = (stationSelected || []).length === 0;
 
-      if ((stationSelected || []).length > 0) {
-        itemsToShift = stationSelected;
-      } else {
-        // 整板出貨：展開每個 MAKE_NO，每個 MAKE_NO = 1 箱, BOX_PACK 包
-        itemsToShift = [];
-        (stationShelfItem || []).forEach((item) => {
-          const makeNos = item.MAKE_NO ? item.MAKE_NO.split(',').map(m => m.trim()) : [];
-          makeNos.forEach((makeNo) => {
-            itemsToShift.push({
-              PRT_NO: item.PRT_NO,
-              MAKE_NO: makeNo,
-              outBoxNo: 1,
-              outPpNo: item.BOX_PACK || 0,
-              ABNORMAL: item.ABNORMAL || 0,
-              PALLET_NO: item.PALLET_NO || null,
-            });
-          });
+      // 沒有勾選時，詢問是否直接退回貨架
+      if (noItemsSelected) {
+        const confirmResult = await Alert({
+          title: "沒有勾選任何產品",
+          text: "是否直接退回貨架？",
+          showCancel: true,
+          confirmButtonText: "是",
+          cancelButtonText: "否",
         });
+        if (!confirmResult.isConfirmed) {
+          setLoading(false);
+          return;
+        }
       }
 
-      if (itemsToShift.length === 0) {
-        Alert({ title: "沒有出庫的產品" });
-        setLoading(false);
-        return;
-      }
+      const itemsToShift = stationSelected || [];
 
       // 2. 判斷是否為最後一台（決定後端要不要更新ORDER狀態）
       const preCheckState = outboundExternalStateRef.current;
@@ -675,14 +667,14 @@ export default function OutboundExternal() {
       });
       const isLastStation = preCheckOthers.length === 0;
 
-      // 3. 扣庫存
+      // 3. 扣庫存（沒勾選時 items 為空，扣的都是 0）
       const shiftRes = await shiftOutOnReturn({
         items: itemsToShift,
         waveNo: stationOrder.W_ID,
         saleNo: stationOrder.SALE_NO,
         shelveId: stationShelf.SHELVE_ID,
         station: stationId,
-        isFullPallet: (stationSelected || []).length === 0,
+        isFullPallet: false,
         isLastStation,
       });
 
@@ -747,7 +739,26 @@ export default function OutboundExternal() {
           );
           Alert({ title: `還有 ${otherWorkingStations.length} 個工作站未完成退回貨架` });
         } else {
-          // 所有工作站都完成了
+          // 所有工作站都完成了 - 檢查是否已經有其他站點處理過完成邏輯
+          if (hasCompletedRef.current) {
+            // 已經有站點處理過了，只清理自己的狀態
+            dispatch(
+              setOutboundExternal({
+                station: stationId,
+                step: 1,
+                screen: "idle",
+                orderCode: "",
+                waveNo: null,
+                order: {},
+                shelf: {},
+                shelfItem: [],
+                selected: [],
+              }),
+            );
+            return;
+          }
+          hasCompletedRef.current = true;
+
           stations.forEach((sid) => {
             dispatch(
               setOutboundExternal({
@@ -769,6 +780,8 @@ export default function OutboundExternal() {
           dispatch(resetoutboundInternal());
           await getOutboundExternalTable();
           Alert({ title: "出庫完成" });
+          // 重置 flag，讓下一次出庫可以正常顯示
+          hasCompletedRef.current = false;
         }
       }
     } catch (error) {
@@ -790,35 +803,24 @@ export default function OutboundExternal() {
 
     setLoading(true);
     try {
-      // 1.判斷是整板還是零散
-      let itemsToShift = [];
+      const noItemsSelected = (selected || []).length === 0;
 
-      if ((selected || []).length > 0) {
-        // 零散掃條碼
-        itemsToShift = selected;
-      } else {
-        // 整板出貨：展開每個 MAKE_NO，每個 MAKE_NO = 1 箱, BOX_PACK 包
-        itemsToShift = [];
-        (shelfItem || []).forEach((item) => {
-          const makeNos = item.MAKE_NO ? item.MAKE_NO.split(',').map(m => m.trim()) : [];
-          makeNos.forEach((makeNo) => {
-            itemsToShift.push({
-              PRT_NO: item.PRT_NO,
-              MAKE_NO: makeNo,
-              outBoxNo: 1,
-              outPpNo: item.BOX_PACK || 0,
-              ABNORMAL: item.ABNORMAL || 0,
-              PALLET_NO: item.PALLET_NO || null,
-            });
-          });
+      // 沒有勾選時，詢問是否直接退回貨架
+      if (noItemsSelected) {
+        const confirmResult = await Alert({
+          title: "沒有勾選任何產品",
+          text: "是否直接退回貨架？",
+          showCancel: true,
+          confirmButtonText: "是",
+          cancelButtonText: "否",
         });
+        if (!confirmResult.isConfirmed) {
+          setLoading(false);
+          return;
+        }
       }
 
-      if (itemsToShift.length === 0) {
-        Alert({ title: "沒有出庫的產品" });
-        setLoading(false);
-        return;
-      }
+      const itemsToShift = selected || [];
 
       // 2. 判斷是否為最後一台（決定後端要不要更新ORDER狀態）
       const preCheckState2 = outboundExternalStateRef.current;
@@ -829,7 +831,7 @@ export default function OutboundExternal() {
       });
       const isLastStation2 = preCheckOthers2.length === 0;
 
-      // 3. 扣庫存
+      // 3. 扣庫存（沒勾選時 items 為空，扣的都是 0）
       // eslint-disable-next-line no-console
       console.log("[W_ID-4] handleReturnShelf order.W_ID:", order?.W_ID, "waveNo:", waveNo, "isLastStation:", isLastStation2);
       const shiftRes = await shiftOutOnReturn({
@@ -838,7 +840,7 @@ export default function OutboundExternal() {
         saleNo: order.SALE_NO,
         shelveId: shelf.SHELVE_ID,
         station: currentStation,
-        isFullPallet: (selected || []).length === 0,
+        isFullPallet: false,
         isLastStation: isLastStation2,
       });
 
@@ -906,7 +908,27 @@ export default function OutboundExternal() {
           );
           Alert({ title: `還有 ${otherWorkingStations.length} 個工作站未完成退回貨架` });
         } else {
-          // 4. 所有工作站都完成了清空所有站點的資料(出庫會佔滿所有站點)
+          // 4. 所有工作站都完成了 - 檢查是否已經有其他站點處理過完成邏輯
+          if (hasCompletedRef.current) {
+            // 已經有站點處理過了，只清理自己的狀態
+            dispatch(
+              setOutboundExternal({
+                station: currentStation,
+                step: 1,
+                screen: "idle",
+                orderCode: "",
+                waveNo: null,
+                order: {},
+                shelf: {},
+                shelfItem: [],
+                selected: [],
+              }),
+            );
+            return;
+          }
+          hasCompletedRef.current = true;
+
+          // 清空所有站點的資料(出庫會佔滿所有站點)
           stations.forEach((stationId) => {
             dispatch(
               setOutboundExternal({
@@ -937,6 +959,8 @@ export default function OutboundExternal() {
           await getOutboundExternalTable();
 
           Alert({ title: "出庫完成" });
+          // 重置 flag，讓下一次出庫可以正常顯示
+          hasCompletedRef.current = false;
         }
       }
     } catch (error) {
