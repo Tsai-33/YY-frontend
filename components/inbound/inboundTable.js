@@ -59,7 +59,7 @@ export default function InboundTable({ data, data2, setData2 }) {
     {
       label: "產品品號",
       key: "PRT_NO",
-      width: `30%`,
+      width: `25%`,
     },
     { label: "總包數", key: "PP_NO", width: `15%` },
     { label: "棧板", key: "PALLET_NO", width: `10%` },

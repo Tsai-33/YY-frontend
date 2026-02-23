@@ -26,7 +26,7 @@ export default function TableAll({ headers = [], data = [], type, name, onChange
 
   return (
     <div className="w-full h-full bg-[var(--white)] border border-white text-center overflow-y-auto custom-scrollbar text-(length:--font-size-2xl)" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
-      <table className="table-auto w-full">
+      <table className="table-fixed w-full">
         <thead className="sticky top-0 bg-white z-5">
           <tr className={`bg-[var(--gray-light)]`}>
             {headers.map((header, idx) => {
