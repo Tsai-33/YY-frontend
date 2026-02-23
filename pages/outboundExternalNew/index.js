@@ -34,7 +34,7 @@ export default function OutboundExternalNew() {
     dispatch(setCurrentJob("銷貨"));
   }, [currentStation, dispatch]);
 
-  // 進入頁面時清除所有站點的殘留 pushButton
+  // 進入頁面時清除所有站點的殘留 pushButton，並重置無效的 state
   const hasCleanedPushButton = useRef(false);
   // 防止多個站點同時按下 push_button 時重複顯示「出庫完成」Alert
   const hasCompletedRef = useRef(false);
@@ -43,6 +43,22 @@ export default function OutboundExternalNew() {
       hasCleanedPushButton.current = true;
       stations.forEach((stationId) => {
         dispatch(clearPushButton({ station: stationId }));
+        // 如果 step > 1 但 waveNo 是空的，重置該站點的 state
+        const stationState = outboundExternalNewState[stationId];
+        if (stationState?.step > 1 && !stationState?.waveNo) {
+          dispatch(setOutboundExternalNew({
+            station: stationId,
+            step: 1,
+            screen: "idle",
+            orderCode: "",
+            waveNo: null,
+            order: {},
+            shelf: {},
+            shelfItem: [],
+            selected: [],
+            selectedShelves: [],
+          }));
+        }
       });
     }
   }, [stations]);

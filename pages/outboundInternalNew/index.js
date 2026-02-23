@@ -61,6 +61,31 @@ export default function OutboundInternalNew() {
   }, [outboundInternalNewState]);
   const { step, screen, orderCode, order, shelf, shelfItem, selected, selectedShelves, waveNo, pushButton, remark } = outboundInternalNewState[currentStationSafe] || {};
 
+  // 進入頁面時重置無效的 state（step > 1 但 waveNo 是空的）
+  const hasResetInvalidState = useRef(false);
+  useEffect(() => {
+    if (!hasResetInvalidState.current && stations.length > 0) {
+      hasResetInvalidState.current = true;
+      stations.forEach((stationId) => {
+        const stationState = outboundInternalNewState[stationId];
+        if (stationState?.step > 1 && !stationState?.waveNo) {
+          dispatch(setOutboundInternalNew({
+            station: stationId,
+            step: 1,
+            screen: "idle",
+            orderCode: "",
+            waveNo: null,
+            order: {},
+            shelf: {},
+            shelfItem: [],
+            selected: [],
+            selectedShelves: [],
+          }));
+        }
+      });
+    }
+  }, [stations, outboundInternalNewState]);
+
   // =====根據領用單取得細節=====
   useEffect(() => {
     if (order?.W_ID) {
