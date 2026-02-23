@@ -63,12 +63,12 @@ export default function OutboundInternalNew() {
 
   // =====根據領用單取得細節=====
   useEffect(() => {
-    if (order?.SALE_NO) {
-      fetchOrderDetail(order.SALE_NO);
+    if (order?.W_ID) {
+      fetchOrderDetail(order.W_ID);
     } else {
       setOrderDetail([]);
     }
-  }, [order?.SALE_NO]);
+  }, [order?.W_ID]);
 
   useEffect(() => {
     setOrderInput(orderCode || "");
@@ -91,9 +91,9 @@ export default function OutboundInternalNew() {
     }
   }, [step, shelf?.SHELVE_ID]);
 
-  const fetchOrderDetail = async (saleNo) => {
+  const fetchOrderDetail = async (wId) => {
     try {
-      const res = await getOutboundInternalOrderDetailBySaleNo(saleNo);
+      const res = await getOutboundInternalOrderDetailByWID(wId);
       if (res.data.success) {
         setOrderDetail(res.data.data || []);
       }

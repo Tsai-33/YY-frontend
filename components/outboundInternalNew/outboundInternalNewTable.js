@@ -39,6 +39,7 @@ export default function OutboundInternalNewTable({ data, selectedArray, setSelec
                 dispatch(
                     setOutboundInternalNew({
                         station: currentStationSafe,
+                        step: 1,
                         order: {},
                         orderCode: "",
                         waveNo: null,
@@ -48,6 +49,7 @@ export default function OutboundInternalNewTable({ data, selectedArray, setSelec
                 dispatch(
                     setOutboundInternalNew({
                         station: currentStationSafe,
+                        step: 2,
                         order: value,
                         orderCode: value?.OUTSTOCK_NO,
                         waveNo: value?.W_ID,
