@@ -38,7 +38,7 @@ const transferSlice = createSlice({
       if (shelfItem !== undefined) state[station].shelfItem = shelfItem;
       if (selected !== undefined) state[station].selected = selected;
       if (job !== undefined) {
-        const newJob = job.map((v) => ({ OUTSTOCK_NO: state.orderCode, BOX_NO: v.Est_Boxes, PP_NO: v.Est_PPs, PRT_NO: v.Est_PRT_NO, AREA: v.MEMO }));
+        const newJob = job?.map((v) => ({ OUTSTOCK_NO: state.orderCode, BOX_NO: v.Est_Boxes, PP_NO: v.Est_PPs, PRT_NO: v.Est_PRT_NO, AREA: v.MEMO }));
         state[station].job = newJob;
       }
     },

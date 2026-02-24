@@ -432,7 +432,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
               站點{currentStation}-{stationLabel}貨架編號: {shelf?.SHELVE_ID}
             </div>
             <div>
-              {stationLabel}庫別: {shelf?.area}
+               {shelf?.area && `${stationLabel}庫別: ${shelf?.area}`}
             </div>
           </div>
 
