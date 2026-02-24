@@ -617,7 +617,7 @@ export default function InboundContext({ barCodeRef, setLoading }) {
 
             <div className="flex flex-col justify-end items-center p-4">
               {orderCode && <ActionButtons />}
-              {step <= 2 && (
+              {step <= 2 && currentStation?.includes("A") && (
                 <button onClick={handleReSendNewjob} className="absolute top-0 text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200 active:scale-95">
                   <span className="mr-1">🔄</span> 重發任務
                 </button>

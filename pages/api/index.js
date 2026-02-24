@@ -9,6 +9,7 @@ export const updateTransferWMS = (payload) => api.post("/transfer/update/wms", p
 export const updateTransferWMSAbnormal = (payload) => api.post("/transfer/update/wms/abnormal", payload);
 export const finishTransferOrder = (payload) => api.post("/transfer/finish/order", payload);
 export const restoreTransfer = (payload) => api.post("/transfer/restore/orders", payload);
+export const resendTaskdoneCheck  = (payload) => api.post("/transfer/resend/taskdone/check", payload);
 
 /* 取得入庫單 */
 export const addInboundWCS = (payload) => api.post("/inbound/add/wcs", payload);

@@ -8,9 +8,12 @@ import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
 import TransferTable from "@/components/transfer/transferTable";
 import { resetTransfer, setAllLoading, setTransfer, updateShelfItem } from "@/redux/reducer/reducerTransfer";
-import { addAbnormal_tr, addShelf_tr, addTask_tr, cancelShelf_tr, checkTask_tr, checkWCS_tr, confrimList_tr, deleteTask_tr, finishList_tr, getEPR, getList, getTable, restoreList_tr, returnShelf_tr, updateWMS_tr } from "@/components/transfer/transferFunction";
-import { restoreTransfer } from "@/pages/api";
+import { addAbnormal_tr, addShelf_tr, addTask_tr, cancelShelf_tr, checkTask_tr, checkWCS_tr, confrimList_tr, deleteTask_tr, finishList_tr, getEPR, getList, getTable, resend_check_tr, restoreList_tr, returnShelf_tr, updateWMS_tr } from "@/components/transfer/transferFunction";
+import { restoreTransfer, sendToWMS, updateTask } from "@/pages/api";
 import { FaTrashAlt } from "react-icons/fa";
+import LoadingShelf from "../common/loading/loading-shelf";
+import { generateRandomNumber } from "@/utils/random";
+import toast from "react-hot-toast";
 
 /**
  * 調撥系統核心上下文組件 (TransferContext)
@@ -36,7 +39,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   const currentStationSafe = currentStation || stations?.[0] || "";
   const transfer = useSelector((s) => s.transfer);
   const { step, orderCode, order, waveNo } = useSelector((s) => s.transfer);
-  const { screen, shelf, shelfItem, selected } = useSelector((s) => s.transfer[currentStationSafe] || {});
+  const { screen, shelf, shelfItem, selected, remark } = useSelector((s) => s.transfer[currentStationSafe] || {});
 
   const filteredItems = useMemo(() => {
     return tableData2.filter((v) => {
@@ -284,6 +287,29 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       );
     }
   };
+  const handleChangeREMARK = (e) => {
+    dispatch(setTransfer({ station: currentStation, remark: e.target.value }));
+  };
+  const handleReSendTaskdone = async () => {
+    const res = await resend_check_tr(currentStation);
+    if (res?.data?.data) {
+      const transferData = res?.data?.data;
+      dispatch(setTransfer({ station: currentStation, screen: "loading", step: 2, waveNo: transferData?.W_ID, orderCode: transferData?.orderCode, order: transferData?.order }));
+      await updateTask({ stations: "A01", location: "transfer" });
+
+      const random = generateRandomNumber();
+      const data = { action: "ask_done", STATION: currentStation, dataid: random };
+      const res1 = await sendToWMS(data);
+      if (res1?.data?.data?.result == "ok") {
+        toast.success("重抓成功");
+        dispatch(setTransfer({ step: 3, screen: "working" }));
+      } else {
+        toast.error(`${res?.data?.data?.result}`);
+      }
+    } else {
+      toast.success("沒有任務");
+    }
+  };
 
   // ============================
   // ⭐ 搜尋框
@@ -348,7 +374,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
 
     // 處理現有項目
     currentShelfItems.forEach((item) => {
-      if (item?.PRT_NO &&  item?.PRT_NAME !== "DUMMY") {
+      if (item?.PRT_NO && item?.PRT_NAME !== "DUMMY") {
         tempMap.set(item.PRT_NO, { ...item, selectedBox: 0, selectedPP: 0, isNew: false });
       }
     });
@@ -391,7 +417,8 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   // ============================
   // ⭐ 貨架上資訊
   // ============================
-  const ActionOrderList = ({ filteredItems }) => {
+  const ActionOrderList = ({ filteredItems, remark }) => {
+    console.log(remark, "1");
     if (step <= 2) {
       if (Object.values(order).length === 0) return null;
       return (
@@ -418,12 +445,20 @@ export default function TransferContext({ barCodeRef, setLoading }) {
           </div>
         </SchematicDiagramList>
       );
-    } else return <ShelfData />;
+    } else return <ShelfData remark={remark} />;
   };
-  const ShelfData = () => {
+  const ShelfData = ({ remark }) => {
     const isDestination = currentStation === stations[0];
     const stationLabel = isDestination ? "目的" : "來源";
     const titleColor = isDestination ? "text-[var(--blue-vivid)]" : "text-[var(--red)]";
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        e.target.blur();
+        toast.success("寫入備註成功!");
+      }
+    };
     return (
       <SchematicDiagram>
         <div className="flex flex-col gap-8">
@@ -431,27 +466,28 @@ export default function TransferContext({ barCodeRef, setLoading }) {
             <div style={isDestination ? { textShadow: "1px 1px 0 white" } : {}}>
               站點{currentStation}-{stationLabel}貨架編號: {shelf?.SHELVE_ID}
             </div>
-            <div>
-               {shelf?.area && `${stationLabel}庫別: ${shelf?.area}`}
-            </div>
+            <div>{shelf?.area && `${stationLabel}庫別: ${shelf?.area}`}</div>
+          </div>
+          <div>
+            <span>備註:</span>
+            <input type="text" value={remark} placeholder="點擊輸入備註..." className="w-full px-2 py-1 outline-none rounded bg-transparent focus:bg-white transition-colors duration-200" onChange={handleChangeREMARK} onKeyDown={handleKeyDown} />
           </div>
 
           {displayItems.length === 0 ? (
             <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
           ) : (
-            displayItems.map((item, index) => <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} isDestination={isDestination} isLastItem={index === displayItems.length - 1} cars={shelf?.CARS} />)
+            displayItems.map((item, index) => <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} isDestination={isDestination} isLastItem={index === displayItems.length - 1} cars={shelf?.CARS} remark={remark} />)
           )}
         </div>
       </SchematicDiagram>
     );
   };
-  const ShelfItemRow = ({ item, isDestination, isLastItem, cars }) => {
+  const ShelfItemRow = ({ item, isDestination, isLastItem, cars, remark }) => {
     const isNew = item.isNew || (item.selectedBox > 0 && (item.BOX_NO || 0) === 0 && (item.PP_NO || 0) === 0);
     const textClass = isNew ? "text-red-500" : "";
 
     // 目的地顯示 (+), 來源地顯示 (-)
     const operator = isDestination ? "+" : "-";
-
     return (
       <div className={`flex flex-col ${textClass}`}>
         <div className="flex gap-x-2">
@@ -527,7 +563,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
           <div className="flex flex-col flex-1 min-h-0 justify-between bg-white p-8 pb-4 h-full overflow-hidden">
             {orderCode && (
               <div className="custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
-                <ActionOrderList filteredItems={filteredItems} />
+                <ActionOrderList filteredItems={filteredItems} remark={remark} />
               </div>
             )}
             <div className="flex flex-col justify-end items-center p-4">{orderCode && <ActionButtons />}</div>
@@ -583,6 +619,13 @@ export default function TransferContext({ barCodeRef, setLoading }) {
           <div>請至盤點更正為正確數量並重新開立單據</div>
         </>
       </Modal>
+
+      {/* 重發的taskdone 沒有Job 使用，所以會壞掉 */}
+      {/* {step <= 2 && (
+        <button onClick={handleReSendTaskdone} className="absolute top-0 right-100 z-99 text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200 active:scale-95">
+          <span className="mr-1">🔄</span> 重發任務
+        </button>
+      )} */}
     </>
   );
 }

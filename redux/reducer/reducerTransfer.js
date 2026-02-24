@@ -6,6 +6,7 @@ const createStation = () => ({
   shelfItem: [], // 目前貨架上的物品
   selected: [], // 目前選擇
   job: [], // 要顯示的單據
+  remark: "",
 });
 
 const initialState = {
@@ -27,7 +28,7 @@ const transferSlice = createSlice({
       }
     },
     setTransfer: (state, action) => {
-      const { step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, job } = action.payload;
+      const { step, screen, orderCode, waveNo, order, shelf, shelfItem, selected, station, job, remark } = action.payload;
       if (!state[station]) return;
       if (step !== undefined) state.step = step;
       if (screen !== undefined) state[station].screen = screen;
@@ -37,6 +38,7 @@ const transferSlice = createSlice({
       if (shelf !== undefined) state[station].shelf = shelf;
       if (shelfItem !== undefined) state[station].shelfItem = shelfItem;
       if (selected !== undefined) state[station].selected = selected;
+      if (remark !== undefined) state[station].remark = remark;
       if (job !== undefined) {
         const newJob = job?.map((v) => ({ OUTSTOCK_NO: state.orderCode, BOX_NO: v.Est_Boxes, PP_NO: v.Est_PPs, PRT_NO: v.Est_PRT_NO, AREA: v.MEMO }));
         state[station].job = newJob;

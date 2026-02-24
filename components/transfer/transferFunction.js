@@ -1,4 +1,4 @@
-import { addShelf, addTransferWCS, checkWCS, deleteTask, finishTransferOrder, getEPRData, getOrder, getOrderDetail, getOrderDetailByWID, restoreOrders, sendToWMS, updateTask, updateTransferWMS, updateTransferWMSAbnormal } from "@/pages/api";
+import { addShelf, addTransferWCS, checkWCS, deleteTask, finishTransferOrder, getEPRData, getOrder, getOrderDetail, getOrderDetailByWID, resendJob, resendTaskdoneCheck, restoreOrders, sendToWMS, updateTask, updateTransferWMS, updateTransferWMSAbnormal } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
@@ -225,3 +225,13 @@ export const addAbnormal_tr = async (waveNo, abData, shelf) => {
     console.log(`handleAbnormal:`, err);
   }
 };
+
+
+export const resend_check_tr = async (currentStation) => {
+  try {
+    return await resendTaskdoneCheck({ STATION: currentStation });
+  } catch (err) {
+    console.log(`resend job:`, err);
+  }
+};
+
