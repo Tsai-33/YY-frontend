@@ -8,13 +8,35 @@ import InboundTable from "@/components/inbound/inboundTable";
 import SchematicDiagramList from "@/components/diagram/schematicDiagramList";
 import Alert from "@/components/common/alert/alert";
 import Modal from "@/components/common/modal/modal";
-import { getERP, getTable, getList, confrimList_in, addShelf_in, checkCar, returnShelf_in, restoreList_in, cancelShelf_in, onToShelf_in, finishList_in, checkTask_in, addTask_in, deleteTask_in, searchWMS_in, updateWMS_in, searchWMSBynoSALE_in, decryptBarCodePRTNO_in } from "./inboundFunction";
-import { checkNodePos, checkOrder, checkOrderDetail } from "@/pages/api";
+import {
+  getERP,
+  getTable,
+  getList,
+  confrimList_in,
+  addShelf_in,
+  checkCar,
+  returnShelf_in,
+  restoreList_in,
+  cancelShelf_in,
+  onToShelf_in,
+  finishList_in,
+  checkTask_in,
+  addTask_in,
+  deleteTask_in,
+  searchWMS_in,
+  updateWMS_in,
+  searchWMSBynoSALE_in,
+  decryptBarCodePRTNO_in,
+  resend_job_in,
+} from "./inboundFunction";
+import { checkNodePos, checkOrder, checkOrderDetail, sendToWMS, updateTask } from "@/pages/api";
 import LoadingText from "../common/loading/loading-text";
 import { FaTrashAlt } from "react-icons/fa";
 import { MdShelves } from "react-icons/md";
 import { setCurrentStation } from "@/redux/reducer/reducerWorkStations";
 import toast from "react-hot-toast";
+import LoadingShelf from "../common/loading/loading-shelf";
+import { generateRandomNumber } from "@/utils/random";
 
 export default function InboundContext({ barCodeRef, setLoading }) {
   const dispatch = useDispatch();
@@ -294,6 +316,27 @@ export default function InboundContext({ barCodeRef, setLoading }) {
   const handleChangeREMARK = (e) => {
     dispatch(setInbound({ station: currentStation, remark: e.target.value }));
   };
+  const handleReSendNewjob = async () => {
+    const res = await resend_job_in(currentStation);
+    if (res?.data?.data) {
+      dispatch(setInbound({ station: currentStation, screen: "loading", step: 2, lackStation: currentStation, waveNo: res?.data?.data?.W_ID, orderList: res?.data?.data?.INSTOCK_NO, orderCode: res?.data?.data?.INSTOCK_NO, order: res?.data?.data?.order }));
+      await updateTask({ stations: "A01", location: "inbound" });
+    } else {
+      toast.success("沒有任務");
+    }
+  };
+  const handleReSendTaskdone = async () => {
+    const random = generateRandomNumber();
+    const data = { action: "ask_done", STATION: currentStation, dataid: random };
+    const res = await sendToWMS(data);
+    console.log(res, "123");
+    if (res?.data?.data?.result == "ok") {
+      toast.success("重抓成功");
+      dispatch(setInbound({ step: 3, screen: "working" }));
+    } else {
+      toast.error(`${res?.data?.data?.result}`);
+    }
+  };
   // ============================
   // ⭐ 搜尋框
   // ============================
@@ -571,7 +614,15 @@ export default function InboundContext({ barCodeRef, setLoading }) {
                 )}
               </div>
             )}
-            <div className="flex flex-col justify-end items-center p-4">{orderCode && <ActionButtons />}</div>
+
+            <div className="flex flex-col justify-end items-center p-4">
+              {orderCode && <ActionButtons />}
+              {step <= 2 && (
+                <button onClick={handleReSendNewjob} className="absolute top-0 text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200 active:scale-95">
+                  <span className="mr-1">🔄</span> 重發任務
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -604,6 +655,15 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       <Modal showModal={returnModal} title="退回貨架" onClose={() => setReturnModal(false)} onConfirm={handleReturnShelf} width="39vw" height="40vh">
         確定是否返回貨架
       </Modal>
+
+      {screen === "loading" && (
+        <>
+          <LoadingShelf />
+          <button onClick={handleReSendTaskdone} className="absolute top-0 z-99 text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200 active:scale-95">
+            <span className="mr-1">🔄</span> 重發任務
+          </button>
+        </>
+      )}
     </>
   );
 }

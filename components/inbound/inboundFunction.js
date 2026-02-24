@@ -18,6 +18,7 @@ import {
   searchInboundWMSBynoSALE,
   searchInboundDecrypt,
   getOrderByWID,
+  resendJob,
 } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
@@ -246,6 +247,15 @@ export const updateWMS_in = async (SHELVE_ID, PRT_NO, REMARK) => {
     console.log(`searchWMS:`, err);
   }
 };
+
+export const resend_job_in = async (currentStation) => {
+  try {
+    return await resendJob({ STATION: currentStation });
+  } catch (err) {
+    console.log(`resend job:`, err);
+  }
+};
+
 
 // 檢查目前掃描的外箱條碼
 export const decryptBarCodePRTNO_in = async (value, inbound) => {

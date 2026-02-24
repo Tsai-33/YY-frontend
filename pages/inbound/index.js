@@ -83,7 +83,6 @@ export default function Inbound() {
         ))}
       </div>
       {/* loading */}
-      {screen === "loading" && <LoadingShelf />}
       {loading && <Loading />}
 
       {/* 測試按鈕 */}

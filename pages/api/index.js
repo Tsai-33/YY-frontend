@@ -19,7 +19,9 @@ export const finishInboundOrder = (payload) => api.post("/inbound/finish/order",
 export const restoreOrders = (payload) => api.post("/inbound/restore/orders", payload);
 export const searchInboundWMS = (payload) => api.post("/inbound/search/wms", payload);
 export const searchInboundWMSBynoSALE = () => api.get("/inbound/search/wms/no/saleno");
-export const searchInboundDecrypt = (payload) => api.post("/inbound/decrypt",payload);
+export const searchInboundDecrypt = (payload) => api.post("/inbound/decrypt", payload);
+export const resendJob = (payload) => api.post("/inbound/resend/job", payload);
+export const resendTaskdone = (payload) => api.post("/inbound/resend/taskdone", payload);
 
 /* 取得出庫單(銷貨) */
 export const getOutboundExternal = () => api.get("/outboundExternal/getOutBoundExternal");
