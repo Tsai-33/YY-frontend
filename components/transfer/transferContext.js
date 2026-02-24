@@ -348,7 +348,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
 
     // 處理現有項目
     currentShelfItems.forEach((item) => {
-      if (item?.PRT_NO) {
+      if (item?.PRT_NO &&  item?.PRT_NAME !== "DUMMY") {
         tempMap.set(item.PRT_NO, { ...item, selectedBox: 0, selectedPP: 0, isNew: false });
       }
     });
@@ -424,7 +424,6 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     const isDestination = currentStation === stations[0];
     const stationLabel = isDestination ? "目的" : "來源";
     const titleColor = isDestination ? "text-[var(--blue-vivid)]" : "text-[var(--red)]";
-
     return (
       <SchematicDiagram>
         <div className="flex flex-col gap-8">
@@ -453,8 +452,6 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     // 目的地顯示 (+), 來源地顯示 (-)
     const operator = isDestination ? "+" : "-";
 
-
-        if (item?.PRT_NAME === "DUMMY") return;
     return (
       <div className={`flex flex-col ${textClass}`}>
         <div className="flex gap-x-2">
