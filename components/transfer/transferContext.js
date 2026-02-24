@@ -468,10 +468,10 @@ export default function TransferContext({ barCodeRef, setLoading }) {
             </div>
             <div>{shelf?.area && `${stationLabel}庫別: ${shelf?.area}`}</div>
           </div>
-          <div>
+          {/* <div>
             <span>備註:</span>
             <input type="text" value={remark} placeholder="點擊輸入備註..." className="w-full px-2 py-1 outline-none rounded bg-transparent focus:bg-white transition-colors duration-200" onChange={handleChangeREMARK} onKeyDown={handleKeyDown} />
-          </div>
+          </div> */}
 
           {displayItems.length === 0 ? (
             <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
