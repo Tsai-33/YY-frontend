@@ -533,13 +533,6 @@ export default function InboundContext({ barCodeRef, setLoading }) {
       getTable(setTableData, setOriginalData, orderList);
     }
   }, [shelfItem, waveNo]);
-  // useEffect(() => {
-  //   if (!order) return;
-  //   // 2026-1-28 現場討論，告知必須抓出相符條件
-  //   // 假設訂單內有SHELVE_ID的陣列
-  //   searchWMS(order);
-  //   dispatch(clearAllShelves());
-  // }, [order]);
   useEffect(() => {
     // 延遲 100ms 是為了確保 DOM 已經完全渲染並出現在畫面上
     // 特別是如果你有切換動畫或 Step 切換

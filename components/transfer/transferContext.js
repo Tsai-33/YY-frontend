@@ -414,107 +414,6 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       </div>
     );
   };
-  // ============================
-  // ⭐ 貨架上資訊
-  // ============================
-  const ActionOrderList = ({ filteredItems, remark }) => {
-    console.log(remark, "1");
-    if (step <= 2) {
-      if (Object.values(order).length === 0) return null;
-      return (
-        <SchematicDiagramList>
-          <div className="flex flex-col">
-            <div className="flex justify-end mb-2">
-              <span>目的庫別: {order?.STOCK_AREA == "X01" ? "外部倉" : order?.STOCK_AREA}</span>
-            </div>
-            {filteredItems.map((v, i) => (
-              <div key={i} className="mb-4 border-b pb-2 last:border-0">
-                <div className="flex justify-between">
-                  <span>產品品號: {v?.PRT_NO}</span>
-                  <span className="text-[var(--red)]">來源庫別: {v?.MEMO}</span>
-                </div>
-                <div>品名: {v?.PRT_NAME}</div>
-                <div className="flex gap-16">
-                  <span>箱數: {v?.BOX_NO} 箱</span>
-                  <span>
-                    數量: {v?.PP_NO} {v?.UNIT}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </SchematicDiagramList>
-      );
-    } else return <ShelfData remark={remark} />;
-  };
-  const ShelfData = ({ remark }) => {
-    const isDestination = currentStation === stations[0];
-    const stationLabel = isDestination ? "目的" : "來源";
-    const titleColor = isDestination ? "text-[var(--blue-vivid)]" : "text-[var(--red)]";
-
-    const handleKeyDown = (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        e.target.blur();
-        toast.success("寫入備註成功!");
-      }
-    };
-    return (
-      <SchematicDiagram>
-        <div className="flex flex-col gap-8">
-          <div className={`flex justify-between pb-2 ${titleColor}`}>
-            <div style={isDestination ? { textShadow: "1px 1px 0 white" } : {}}>
-              站點{currentStation}-{stationLabel}貨架編號: {shelf?.SHELVE_ID}
-            </div>
-            <div>{shelf?.area && `${stationLabel}庫別: ${shelf?.area}`}</div>
-          </div>
-          {/* <div>
-            <span>備註:</span>
-            <input type="text" value={remark} placeholder="點擊輸入備註..." className="w-full px-2 py-1 outline-none rounded bg-transparent focus:bg-white transition-colors duration-200" onChange={handleChangeREMARK} onKeyDown={handleKeyDown} />
-          </div> */}
-
-          {displayItems.length === 0 ? (
-            <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
-          ) : (
-            displayItems.map((item, index) => <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} isDestination={isDestination} isLastItem={index === displayItems.length - 1} cars={shelf?.CARS} remark={remark} />)
-          )}
-        </div>
-      </SchematicDiagram>
-    );
-  };
-  const ShelfItemRow = ({ item, isDestination, isLastItem, cars, remark }) => {
-    const isNew = item.isNew || (item.selectedBox > 0 && (item.BOX_NO || 0) === 0 && (item.PP_NO || 0) === 0);
-    const textClass = isNew ? "text-red-500" : "";
-
-    // 目的地顯示 (+), 來源地顯示 (-)
-    const operator = isDestination ? "+" : "-";
-    return (
-      <div className={`flex flex-col ${textClass}`}>
-        <div className="flex gap-x-2">
-          <span>產品品號:</span>
-          <span>{item.PRT_NO}</span>
-        </div>
-        <div className="flex gap-x-2">
-          <span>產品品名:</span>
-          <span>{item.PRT_NAME}</span>
-        </div>
-        <div className="flex gap-16 relative">
-          <div className="flex gap-x-2">
-            <span>箱數:</span>
-            <span>{item.BOX_NO}</span>
-            <span>箱</span>
-            {item.selectedBox > 0 && <span className="text-red-500">{`(-${item.selectedBox})`}</span>}
-          </div>
-          <div className="flex gap-x-2">
-            數量: {item.PP_NO} {item.UNIT}
-            {item.selectedPP > 0 && <span className="text-red-500">{`(${operator}${item.selectedPP})`}</span>}
-          </div>
-          <div className="absolute bottom-0 right-0">{isLastItem && cars && <span className="text-black">{cars}</span>}</div>
-        </div>
-      </div>
-    );
-  };
-
   // -------------------------------*
 
   useEffect(() => {
@@ -563,7 +462,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
           <div className="flex flex-col flex-1 min-h-0 justify-between bg-white p-8 pb-4 h-full overflow-hidden">
             {orderCode && (
               <div className="custom-scrollbar" style={{ "--scrollbar-thumb-color": `var(--green-vivid)` }}>
-                <ActionOrderList filteredItems={filteredItems} remark={remark} />
+                {step <= 2 ? <ActionOrderList filteredItems={filteredItems} order={order} /> : <ShelfData shelf={shelf} handleChangeREMARK={handleChangeREMARK} displayItems={displayItems} remark={remark} currentStation={currentStation} stations={stations} />}
               </div>
             )}
             <div className="flex flex-col justify-end items-center p-4">{orderCode && <ActionButtons />}</div>
@@ -629,3 +528,138 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     </>
   );
 }
+
+// ============================
+// ⭐ 貨架上資訊
+// ============================
+const ActionOrderList = ({ filteredItems, order }) => (
+  <SchematicDiagramList>
+    <div className="flex flex-col text-lg">
+      <div className="flex justify-end p-2">
+        <span>目的庫別: {order?.STOCK_AREA}</span>
+      </div>
+
+      <table className="w-full border-collapse text-left border-collapse">
+            <thead className="bg-gray-300 rounded-lg">
+              <tr>
+                <th className="p-2 w-[25%]">產品品號</th>
+                <th className="p-2">品名</th>
+                <th className="p-2 w-[12%]">箱數</th>
+                <th className="p-2 w-[18%]">包數</th>
+                <th className="p-2 w-[10%]">單位</th>
+                <th className="p-2 w-[10%]">來源</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredItems?.map((v) => (
+                <tr className="bg-gray-100 rounded-lg">
+                  <td title={v?.PRT_NO} className="truncate p-2">
+                    {v?.PRT_NO || ""}
+                  </td>
+                  <td title={v?.PRT_NAME} className="truncate p-2">
+                    {v?.PRT_NAME || ""}
+                  </td>
+                  <td className="p-2" title={v?.BOX_NO}>{v?.BOX_NO || 0}</td>
+                  <td className="p-2" title={v?.PP_NO}>{v?.PP_NO || ""}</td>
+                  <td className="p-2" title={v?.UNIT}>{v?.UNIT || ""}</td>
+                  <td className="p-2" title={v?.MEMO}>{v?.MEMO || ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+    </div>
+  </SchematicDiagramList>
+);
+
+const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems, currentStation, stations }) => {
+  const isDestination = currentStation === stations[0];
+  const stationLabel = isDestination ? "目的" : "來源";
+  const titleColor = isDestination ? "text-[var(--blue-vivid)]" : "text-[var(--red)]";
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.target.blur();
+      toast.success("寫入備註成功!");
+    }
+  };
+  return (
+    <SchematicDiagram>
+      <div className="flex flex-col gap-2 ">
+        <div className="flex items-center justify-between gap-4 w-full">
+          <div className={`whitespace-nowrap ${titleColor}`} style={isDestination ? { textShadow: "1px 1px 0 white" } : {}}>
+            站點{currentStation}-{stationLabel}貨架編號: {shelf?.SHELVE_ID}
+          </div>
+          <div>{shelf?.area && `${stationLabel}庫別: ${shelf?.area}`}</div>
+        </div>
+        <div className="flex-1 flex items-center gap-2">
+          <span>備註:</span>
+          <input type="text" value={remark} placeholder="點擊輸入備註..." className="flex-1 px-2 py-1 outline-none rounded bg-transparent focus:bg-white transition-colors duration-200" onChange={handleChangeREMARK} onKeyDown={handleKeyDown} />
+        </div>
+        <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
+
+        <div>
+          {displayItems.length === 0 ? (
+            <>
+              <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
+              {shelf?.CARS && (
+                <div className="bg-transparent text-right p-2 pr-4">
+                  <span>車次：{shelf.CARS}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            <table className="table-fixed w-full text-left border-collapse">
+              <thead className="bg-gray-300 rounded-lg">
+                <tr>
+                  <th className="rounded-tl-xl p-2 w-[25%]">產品品號</th>
+                  <th className="p-2">品名</th>
+                  <th className="p-2 w-[18%]">總箱數</th>
+                  <th className="p-2 w-[18%]">總包數</th>
+                  <th className="rounded-tr-xl p-2 w-[10%]">單位</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayItems.map((item, index) => (
+                  <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} isLast={index === displayItems.length - 1} index={index} />
+                ))}
+                {shelf?.CARS && (
+                  <tr>
+                    <td colSpan={5} className="bg-transparent text-right p-2 pr-4">
+                      <span>車次：{shelf.CARS}</span>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </SchematicDiagram>
+  );
+};
+const ShelfItemRow = ({ item, isDestination }) => {
+  const isNew = item.isNew || (item.selectedBox > 0 && (item.BOX_NO || 0) === 0 && (item.PP_NO || 0) === 0);
+  // 目的地顯示 (+), 來源地顯示 (-)
+  const operator = isDestination ? "+" : "-";
+  return (
+    <tr className={`${isNew ? "text-red-500" : ""} bg-gray-100 rounded-lg`}>
+      <td className={`p-2 truncate max-w-0`} title={item?.PRT_NO}>
+        {item?.PRT_NO}
+      </td>
+      <td className="p-2 truncate max-w-0" title={item?.PRT_NAME}>
+        {item?.PRT_NAME}
+      </td>
+      <td className="p-2 truncate max-w-0" title={`${item?.BOX_NO}${item?.selectedBox > 0 && `(+${item?.selectedBox})`}`}>
+        {item?.BOX_NO}
+        <span className="inline-block text-red-500">{item?.selectedBox > 0 && `(+${item?.selectedBox})`}</span>
+      </td>
+      <td className="p-2 truncate max-w-0" title={`${item?.PP_NO}${item?.selectedPP > 0 && `(+${item?.selectedPP})`}`}>
+        {item?.PP_NO} <span className="inline-block text-red-500">{item?.selectedPP > 0 && `(${operator}${item?.selectedPP})`}</span>
+      </td>
+      <td className={`p-2 truncate max-w-0`} title={item?.UNIT}>
+        {item?.UNIT}
+      </td>
+    </tr>
+  );
+};
