@@ -578,12 +578,8 @@ const ActionOrderList = ({ filteredItems, order }) => (
     </div>
   </SchematicDiagramList>
 );
-
 const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems, currentStation, stations }) => {
-  console.log(stations[0])
-  console.log(currentStation)
   const isDestination = currentStation === stations[0];
-  console.log(isDestination)
   const stationLabel = isDestination ? "目的" : "來源";
   const titleColor = isDestination ? "text-[var(--blue-vivid)]" : "text-[var(--red)]";
   // 目的地顯示 (+), 來源地顯示 (-)
@@ -652,7 +648,6 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems, currentSta
   );
 };
 const ShelfItemRow = ({ item, operator }) => {
-  console.log(operator,'123')
   const isNew = item.isNew || (item.selectedBox > 0 && (item.BOX_NO || 0) === 0 && (item.PP_NO || 0) === 0);
   return (
     <tr className={`${isNew ? "text-red-500" : ""} bg-gray-100 rounded-lg`}>
