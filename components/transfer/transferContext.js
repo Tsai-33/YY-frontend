@@ -165,9 +165,11 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     }
 
     if (currentStation === stations[0]) {
-      tableData2.find((item) => item.STATUS === 1 && item.PRT_NO === job[0].PRT_NO);
-      Alert({ title: "尚未完成" });
-      return;
+      const data = tableData2.find((item) => item.PRT_NO === job[0].PRT_NO);
+      if (data.STATUS === 1) {
+        Alert({ title: "尚未完成" });
+        return;
+      }
     } else {
       if (job.length > 0) {
         toast.error("您未上架完成");
@@ -175,7 +177,6 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       }
     }
 
-    return;
     await handleReturn();
   };
 

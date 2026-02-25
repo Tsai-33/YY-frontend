@@ -2,6 +2,7 @@ import { addShelf, addTransferWCS, checkWCS, deleteTask, finishTransferOrder, ge
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
+import toast from "react-hot-toast";
 
 // 抓取ERP
 export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTotalData2, setOriginalData) => {
@@ -10,8 +11,8 @@ export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTot
     const res = await getEPRData({ barCode: inputBarCode });
     if (res?.data?.success) {
       await getTable(setTableData, setTableTotalData2, setOriginalData);
-    } else if (!res?.success && res?.error) {
-      Alert({ title: `${res?.error?.message}` });
+    } else{
+      toast.error("建立失敗")
     }
   } catch (error) {
     console.log(`handleBarCode :`, error);
