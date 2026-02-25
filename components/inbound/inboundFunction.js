@@ -31,8 +31,8 @@ export const getERP = async (setLoading, inputBarCode, setTableData, setOriginal
     const res = await getEPRData({ barCode: inputBarCode });
     if (res?.success) {
       await getTable(setTableData, setOriginalData, orderList);
-    } else if (!res?.success && res?.error) {
-      Alert({ title: "目前無法取得ERP資料" });
+    } else {
+      toast.error("建立失敗");
     }
   } catch (error) {
     console.log(`ask_order handleBarCode :`, error);
@@ -255,7 +255,6 @@ export const resend_job_in = async (currentStation) => {
     console.log(`resend job:`, err);
   }
 };
-
 
 // 檢查目前掃描的外箱條碼
 export const decryptBarCodePRTNO_in = async (value, inbound) => {
