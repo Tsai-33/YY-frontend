@@ -57,7 +57,7 @@ const mergedData = data.map(row => {
                     return (
                       <td key={i}>
                         <label className="relative cursor-pointer flex items-center justify-center">
-                          <span className="font-bold text-sm">{row.STATUS == 2 ? <Check className="text-green-800 w-6 h-6" strokeWidth={3} /> : <X className="text-red-800 w-6 h-6" strokeWidth={3} />}</span>
+                          <span className="font-bold text-sm">{row.STATUS == 2 || row.STATUS == 5 ? <Check className="text-green-800 w-6 h-6" strokeWidth={3} /> : <X className="text-red-800 w-6 h-6" strokeWidth={3} />}</span>
                         </label>
                       </td>
                     );

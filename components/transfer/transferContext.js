@@ -39,7 +39,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
   const currentStationSafe = currentStation || stations?.[0] || "";
   const transfer = useSelector((s) => s.transfer);
   const { step, orderCode, order, waveNo } = useSelector((s) => s.transfer);
-  const { screen, shelf, shelfItem, selected, remark } = useSelector((s) => s.transfer[currentStationSafe] || {});
+  const { job, screen, shelf, shelfItem, selected, remark } = useSelector((s) => s.transfer[currentStationSafe] || {});
 
   const filteredItems = useMemo(() => {
     return tableData2.filter((v) => {
@@ -122,9 +122,15 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       Alert({ title: "沒有選擇項目" });
       return;
     }
-    const res = await updateWMS_tr(setLoading, selected, shelf, order, transfer[stations[0]], setConfirmModal);
 
-    if (res?.success) {
+    if (transfer[stations[0]]?.job[0]?.PRT_NO !== job[0]?.PRT_NO) {
+      setConfirmModal(false);
+      toast.error("不是上在這個目的貨架上");
+      return;
+    }
+
+    const res = await updateWMS_tr(setLoading, selected, shelf, order, transfer[stations[0]], setConfirmModal, remark);
+    if (res?.data?.data === "success") {
       const detail = selected.map((s) => tableData2.find((de) => de.PRT_NO === s.PRT_NO));
       dispatch(updateShelfItem({ station: currentStation, items: detail, ppStation: stations[0] }));
       getList(waveNo, setTableData2);
@@ -139,7 +145,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       Alert({ title: "調撥單完成", html: `此調撥單已經完成，請選擇「 調撥單完成 」。` });
       return;
     }
-    const res = await addShelf_tr(setLoading, setAddModal, shelf, order, stations);
+    const res = await addShelf_tr(setLoading, setAddModal, shelf, order, currentStation);
     if (!res?.success && res?.error) {
       Alert({ title: `${res?.error.message}` });
     }
@@ -152,61 +158,27 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       return;
     }
 
-    const isAllCompleted = tableData2.every((item) => item.STATUS === 2);
+    const isAllCompleted = tableData2.every((item) => item.STATUS === 2 || item.STATUS === 5);
     if (isAllCompleted) {
       Alert({ title: "請選擇「完成調撥」" });
       return;
     }
 
-    // 如果是目的站，有移動過產品後不可使用
     if (currentStation === stations[0]) {
-      const check = await checkWCS_tr(waveNo, stations[0]);
-      if (!check?.success) {
-        Alert({ title: `${check?.error?.message}` });
-        return;
-      } else if (check?.data?.data?.length <= 0) {
-        if (tableData2.every((v) => v.STATUS === 1)) {
-          Alert({
-            title: "調撥單未完成",
-            html: `此調撥單未完成且您正在退回目的貨架<br>如果退回將返回選單列表`,
-            showCancel: true,
-            onConfirm: async () => {
-              await handleCancel();
-              await deleteTask_tr(stations);
-              await restoreTransfer({ W_ID: waveNo });
-              getTable(setTableData, setTableTotalData2, setOriginalData);
-            },
-          });
-        } else if (tableData2.some((v) => v.STATUS === 2)) {
-          Alert({ title: "有下架其他貨架產品，請完成此單。" });
-        }
-        return;
-      } else if (check?.data?.data?.length > 0) {
-        const hasGGroupEndingWithA = check.data.data.some((item) => item.GGROUP && item.GGROUP.endsWith("A"));
-        if (!hasGGroupEndingWithA) {
-          Alert({
-            title: "調撥單未完成",
-            html: `此調撥單未完成且您正在退回目的貨架<br>如果退回將返回選單列表`,
-            showCancel: true,
-            onConfirm: async () => {
-              await handleCancel();
-              await deleteTask_tr(stations);
-              await restoreTransfer({ W_ID: order.W_ID });
-              getTable(setTableData, setTableTotalData2, setOriginalData);
-            },
-          });
-          return;
-        }
-      }
+      tableData2.find((item) => item.STATUS === 1 && item.PRT_NO === job[0].PRT_NO);
+      Alert({ title: "尚未完成" });
+      return;
     } else {
-      if (shelf.SHELVE_ID === "X001") {
-        dispatch(resetTransfer({ type: "one", station: currentStation, W_ID: waveNo }));
+      if (job.length > 0) {
+        toast.error("您未上架完成");
         return;
       }
     }
 
+    return;
     await handleReturn();
   };
+
   const handleCancel = async () => {
     const res = await cancelShelf_tr(setLoading, currentStation);
     if (res?.data?.success) {
@@ -214,14 +186,15 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     }
   };
   const handleReturn = async () => {
-    const res = await returnShelf_tr(setLoading, currentStation, shelf, order);
+    const res = await returnShelf_tr(setLoading, shelf, currentStation, order, remark);
+    console.log(res.data);
     if (res?.data?.success) {
       dispatch(resetTransfer({ type: "one", station: currentStation, W_ID: waveNo }));
     }
   };
   const handleFinish = async () => {
-    if (tableData2.every((v) => v.STATUS === 2)) {
-      const res = await finishList_tr(setLoading, order, setFinishModal);
+    if (tableData2.every((v) => v.STATUS === 2 || v.STATUS === 5)) {
+      const res = await finishList_tr(setLoading, order, setFinishModal, shelf?.SHELVE_ID, remark);
       if (res?.data?.success) {
         dispatch(resetTransfer({ type: "all", station: stations }));
         Alert({ title: res?.data?.message });
@@ -231,21 +204,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       }
     } else {
       setFinishModal(false);
-      Alert({
-        title: "有其他項目未完成",
-        html: "確認後結束訂單並把未完成項目註記異常",
-        showCancel: true,
-        onConfirm: async () => {
-          const res = await finishList_tr(setLoading, order, setFinishModal);
-          if (res?.data?.success) {
-            dispatch(resetTransfer({ type: "all", station: stations }));
-            Alert({ title: res?.data?.message });
-            await deleteTask_tr(stations);
-          } else if (!res?.success) {
-            Alert({ title: `${res?.error?.message}` });
-          }
-        },
-      });
+      toast.error("有其他車次或項目未完成");
     }
   };
   const setAbnormal = async (data) => {
@@ -254,12 +213,25 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     setWmsModal(true);
   };
   const handleAbnormal = async () => {
-    const res = await addAbnormal_tr(waveNo, abData, shelf);
+    if (transfer[stations[0]]?.job[0]?.PRT_NO !== job[0]?.PRT_NO) {
+      toast.error("不是上在這個目的貨架上");
+      return;
+    }
+
+    const res = await addAbnormal_tr(waveNo, abData, shelf, shelfItem);
     setWmsModal(false);
     if (res?.success) {
-      await handleCancel();
-      await deleteTask_tr(stations);
       Alert({ title: `${res?.data?.message}` });
+
+      const res1 = await updateWMS_tr(setLoading, [abData], shelf, order, transfer[stations[0]], setConfirmModal, remark, 1);
+      if (res1?.data?.data === "success") {
+        const detail = [abData].map((s) => tableData2.find((de) => de.PRT_NO === s.PRT_NO));
+        dispatch(updateShelfItem({ station: currentStation, items: detail, ppStation: stations[0] }));
+        getList(waveNo, setTableData2);
+      } else if (!res1?.success) {
+        Alert({ title: `${res1?.error.message}` });
+      }
+      dispatch(setTransfer({ station: currentStation, selected: [] }));
     } else {
       Alert({ title: `${res?.error?.message}` });
     }
@@ -273,8 +245,8 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       return (
         <div className="w-full flex justify-between">
           <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2.every((v) => v.STATUS === 2)} />
-          <ActionBtn icon="icon-transfer" text="完成調撥" variant="orange" onClick={() => setFinishModal(true)} disabled={tableData2.every((v) => v.STATUS !== 2)} />
-          <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />{" "}
+          <ActionBtn icon="icon-transfer" text="完成調撥" variant="orange" onClick={() => setFinishModal(true)} />
+          <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
         </div>
       );
     } else {
@@ -282,7 +254,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
         <div className="w-full flex justify-between">
           <button className="w-50 opacity-0 pointer-events-none"></button>
           <ActionBtn icon="icon-check" text="確定" variant="orange" onClick={() => setConfirmModal(true)} disabled={selected?.length <= 0} />
-          <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />{" "}
+          <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
         </div>
       );
     }
@@ -310,7 +282,6 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       toast.success("沒有任務");
     }
   };
-
   // ============================
   // ⭐ 搜尋框
   // ============================
@@ -513,9 +484,9 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       <Modal showModal={wmsModal} title="數量異常" onClose={() => setWmsModal(false)} onConfirm={handleAbnormal} width={`39vw`} height={`auto`}>
         <>
           <div>產品編號:「 {abData?.PRT_NO} 」</div>
-          <div>系統數量與實際數量不相符</div>
-          <div>按下「確認」後退回所有貨架</div>
-          <div>請至盤點更正為正確數量並重新開立單據</div>
+          <div>貨架數量與實際數量不相符</div>
+          <div>按下「確認」後將退回所有貨架</div>
+          <div>請至盤點更正為正確數量並重新開立調撥單</div>
         </>
       </Modal>
 

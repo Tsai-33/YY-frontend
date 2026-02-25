@@ -10,6 +10,8 @@ export const updateTransferWMSAbnormal = (payload) => api.post("/transfer/update
 export const finishTransferOrder = (payload) => api.post("/transfer/finish/order", payload);
 export const restoreTransfer = (payload) => api.post("/transfer/restore/orders", payload);
 export const resendTaskdoneCheck  = (payload) => api.post("/transfer/resend/taskdone/check", payload);
+export const returnTransferWCS = (payload) => api.post("/transfer/return/wcs", payload);
+
 
 /* 取得入庫單 */
 export const addInboundWCS = (payload) => api.post("/inbound/add/wcs", payload);

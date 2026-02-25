@@ -1,4 +1,4 @@
-import { addShelf, addTransferWCS, checkWCS, deleteTask, finishTransferOrder, getEPRData, getOrder, getOrderDetail, getOrderDetailByWID, resendJob, resendTaskdoneCheck, restoreOrders, sendToWMS, updateTask, updateTransferWMS, updateTransferWMSAbnormal } from "@/pages/api";
+import { addShelf, addTransferWCS, checkWCS, deleteTask, finishTransferOrder, getEPRData, getOrder, getOrderDetail, getOrderDetailByWID, resendJob, resendTaskdoneCheck, restoreOrders, returnTransferWCS, sendToWMS, updateTask, updateTransferWMS, updateTransferWMSAbnormal } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
@@ -76,10 +76,11 @@ export const confrimList_tr = async (setLoading, order) => {
 };
 
 // 新增
-export const addShelf_tr = async (setLoading, setAddModal, shelf, order, stations) => {
+export const addShelf_tr = async (setLoading, setAddModal, shelf, order,currentStation) => {
+  console.log(shelf, order,currentStation,'1')
   setLoading(true);
   try {
-    return await addTransferWCS({ step: "transfer", STOCK_AREA: shelf?.area, WAVENO: order?.W_ID, STATION: stations[0] });
+    return await addTransferWCS({ step: "transfer", STOCK_AREA: shelf?.area, WAVENO: order?.W_ID, STATION: currentStation });
   } catch (err) {
     console.log("handleAddShelf :", err);
     if (err?.code === "ECONNABORTED") {
@@ -104,25 +105,11 @@ export const addShelf_tr = async (setLoading, setAddModal, shelf, order, station
 };
 
 // 退回
-export const returnShelf_tr = async (setLoading, currentStation, shelf, order) => {
+export const returnShelf_tr = async (setLoading, shelf, currentStation, order, remark) => {
   try {
-    const random9 = generateRandomNumber();
-    const data = { step: "transfer", Command: "RETURN", SHELVE_ID: shelf?.SHELVE_ID, BAR_CODE: "", FACE: 2, STATION: currentStation, PURPOSE: 3, STATUS: 0, CART_ID: "", DATA_ID: random9, WAVENO: String(order.W_ID), GGROUP: String(order.W_ID) };
-    return await addShelf(data);
+    return await returnTransferWCS({ step: "transfer", SHELVE_ID: shelf?.SHELVE_ID, STATION: currentStation, WAVENO: order.W_ID, remark: remark });
   } catch (err) {
     console.log("handleReturnShelf :", err);
-    if (err?.code === "ECONNABORTED") {
-      try {
-        const checkRes = await checkWCS({ W_ID: order?.W_ID, command: "RETURN", SHELVE_ID: shelf?.SHELVE_ID, station: currentStation });
-        if (checkRes?.data?.data?.length > 0) {
-          return Alert({ title: "連線逾時但車輛已發送返還訊息，請勿重複發送" });
-        } else {
-          return Alert({ title: "未成功，請重新發送" });
-        }
-      } catch (checkErr) {
-        return Alert({ title: checkErr?.message });
-      }
-    }
   } finally {
     setLoading(false);
   }
@@ -154,10 +141,10 @@ export const restoreList_tr = async (setLoading, waveNo) => {
 };
 
 // 完成調撥單
-export const finishList_tr = async (setLoading, order, setFinishModal) => {
+export const finishList_tr = async (setLoading, order, setFinishModal, SHELVE_ID, remark) => {
   setLoading(true);
   try {
-    return await finishTransferOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME });
+    return await finishTransferOrder({ W_ID: order.W_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, SHELVE_ID, remark });
   } catch (err) {
     console.log(`handleFinish :`, err);
   } finally {
@@ -167,11 +154,24 @@ export const finishList_tr = async (setLoading, order, setFinishModal) => {
 };
 
 // 更改數量
-export const updateWMS_tr = async (setLoading, selected, shelf, order, addShelf, setConfirmModal) => {
+export const updateWMS_tr = async (setLoading, selected, shelf, order, addShelf, setConfirmModal, remark, abnormal = null) => {
   setLoading(true);
   try {
     // 傳給WMS
-    const data = { itemArray: selected, SHELVE_ID: shelf.SHELVE_ID, BILL_TIME: order.BILL_TIME, WORK_TIME: order.WORK_TIME, CUS_NO: order.CUS_NO, addShelf: addShelf.shelf.SHELVE_ID, addShelfArea: shelf.area, SALE_NO: order.SALE_NO, W_ID: order.W_ID };
+    const data = {
+      itemArray: selected,
+      SHELVE_ID: shelf.SHELVE_ID,
+      BILL_TIME: order.BILL_TIME,
+      WORK_TIME: order.WORK_TIME,
+      CUS_NO: order.CUS_NO,
+      addShelf: addShelf.shelf.SHELVE_ID,
+      addShelfArea: shelf.area,
+      SALE_NO: order.SALE_NO,
+      W_ID: order.W_ID,
+      remark: remark,
+      purposeRemark: addShelf.remark,
+      abnormal: abnormal,
+    };
     return await updateTransferWMS(data);
   } catch (err) {
     console.log("handleConfirmShelf :", err);
@@ -217,15 +217,14 @@ export const deleteTask_tr = async (stations) => {
 };
 
 // 數量異常
-export const addAbnormal_tr = async (waveNo, abData, shelf) => {
+export const addAbnormal_tr = async (waveNo, abData, shelf, shelfItem) => {
   try {
-    const data = { W_ID: waveNo, PRT_NO: abData.PRT_NO, SHELVE_ID: shelf.SHELVE_ID };
+    const data = { W_ID: waveNo, PRT_NO: abData.PRT_NO, SHELVE_ID: shelf.SHELVE_ID, SALE_NO: shelfItem[0]?.SALE_NO };
     return await updateTransferWMSAbnormal(data);
   } catch (err) {
     console.log(`handleAbnormal:`, err);
   }
 };
-
 
 export const resend_check_tr = async (currentStation) => {
   try {
@@ -234,4 +233,3 @@ export const resend_check_tr = async (currentStation) => {
     console.log(`resend job:`, err);
   }
 };
-
