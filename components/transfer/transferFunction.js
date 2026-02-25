@@ -77,7 +77,6 @@ export const confrimList_tr = async (setLoading, order) => {
 
 // 新增
 export const addShelf_tr = async (setLoading, setAddModal, shelf, order,currentStation) => {
-  console.log(shelf, order,currentStation,'1')
   setLoading(true);
   try {
     return await addTransferWCS({ step: "transfer", STOCK_AREA: shelf?.area, WAVENO: order?.W_ID, STATION: currentStation });
