@@ -540,41 +540,54 @@ const ActionOrderList = ({ filteredItems, order }) => (
       </div>
 
       <table className="w-full border-collapse text-left border-collapse">
-            <thead className="bg-gray-300 rounded-lg">
-              <tr>
-                <th className="p-2 w-[25%]">產品品號</th>
-                <th className="p-2">品名</th>
-                <th className="p-2 w-[12%]">箱數</th>
-                <th className="p-2 w-[18%]">包數</th>
-                <th className="p-2 w-[10%]">單位</th>
-                <th className="p-2 w-[10%]">來源</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredItems?.map((v) => (
-                <tr className="bg-gray-100 rounded-lg">
-                  <td title={v?.PRT_NO} className="truncate p-2">
-                    {v?.PRT_NO || ""}
-                  </td>
-                  <td title={v?.PRT_NAME} className="truncate p-2">
-                    {v?.PRT_NAME || ""}
-                  </td>
-                  <td className="p-2" title={v?.BOX_NO}>{v?.BOX_NO || 0}</td>
-                  <td className="p-2" title={v?.PP_NO}>{v?.PP_NO || ""}</td>
-                  <td className="p-2" title={v?.UNIT}>{v?.UNIT || ""}</td>
-                  <td className="p-2" title={v?.MEMO}>{v?.MEMO || ""}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <thead className="bg-gray-300 rounded-lg">
+          <tr>
+            <th className="p-2 w-[25%]">產品品號</th>
+            <th className="p-2">品名</th>
+            <th className="p-2 w-[12%]">箱數</th>
+            <th className="p-2 w-[18%]">包數</th>
+            <th className="p-2 w-[10%]">單位</th>
+            <th className="p-2 w-[10%]">來源</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredItems?.map((v) => (
+            <tr className="bg-gray-100 rounded-lg">
+              <td title={v?.PRT_NO} className="truncate p-2">
+                {v?.PRT_NO || ""}
+              </td>
+              <td title={v?.PRT_NAME} className="truncate p-2">
+                {v?.PRT_NAME || ""}
+              </td>
+              <td className="p-2" title={v?.BOX_NO}>
+                {v?.BOX_NO || 0}
+              </td>
+              <td className="p-2" title={v?.PP_NO}>
+                {v?.PP_NO || ""}
+              </td>
+              <td className="p-2" title={v?.UNIT}>
+                {v?.UNIT || ""}
+              </td>
+              <td className="p-2" title={v?.MEMO}>
+                {v?.MEMO || ""}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   </SchematicDiagramList>
 );
 
 const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems, currentStation, stations }) => {
+  console.log(stations[0])
+  console.log(currentStation)
   const isDestination = currentStation === stations[0];
+  console.log(isDestination)
   const stationLabel = isDestination ? "目的" : "來源";
   const titleColor = isDestination ? "text-[var(--blue-vivid)]" : "text-[var(--red)]";
+  // 目的地顯示 (+), 來源地顯示 (-)
+  const operator = isDestination ? "+" : "-";
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
@@ -621,7 +634,7 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems, currentSta
               </thead>
               <tbody>
                 {displayItems.map((item, index) => (
-                  <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} isLast={index === displayItems.length - 1} index={index} />
+                  <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} operator={operator} />
                 ))}
                 {shelf?.CARS && (
                   <tr>
@@ -638,10 +651,9 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems, currentSta
     </SchematicDiagram>
   );
 };
-const ShelfItemRow = ({ item, isDestination }) => {
+const ShelfItemRow = ({ item, operator }) => {
+  console.log(operator,'123')
   const isNew = item.isNew || (item.selectedBox > 0 && (item.BOX_NO || 0) === 0 && (item.PP_NO || 0) === 0);
-  // 目的地顯示 (+), 來源地顯示 (-)
-  const operator = isDestination ? "+" : "-";
   return (
     <tr className={`${isNew ? "text-red-500" : ""} bg-gray-100 rounded-lg`}>
       <td className={`p-2 truncate max-w-0`} title={item?.PRT_NO}>
@@ -650,11 +662,11 @@ const ShelfItemRow = ({ item, isDestination }) => {
       <td className="p-2 truncate max-w-0" title={item?.PRT_NAME}>
         {item?.PRT_NAME}
       </td>
-      <td className="p-2 truncate max-w-0" title={`${item?.BOX_NO}${item?.selectedBox > 0 && `(+${item?.selectedBox})`}`}>
+      <td className="p-2 truncate max-w-0" title={`${item?.BOX_NO}${item?.selectedBox > 0 && `(${operator}${item?.selectedBox})`}`}>
         {item?.BOX_NO}
-        <span className="inline-block text-red-500">{item?.selectedBox > 0 && `(+${item?.selectedBox})`}</span>
+        <span className="inline-block text-red-500">{item?.selectedBox > 0 && `(${operator}${item?.selectedBox})`}</span>
       </td>
-      <td className="p-2 truncate max-w-0" title={`${item?.PP_NO}${item?.selectedPP > 0 && `(+${item?.selectedPP})`}`}>
+      <td className="p-2 truncate max-w-0" title={`${item?.PP_NO}${item?.selectedPP > 0 && `(${operator}${item?.selectedPP})`}`}>
         {item?.PP_NO} <span className="inline-block text-red-500">{item?.selectedPP > 0 && `(${operator}${item?.selectedPP})`}</span>
       </td>
       <td className={`p-2 truncate max-w-0`} title={item?.UNIT}>
