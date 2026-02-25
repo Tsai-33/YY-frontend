@@ -23,6 +23,7 @@ import {
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
+import toast from "react-hot-toast";
 
 // 取得ERP資料
 export const getERP = async (setLoading, inputBarCode, setTableData, setOriginalData, orderList) => {
@@ -31,6 +32,9 @@ export const getERP = async (setLoading, inputBarCode, setTableData, setOriginal
     const res = await getEPRData({ barCode: inputBarCode });
     if (res?.success) {
       await getTable(setTableData, setOriginalData, orderList);
+      if(res?.data?.data?.result !== 'ok'){
+        toast.error("建立失敗");
+      }
     } else {
       toast.error("建立失敗");
     }

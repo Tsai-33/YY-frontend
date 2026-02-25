@@ -11,6 +11,9 @@ export const getEPR = async (setLoading, inputBarCode, setTableData, setTableTot
     const res = await getEPRData({ barCode: inputBarCode });
     if (res?.data?.success) {
       await getTable(setTableData, setTableTotalData2, setOriginalData);
+      if(res?.data?.data?.result !== 'ok'){
+        toast.error("建立失敗");
+      }
     } else{
       toast.error("建立失敗")
     }
