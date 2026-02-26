@@ -245,7 +245,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     if (currentStation === stations[0]) {
       return (
         <div className="w-full flex justify-between">
-      <button className="w-50 invisible pointer-events-none" />
+          <button className="w-50 invisible pointer-events-none" />
           {/* <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2.every((v) => v.STATUS === 2)} /> */}
           <ActionBtn icon="icon-transfer" text="完成調撥" variant="orange" onClick={() => setFinishModal(true)} />
           <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
@@ -289,6 +289,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     if (reset) {
       Alert({ title: "項目已完成，請選擇「完成調撥」" });
     } else {
+      setLoading(true);
       Alert({
         title: "調撥單尚未完成",
         html: "是否需要結束此調撥單?<br /> *(若已有處理任何項目將無法退出此調撥單)",
@@ -298,11 +299,15 @@ export default function TransferContext({ barCodeRef, setLoading }) {
           if (res?.data?.success) {
             toast.success("結束調撥單!");
             dispatch(resetTransfer({ type: "all", station: stations }));
+            setLoading(false);
           } else {
             toast.error(`${res?.error?.message}`);
+            setLoading(false);
           }
         },
-        onCancel: async () => {},
+        onCancel: () => {
+          setLoading(false);
+        },
       });
     }
   };
@@ -513,6 +518,11 @@ export default function TransferContext({ barCodeRef, setLoading }) {
           <div>並請至盤點更正為正確數量</div>
         </>
       </Modal>
+      {step > 2 && currentStation === "A01" && (
+        <button onClick={handleReset} className="absolute top-0 right-0 z-50 text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200 active:scale-95">
+          <span className="mr-1">🔄</span> 下線
+        </button>
+      )}
 
       {/* 重發的taskdone 沒有Job 使用，所以會壞掉 */}
       {/* {step <= 2 && (
@@ -606,11 +616,9 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems, currentSta
           {displayItems.length === 0 ? (
             <>
               <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
-              {shelf?.CARS && stationLabel === '目的' && (
+              {shelf?.CARS && stationLabel === "目的" && (
                 <div className="bg-transparent text-right p-2 pr-4">
-                  <span>
-                  剩餘車數：{shelf.CARS}
-                  </span>
+                  <span>剩餘車數：{shelf.CARS}</span>
                 </div>
               )}
             </>
@@ -629,12 +637,10 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems, currentSta
                 {displayItems.map((item, index) => (
                   <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} operator={operator} />
                 ))}
-                {shelf?.CARS && stationLabel === '目的' && (
+                {shelf?.CARS && stationLabel === "目的" && (
                   <tr>
                     <td colSpan={5} className="bg-transparent text-right p-2 pr-4">
-                      <span>
-                        剩餘車數：{shelf.CARS}
-                      </span>
+                      <span>剩餘車數：{shelf.CARS}</span>
                     </td>
                   </tr>
                 )}
