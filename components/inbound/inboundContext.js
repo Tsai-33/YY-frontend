@@ -329,7 +329,6 @@ export default function InboundContext({ barCodeRef, setLoading }) {
     const random = generateRandomNumber();
     const data = { action: "ask_done", STATION: currentStation, dataid: random };
     const res = await sendToWMS(data);
-    console.log(res, "123");
     if (res?.data?.data?.result == "ok") {
       toast.success("重抓成功");
       dispatch(setInbound({ step: 3, screen: "working" }));
@@ -841,7 +840,7 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems }) => {
               <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
               {shelf?.CARS && (
                 <div className="bg-transparent text-right p-2 pr-4">
-                  <span>車次：{shelf.CARS}</span>
+                  <span>剩餘車數：{shelf.CARS}</span>
                 </div>
               )}
             </>

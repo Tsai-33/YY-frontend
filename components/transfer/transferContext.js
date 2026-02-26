@@ -167,7 +167,7 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     if (currentStation === stations[0]) {
       const data = tableData2.find((item) => item.PRT_NO === job[0].PRT_NO);
       if (data.STATUS === 1) {
-        Alert({ title: "尚未完成" });
+        toast.error("有未完成的項目");
         return;
       }
     } else {
@@ -198,10 +198,10 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       const res = await finishList_tr(setLoading, order, setFinishModal, shelf?.SHELVE_ID, remark);
       if (res?.data?.success) {
         dispatch(resetTransfer({ type: "all", station: stations }));
-        Alert({ title: res?.data?.message });
+        toast.success(`${res?.data?.message}`);
         await deleteTask_tr(stations);
       } else if (!res?.success) {
-        Alert({ title: `${res?.error?.message}` });
+        toast.error(`${res?.error?.message}`);
       }
     } else {
       setFinishModal(false);
@@ -245,7 +245,8 @@ export default function TransferContext({ barCodeRef, setLoading }) {
     if (currentStation === stations[0]) {
       return (
         <div className="w-full flex justify-between">
-          <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2.every((v) => v.STATUS === 2)} />
+      <button className="w-50 invisible pointer-events-none" />
+          {/* <ActionBtn icon="icon-add" text="新增貨架" variant="orange" onClick={() => setAddModal(true)} disabled={tableData2.every((v) => v.STATUS === 2)} /> */}
           <ActionBtn icon="icon-transfer" text="完成調撥" variant="orange" onClick={() => setFinishModal(true)} />
           <ActionBtn icon="icon-returnShelf" text="退回貨架" variant="orange" onClick={() => setReturnModal(true)} />
         </div>
@@ -281,6 +282,28 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       }
     } else {
       toast.success("沒有任務");
+    }
+  };
+  const handleReset = () => {
+    const reset = tableData2.every((v) => v.STATUS === 2 || v.STATUS === 5);
+    if (reset) {
+      Alert({ title: "項目已完成，請選擇「完成調撥」" });
+    } else {
+      Alert({
+        title: "調撥單尚未完成",
+        html: "是否需要結束此調撥單?<br /> *(若已有處理任何項目將無法退出此調撥單)",
+        showCancel: true,
+        onConfirm: async () => {
+          const res = await restoreList_tr(waveNo);
+          if (res?.data?.success) {
+            toast.success("結束調撥單!");
+            dispatch(resetTransfer({ type: "all", station: stations }));
+          } else {
+            toast.error(`${res?.error?.message}`);
+          }
+        },
+        onCancel: async () => {},
+      });
     }
   };
   // ============================
@@ -485,9 +508,9 @@ export default function TransferContext({ barCodeRef, setLoading }) {
       <Modal showModal={wmsModal} title="數量異常" onClose={() => setWmsModal(false)} onConfirm={handleAbnormal} width={`39vw`} height={`auto`}>
         <>
           <div>產品編號:「 {abData?.PRT_NO} 」</div>
-          <div>貨架數量與實際數量不相符</div>
-          <div>按下「確認」後將退回所有貨架</div>
-          <div>請至盤點更正為正確數量並重新開立調撥單</div>
+          <div>貨架上產品數量與實際數量不相符</div>
+          <div>按下「確認」後將完成此項目搬移</div>
+          <div>並請至盤點更正為正確數量</div>
         </>
       </Modal>
 
@@ -583,9 +606,11 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems, currentSta
           {displayItems.length === 0 ? (
             <>
               <div className="h-25 flex items-center justify-center text-gray-400">暫無資料</div>
-              {shelf?.CARS && (
+              {shelf?.CARS && stationLabel === '目的' && (
                 <div className="bg-transparent text-right p-2 pr-4">
-                  <span>車次：{shelf.CARS}</span>
+                  <span>
+                  剩餘車數：{shelf.CARS}
+                  </span>
                 </div>
               )}
             </>
@@ -604,10 +629,12 @@ const ShelfData = ({ shelf, remark, handleChangeREMARK, displayItems, currentSta
                 {displayItems.map((item, index) => (
                   <ShelfItemRow key={`${item.PRT_NO}-${index}`} item={item} operator={operator} />
                 ))}
-                {shelf?.CARS && (
+                {shelf?.CARS && stationLabel === '目的' && (
                   <tr>
                     <td colSpan={5} className="bg-transparent text-right p-2 pr-4">
-                      <span>車次：{shelf.CARS}</span>
+                      <span>
+                        剩餘車數：{shelf.CARS}
+                      </span>
                     </td>
                   </tr>
                 )}

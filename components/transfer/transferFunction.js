@@ -1,4 +1,4 @@
-import { addShelf, addTransferWCS, checkWCS, deleteTask, finishTransferOrder, getEPRData, getOrder, getOrderDetail, getOrderDetailByWID, resendJob, resendTaskdoneCheck, restoreOrders, returnTransferWCS, sendToWMS, updateTask, updateTransferWMS, updateTransferWMSAbnormal } from "@/pages/api";
+import { addShelf, addTransferWCS, checkWCS, deleteTask, finishTransferOrder, getEPRData, getOrder, getOrderDetail, getOrderDetailByWID, resendJob, resendTaskdoneCheck, restoreOrders, restoreTransfer, returnTransferWCS, sendToWMS, updateTask, updateTransferWMS, updateTransferWMSAbnormal } from "@/pages/api";
 import { generateRandomNumber } from "@/utils/random";
 import Alert from "../common/alert/alert";
 import { selectTask } from "../taskFunction";
@@ -133,14 +133,12 @@ export const cancelShelf_tr = async (setLoading, currentStation) => {
 };
 
 // 未完成 返回
-export const restoreList_tr = async (setLoading, waveNo) => {
+export const restoreList_tr = async (waveNo) => {
   try {
-    return await restoreOrders({ W_ID: waveNo });
+    return await  restoreTransfer({ W_ID: waveNo });
   } catch (err) {
     console.log(`handleReturnShelf :`, err);
-  } finally {
-    setLoading(false);
-  }
+  } 
 };
 
 // 完成調撥單
