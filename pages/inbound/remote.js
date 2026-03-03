@@ -165,6 +165,7 @@ export default function Remote() {
               <input
                 ref={barCodeRef}
                 type="text"
+                inputmode="none"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.stopPropagation();
