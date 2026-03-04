@@ -26,13 +26,11 @@ export default function InventoryShelf() {
   const stationState = useSelector((s) => s.inventory[currentStation]);
   const rowState = stationState?.rowState || [];
   const SHELVE_ID = stationState?.shelf?.SHELVE_ID;
-  const CARS = stationState?.shelf?.CARS;
   const shelfItem = stationState?.shelfItem;
   const currentSTOCKAREA = stationState?.filter?.stockArea;
   const currentCUSNO = stationState?.filter?.cusNo;
   const currentSALENO = stationState?.filter?.saleNo;
   const currentPRTNO = stationState?.filter?.prtNo;
-  const currentREMARK = stationState?.shelfItem[0]?.REMARK;
 
   // 目前選擇的工作站
   const handleSwitchStation = (station) => {
@@ -364,8 +362,8 @@ export default function InventoryShelf() {
                     </div>
                     <div
                       className="flex-1 flex items-center gap-2 truncate"
-                      title={shelfItem?.REMARK}>
-                      備註:{shelfItem?.REMARK}
+                      title={shelfItem[0]?.REMARK}>
+                      備註:{shelfItem[0]?.REMARK}
                     </div>
                     <div>庫別:{currentSTOCKAREA}</div>
                   </div>
