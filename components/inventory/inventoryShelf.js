@@ -5,7 +5,7 @@ import {
   setPage,
   setBatchNo,
   setInventory,
-  setInitialRowState,
+  updateShelfRemark,
   updateRowState,
   resetRowState,
   clearRowState,
@@ -31,6 +31,8 @@ export default function InventoryShelf() {
   const currentCUSNO = stationState?.filter?.cusNo;
   const currentSALENO = stationState?.filter?.saleNo;
   const currentPRTNO = stationState?.filter?.prtNo;
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(shelfItem[0]?.REMARK || "");
 
   // 目前選擇的工作站
   const handleSwitchStation = (station) => {
@@ -45,9 +47,9 @@ export default function InventoryShelf() {
     return "未選擇篩選條件";
   }, [currentPRTNO, currentSALENO, currentCUSNO, currentSTOCKAREA]);
 
-  // ============================
-  // ⭐ 篩選指定產品品號
-  // ============================
+  /**
+   * 篩選指定產品品號
+   */
   const displayItems = useMemo(() => {
     // 1. 先過濾
     const filtered = currentPRTNO
@@ -61,9 +63,9 @@ export default function InventoryShelf() {
     }));
   }, [currentPRTNO, rowState]);
 
-  // ============================
-  // ⭐ 修改數量
-  // ============================
+  /**
+   * 修改數量
+   */
   const handleQtyChange = (row, value) => {
     const v = Number(value);
     dispatch(
@@ -76,10 +78,10 @@ export default function InventoryShelf() {
     );
   };
 
-  // ============================
-  // ⭐ 按「正確」→ 自動完成盤點
-  // 正確（actual === expected），標記為 confirmed 並清除 error
-  // ============================
+  /**
+   * 按「正確」→ 自動完成盤點
+   * 正確（actual === expected），標記為 confirmed 並清除 error
+   */
   const handleConfirm = (row) => {
     dispatch(
       updateRowState({
@@ -91,10 +93,10 @@ export default function InventoryShelf() {
     );
   };
 
-  // ============================
-  // ⭐ 異常（數量不符）→ 修改後確定
-  // 標記異常並同時確認（confirmed = true, error = true）
-  // ============================
+  /**
+   * 異常（數量不符）→ 修改後確定
+   * 標記異常並同時確認（confirmed = true, error = true）
+   */
   const handleMarkErrorAndConfirm = (row) => {
     dispatch(
       updateRowState({
@@ -106,10 +108,10 @@ export default function InventoryShelf() {
     );
   };
 
-  // ============================
-  // ⭐ 重新修改
-  //（解除 confirmed 與 error）
-  // ============================
+  /**
+   * 重新修改
+   * 解除 confirmed 與 error）
+   */
   const handleResetRow = (prtNo) => {
     dispatch(
       resetRowState({
@@ -119,23 +121,23 @@ export default function InventoryShelf() {
     );
   };
 
-  // ============================
-  // checked items for CheckTable (checkbox 顯示來源)：
-  // 我們把已確認或被標記異常的列視為「已盤完」，因此自動打勾
-  // ============================
+  /**
+   * checked items for CheckTable (checkbox 顯示來源)：
+   * 我們把已確認或被標記異常的列視為「已盤完」，因此自動打勾
+   */
   const checkedItems = rowState
     .filter((r) => r.confirmed || r.error)
     .map((r) => `${r.PRT_NO}-${r.SALE_NO}`);
 
-  // ============================
-  // 判斷是否可以送出 ERP：所有顯示列都必須 confirmed = true 代表已盤
-  // ============================
+  /**
+   * 判斷是否可以送出 ERP：所有顯示列都必須 confirmed = true 代表已盤
+   */
   const canSubmitToERP =
     displayItems.length > 0 && displayItems.every((r) => r.confirmed === true);
 
-  // ============================
-  // ⭐ 左側 table 欄位
-  // ============================
+  /**
+   * 左側 table 欄位
+   */
   const tableHeader = [
     { label: "", key: "checkbox", width: `7%` },
     {
@@ -208,9 +210,9 @@ export default function InventoryShelf() {
     },
   ];
 
-  // ============================
-  // ⭐ 右側 shelf 資料顯示+操作
-  // ============================
+  /**
+   * 右側 shelf 資料顯示+操作
+   */
   const submitToBackend = async () => {
     dispatch(
       setInventory({
@@ -223,6 +225,7 @@ export default function InventoryShelf() {
       STATION: currentStation,
       batchNo: batchNo,
       SHELVE_ID: SHELVE_ID,
+      REMARK: shelfItem[0]?.REMARK || "",
       rowState: rowState,
       UserId: userId,
     };
@@ -270,9 +273,9 @@ export default function InventoryShelf() {
     }
   };
 
-  // ============================
-  // ⭐ 下線功能
-  // ============================
+  /**
+   * 下線功能
+   */
   const submitToOffline = async () => {
     Alert({
       title: "確定盤點下線？",
@@ -324,6 +327,38 @@ export default function InventoryShelf() {
     });
   };
 
+  // 當 Redux 的資料變動時，同步更新 local state，確保顯示最新資料
+  useEffect(() => {
+    setEditValue(shelfItem[0]?.REMARK || "");
+  }, [shelfItem]);
+
+  const handleDoubleClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    setIsEditing(false);
+    // 檢查內容是否有變動，避免不必要的 dispatch
+    if (editValue === shelfItem[0]?.REMARK) return;
+
+    dispatch(
+      updateShelfRemark({
+        station: currentStation,
+        remark: editValue,
+      }),
+    );
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSave();
+    }
+    if (e.key === "Escape") {
+      setIsEditing(false);
+      setEditValue(shelfItem[0]?.REMARK || ""); // 還原
+    }
+  };
+
   return (
     <>
       {/* 頂部區域 */}
@@ -360,12 +395,31 @@ export default function InventoryShelf() {
                     <div className="whitespace-nowrap">
                       貨架編號:{SHELVE_ID}
                     </div>
-                    <div
-                      className="flex-1 flex items-center gap-2 truncate"
-                      title={shelfItem[0]?.REMARK}>
-                      備註:{shelfItem[0]?.REMARK}
-                    </div>
                     <div>庫別:{currentSTOCKAREA}</div>
+                  </div>
+                  <div
+                    className="flex-1 flex items-center gap-2 truncate"
+                    title={shelfItem[0]?.REMARK}
+                    onDoubleClick={() => setIsEditing(true)}>
+                    <div className="shrink-0">備註:</div>
+                    {isEditing ? (
+                      <input
+                        autoFocus
+                        className="flex-1 px-2 py-1 outline-none rounded bg-transparent focus:bg-white transition-colors duration-200"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onBlur={handleSave}
+                        onKeyDown={handleKeyDown}
+                      />
+                    ) : (
+                      <div className="flex-1 px-2 py-1 truncate cursor-pointer hover:bg-gray-200/40 rounded transition-colors">
+                        {shelfItem[0]?.REMARK || (
+                          <span className="text-gray-400 italic">
+                            (雙擊編輯備註)
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="border-t border-[#c4a57b] pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0"></div>
                   <table className="w-full border-collapse text-center">

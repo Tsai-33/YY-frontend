@@ -77,47 +77,6 @@ const inventorySlice = createSlice({
       initRowStateIfNeeded(state[station], data.shelfItem);
     },
 
-    // setInventory: (state, action) => {
-    //   const { station, data } = action.payload;
-
-    //   // 1. 先處理資料轉換 (加上 rowState)
-    //   const processedData = {
-    //     ...data,
-    //     rowState: data.shelfItem
-    //       ? data.shelfItem.map((item) => ({
-    //           ...item,
-    //           actualQty: item.PP_NO,
-    //           confirmed: false,
-    //           error: false,
-    //         }))
-    //       : [],
-    //   };
-
-    //   // 更新所有站
-    //   if (station === "*") {
-    //     Object.keys(state).forEach((key) => {
-    //       if (
-    //         !["page", "batchNo", "_persist"].includes(key) &&
-    //         typeof state[key] === "object"
-    //       ) {
-    //         // 直接遍歷屬性賦值，確保每一個 key 都被寫入
-    //         Object.keys(processedData).forEach((prop) => {
-    //           state[key][prop] = processedData[prop];
-    //         });
-    //       }
-    //     });
-    //     return;
-    //   }
-
-    //   // 更新單一站
-    //   if (!state[station]) return;
-
-    //   // 改用這種方式賦值，不要用 Object.assign
-    //   Object.keys(processedData).forEach((prop) => {
-    //     state[station][prop] = processedData[prop];
-    //   });
-    // },
-
     setAllStations(state, action) {
       const { data } = action.payload;
 
@@ -130,6 +89,25 @@ const inventorySlice = createSlice({
     },
     setBatchNo(state, action) {
       state.batchNo = action.payload;
+    },
+    updateShelfRemark: (state, action) => {
+      const { station, remark } = action.payload;
+      const stationState = state[station];
+
+      if (stationState && Array.isArray(stationState.shelfItem)) {
+        // 更新 shelfItem 中所有項目的 REMARK (或是只更新第一個，視你的需求而定)
+        // 依照你的 JSX 寫法 shelfItem[0]?.REMARK，通常是整組貨架共用一個備註
+        stationState.shelfItem.forEach((item) => {
+          item.REMARK = remark;
+        });
+
+        // 如果 rowState 也同步存在，建議一起更新以保持資料一致
+        if (Array.isArray(stationState.rowState)) {
+          stationState.rowState.forEach((item) => {
+            item.REMARK = remark;
+          });
+        }
+      }
     },
     setInitialRowState: (state, action) => {
       const { station, shelfItem, fromStorage } = action.payload;
@@ -194,6 +172,7 @@ export const {
   setAllStations,
   setPage,
   setBatchNo,
+  updateShelfRemark,
   setInitialRowState,
   updateRowState,
   resetRowState,
